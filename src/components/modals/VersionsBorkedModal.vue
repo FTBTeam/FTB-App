@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { FTBButton, ModalBody, ModalFooter } from '@/components/ui';
+import { UiButton, ModalBody, ModalFooter } from '@/components/ui';
 import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 const {
@@ -13,7 +13,6 @@ const {
   notification?: string;
 }>()
 </script>
-
 
 <template>
   <div>
@@ -38,25 +37,23 @@ const {
       </div>
     </ModalBody>
     <ModalFooter class="flex justify-end">
-      <FTBButton
+      <UiButton
         class="py-2 px-4"
-        :color="fixedVersion != null ? 'danger' : 'warning'"
-        css-class="text-center text-l"
+        :type="fixedVersion != null ? 'danger' : 'warning'"
         @click="$emit('closed')"
       >
         <FontAwesomeIcon :icon="faTimes" class="mr-2" size="1x" />
         {{ fixedVersion !== null ? 'Ignore' : 'Close' }}
-      </FTBButton>
-      <FTBButton
+      </UiButton>
+      <UiButton
         v-if="fixedVersion != null"
         class="py-2 px-8 ml-4"
-        color="primary"
-        css-class="text-center text-l"
+        type="primary"
         @click="$emit('action', fixedVersion)"
       >
         <FontAwesomeIcon :icon="faCheck" class="mr-2" size="1x" />
         {{ isDowngrade ? 'Downgrade pack' : 'Update pack' }}
-      </FTBButton>
+      </UiButton>
     </ModalFooter>
   </div>
 </template>

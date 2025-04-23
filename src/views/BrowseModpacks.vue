@@ -6,13 +6,13 @@ import { toggleBeforeAndAfter } from '@/utils/helpers/asyncHelpers';
 import Loader from '@/components/ui/Loader.vue';
 import PackPreview from '@/components/groups/modpack/PackPreview.vue';
 import { modpackApi } from '@/core/pack-api/modpackApi';
-import { UiPagination, UiMessage, FTBSearchBar } from '@/components/ui';
+import { Pagination, Message, Input } from '@/components/ui';
 import { createLogger } from '@/core/logger';
 import { RouterNames } from '@/router';
 import { onMounted, ref, watch } from 'vue';
 import { packBlacklist } from '@/store/modpackStore.ts';
 import { PackProviders } from '@/core/types/appTypes.ts';
-import { faInfo, faWarning } from '@fortawesome/free-solid-svg-icons';
+import { faInfo, faSearch, faWarning } from '@fortawesome/free-solid-svg-icons';
 
 const logger = createLogger("BrowseModpacks.vue")
 const router = useRouter();
@@ -98,7 +98,7 @@ watch(searchValue, () => {
   }
 
   error.value = '';
-  debouncedSearch();
+  debouncedSearch.run();
 });
 
 async function searchPacks() {
@@ -136,27 +136,27 @@ async function searchPacks() {
           <img src="@/assets/curse-logo.svg" alt="" />
         </div>
       </div>
-      <FTBSearchBar
+      <Input
         v-model="searchValue"
-        class="w-full"
+        :icon="faSearch"
+        fill
         :placeholder="`Search ${currentTab === 'modpacksch' ? 'FTB Modpacks' : 'Curseforge Modpacks'}`"
-        :min="3"
       />
     </div>
     
-    <UiMessage :icon="faWarning" type="danger" class="my-6" v-if="error">
+    <Message :icon="faWarning" type="danger" class="my-6" v-if="error">
       {{ error }}
-    </UiMessage>
+    </Message>
 
-    <UiMessage :icon="faInfo" type="info" class="my-6" v-if="!error && searchResults.length === 0 && searchValue.length > 0 && !loading">
+    <Message :icon="faInfo" type="info" class="my-6" v-if="!error && searchResults.length === 0 && searchValue.length > 0 && !loading">
       No results found for '{{ searchValue }}'
-    </UiMessage>
+    </Message>
 
     <loader class="mt-20"  v-if="(!error && searchValue !== '' && loading && !loadingInitialPacks)" />
     
-    <UiMessage v-if="searchValue === '' && !loading && !loadingInitialPacks && !ourPackIds.length">
+    <Message v-if="searchValue === '' && !loading && !loadingInitialPacks && !ourPackIds.length">
       <p>No packs available</p>
-    </UiMessage>
+    </Message>
 
     <div class="result-cards pb-2" v-if="!error && searchResults.length > 0">
       <pack-preview v-for="(pack, index) in searchResults" :partial-pack="pack" :key="index" :provider="currentTab" />
@@ -168,7 +168,7 @@ async function searchPacks() {
       </div>
 
       <div class="flex justify-center pb-8">
-        <ui-pagination v-if="ourPackIds.length" v-model="currentPage" :total="ourPackIds.length" :per-page="10" @input="scrollToTop" />
+        <Pagination v-if="ourPackIds.length" v-model="currentPage" :total="ourPackIds.length" :per-page="10" @input="scrollToTop" />
       </div>
       <loader class="mt-20" v-if="loadingInitialPacks" />
     </div>
@@ -176,6 +176,8 @@ async function searchPacks() {
 </template>
 
 <style scoped lang="scss">
+@import 'tailwindcss/theme' theme(reference);
+
 .result-cards {
   position: relative;
   z-index: 1;
@@ -191,6 +193,7 @@ async function searchPacks() {
     display: flex;
     border-radius: 5px;
     overflow: hidden;
+    border: 1px solid rgba(white, .3);
 
     .btn-icon {
       padding: 0 1.2rem;
@@ -210,7 +213,7 @@ async function searchPacks() {
       }
 
       &.active {
-        background-color: var(--color-primary-button);
+        background-color: var(--color-green-600);
         img {
           opacity: 1;
         }

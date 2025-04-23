@@ -11,9 +11,9 @@
     <div class="featured-packs">
       <h2 class="text-lg font-bold text-white mb-4">Featured packs</h2>
       <PackPreview v-if="modpackStore.featuredPackIds.length" v-for="packId in modpackStore.featuredPackIds" :key="packId" :packId="packId" provider="modpacksch" />
-      <UiMessage type="warning" v-if="!modpackStore.featuredPackIds.length && !loadingFeatured">
+      <Message type="warning" v-if="!modpackStore.featuredPackIds.length && !loadingFeatured">
         <p>No featured packs available at the moment</p>
-      </UiMessage>
+      </Message>
     </div>
   </div>
 </template>
@@ -21,7 +21,7 @@
 <script lang="ts" setup>
 import PackPreview from '@/components/groups/modpack/PackPreview.vue';
 import PackCard2 from '@/components/groups/modpack/PackCard2.vue';
-import { UiMessage } from '@/components/ui';
+import { Message } from '@/components/ui';
 import { computed, onMounted, ref } from 'vue';
 import { useInstanceStore } from '@/store/instancesStore.ts';
 import { useModpackStore } from '@/store/modpackStore.ts';

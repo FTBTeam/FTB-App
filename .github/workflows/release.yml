@@ -221,6 +221,10 @@ jobs:
         with:
           name: subprocess-jar-ubuntu-latest
           path: subprocess/build/libs/
+      - name: Patch platform
+        # Replace electron with overwolf in the tsconfig.json file
+        run: |
+          sed -i 's|./src/utils/interface/impl/electron.ts|./src/utils/interface/impl/overwolf.ts|g' src/tsconfig.json
       - name: Build App (Overwolf)
         env:
           OW_CLI_API_KEY: ${{ secrets.OW_CLI_API_KEY }}

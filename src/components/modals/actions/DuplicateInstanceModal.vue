@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { FTBButton, FTBInput, ModalBody, ModalFooter } from '@/components/ui';
+import { UiButton, Input, ModalBody, ModalFooter } from '@/components/ui';
 import CategorySelector from '@/components/groups/modpack/create/CategorySelector.vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { RouterNames } from '@/router';
@@ -86,22 +86,20 @@ function getDuplicateNameCount() {
     <ModalBody>
       Duplicating {{ instanceName }} will copy all of the contents of this pack to a new instance.
 
-      <FTBInput
-        :value="newName"
+      <Input
         v-model="newName"
         class="mt-4 mb-4"
         label="New instance name"
         :disabled="working || done"
+        fill
       />
       
       <CategorySelector v-model="newCategory" />
     </ModalBody>
     <ModalFooter class="flex justify-end">
-      <FTBButton
+      <UiButton
         :disabled="working || done"
-        class="py-2 px-8"
         color="primary"
-        css-class="text-center text-l"
         @click="duplicate"
       >
         <template v-if="!working && !done">
@@ -112,7 +110,7 @@ function getDuplicateNameCount() {
           <FontAwesomeIcon :icon="faSpinner" class="mr-2" spin size="1x" />
           {{ status }}
         </template>
-      </FTBButton>
+      </UiButton>
     </ModalFooter>
   </div>
 </template>

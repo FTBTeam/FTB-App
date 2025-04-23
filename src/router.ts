@@ -132,14 +132,7 @@ const router = createRouter({
         }
       ]
     }
-    // TODO: Add a 404 page
-    // Fallback route for 404
-    // {
-    //   path: '*',
-    //   redirect: '/',
-    // }
   ],
-  // TODO: Verify this still works after layout updates
   scrollBehavior: (to, _, savedPosition) => {
     if (savedPosition) {
       return {

@@ -10,58 +10,15 @@ import { faCheck, faDownload, faUsers } from '@fortawesome/free-solid-svg-icons'
 
 const {
   mod,
-  // instance,
-  // target,
   installedMods,
 } = defineProps<{
   mod: Mod;
-  // instance: InstanceJson;
-  // target: string;
   installedMods: [number, number][];
 }>()
 
-// TODO: Unused? [port] fixme
-// function fileName(modName: string, fileName: string, trim = -1, trimReverse = false) {
-//   const cleanedModName = modName.split("-")[0].replaceAll(" ", "").replace(/[^a-z0-9]/gi, '_').toLowerCase();
-//
-//   // Try and remove the modname from the file name
-//   let replacedName = fileName.replace(new RegExp(cleanedModName, "gi"), "").replace(".jar", "").toLowerCase();
-//
-//   if (replacedName.startsWith("-") || replacedName.startsWith("_")) {
-//     replacedName = replacedName.substring(1);
-//   }
-//
-//   const variations = ["$1", "$1_", "$1-", "-$1", "_$1", "_$1_", "-$1-"].reverse();
-//   const lookups  = ["forge", "fabric", "quilt", "neoforge", "mc", "minecraft", "release", "alpha", "beta"];
-//
-//   // Soft search to save on performance
-//   // Look over the lookups list and see if the name contains any of them
-//   if (lookups.findIndex((e) => replacedName.includes(e)) !== -1) {
-//     for (const variation of variations) {
-//       for (const lookup of lookups) {
-//         const regex = new RegExp(`(${variation.replace("$1", lookup)})`, "gi");
-//         replacedName = replacedName.replace(regex, "");
-//       }
-//     }
-//   }
-//
-//   if (trim === -1 || replacedName.length <= trim) {
-//     return replacedName;
-//   }
-//
-//   return !trimReverse ? ("..." + replacedName.substring(0, trim)) : (replacedName.substring(replacedName.length - trim) + "...")
-// }
-
 const projectInstalled = computed(() => installedMods.findIndex((e) => e[0] === mod.id) !== -1);
 const art = computed(() => mod.art[0]?.url ?? 'broken');
-// const latest = computed(() => mod.versions[mod.versions.length - 1] ? mod.versions[mod.versions.length - 1].name : 'Unknown');
 const curseLink = computed(() => mod.links.find((e) => e.type === 'curseforge'));
-// const versions = computed(() => mod.versions
-//   .filter(
-//     (e) =>
-//       e.targets.findIndex((a) => a.type === 'game' && a.name === 'minecraft' && a.version === target) !== -1,
-//   )
-//   .sort((a, b) => b.id - a.id) ?? []);
 </script>
 
 <template>

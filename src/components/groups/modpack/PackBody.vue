@@ -159,7 +159,7 @@ function cursePackBody() {
       <div class="action-heading">
         <div class="action-holder flex items-center justify-between duration-200 transition-opacity" :class="{'opacity-0': (isInstalling && installStore.currentInstall) || modloaderUpdating}">
           <div class="play">
-            <div class="py-3 px-8 bg-green-600 hover:bg-green-500 cursor-pointer rounded z-10" :class="{ 'opacity-50': isInstalled && isRunning }" @click="() => (isInstalled && isRunning) && emit('mainAction')">
+            <div class="py-3 px-8 bg-green-600 hover:bg-green-500 cursor-pointer rounded z-10" :class="{ 'opacity-50': isInstalled && isRunning }" @click="() => !(isInstalled && isRunning) && emit('mainAction')">
               <FontAwesomeIcon :icon="isInstalled ? faPlay : faDownload" class="mr-4" />
               {{ isInstalled ? 'Play' : 'Install' }}
             </div>
@@ -223,12 +223,12 @@ function cursePackBody() {
         <div
           v-if="packInstance"
           class="tab"
-          :class="{ active: activeTab === tabs.OVERVIEW }"
+          :class="{ '!border-blue-600 !text-white': activeTab === tabs.OVERVIEW }"
           @click="() => emit('tabChange', tabs.OVERVIEW)"
         >
           Overview
         </div>
-        <div v-if="!isVanilla" class="tab" :class="{ active: activeTab === tabs.MODS }" @click="() => emit('tabChange', tabs.MODS)">
+        <div v-if="!isVanilla" class="tab" :class="{ '!border-blue-600 !text-white': activeTab === tabs.MODS }" @click="() => emit('tabChange', tabs.MODS)">
           Mods
         </div>
 <!--        <div v-if="packInstance && packInstance.meta && packInstance.meta.supportsWorlds" class="tab flex items-center whitespace-no-wrap justify-center" :class="{ active: activeTab === tabs.WORLDS }" @click="() => emit('tabChange', tabs.WORLDS)">-->
@@ -421,11 +421,6 @@ function cursePackBody() {
     transition: color 0.25s ease-in-out, background-color 0.25s ease-in-out;
     margin-right: 1rem;
     border-bottom: 2px solid transparent;
-
-    &.active {
-      border-bottom-color: var(--color-info-button);
-      color: white;
-    }
 
     &:hover {
       color: white;

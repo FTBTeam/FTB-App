@@ -86,9 +86,9 @@ export class JavaVerifier {
       try {
         fs.rmSync(runtimeHome, { recursive: true, force: true });
       } catch (e) {
-        // We can ask the user to remove it if we fail
-        // TODO: Ask the user to remove it
+        alert("Failed to remove existing java installation, please remove it manually at " + runtimeHome);
         log.warn("Failed to remove existing java installation", e);
+        return;
       }
     }
     

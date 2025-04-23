@@ -2,9 +2,9 @@
 import {InstanceJson, SugaredInstanceJson} from '@/core/types/javaApi';
 import {packUpdateAvailable} from '@/utils/helpers/packHelpers';
 import UpdateConfirmModal from '@/components/modals/UpdateConfirmModal.vue';
-import { FTBButton } from '@/components/ui';
+import { UiButton } from '@/components/ui';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { ModPack, Versions } from '@/core/types/appTypes.ts';
 import { faCloudDownloadAlt } from '@fortawesome/free-solid-svg-icons';
 
@@ -19,25 +19,28 @@ const {
 const showConfirm = ref(false);
 const latestVersion = ref<Versions | null>(null);
 
+onMounted(() => {
+  updateAvailablePacks()
+})
+
 function updateAvailablePacks() {
   if (!instance || !localInstance) {
     return;
   }
-
+  
   latestVersion.value = packUpdateAvailable(localInstance, instance) ?? null;
 }
 
-watch(() => instance, () => updateAvailablePacks)
-watch(() => localInstance, () => updateAvailablePacks)
+watch(() => instance?.id, () => updateAvailablePacks)
+watch(() => localInstance?.uuid, () => updateAvailablePacks)
 </script>
 
 <template>
   <div class="update" v-if="instance && localInstance && latestVersion">
-<!--    TODO: Replace with ui-button -->
-    <FTBButton color="warning" class="update-btn px-4 py-1" @click="showConfirm = true">
+    <UiButton type="warning" class="update-btn px-4 py-1" @click="showConfirm = true">
       <span class="hidden sm:inline-block">Update available</span>
       <FontAwesomeIcon :icon="faCloudDownloadAlt" class="sm:ml-2" />
-    </FTBButton>
+    </UiButton>
 
     <UpdateConfirmModal v-if="localInstance && instance" :local-instance="localInstance" :latest-version="latestVersion" :open="showConfirm" @close="showConfirm = false" />
   </div>

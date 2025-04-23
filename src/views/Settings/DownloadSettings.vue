@@ -4,8 +4,6 @@ import { useAppSettings } from '@/store/appSettingsStore.ts';
 import { onMounted, ref } from 'vue';
 import { FTBSlider, Loader } from '@/components/ui';
 
-// TODO: this component is fucked
-
 const appSettingsStore = useAppSettings();
 const localSettings = ref<SettingsData>({} as SettingsData);
 

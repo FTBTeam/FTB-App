@@ -18,6 +18,7 @@ import { useAccountsStore } from '@/store/accountsStore.ts';
 import { useAppSettings } from '@/store/appSettingsStore.ts';
 import { useAppStore } from '@/store/appStore.ts';
 import { createLogger } from '@/core/logger.ts';
+import { retrying } from '@/utils/helpers/asyncHelpers.ts';
 
 const logger = createLogger("App.vue")
 
@@ -54,10 +55,19 @@ async function startApplication() {
     logger.debug("Production mode, starting subprocess")
     startingSubprocess.value = true;
     try {
-      const result = await appPlatform.app.startSubprocess();
+      const result = await retrying(async () => {
+        const startResult = await appPlatform.app.startSubprocess();
+        if (!startResult) {
+          logger.debug("Failed to start the subprocess?")
+          return null;
+        }
+        
+        return startResult;
+      }, 10)
+      
       if (!result) {
-        logger.debug("Failed to start the subprocess?")
-        // TODO: Handle this properly
+        logger.error("Failed to start subprocess")
+        alertController.error("Failed to start subprocess, please restart the app")
         return;
       }
       

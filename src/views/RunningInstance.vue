@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { FTBButton, ProgressBar, Modal } from '@/components/ui';
+import { UiButton, ProgressBar, Modal } from '@/components/ui';
 import Router, {RouterNames} from '@/router';
 import {SugaredInstanceJson} from '@/core/types/javaApi';
 import {alertController} from '@/core/controllers/alertController';
@@ -17,9 +17,8 @@ import {
   faArrowLeft,
   faCircleNotch,
   faEllipsisVertical,
-  faEye,
-  faFolderOpen, faMoon,
-  faSkullCrossbones, faSun,
+  faFolderOpen,
+  faSkullCrossbones,
 } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/free-brands-svg-icons';
 // @ts-ignore (Literally no types :tada:)
@@ -131,7 +130,6 @@ const loading = ref(false);
 
 const instanceFolders = ref<string[]>([]);
 const hasCrashed = ref(false);
-const darkMode = ref(true);
 const disableFollow = ref(false);
 
 const emptyStep = {
@@ -252,15 +250,6 @@ function leavePage() {
   }
 }
 
-async function showInstance() {
-  await gobbleError(async () => {
-    await sendMessage('messageClient', {
-      uuid: instance.value?.uuid ?? "",
-      message: 'show',
-    })
-  })
-}
-
 function openFolder() {
   gobbleError(async () => {
     await platform.io.openFinder(`${instance.value?.path ?? ""}`)
@@ -292,11 +281,11 @@ const instanceName = computed(() => {
 })
 
 const messageTypes = {
-  "W": "text-orange",
-  "I": "text-blue",
-  "E": "text-red",
-  "D": "text-purple",
-  "T": "text-green",
+  "W": "text-orange-400",
+  "I": "text-blue-400",
+  "E": "text-red-400",
+  "D": "text-purple-400",
+  "T": "text-green-400",
 }
 
 function runAction(action: InstanceAction) {
@@ -360,19 +349,19 @@ function toggleEnabledLog(type: string) {
 </script>
 
 <template>
-  <div class="pack-loading" :class="{ 'dark-mode': darkMode }">
+  <div class="pack-loading">
     <header class="flex">
       <img v-if="instance" :src="artworkFileOrElse(instance)" class="art rounded-2xl shadow mr-8" width="135" alt="" />
 
       <div class="body flex-1">
         <h3 class="text-xl font-bold mb-2">
-          {{ launchStatus.replace('%s', instanceName) }}
+          {{ runningInstance ? launchStatus.replace('%s', instanceName) : (instanceName + " has stopped") }}
         </h3>
-        <p v-if="finishedLoading && !hasCrashed">
+        <p v-if="runningInstance && finishedLoading && !hasCrashed">
           <i class="italic">{{ instanceName }}</i> running
         </p>
         <template v-if="!hasCrashed">
-          <template v-if="!finishedLoading">
+          <template v-if="!finishedLoading && runningInstance">
             <div class="loading-area" v-if="instance !== null">
               <div
                 class="progress-container"
@@ -393,57 +382,59 @@ function toggleEnabledLog(type: string) {
               </div>
             </div>
           </template>
-          <div v-else class="flex mt-4">
-            <FTBButton
+          <div v-else class="flex mt-4 gap-4">
+            <UiButton
               @click="openFolder"
-              class="transition ease-in-out duration-200 text-sm py-2 px-4 mr-4"
-              color="primary"
+              type="info"
             >
               <FontAwesomeIcon :icon="faFolderOpen" class="mr-2" />
               Open instance folder
-            </FTBButton>
+            </UiButton>
 
-            <FTBButton
+            <router-link :to="{ name: RouterNames.ROOT_LIBRARY }">
+              <UiButton
+                v-if="!runningInstance"
+                type="info"
+              >
+                <FontAwesomeIcon :icon="faArrowLeft" class="mr-2" />
+                Back to library
+              </UiButton>
+            </router-link>
+            
+            <UiButton
+              v-if="runningInstance"
               @click="cancelLoading"
-              class="transition ease-in-out duration-200 text-sm py-2 px-4 mr-4 bg-red-600 hover:bg-red-700"
+              type="danger"
             >
               <FontAwesomeIcon :icon="faSkullCrossbones" class="mr-2" />
               Kill instance
-            </FTBButton>
+            </UiButton>
           </div>
         </template>
         <template v-else>
           <p>Looks like the instance has crashed during startup or whilst running...</p>
           <div class="flex mt-4">
-<!--            <FTBButton-->
-<!--              @click="launch"-->
-<!--              color="primary"-->
-<!--              class="transition ease-in-out duration-200 text-sm py-2 px-4 mr-4"-->
-<!--            >-->
-<!--              <FontAwesomeIcon icon="arrow-rotate-right" class="mr-2" />-->
-<!--              Retry launch-->
-<!--            </FTBButton>-->
-            <FTBButton
+            <UiButton
               @click="openFolder"
               class="transition ease-in-out duration-200 text-sm py-2 px-4 mr-4"
               color="info"
             >
               <FontAwesomeIcon :icon="faFolderOpen" class="mr-2" />
               Open instance folder
-            </FTBButton>
-            <FTBButton
+            </UiButton>
+            <UiButton
               @click="leavePage"
               class="transition ease-in-out duration-200 text-sm py-2 px-4 mr-4 bg-red-600 hover:bg-red-700"
             >
               <FontAwesomeIcon :icon="faArrowLeft" class="mr-2" />
               Exit
-            </FTBButton>
+            </UiButton>
           </div>
         </template>
       </div>
     </header>
 
-    <div class="logs flex items-center" :class="{ 'dark-mode': darkMode }">
+    <div class="logs flex items-center">
       <h3 class="font-bold text-lg mr-6">Log</h3>
       
       <div class="flex text-sm gap-2 flex-1">
@@ -452,38 +443,24 @@ function toggleEnabledLog(type: string) {
         </div>
       </div>
       
-      <div class="buttons flex items-center">
-        <div
-          class="color cursor-pointer ml-4"
-          :aria-label="darkMode ? 'Light mode' : 'Dark mode'"
-          data-balloon-pos="down"
-          @click="darkMode = !darkMode"
-        >
-          <FontAwesomeIcon :icon="darkMode ? faSun : faMoon" />
-        </div>
-        <FTBButton
-          @click="showInstance"
-          class="transition ease-in-out duration-200 ml-4 py-1 px-4 text-xs border-blue-600 border border-solid hover:bg-blue-600 hover:text-white"
-          aria-label="Sometimes an instance can get stuck hidden in the background... You can use this to show the instance if it's not showing up after you think it's finished loading."
-          data-balloon-pos="up-right"
-          data-balloon-length="xlarge"
-          v-if="!instance?.preventMetaModInjection"
-        >
-          <FontAwesomeIcon :icon="faEye" class="" />
-        </FTBButton>
-        <FTBButton
+      <div class="buttons flex gap-4 items-center">
+        <UiButton
+          type="danger"
+          size="small"
+          v-if="runningInstance"
           @click="cancelLoading"
-          class="transition ease-in-out duration-200 ml-4 py-1 px-4 text-xs border-red-600 border border-solid hover:bg-red-600 hover:text-white"
         >
           <FontAwesomeIcon :icon="faSkullCrossbones" class="mr-2" />
           Kill instance
-        </FTBButton>
-        <FTBButton
+        </UiButton>
+        <UiButton
+          type="info"
+          size="small"
+          class="!px-4"
           @click="showOptions = true"
-          class="transition ease-in-out duration-200 ml-4 py-1 px-4 text-xs border-orange-600 border border-solid hover:bg-orange-600 hover:text-white"
         >
           <FontAwesomeIcon :icon="faEllipsisVertical" />
-        </FTBButton>
+        </UiButton>
       </div>
     </div>
     
@@ -494,10 +471,10 @@ function toggleEnabledLog(type: string) {
       :item-size="20" 
       class="select-text log-contents flex-1"
       list-class="log-contents-fixer"
-      :class="{ 'dark-mode': darkMode }" v-slot="{ item }"
+      v-slot="{ item }"
       @scroll.native="userInteractedWithLogs"
     >
-      <div class="log-item" :class="(messageTypes as any)[item.t] + (!darkMode ? '-600': '-400')" :key="item.i">{{item.v}}</div>
+      <div class="log-item" :class="(messageTypes as any)[item.t]" :key="item.i">{{item.v}}</div>
     </RecycleScroller>
     
     <Modal :open="showOptions" title="Instance options" :sub-title="instanceName" @closed="showOptions = false">
@@ -506,15 +483,14 @@ function toggleEnabledLog(type: string) {
           <div class="title">{{category.title}}</div>
           <div class="actions">
             <template v-for="action in category.actions">
-              <FTBButton
-                class="transition ease-in-out duration-200 button"
-                :class="{[action.color ?? '']: action.color, 'looks-like-button': action.looksLikeButton}"
+              <UiButton
+                :type="action.color ?? 'secondary'"
                 v-if="!action.condition || (instance && action.condition({instance, instanceFolders}))"
                 @click="runAction(action)"
               >
                 <FontAwesomeIcon :icon="action.icon" class="mr-2" />
                 {{ action.title }}
-              </FTBButton>
+              </UiButton>
             </template>
           </div>
         </div>
@@ -532,19 +508,11 @@ function toggleEnabledLog(type: string) {
   max-height: 100%;
   z-index: 1;
   transition: 0.25s ease-in-out background-color;
-  background-color: #ececec;
+  background-color: #1c1c1c;
 
   *::-webkit-scrollbar-corner {
-    background-color: #ececec;
-    transition: 0.25s ease-in-out background-color;
-  }
-  
-  &.dark-mode {
     background-color: #1c1c1c;
-
-    *::-webkit-scrollbar-corner {
-      background-color: #1c1c1c;
-    }
+    transition: 0.25s ease-in-out background-color;
   }
 
   > header {
@@ -632,18 +600,8 @@ function toggleEnabledLog(type: string) {
   .logs,
   .log-contents {
     transition: 0.25s ease-in-out background-color, 0.25s ease-in-out color;
-    background-color: #ececec;
-    color: #24292e;
-    &.dark-mode {
-      background-color: #1c1c1c;
-      color: white;
-    }
-  }
-  
-  &:not(.dark-mode) {
-    .log-contents {
-      font-weight: 600;
-    }
+    background-color: #1c1c1c;
+    color: white;
   }
 }
 

@@ -1,14 +1,13 @@
 <script lang="ts" setup>
 import {Mod} from '@/types';
 import {debounce} from '@/utils';
-import FTBSearchBar from '@/components/ui/input/FTBSearchBar.vue';
 import ModCard from '@/components/groups/modpack/ModCard.vue';
 import {modpackApi} from '@/core/pack-api/modpackApi';
 import {InstanceJson} from '@/core/types/javaApi';
 import InstallModModal from '@/components/modals/InstallModModal.vue';
 import {compatibleCrossLoaderPlatforms, resolveModloader} from '@/utils/helpers/packHelpers';
 import { computed, onMounted, ref, watch } from 'vue';
-import { FTBButton } from '@/components/ui';
+import { UiButton, Input } from '@/components/ui';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faSearch, faSpinner } from '@fortawesome/free-solid-svg-icons';
 
@@ -26,10 +25,9 @@ const selectedMod = ref<Mod | null>(null);
 const offset = ref(0);
 const search = ref('');
 
-const loading = ref(true); // Handles loading the packs version data
-const loadingExtra = ref(false); // Handles loading results
-const loadingTerm = ref(false); // Handles loading the inital search term
-const visualLoadingFull = ref(false);
+const loading = ref(false);
+const loadingExtra = ref(false);
+const awaitingDebounce = ref(false);
 
 const target = ref('');
 const modLoader = ref('');
@@ -43,6 +41,8 @@ const resultsBuffer = ref<Mod[]>([]);
 
 const searchDebounce = ref<any>(null);
 
+const searching = computed(() => search.value.length && (awaitingDebounce.value || loading.value))
+
 /**
  * If no instance is set, everything is wrong. The instance in this case is being
  * pulled from the instance page vue.
@@ -50,26 +50,37 @@ const searchDebounce = ref<any>(null);
  * Then load the packs version data to pull from the targets list to get the mc
  * version of the pack
  */
-onMounted(async () => {
+onMounted(() => {
   if (!instance) {
     return;
   }
 
   searchDebounce.value = debounce(() => searchForMod(), 500);
-  await loadInstanceVersion();
+  loadInstanceVersion();
 })
 
-watch(search, () => {
-  console.log('search', search.value)
-  searchDebounce.value();
+watch(search, (value) => {
+  if (value === '') {
+    searchDebounce.value.stop();
+    resetSearch();
+    return;
+  }
+  awaitingDebounce.value = true;
+  searchDebounce.value.run();
+})
+
+watch(resultingIds, (value) => {
+  if (value.length && !search.value.length) {
+    resultingIds.value = [];
+  }
 })
 
 async function searchForMod() {
   // Clean up all data, we have a new request
   resetSearch();
-
-  loadingTerm.value = true;
-  visualLoadingFull.value = true;
+  awaitingDebounce.value = false;
+  loading.value = true;
+  
   const start = new Date().getTime();
 
   let searchResults: number[] = [];
@@ -82,14 +93,14 @@ async function searchForMod() {
   } else {
       searchResults = (await modpackApi.search.modSearch(search.value, target.value, modLoader.value as any))?.mods ?? []; 
   }
-
-  loadingTerm.value = false;
+  
   if (!searchResults.length) {
-    visualLoadingFull.value = false;
+    loading.value = false;
     return;
   }
 
   resultingIds.value = searchResults || [];
+  loading.value = false;
   await loadResultsProgressively();
 
   timeTaken.value = new Date().getTime() - start;
@@ -125,10 +136,6 @@ async function loadResultsProgressively() {
         results.value.push(res);
       }
     }
-  }
-
-  if (offset.value === 0) {
-    visualLoadingFull.value = false;
   }
 
   offset.value += 5;
@@ -180,15 +187,12 @@ function resetSearch() {
   initialTimeTaken.value = 0;
   loadingExtra.value = false;
   resultsBuffer.value = [];
-  loadingTerm.value = false;
 }
 
 /**
  * We can get rid of this once the vuex store is fixed to hold this info...
  */
-async function loadInstanceVersion() {
-  loading.value = true;
-
+function loadInstanceVersion() {
   target.value = instance!.mcVersion;
   modLoader.value = resolveModloader(instance!)
 }
@@ -205,7 +209,7 @@ const hasResults = computed(() => {
 <template>
   <div class="find-mods">
     <div class="header flex items-center mt-2">
-      <FTBSearchBar :alpha="true" class="w-full flex-1" placeholder="Search for a mod" :min="3" v-model="search" />
+      <Input fill :icon="faSearch" class="w-full flex-1" placeholder="Search for a mod" v-model="search" />
     </div>
     <div class="body pt-6">
       <div class="stats-bar" v-if="resultingIds.length">
@@ -232,20 +236,18 @@ const hasResults = computed(() => {
             v-for="(mod, index) in results"
             :key="index"
             :mod="mod"
-            :instance="instance"
             :installed-mods="installedMods"
-            :target="target"
             @install="selectedMod = mod"
           />
         </template>
         <!-- This is so over the top -->
-        <div class="loading" v-else-if="search !== '' && (loadingTerm || visualLoadingFull)">
+        <div class="loading" v-else-if="search !== '' && loading">
           <FontAwesomeIcon spin :icon="faSpinner" />
           <p>Loading results</p>
         </div>
         <div
           class="no-results"
-          v-else-if="search !== '' && !loadingTerm && !visualLoadingFull && !results.length"
+          v-else-if="search.length && !searching && !results.length"
         >
           <div
             class="fancy"
@@ -280,22 +282,21 @@ const hasResults = computed(() => {
               <FontAwesomeIcon :icon="faSearch" class="primary" />
               <FontAwesomeIcon :icon="faSearch" class="secondary" />
             </div>
-            <p v-if="!loadingExtra && !loading">Use the search box above to find new mods</p>
+            <p v-if="!search">Use the search box above to find new mods</p>
             <p v-else>Searching...</p>
           </div>
         </div>
       </div>
       <div class="more-btn flex justify-center">
-        <FTBButton
+        <UiButton
           v-if="results.length > 0"
-          color="info"
+          type="info"
+          :working="loadingExtra"
           :disabled="!hasResults || loadingExtra"
           @click="loadMore"
-          class="px-10 py-2 inline-block"
         >
-          <FontAwesomeIcon spin :icon="faSpinner" class="mr-2" v-if="hasResults && loadingExtra" />
           {{ !hasResults ? 'No more results' : `${loadingExtra ? 'Loading' : 'Load'} more results` }}
-        </FTBButton>
+        </UiButton>
       </div>
     </div>
     

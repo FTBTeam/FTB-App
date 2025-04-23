@@ -54,7 +54,7 @@ function goToSettings() {
 }
 
 const branch = computed(() => appPlatform.config.branch);
-const isUnix = computed(() => !appPlatform.isOverwolf); // TODO: Fix this. It's not right
+const isUnix = computed(async () => await appPlatform.utils.getOsType() !== "windows");
 </script>
 
 <template>

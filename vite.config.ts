@@ -4,14 +4,15 @@ import electron from 'vite-plugin-electron/simple'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 
+const isOverwolf = process.env.TARGET_PLATFORM === 'overwolf'
+
 // https://vitejs.dev/config/
 export default defineConfig({
   // Define @ alias for src/ directory
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
-      // electron: "@overwolf/ow-electron",
-      "@platform": path.resolve(__dirname, 'src/utils/interface/impl/electron.ts'),
+      "@platform": path.resolve(__dirname, `src/utils/interface/impl/${isOverwolf ? 'overwolf' : 'electron'}.ts`),
     },
   },
   plugins: [

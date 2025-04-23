@@ -5,7 +5,7 @@ import {sendMessage} from '@/core/websockets/websocketsApi';
 import {alertController} from '@/core/controllers/alertController';
 import {InstanceActions} from '@/core/actions/instanceActions';
 import {MoveInstancesHandlerReply, OperationProgressUpdateData, SettingsData} from '@/core/types/javaApi';
-import { ProgressBar, Loader, Modal, UiToggle, UiButton, FTBInput, Input } from '@/components/ui';
+import { ProgressBar, Loader, Modal, UiToggle, UiButton, Input } from '@/components/ui';
 import {dialogsController} from '@/core/controllers/dialogsController';
 import {toTitleCase} from '@/utils/helpers/stringHelpers';
 import {createLogger} from '@/core/logger';

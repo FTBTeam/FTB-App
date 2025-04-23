@@ -136,7 +136,6 @@ const Overwolf: ElectronOverwolfInterface = {
   // Frame / Chrome / Window / What ever you want to call it
   frame: {
     close(windowId: any, onClose: () => void) {
-      // TODO: (legacy) if exitOverwolf is enabled, ensure Overwolf exists
       overwolf.windows.close(windowId);
 
       // @ts-ignore we don't know what the window is.

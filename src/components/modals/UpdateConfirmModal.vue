@@ -8,7 +8,7 @@ import {modpackApi} from '@/core/pack-api/modpackApi';
 import {alertController} from '@/core/controllers/alertController';
 import {createLogger} from '@/core/logger';
 import { ref, watch } from 'vue';
-import { UiMessage, Modal, ModalBody, ModalFooter } from '@/components/ui';
+import { Message, Modal, ModalBody, ModalFooter } from '@/components/ui';
 import { Versions } from '@/core/types/appTypes.ts';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import { useAppStore } from '@/store/appStore.ts';
@@ -99,12 +99,12 @@ async function loadChanges() {
     @closed="close"
   >
     <ModalBody>
-      <UiMessage type="danger" class="mb-4" v-if="isUnstable">
+      <Message type="danger" class="mb-4" v-if="isUnstable">
         <p>
           <b class="font-bold">WARNING!</b> You're about to update to an unstable version of the pack. Bugs are
           expected and likely.
         </p>
-      </UiMessage>
+      </Message>
 
       <Loader key="changes-loading" v-if="loadingChanges" title="Fetching Changelog" />
       <div key="changes-loading-else" v-else>
@@ -113,10 +113,10 @@ async function loadChanges() {
           close this message.
         </p>
 
-        <UiMessage v-if="changes === null" key="changes-available" type="danger" class="mt-6">
+        <Message v-if="changes === null" key="changes-available" type="danger" class="mt-6">
           Unable to find a changelog for {{ latestVersion.name }}... this doesn't seem right 🤔. You can still update
           even if the changelog isn't loading.
-        </UiMessage>
+        </Message>
 
         <div v-else class="wysiwyg changes mt-6" v-html="parseMarkdown(changes)" />
       </div>

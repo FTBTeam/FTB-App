@@ -170,7 +170,10 @@ async function attemptCheckJava() {
       We're just getting things ready
     </div>
     
-    <p v-if="javaCheckStatus">{{ javaCheckStatus }}</p>
+    <p v-if="totalFailure">Something has unrecoverably failed, please try restarting</p>
+    <p v-else-if="checkingForUpdates">Checking for updates</p>
+    <p v-else-if="updating">Updating to {{updateName}} ({{updateProgress}}%)</p>
+    <p v-else>{{ javaCheckStatus }}</p>
 
     <div id="bypass-button" class="hidden">
       Skip

@@ -32,7 +32,7 @@ const provider = typeIdToProvider(packInstance?.id ?? 0);
         -
         {{ packInstance?.synopsis }}
       </div>
-      <div class="select-text pack-version text-xs px-4 py-1 rounded bg-transparent-black inline-block" v-if="instance && !instance.isImport">
+      <div class="select-text pack-version text-xs px-4 py-1 rounded bg-black/30 inline-block" v-if="instance && !instance.isImport">
         Version {{ instance.version }}
       </div>
     </div>

@@ -9,8 +9,7 @@ import { Loader, UiButton, Selection2, Input, InputNumber } from '@/components/u
 import { useAppSettings } from '@/store/appSettingsStore.ts';
 import { computed, onMounted, ref } from 'vue';
 import { faCode, faUndo } from '@fortawesome/free-solid-svg-icons';
-import UiNumberInput from '@/components/ui/UiNumberInput.vue';
-import AbstractInput from '@/components/ui/form/AbstractInput.vue';
+import TextArea from '@/components/ui/form/TextArea/TextArea.vue';
 
 const appSettingsStore = useAppSettings();
 
@@ -164,29 +163,20 @@ const channelOptions = computed(() => ReleaseChannelOptions());
     <ram-slider class="mb-6" v-model="localSettings.instanceDefaults.memory" @change="saveMutated" />
 
     <div class="flex gap-4 flex-col mb-6">
-      <AbstractInput
+      <TextArea
         label="Java runtime arguments"
         class="mb-4"
         hint="These arguments are appended to your instances upon start, they are normal java arguments. New lines will be removed."
-        fill
-        v-slot="{ class: clazz, blur, focus }"
-      >
-        <textarea
-          placeholder="-TestArgument=120"
-          v-model="localSettings.instanceDefaults.javaArgs"
-          @blur="() => {
-            blur()
+        v-model="localSettings.instanceDefaults.javaArgs"
+        @blur="() => {
             // Remove all new lines and trim the string
             localSettings.instanceDefaults.javaArgs = localSettings.instanceDefaults.javaArgs.trim().replaceAll(/(\r\n|\n|\r)/gm, '')
             saveMutated()
           }"
-          @focus="focus"
-          spellcheck="false"
-          rows="4"
-          :class="clazz"
-          class="resize-none break-normal font-mono"
-        />
-      </AbstractInput>
+        fill
+        :spellcheck="false"
+        :rows="4"
+      />
 
       <div class="flex gap-4">
         <UiButton size="small" :icon="faUndo" @click="() => {

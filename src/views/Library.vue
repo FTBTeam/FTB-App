@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import FTBSearchBar from '@/components/ui/input/FTBSearchBar.vue';
 import {SugaredInstanceJson} from '@/core/types/javaApi';
 import PackCard2 from '@/components/groups/modpack/PackCard2.vue';
 import {containsIgnoreCase} from '@/utils/helpers/stringHelpers';
@@ -23,6 +22,7 @@ import {
   faSearch,
   faSort,
 } from '@fortawesome/free-solid-svg-icons';
+import { Input } from '@/components/ui';
 
 const groupOptions = [
   ['Category', 'category'],
@@ -206,7 +206,7 @@ watch(groupBy, onSortChange)
   <div class="mod-packs h-full">
     <div class="page-spacing" v-if="!instanceStore.loading && instanceStore.instances.length > 0">
       <header class="flex gap-4 mb-6 items-center">
-        <FTBSearchBar v-model="searchTerm" placeholder="Search" class="flex-1" />
+        <Input :icon="faSearch" fill v-model="searchTerm" placeholder="Search" class="flex-1" />
         
         <selection2 v-if="Object.keys(groupedPacks).length > 1" :icon="faFolder" direction="right" :min-width="300" :options="groupByOptions" v-model="groupBy" aria-label="Sort categories" data-balloon-pos="down-right" />
         <selection2 :icon="faSort" direction="right" :min-width="300" :options="sortByOptions" v-model="sortBy" aria-label="Sort packs" data-balloon-pos="down-right" />

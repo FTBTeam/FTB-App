@@ -4,7 +4,7 @@ import PackTitleHeader from '@/components/groups/modpack/PackTitleHeader.vue';
 import {ModpackPageTabs} from '@/views/InstancePage.vue';
 import ModpackVersions from '@/components/groups/instance/ModpackVersions.vue';
 import PackBody from '@/components/groups/modpack/PackBody.vue';
-import { ClosablePanel, Loader, UiMessage } from '@/components/ui';
+import { ClosablePanel, Loader, Message } from '@/components/ui';
 import ModpackInstallModal from '@/components/modals/ModpackInstallModal.vue';
 import {resolveArtwork, typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {createLogger} from '@/core/logger';
@@ -74,9 +74,9 @@ const packType = typeIdToProvider(packTypeId.value);
   <div class="pack-container" v-if="!loading">
     <div class="pack-page">
       <div v-if="!currentModpack && !loading">
-        <UiMessage :icon="faWarning" type="danger" class="m-6">
+        <Message :icon="faWarning" type="danger" class="m-6">
           {{ error ? error : 'Something has gone wrong...' }}
-        </UiMessage>
+        </Message>
       </div>
       <div class="pack-page-contents" v-if="currentModpack">
         <header>

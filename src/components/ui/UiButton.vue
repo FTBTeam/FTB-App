@@ -9,7 +9,6 @@ const {
   disabled = false,
   working = false,
   icon,
-  innerClass = '',
   fullWidth = false,
   wider = false,
   ariaLabel = '',
@@ -17,7 +16,6 @@ const {
 } = defineProps<{
   type?: ElementColorType;
   size?: ElementStandardSizing;
-  innerClass?: string;
   disabled?: boolean;
   working?: boolean;
   icon?: IconDefinition;
@@ -60,31 +58,24 @@ export function colorFromElementColorType(type: ElementColorType, disabled: bool
 </script>
 
 <template>
-  <div class="ui-button-holder" :aria-label="ariaLabel ? ariaLabel : undefined" :data-balloon-pos="ariaLabel && ariaLabelPos ? ariaLabelPos : undefined" :class="{'disabled': working || disabled}">
-    <div 
-      :class="[`ui-button ${colorFromType}`, {fullWidth, wider, 'disabled': working || disabled}, [size], [innerClass]]" 
-      @click="click"
-    >
-      <span :class="{'opacity-0': working}">
-        <FontAwesomeIcon :fixedWidth="true" v-if="icon" :icon="icon" :class="{'mr-2': $slots['default']}" />
-        <slot />
+  <div 
+    :class="[`ui-button ${colorFromType}`, {fullWidth, wider, 'disabled': working || disabled}, [size]]"
+    :aria-label="ariaLabel ? ariaLabel : undefined" :data-balloon-pos="ariaLabel && ariaLabelPos ? ariaLabelPos : undefined"
+    @click="click"
+  >
+    <span :class="{'opacity-0': working}">
+      <FontAwesomeIcon :fixedWidth="true" v-if="icon" :icon="icon" :class="{'mr-2': $slots['default']}" />
+      <slot />
+    </span>
+    <transition name="fade">
+      <span v-if="working" class="absolute inset-0 flex items-center justify-center">
+        <FontAwesomeIcon :fixedWidth="true" :icon="faCircleNotch" spin />
       </span>
-      <transition name="fade">
-        <span v-if="working" class="absolute inset-0 flex items-center justify-center">
-          <FontAwesomeIcon :fixedWidth="true" :icon="faCircleNotch" spin />
-        </span>
-      </transition>
-    </div>
+    </transition>
   </div>
 </template>
 
 <style scoped lang="scss">
-.ui-button-holder {
-  &.disabled {
-    cursor: not-allowed;
-  }
-}
-
 .ui-button {
   border-radius: 3px;
   position: relative;
@@ -95,6 +86,10 @@ export function colorFromElementColorType(type: ElementColorType, disabled: bool
   font-weight: bold;
   transition: background-color .25s ease-in-out, opacity .25s ease-in-out;
   cursor: pointer;
+
+  &.disabled {
+    cursor: not-allowed;
+  }
 
   &.wider {
     padding: 0.75em 2em;

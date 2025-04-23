@@ -12,6 +12,7 @@ export async function safeNavigate(name: RouterNames, params?: any, query?: any)
   try {
     await Router.push({name, params, query});
   } catch (e) {
+    console.warn("Failed to navigate", e);
     // Ignore
   }
 }

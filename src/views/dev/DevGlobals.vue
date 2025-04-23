@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { FTBInput, UiButton } from '@/components/ui';
+import { Input, UiButton } from '@/components/ui';
 import { alertController } from '@/core/controllers/alertController.ts';
 import { dialogsController } from '@/core/controllers/dialogsController.ts';
 import { useModalStore } from '@/store/modalStore.ts';
@@ -71,10 +71,10 @@ function randomLongString() {
     <UiButton @click="showBackendModal">Open backend modal</UiButton>
   </div>
 
-  <p class="font-bold uppercase mt-8 mb-4 text-white/80">Chanelog</p>
+  <p class="font-bold uppercase mt-8 mb-4 text-white/80">Changelog</p>
   <div class="flex gap-4 items-center">
     <div>
-      <FTBInput v-model="changelogVersion" />
+      <Input v-model="changelogVersion" />
     </div>
     <UiButton @click="showChangelog">Trigger Changelog modal</UiButton>
   </div>

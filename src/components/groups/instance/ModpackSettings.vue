@@ -18,7 +18,7 @@ import {ModLoaderWithPackId} from '@/core/types/modpacks/modloaders';
 import RamSlider from '@/components/groups/modpack/components/RamSlider.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { FTBInput, Modal, UiToggle, Selection2, UiButton, InputNumber, Input } from '@/components/ui';
+import { Modal, UiToggle, Selection2, UiButton, InputNumber, Input } from '@/components/ui';
 import { toTitleCase } from '@/utils/helpers/stringHelpers.ts';
 import { useInstallStore } from '@/store/installStore.ts';
 import { useAppSettings } from '@/store/appSettingsStore.ts';
@@ -33,8 +33,8 @@ import {
   faWarning,
   faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import UiNumberInput from '@/components/ui/UiNumberInput.vue';
 import { useAppStore } from '@/store/appStore.ts';
+import TextArea from '@/components/ui/form/TextArea/TextArea.vue';
 
 const router = useRouter();
 const appStore = useAppStore();
@@ -439,15 +439,9 @@ watch(imageFile, (value) => {
       </section>
       
       <div class="flex gap-4 flex-col mb-6">
-        <label class="block tracking-wide text-white-700 font-bold">
-          Java runtime arguments
-        </label>
-
-        <small class="text-muted block -mt-2 max-w-xl">
-          These arguments are appended to your instances upon start, they are normal java arguments. <em>New lines will be removed.</em>
-        </small>
-
-        <textarea
+        <TextArea
+          label="Java runtime arguments"
+          hint="These arguments are appended to your instances upon start, they are normal java arguments. New lines will be removed."
           placeholder="-TestArgument=120"
           v-model="instanceSettings.jvmArgs"
           @blur="() => {
@@ -455,14 +449,13 @@ watch(imageFile, (value) => {
             instanceSettings.jvmArgs = instanceSettings.jvmArgs.trim().replaceAll(/(\r\n|\n|\r)/gm, '')
             saveSettings()
           }"
-          spellcheck="false"
-          rows="4"
-          class="flex-1 mb-0 appearance-none block w-full ftb-btn bg-input text-gray-400 border border-input py-3 px-4 focus:outline-none rounded resize-none break-normal font-mono"
+          :spellcheck="false"
+          fill
+          :rows="4"
         />
         
         <div class="flex gap-4">
           <UiButton size="small" :icon="faUndo" @click="() => {
-            // TODO: Fix me
             instanceSettings.jvmArgs = appSettingsStore.rootSettings?.instanceDefaults.javaArgs ?? ''
           }">
             Reset to Instance defaults
@@ -475,7 +468,7 @@ watch(imageFile, (value) => {
           </UiButton>
         </div>
         
-        <ui-toggle label="Prefer IPv4 network requests" :value="prefersIPv4" @input="preferIPv4Clicked" />
+        <ui-toggle class="mb-4" label="Prefer IPv4 network requests" :value="prefersIPv4" @input="preferIPv4Clicked" />
       </div>
 
       <Input

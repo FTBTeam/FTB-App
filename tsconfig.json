@@ -23,7 +23,6 @@
       "@/*": [
         "./src/*"
       ],
-      /* TODO: This will need patching */
       "@platform": [
         "./src/utils/interface/impl/electron.ts"
       ],

@@ -5,7 +5,7 @@ import {toTitleCase} from '@/utils/helpers/stringHelpers';
 import {isValidVersion} from '@/utils/helpers/packHelpers';
 import appPlatform from '@platform';
 import {RouterNames} from '@/router';
-import { ModalBody, Modal, FTBInput, UiToggle, Selection2, ModalFooter, UiButton } from '@/components/ui';
+import { ModalBody, Modal, UiToggle, Selection2, ModalFooter, UiButton, Input } from '@/components/ui';
 import { watch, ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import ArtworkSelector from '@/components/groups/modpack/components/ArtworkSelector.vue';
@@ -128,7 +128,7 @@ function versions() {
     <ModalBody>
       <template v-if="apiModpack">
         <ArtworkSelector :pack="apiModpack" class="mb-6" v-model="userSelectedArtwork" />
-        <FTBInput label="Name" :placeholder="packName" v-model="userPackName" class="mb-4" />
+        <Input fill label="Name" :placeholder="packName" v-model="userPackName" class="mb-4" />
         
         <CategorySelector class="mb-4" v-model="selectedCategory" />
 

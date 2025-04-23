@@ -42,7 +42,7 @@ const {
   disabled?: boolean;
 }>()
 
-const value = defineModel<string | null>({
+const value = defineModel<string | number | null>({
   default: null
 })
 

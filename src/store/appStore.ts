@@ -2,7 +2,6 @@ import { defineStore } from 'pinia';
 import mitt, {type Emitter} from 'mitt';
 import { InstanceInstallController } from '@/core/controllers/InstanceInstallController.ts';
 
-// TODO: Better typings
 export type EmitEvents = {
   "ws/connected": void,
   "ws/disconnected": void

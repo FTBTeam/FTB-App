@@ -10,7 +10,7 @@ import {resolveArtwork, typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {alertController} from '@/core/controllers/alertController';
 import {dialogsController} from '@/core/controllers/dialogsController';
 import {modpackApi} from '@/core/pack-api/modpackApi';
-import { UiButton, ClosablePanel, Modal, UiMessage, FTBInput } from '@/components/ui';
+import { UiButton, ClosablePanel, Modal, Message, Input } from '@/components/ui';
 import {createLogger} from '@/core/logger';
 import {InstanceController} from '@/core/controllers/InstanceController';
 import { useRouter } from 'vue-router';
@@ -303,16 +303,16 @@ export enum ModpackPageTabs {
       subTitle="Would you like to play in Offline Mode?"
       @closed="() => closeOfflineModel()"
     >
-      <UiMessage type="warning" class="mb-6 wysiwyg">
+      <Message type="warning" class="mb-6 wysiwyg">
         <p>Please be aware, running in offline mode will mean you can not:</p>
         <ul>
           <li>Play on online servers</li>
           <li>Have a custom skin</li>
           <li>Have any profile specific content in-game</li>
         </ul> 
-      </UiMessage>
+      </Message>
 
-      <FTBInput placeholder="Steve" label="Username" v-model="offlineUserName" class="text-base" />
+      <Input fill placeholder="Steve" label="Username" v-model="offlineUserName" class="text-base" />
 
       <template #footer>
         <div class="flex justify-end">

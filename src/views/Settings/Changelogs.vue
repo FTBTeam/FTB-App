@@ -2,7 +2,7 @@
 import {JavaFetch} from '@/core/javaFetch';
 import {alertController} from '@/core/controllers/alertController';
 import {ChangelogData} from '@/components/groups/changelogs/Changelog.vue';
-import { UiButton, UiMessage } from '@/components/ui';
+import { UiButton, Message } from '@/components/ui';
 import ChangelogEntry from '@/components/groups/changelogs/ChangelogEntry.vue';
 import {constants} from '@/core/constants';
 import { computed, onMounted, ref } from 'vue';
@@ -74,9 +74,7 @@ async function loadChangelog(id: string) {
       alertController.error('Failed to load changelog');
       return;
     }
-
-    // Force vue to update
-    // Vue.set(this.changelogData, id, changelogData); // TODO: validate
+    
     changelogData.value[id] = moreChangelogData;
   } catch (e) {
     console.error(e);
@@ -103,8 +101,8 @@ const allLoaded = computed(() => changelogs.value.length === Object.keys(changel
     </div>
   </div>
   <div v-else>
-    <UiMessage type="warning">
+    <Message type="warning">
       <p>{{error}}</p>
-    </UiMessage>
+    </Message>
   </div>
 </template>

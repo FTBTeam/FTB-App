@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import Selection2, {SelectionOptions} from '@/components/ui/Selection2.vue';
-import { UiButton, Modal, FTBInput } from '@/components/ui';
+import { UiButton, Modal, Input } from '@/components/ui';
 import {alertController} from '@/core/controllers/alertController';
 import {stringListContainsIgnoreCase} from '@/utils/helpers/arrayHelpers';
 import { useInstanceStore } from '@/store/instancesStore.ts';
@@ -22,13 +22,11 @@ const value = defineModel<string>()
 const extraCategory = ref("");
 const showCreate = ref(false);
 
-function valueChanged(newValue: string) {
+function valueChanged(newValue: string | null) {
   if (newValue === "_") {
     showCreate.value = true;
     return;
   }
-  
-  value.value = newValue;
 }
 
 function addCategory() {
@@ -77,10 +75,10 @@ const _options = computed(() => {
 <template>
   <div>
     <Selection2 :open-up="!openDown" :label="label ?? 'Category'" :options="_options"
-                :value="value" @input="v => valueChanged(v)" class="flex-1"/>
+                :value="value" @updated="v => valueChanged(v)" class="flex-1"/>
     
     <Modal :open="showCreate" title="New category" @closed="showCreate = false">
-      <FTBInput v-model="extraCategory" placeholder="FTB Packs" label="Category name" />
+      <Input fill v-model="extraCategory" placeholder="FTB Packs" label="Category name" />
       <template #footer>
         <div class="flex justify-end">
           <UiButton @click="addCategory" type="success" :icon="faPlus">Create</UiButton>

@@ -5,7 +5,7 @@ import {constants} from '@/core/constants';
 import ChangelogEntry from '@/components/groups/changelogs/ChangelogEntry.vue';
 import {createLogger} from '@/core/logger';
 import { onMounted, onUnmounted, ref, watch } from 'vue';
-import {Modal, UiMessage} from '@/components/ui';
+import {Modal, Message} from '@/components/ui';
 import { useWsStore } from '@/store/wsStore.ts';
 import { useAppStore } from '@/store/appStore.ts';
 import { alertController } from '@/core/controllers/alertController.ts';
@@ -126,8 +126,8 @@ export type ChangelogData = {
     @closed="changelogData = null"
   >
     <changelog-entry v-if="changelogData" :use-extended="true" :changelog="changelogData" />
-    <UiMessage v-else type="danger">
+    <Message v-else type="danger">
       Unable to find any changelog data... 
-    </UiMessage>
+    </Message>
   </Modal>
 </template>

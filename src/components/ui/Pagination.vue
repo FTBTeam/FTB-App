@@ -11,7 +11,7 @@ const { total, perPage } = defineProps<{
 const value = defineModel<number>()
 
 const pages = computed(() => Math.ceil(total / perPage));
-const currentPage = value.value ?? 0
+const currentPage = computed(() => value.value ?? 0);
 
 </script>
 
@@ -48,19 +48,21 @@ const currentPage = value.value ?? 0
 </template>
 
 <style lang="scss" scoped>
+@import 'tailwindcss/theme' theme(reference);
+
 .ui-pagination {
   li {
     padding: .4rem .8rem;
-    background-color: var(--color-background-lighten);
+    background-color: rgba(white, .1);
     border-radius: 3px;
     cursor: pointer;
     
     &:hover {
-      background-color: var(--color-info-button);
+      background-color: var(--color-blue-600);
     }
     
     &.active {
-      background-color: var(--color-success-button);
+      background-color: var(--color-green-600);
       cursor: default;
     }
     

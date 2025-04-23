@@ -281,8 +281,6 @@ app.whenReady().then(() => {
         return await net.fetch(`file://${instancePath}${url.pathname}`)
       }
     }
-
-    // TODO: Fuck knows what else I do here...
     
     return new Response(null);
   })

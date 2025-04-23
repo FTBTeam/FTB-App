@@ -14,13 +14,12 @@ import RamSlider from '@/components/groups/modpack/components/RamSlider.vue';
 import {safeNavigate} from '@/utils';
 import {RouterNames} from '@/router';
 import { computed, onMounted, watch, ref } from 'vue';
-import { ModalBody, Modal, FTBInput, ModalFooter } from '@/components/ui';
+import { ModalBody, Modal, ModalFooter, Input, InputNumber } from '@/components/ui';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { useModpackStore } from '@/store/modpackStore.ts';
 import { ModPack } from '@/core/types/appTypes.ts';
 import { useAppSettings } from '@/store/appSettingsStore.ts';
 import { faArrowLeft, faArrowRight, faBoxes, faInfo, faPuzzlePiece } from '@fortawesome/free-solid-svg-icons';
-import UiNumberInput from '@/components/ui/UiNumberInput.vue';
 import { useAppStore } from '@/store/appStore.ts';
 
 const appStore = useAppStore();
@@ -118,8 +117,8 @@ watch(userVanillaVersion, (newValue) => {
   }
 })
 
-function canProceed() {
-  if (fatalError) {
+const canProceed = computed(() => {
+  if (fatalError.value) {
     return false;
   }
 
@@ -132,7 +131,7 @@ function canProceed() {
     default:
       return false;
   }
-}
+});
 
 /**
  * Due to the design of the api and the subprocess, we kinda need to build a special request for each type of
@@ -225,7 +224,7 @@ const screenResolutions = computed( () => {
       <div class="about" v-show="step === 0">
         <template v-if="!loadingVanilla">
           <ArtworkSelector class="mb-6" v-model="userSelectedArtwork" />
-          <FTBInput label="Name" placeholder="Next best instance!" v-model="userPackName" class="mb-4" />
+          <Input fill label="Name" placeholder="Next best instance!" v-model="userPackName" class="mb-4" />
           <Selection2 :open-up="true" label="Minecraft version" class="mb-4" :options="vanillaVersions" v-model="userVanillaVersion" />
           
           <UiToggle class="mb-4" label="Show snapshots" desc="Snapshot versions of Minecraft are typically unstable and no longer maintained" v-model="showVanillaSnapshots" />
@@ -267,19 +266,17 @@ const screenResolutions = computed( () => {
                 <b>Width</b>
                 <small class="text-muted block mt-2">The Minecraft windows screen width</small>
               </div>
-              <UiNumberInput class="mb-0" v-model="userWidth" />
+              <InputNumber class="mb-0" v-model="userWidth" />
             </div>
             <div class="flex items-center">
               <div class="block flex-1 mr-2">
                 <b>Height</b>
                 <small class="text-muted block mt-2">The Minecraft windows screen height</small>
               </div>
-              <UiNumberInput v-model="userHeight" class="mb-0" />
+              <InputNumber v-model="userHeight" class="mb-0" />
             </div>
           </div>
         </div>
-        <hr />
-        
       </div>
     </ModalBody>
     
@@ -288,7 +285,7 @@ const screenResolutions = computed( () => {
         <UiButton v-if="step > 0" :icon="faArrowLeft" class="mr-2" @click="step --">
           Back
         </UiButton>
-        <UiButton :wider="true" type="success" v-if="step < 2" :disabled="!canProceed()" :icon="faArrowRight" @click="step ++">
+        <UiButton :wider="true" type="success" v-if="step < 2" :disabled="!canProceed" :icon="faArrowRight" @click="step ++">
           Next
         </UiButton>
         <UiButton :wider="true" type="success" v-if="step === 2" :icon="faArrowRight" @click="createInstance">
@@ -300,6 +297,8 @@ const screenResolutions = computed( () => {
 </template>
 
 <style lang="scss" scoped>
+@import 'tailwindcss/theme' theme(reference);
+
 .steps {
   .step {
     display: flex;
@@ -308,19 +307,18 @@ const screenResolutions = computed( () => {
     color: rgba(white, .5);
     
     &.active {
-      color: var(--color-light-info-button);
+      color: var(--color-blue-400);
       
       span {
-        @apply bg-pink-400;
-        background: var(--color-info-button);
+        background: var(--color-blue-400);
       }
     }
     
     &.done {
-      color: var(--color-light-success-button);
+      color: var(--color-green-400);
       
       span {
-        background: var(--color-success-button);
+        background: var(--color-green-400);
       }
     }
     

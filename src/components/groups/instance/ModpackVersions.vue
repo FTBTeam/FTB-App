@@ -6,7 +6,7 @@ import {InstanceJson} from '@/core/types/javaApi';
 import {RouterNames} from '@/router';
 import {modpackApi} from '@/core/pack-api/modpackApi';
 import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
-import { Selection2, UiButton, UiMessage } from '@/components/ui';
+import { Selection2, UiButton, Message } from '@/components/ui';
 import dayjs from 'dayjs';
 import {alertController} from '@/core/controllers/alertController';
 import {createLogger} from '@/core/logger';
@@ -130,10 +130,6 @@ const isCursePack = computed(() => {
     </div>
     <div class="main flex pb-8 flex-col" :key="activeLog">
       <div class="heading flex items-center mb-4" v-if="currentVersion">
-        <div class="content flex-1 mr-4">
-          <p class="opacity-50">Changelog for xd</p>
-          <div class="font-bold name text-xl">{{ currentVersion.name }}</div>
-        </div>
         <div class="buttons flex text-sm gap-2">
           <ui-button type="info" size="small" :icon="faServer" v-if="instance && instance.packType === 0" @click="() => appPlatform.utils.openUrl(`https://go.ftb.team/serverfiles`)">Server files</ui-button>
           <ui-button
@@ -152,12 +148,12 @@ const isCursePack = computed(() => {
         >         
           <FontAwesomeIcon :icon="faTriangleExclamation" size="xl" class="mr-4" /> Always backup your worlds before updating.
         </div>
-        <UiMessage class="mb-4 shadow-lg mr-4 mt-2" type="danger" v-if="currentVersion && currentVersion.type.toLowerCase() === 'archived'">
+        <Message class="mb-4 shadow-lg mr-4 mt-2" type="danger" v-if="currentVersion && currentVersion.type.toLowerCase() === 'archived'">
           <p>
             This version has been archived! This typically means the update contained a fatal error causing the version
             to be too unstable for players to use.
           </p>
-        </UiMessage>
+        </Message>
         
         <div class="wysiwyg" v-if="!loading && changelogs[activeLog] && changelogs[activeLog] !== ''" v-html="parseMarkdown(changelogs[activeLog])" />
       </div>

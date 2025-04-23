@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import FindMods from '@/components/groups/instance/FindMods.vue';
-import FTBSearchBar from '@/components/ui/input/FTBSearchBar.vue';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {
   BaseData,
@@ -23,11 +22,12 @@ import { ModPack } from '@/core/types/appTypes.ts';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useAppStore } from '@/store/appStore.ts';
 import platform from '@platform'
-import { faDownload, faFolder, faPlus, faSync } from '@fortawesome/free-solid-svg-icons';
+import { faDownload, faFolder, faPlus, faSearch, faSync } from '@fortawesome/free-solid-svg-icons';
 // @ts-ignore (Literally no types :tada:)
 import { RecycleScroller } from 'vue-virtual-scroller'
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { Input } from '@/components/ui';
 
 type ApiMod = {
   fileId: number;
@@ -282,13 +282,13 @@ const simpleMods = computed(() => {
 
 const installedMods = computed<[number, number][]>(() => {
   return packMods.value?.filter(e => e.curse).map(e => [e.curse.curseProject, e.curse.curseFile])
-})
+}) 
 </script>
 
 <template>
   <div class="modpack-mods">
     <div class="flex mb-8 gap-4 items-center relative z-50">
-      <FTBSearchBar placeholder="Search..." v-model="search" class="w-full" />
+      <Input :icon="faSearch" fill placeholder="Search..." v-model="search" />
       <template v-if="packInstalled && instance">
         <ui-button type="success" @click="searchingForMods = true" :icon="faPlus" :data-balloon-length="instance.locked ? 'medium' : undefined" :aria-label="instance.locked ? 'This instance is locked, to add more content you will need to unlock it in settings.' : 'Add more mods'" :disabled="instance.locked" />
         <ui-button type="info" @click="updateAll" :icon="faDownload" :data-balloon-length="instance.locked ? 'medium' : undefined" :aria-label="instance.locked ? 'This instance is locked, to add more content you will need to unlock it in settings.' : 'Update all mods'" :disabled="instance.locked || modUpdatesAvailableKeys.length === 0" />
@@ -320,7 +320,8 @@ const installedMods = computed<[number, number][]>(() => {
       </template>
       
       <template v-if="packInstalled && instance">
-        <recycle-scroller class="complex-mod mod" :items="packMods" :item-size="70" key-field="sha1" v-slot="{ item }">
+        <p class="text-center italic opacity-80" v-if="!packMods.length">{{ instance.name }} does not have any mods installed</p>
+        <recycle-scroller v-else class="complex-mod mod" :items="packMods" :item-size="70" key-field="sha1" v-slot="{ item }">
           <div class="flex gap-6 items-center mb-4">
             <img v-if="item.curse && item.curse.icon" :src="item.curse.icon" class="rounded" width="40" alt="">
             <div class="placeholder bg-black rounded mt-2" style="width: 40px; height: 40px" v-else-if="item.fileName !== ''"></div>
@@ -358,8 +359,8 @@ const installedMods = computed<[number, number][]>(() => {
       v-if="packInstalled"
       :open="searchingForMods"
       @close="searchingForMods = false"
-      :title="`Add mods to ${apiPack ? apiPack.name : ''}`"
-      subtitle="You can find mods for this pack using the search area below"
+      title="Search for mods"
+      subtitle="Powered by CurseForge"
     >
       <find-mods :instance="instance" :installed-mods="installedMods" @modInstalled="getModList" />
     </closable-panel>
