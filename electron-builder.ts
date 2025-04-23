@@ -101,10 +101,11 @@ const config: Configuration = {
 
 function getPathToLauncher() {
   try {
-    const subprocessPath = path.resolve(__dirname, 'subprocess');
+    const subprocessPath = path.resolve('./subprocess');
     const buildPath = path.resolve(subprocessPath, 'build', "libs");
 
     const files = fs.readdirSync(buildPath);
+    console.log("Possible files in subprocess build path: ", files);
     const jarFiles = files.filter(file => file.startsWith('app') && file.endsWith('.jar'));
 
     if (jarFiles.length === 0) {
