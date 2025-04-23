@@ -1,4 +1,4 @@
-const fs = require("fs");
+import fs from 'fs'
 
 const ref = process.env.GITHUB_REF;
 testAndExitOnError(ref, "GITHUB_REF is required");
