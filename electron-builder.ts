@@ -113,7 +113,7 @@ function getPathToLauncher() {
       return "";
     }
 
-    return path.relative(__dirname, path.join(buildPath, jarFiles[0]));
+    return path.relative('./', path.join(buildPath, jarFiles[0]));
   } catch (e) {
 
     return "";
