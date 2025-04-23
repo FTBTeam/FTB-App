@@ -29,7 +29,6 @@ const {
   allowDeselect = false,
   openUp = false,
   disabled = false,
-  value = null,
 } = defineProps<{
   label?: string;
   icon?: IconDefinition | null;
@@ -41,12 +40,14 @@ const {
   allowDeselect?: boolean;
   openUp?: boolean;
   disabled?: boolean;
-  value?: any;
 }>()
 
+const value = defineModel<string | null>({
+  default: null
+})
+
 const emit = defineEmits<{
-  (e: 'change', value: any): void
-  (e: 'input', value: any): void
+  (e: 'updated', value: string | null): void
 }>()
 
 const open = ref(false);
@@ -71,7 +72,7 @@ onUnmounted(() => {
 })
 
 const selected = computed(() => {
-  return (options ?? []).find(o => o.value === value) ?? null
+  return (options ?? []).find(o => o.value === value.value) ?? null
 });
 
 function handleDocumentClick(event: any) {
@@ -87,17 +88,17 @@ function handleDocumentClick(event: any) {
 function select(option: SelectionOption) {
   if (option.value === value) {
     if (allowDeselect) {
-      emit('input', null)
-      emit('change', null)
+      value.value = null;
+      emit('updated', null)
     }
     
     open.value = false;
     selectionRef.value?.blur();
     return;
   }
-
-  emit('input', option.value)
-  emit('change', option.value)
+  
+  value.value = option.value;
+  emit('updated', option.value)
   open.value = false;
   selectionRef.value?.blur();
 }

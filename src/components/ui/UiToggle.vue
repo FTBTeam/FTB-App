@@ -19,7 +19,6 @@ function toggle() {
 
 <template>
   <div class="ui-toggle" @click="toggle" :class="{disabled, 'text-based': hasText, 'right': alignRight, 'no-desc': !desc}">
-    {{value ? 'On' : 'Off'}}
     <div class="toggle" :class="{active: value}">
       <div class="inner" />
     </div>
@@ -88,7 +87,7 @@ function toggle() {
     
     &::before {
       content: '';
-      background: var(--color-success-button);
+      background: var(--color-green-600);
       opacity: 0;
       border-radius: var(--size);
       position: absolute;
@@ -98,7 +97,7 @@ function toggle() {
     }
     
     &.active {
-      background: var(--color-success-button);
+      background: var(--color-green-600);
       
       &::before {
         transform: scaleY(1.3) scaleX(1.2);

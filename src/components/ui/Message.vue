@@ -1,35 +1,40 @@
 <script lang="ts" setup>
 import { IconDefinition } from '@fortawesome/free-brands-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { computed, useSlots } from 'vue';
-
-const slots = useSlots()
+import { computed } from 'vue';
 
 type MessageType = 'normal' | 'success' | 'info' | 'warning' | 'danger';
 
 const {
   type = 'normal',
-  icon = null,
+  icon,
   header = '',
 } = defineProps<{
   type?: MessageType;
-  icon?: IconDefinition | null;
+  icon?: IconDefinition;
   header?: string;
 }>()
 
-const hasHeader = computed(() => slots.header || header)
+const typedStyles = {
+  normal: 'bg-slate-600/20 border-slate-500 text-slate-200',
+  success: 'bg-green-600/10 border-green-600 text-green-400',
+  info: 'bg-blue-500/10 border-blue-500 text-blue-400',
+  warning: 'bg-yellow-500/10 border-yellow-500 text-yellow-400',
+  danger: 'bg-red-500/10 border-red-500 text-red-400',
+};
+
+const styles = computed(() => {
+  return typedStyles[type]
+})
 </script>
 
 <template>
-  <article class="message" :class="{ [type]: true }">
-    <div class="message-header" v-if="hasHeader">
-      <FontAwesomeIcon class="icon" v-if="icon" :icon="icon" />
-      <div class="heading">
-        <slot name="header" v-if="$slots.header" />
-        <template v-else>{{ header }}</template>
-      </div>
-    </div>
+  <article class="message border flex gap-4 items-start" :class="styles">
+    <FontAwesomeIcon class="pt-0.5" fixedWidth size="lg" v-if="icon" :icon="icon" />
     <div class="message-body">
+      <p v-if="header" class="mb-1">
+        <b>{{ header }}</b>
+      </p>
       <slot />
     </div>
   </article>
@@ -37,63 +42,7 @@ const hasHeader = computed(() => slots.header || header)
 
 <style lang="scss" scoped>
 .message {
-  background: #333333;
-  border-radius: 5px;
-
-  .message-header + .message-body {
-    border-width: 0;
-  }
-
-  .message-header {
-    display: flex;
-    align-items: center;
-    padding: 0.5rem 1rem;
-    background-color: #454545;
-    border-radius: 5px 5px 0 0;
-    font-weight: bold;
-
-    .icon {
-      margin-right: 1rem;
-    }
-  }
-
-  .message-body {
-    padding: 1rem;
-    border-left: 4px solid #454545;
-    border-radius: 5px 0 0 5px;
-  }
-
-  &.success .message-body {
-    border-color: var(--color-success-button);
-  }
-
-  &.info .message-body {
-    border-color: var(--color-info-button);
-  }
-
-  &.warning .message-body {
-    border-color: var(--color-warning-button);
-  }
-
-  &.danger .message-body {
-    border-color: var(--color-danger-button);
-    background-color: #862929;
-  }
-
-  &.success .message-header {
-    background-color: var(--color-success-button);
-  }
-
-  &.info .message-header {
-    background-color: var(--color-info-button);
-  }
-
-  &.warning .message-header {
-    background-color: var(--color-warning-button);
-  }
-
-  &.danger .message-header {
-    background-color: var(--color-danger-button);
-  }
+  padding: 1rem;
+  border-radius: .5rem;
 }
 </style>

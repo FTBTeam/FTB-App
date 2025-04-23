@@ -6,7 +6,7 @@ import PackActions from '@/components/groups/modpack/PackActions.vue';
 import PackUpdateButton from '@/components/groups/modpack/PackUpdateButton.vue';
 import appPlatform from '@platform';
 import {SugaredInstanceJson} from '@/core/types/javaApi';
-import { UiButton, Loader, ProgressBar } from '@/components/ui';
+import { Loader, ProgressBar } from '@/components/ui';
 import { parseMarkdown, safeLinkOpen } from '@/utils';
 import {typeIdToProvider} from '@/utils/helpers/packHelpers';
 import WorldsTab from '@/components/groups/modpack/WorldsTab.vue';
@@ -42,6 +42,15 @@ const {
   activeTab?: ModpackPageTabs;
   allowOffline?: boolean;
 }>()
+
+const emit = defineEmits<{
+  (e: 'tabChange', tab: ModpackPageTabs): void;
+  (e: 'mainAction'): void;
+  (e: 'update'): void;
+  (e: 'showVersion'): void;
+  (e: 'searchForMods'): void;
+  (e: 'playOffline'): void;
+}>();
 
 const installStore = useInstallStore();
 const runningInstancesStore = useRunningInstancesStore();
@@ -150,17 +159,17 @@ function cursePackBody() {
       <div class="action-heading">
         <div class="action-holder flex items-center justify-between duration-200 transition-opacity" :class="{'opacity-0': (isInstalling && installStore.currentInstall) || modloaderUpdating}">
           <div class="play">
-            <UiButton innerClass="py-3 px-8 ftb-play-button" type="secondary" :disabled="isInstalled && isRunning" @click="() => $emit('mainAction')">
+            <div class="py-3 px-8 bg-green-600 hover:bg-green-500 cursor-pointer rounded z-10" :class="{ 'opacity-50': isInstalled && isRunning }" @click="() => (isInstalled && isRunning) && emit('mainAction')">
               <FontAwesomeIcon :icon="isInstalled ? faPlay : faDownload" class="mr-4" />
               {{ isInstalled ? 'Play' : 'Install' }}
-            </UiButton>
+            </div>
 
             <pack-actions
               v-if="instance && isInstalled"
               :instance="instance"
               :allow-offline="allowOffline"
-              @openSettings="$emit('tabChange', tabs.SETTINGS)"
-              @playOffline="$emit('playOffline')"
+              @openSettings="emit('tabChange', tabs.SETTINGS)"
+              @playOffline="emit('playOffline')"
             />
           </div>
 
@@ -169,13 +178,13 @@ function cursePackBody() {
               v-if="isInstalled && instance"
               :instance="packInstance"
               :localInstance="instance"
-              @update="$emit('update')"
+              @update="emit('update')"
             />
-            <div class="option" v-if="packInstance && !isVanilla" @click="() => $emit('showVersion')">
+            <div class="option" v-if="packInstance && !isVanilla" @click="() => emit('showVersion')">
               Versions
               <FontAwesomeIcon :icon="faCodeBranch" class="ml-2" />
             </div>
-            <div class="option" @click="() => $emit('tabChange', tabs.SETTINGS)" v-if="isInstalled">
+            <div class="option" @click="() => emit('tabChange', tabs.SETTINGS)" v-if="isInstalled">
               Settings
               <FontAwesomeIcon :icon="faCogs" class="ml-2" />
             </div>
@@ -215,14 +224,14 @@ function cursePackBody() {
           v-if="packInstance"
           class="tab"
           :class="{ active: activeTab === tabs.OVERVIEW }"
-          @click="() => $emit('tabChange', tabs.OVERVIEW)"
+          @click="() => emit('tabChange', tabs.OVERVIEW)"
         >
           Overview
         </div>
-        <div v-if="!isVanilla" class="tab" :class="{ active: activeTab === tabs.MODS }" @click="() => $emit('tabChange', tabs.MODS)">
+        <div v-if="!isVanilla" class="tab" :class="{ active: activeTab === tabs.MODS }" @click="() => emit('tabChange', tabs.MODS)">
           Mods
         </div>
-<!--        <div v-if="packInstance && packInstance.meta && packInstance.meta.supportsWorlds" class="tab flex items-center whitespace-no-wrap justify-center" :class="{ active: activeTab === tabs.WORLDS }" @click="() => $emit('tabChange', tabs.WORLDS)">-->
+<!--        <div v-if="packInstance && packInstance.meta && packInstance.meta.supportsWorlds" class="tab flex items-center whitespace-no-wrap justify-center" :class="{ active: activeTab === tabs.WORLDS }" @click="() => emit('tabChange', tabs.WORLDS)">-->
 <!--          FTB Worlds <span class="bg-yellow-400 rounded px-1 py-0-5 sm:px-2 sm:py-1 text-black text-opacity-75 font-bold ml-4 text-sm italic">New!</span>-->
 <!--        </div>-->
         <a class="cta whitespace-no-wrap cursor-pointer" @click.prevent="appPlatform.utils.openUrl(bisectPromo())">
@@ -319,12 +328,12 @@ function cursePackBody() {
         :api-pack="packInstance"
         :pack-installed="isInstalled"
         :instance="instance"
-        @showFind="() => $emit('searchForMods')"
-        @searchForMods="() => $emit('searchForMods')"
+        @showFind="() => emit('searchForMods')"
+        @searchForMods="() => emit('searchForMods')"
       />
 
       <!-- If the pack page grows more, we will have to use the router to clean this up. -->
-      <modpack-settings @back="$emit('tabChange', tabs.OVERVIEW)" :instance="instance" v-if="instance && isInstalled && activeTab === tabs.SETTINGS" />
+      <modpack-settings @back="emit('tabChange', tabs.OVERVIEW)" :instance="instance" v-if="instance && isInstalled && activeTab === tabs.SETTINGS" />
 
       <!-- v-show to allow servers to load in the background -->
 <!--      <modpack-public-servers-->
@@ -366,6 +375,7 @@ function cursePackBody() {
     .ftb-play-button {
       position: relative;
       z-index: 2;
+      padding: 0 2px;
     }
   }
 

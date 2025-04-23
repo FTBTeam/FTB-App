@@ -2,9 +2,8 @@
 import {alertController} from '@/core/controllers/alertController';
 import { useAppSettings } from '@/store/appSettingsStore.ts';
 import { onMounted, ref, watch } from 'vue';
-import { FTBInput, UiMessage, UiButton } from '@/components/ui';
-import { faCheck } from '@fortawesome/free-solid-svg-icons';
-import UiNumberInput from '@/components/ui/UiNumberInput.vue';
+import { UiButton, Input, InputNumber, Message } from '@/components/ui';
+import { faAsterisk, faCheck, faGlobe, faUser, faWarning } from '@fortawesome/free-solid-svg-icons';
 
 const appSettingsStore = useAppSettings();
 
@@ -73,7 +72,9 @@ function save(remove = false) {
       Proxy Settings <span class="ml-4 text-sm px-2 py-0-5 bg-orange-500 rounded">Beta</span>
     </h2>
     <p class="text-muted text-sm mb-4">You can configure the app to use a Proxy Server to route all of the internal network requests though. <em>Please note that this is still in beta and some requests might not be put through the proxy.</em></p>
-    
+
+    <Message type='warning' class='mt-6 mb-8' :icon="faWarning" header="Beta notice">We're currently classing this setting as <em>Beta</em> because there are some known requests that do not yet use this setting.</Message>
+
     <div class='switcher'>
       <input id='switcher-none' type='radio' name='type' value='none' v-model='proxyType' />
       <label for='switcher-none' class='item'>
@@ -90,53 +91,48 @@ function save(remove = false) {
     </div>
     
     <div class="flex mb-4">
-      <FTBInput
+      <Input
+        :icon="faGlobe"
         :disabled='proxyType === "none"'
         class="mr-4 flex-1"
         label="Proxy Host*"
         placeholder="localhost"
         :value="proxyHost"
         v-model="proxyHost"
+        fill
       />
 
-      <UiNumberInput
+      <InputNumber
         :disabled="proxyType === 'none'"
         label="Proxy Port*"
         placeholder="9040"
-        :value="proxyPort"
+        :min="0"
+        v-model="proxyPort"
       />
-      
-<!--      <FTBInput-->
-<!--        :disabled='proxyType === "none"'-->
-<!--        label="Proxy Port*"-->
-<!--        placeholder="9040"-->
-<!--        type="number"-->
-<!--        :value="proxyPort"-->
-<!--        v-model="proxyPort"-->
-<!--      />-->
     </div>
 
-    <FTBInput
+    <Input
+      :icon="faUser"
       :disabled='proxyType === "none"'
       class="mb-4"
       label="Proxy Username"
       placeholder="Username"
       :value="proxyUser"
       v-model="proxyUser"
+      fill
     />
 
-    <FTBInput
+    <Input
+      :icon="faAsterisk"
       :disabled='proxyType === "none"'
       label="Proxy Password"
       placeholder="Password"
       :value="proxyPass"
       v-model="proxyPass"
       type="password"
+      fill
     />
     
-    <p class='text-muted text-xs italic'>Please be aware that proxy passwords are stored in plain text in the apps settings file. You have been warned!</p>
-    <UiMessage type='warning' class='mt-4 mb-8'>We're currently classing this setting as <em>Beta</em> because there are some known requests that do not yet use this setting.</UiMessage>
-
     <div class='action flex justify-end'>
       <UiButton :wider="true" :disabled='proxyType === "none" || isInvalid()' type='success' :icon='faCheck' @click='() => save()'>Test & Save</UiButton>
     </div>
@@ -168,7 +164,7 @@ function save(remove = false) {
     height: 0;
     
     &:checked + label {
-      background-color: var(--color-primary-button)
+      background-color: var(--color-green-600)
     }
   }
 }

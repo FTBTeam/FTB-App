@@ -5,11 +5,12 @@ import {computeAspectRatio, prettyByteFormat} from '@/utils';
 import UiToggle from '@/components/ui/UiToggle.vue';
 import RamSlider from '@/components/groups/modpack/components/RamSlider.vue';
 import {SettingsData} from '@/core/types/javaApi';
-import { Loader, UiButton, Selection2, FTBInput } from '@/components/ui';
+import { Loader, UiButton, Selection2, Input, InputNumber } from '@/components/ui';
 import { useAppSettings } from '@/store/appSettingsStore.ts';
 import { computed, onMounted, ref } from 'vue';
-import { faUndo } from '@fortawesome/free-solid-svg-icons';
+import { faCode, faUndo } from '@fortawesome/free-solid-svg-icons';
 import UiNumberInput from '@/components/ui/UiNumberInput.vue';
+import AbstractInput from '@/components/ui/form/AbstractInput.vue';
 
 const appSettingsStore = useAppSettings();
 
@@ -137,16 +138,14 @@ const channelOptions = computed(() => ReleaseChannelOptions());
               <b>Width</b>
               <small class="text-muted block mt-2">The Minecraft windows screen width</small>
             </div>
-            <UiNumberInput v-model="localSettings.instanceDefaults.width" />
-<!--            <FTBInput class="mb-0" v-model="localSettings.instanceDefaults.width" :value="localSettings.instanceDefaults.width" @blur="saveMutated" />-->
+            <InputNumber v-model="localSettings.instanceDefaults.width" @blur="saveMutated" />
           </div>
           <div class="flex items-center">
             <div class="block flex-1 mr-2">
               <b>Height</b>
               <small class="text-muted block mt-2">The Minecraft windows screen height</small>
             </div>
-            <UiNumberInput v-model="localSettings.instanceDefaults.height" />
-<!--            <FTBInput class="mb-0" v-model="localSettings.instanceDefaults.height" :value="localSettings.instanceDefaults.height" @blur="saveMutated" />-->
+            <InputNumber v-model="localSettings.instanceDefaults.height" @blur="saveMutated" />
           </div>
         </template>
       </div>
@@ -165,26 +164,29 @@ const channelOptions = computed(() => ReleaseChannelOptions());
     <ram-slider class="mb-6" v-model="localSettings.instanceDefaults.memory" @change="saveMutated" />
 
     <div class="flex gap-4 flex-col mb-6">
-      <label class="block tracking-wide text-white-700 font-bold">
-        Java runtime arguments
-      </label>
-
-      <small class="text-muted block -mt-2 max-w-xl">
-        These arguments are appended to your instances upon start, they are normal java arguments. <em>New lines will be removed.</em>
-      </small>
-
-      <textarea
-        placeholder="-TestArgument=120"
-        v-model="localSettings.instanceDefaults.javaArgs"
-        @blur="() => {
-          // Remove all new lines and trim the string
-          localSettings.instanceDefaults.javaArgs = localSettings.instanceDefaults.javaArgs.trim().replaceAll(/(\r\n|\n|\r)/gm, '')
-          saveMutated()
-        }"
-        spellcheck="false"
-        rows="4"
-        class="flex-1 mb-0 appearance-none block w-full ftb-btn bg-input text-gray-400 border border-input py-3 px-4 focus:outline-none rounded resize-none break-normal font-mono"
-      />
+      <AbstractInput
+        label="Java runtime arguments"
+        class="mb-4"
+        hint="These arguments are appended to your instances upon start, they are normal java arguments. New lines will be removed."
+        fill
+        v-slot="{ class: clazz, blur, focus }"
+      >
+        <textarea
+          placeholder="-TestArgument=120"
+          v-model="localSettings.instanceDefaults.javaArgs"
+          @blur="() => {
+            blur()
+            // Remove all new lines and trim the string
+            localSettings.instanceDefaults.javaArgs = localSettings.instanceDefaults.javaArgs.trim().replaceAll(/(\r\n|\n|\r)/gm, '')
+            saveMutated()
+          }"
+          @focus="focus"
+          spellcheck="false"
+          rows="4"
+          :class="clazz"
+          class="resize-none break-normal font-mono"
+        />
+      </AbstractInput>
 
       <div class="flex gap-4">
         <UiButton size="small" :icon="faUndo" @click="() => {
@@ -196,27 +198,29 @@ const channelOptions = computed(() => ReleaseChannelOptions());
       </div>
     </div>
 
-    <FTBInput
+    <Input
+      class="mb-4"
+      :icon="faCode"
       label="Program arguments"
       :value="localSettings.instanceDefaults.programArgs"
       v-model="localSettings.instanceDefaults.programArgs"
       placeholder="--fullscreen"
       @blur="saveMutated"
+      fill
+      hint="These arguments are appended to the end of the java command, these are typically arguments Minecraft uses."
     />
-    <small class="text-muted block mb-6 max-w-xl">
-      These arguments are appended to the end of the java command, these are typically arguments Minecraft uses.
-    </small>
     
-    <FTBInput
+    <Input
+      class="mb-4"
+      :icon="faCode"
       label="Shell arguments"
       :value="localSettings.instanceDefaults.shellArgs"
       v-model="localSettings.instanceDefaults.shellArgs"
       placeholder="/usr/local/application-wrapper"
       @blur="saveMutated"
+      fill
+      hint="These arguments will be inserted before java is run, see the example below. It's recommended to not change these unless you know what you are doing."
     />
-    <small class="text-muted block mb-6 max-w-xl">
-      These arguments will be inserted before java is run, see the example below. It's recommended to not change these unless you know what you are doing.
-    </small>
     
     <p class="mb-2">Startup preview</p>
     <small class="mb-4 block">This is for illustrative purposes only, this is not a complete example.</small>

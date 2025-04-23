@@ -1,9 +1,8 @@
 <script lang="ts" setup>
 import {megabyteSize, prettyByteFormat} from '@/utils';
 import { computed, onMounted, ref } from 'vue';
-import { UiToggle } from '@/components/ui';
+import { InputNumber, UiToggle } from '@/components/ui';
 import { useAppSettings } from '@/store/appSettingsStore.ts';
-import UiNumberInput from '@/components/ui/UiNumberInput.vue';
 
 const appSettingsStore = useAppSettings();
 
@@ -14,10 +13,6 @@ const {
 }>()
 
 const value = defineModel<number>()
-
-const emit = defineEmits<{
-  (e: 'change', value: number): void;
-}>()
 
 const step = 16;
 const allowDangerous = ref(false)
@@ -65,13 +60,10 @@ const valueAsPercentage = computed(() => {
        <input
          type="range"
          class="w-full"
-         :value="value"
+         v-model="value"
          @focus="hidden = false"
          @blur="hidden = true"
-         @mouseup="() => {
-           hidden = true;
-           // value.value = parseInt(value.toString()) 
-         }"
+         @mouseup="hidden = true"
          @mousedown="hidden = false"
          :min="min"
          :max="maxRam"
@@ -86,7 +78,7 @@ const valueAsPercentage = computed(() => {
      </div>
      
      <div class="value-input gap-2 flex items-center">
-       <UiNumberInput @blur="emit('change', parseInt((value ?? 0).toString()))" style="width: 120px" v-model="value" :min="0" :max="appSettingsStore.systemHardware?.totalMemory ?? 0" />
+       <InputNumber v-model="value" :min="0" :max="appSettingsStore.systemHardware?.totalMemory ?? 0" />
      </div>
    </div>
    

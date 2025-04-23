@@ -18,7 +18,7 @@ import {ModLoaderWithPackId} from '@/core/types/modpacks/modloaders';
 import RamSlider from '@/components/groups/modpack/components/RamSlider.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { FTBInput, Modal, UiToggle, Selection2, UiButton } from '@/components/ui';
+import { FTBInput, Modal, UiToggle, Selection2, UiButton, InputNumber, Input } from '@/components/ui';
 import { toTitleCase } from '@/utils/helpers/stringHelpers.ts';
 import { useInstallStore } from '@/store/installStore.ts';
 import { useAppSettings } from '@/store/appSettingsStore.ts';
@@ -80,12 +80,15 @@ onMounted(async () => {
     }
   }
   
-  previousSettings.value = {
+  instanceSettings.value = createInstanceSettingsFromInstance(instance);
+  previousSettings.value = { 
     ...instanceSettings.value
   }
 })
 
-function selectResolution(id: string) {
+function selectResolution(id: string | null) {
+  if (id === null) return;
+  
   const selected = appSettingsStore.systemHardware?.supportedResolutions.find(e => `${e.width}|${e.height}` === id);
   if (!selected) {
     return;
@@ -293,19 +296,18 @@ watch(imageFile, (value) => {
   <div class="pack-settings">
     <ArtworkSelector :pack="instance" class="mb-4" v-model="imageFile" :allow-remove="false" />
     
-    <FTBInput
+    <Input
       label="Instance Name"
       v-model="instanceSettings.name"
       @blur="saveSettings"
       class="mb-4"
-    >
-      <template #extra>
-        <UiButton :icon="instanceSettings.locked ? faUnlock : faLock" @click="toggleLock">
-          {{instanceSettings.locked ? 'Unlock' : 'Lock'}} instance
-        </UiButton>
-      </template>
-    </FTBInput>
-  
+      fill
+    />
+
+    <UiButton :icon="instanceSettings.locked ? faUnlock : faLock" @click="toggleLock" class="mb-6">
+      {{instanceSettings.locked ? 'Unlock' : 'Lock'}} instance
+    </UiButton>
+    
     <CategorySelector :open-down="true" class="mb-6" v-model="instanceSettings.category" @input="() => saveSettings()" />
 
     <div class="buttons flex gap-4 mb-8">
@@ -349,7 +351,7 @@ watch(imageFile, (value) => {
         <selection2
           v-if="resolutionList.length"
           v-model="resolutionId"
-          @change="selectResolution"
+          @updated="selectResolution"
           :style="{width: '220px'}"
           :options="resolutionList"
         />
@@ -359,14 +361,14 @@ watch(imageFile, (value) => {
           <b>Width</b>
           <small class="text-muted block mt-2">The Minecraft windows screen width</small>
         </div>
-        <UiNumberInput class="mb-0" v-model="instanceSettings.width" @blur="saveSettings" />
+        <InputNumber class="mb-0" v-model="instanceSettings.width" @blur="saveSettings" />
       </div>
       <div class="flex items-center">
         <div class="block flex-1 mr-2">
           <b>Height</b>
           <small class="text-muted block mt-2">The Minecraft windows screen height</small>
         </div>
-        <UiNumberInput class="mb-0" v-model="instanceSettings.height" @blur="saveSettings" />
+        <InputNumber class="mb-0" v-model="instanceSettings.height" @blur="saveSettings" />
       </div>
     </div>
     
@@ -476,27 +478,27 @@ watch(imageFile, (value) => {
         <ui-toggle label="Prefer IPv4 network requests" :value="prefersIPv4" @input="preferIPv4Clicked" />
       </div>
 
-      <FTBInput
+      <Input
+        class="mb-6"
         label="Program arguments"
         :value="instanceSettings.programArgs"
         v-model="instanceSettings.programArgs"
         placeholder="--fullscreen"
         @blur="saveSettings"
+        hint="These arguments are appended to the end of the java command, these are typically arguments Minecraft uses."
+        fill
       />
-      <small class="text-muted block mb-6 max-w-xl">
-        These arguments are appended to the end of the java command, these are typically arguments Minecraft uses.
-      </small>
       
-      <FTBInput
+      <Input
+        class="mb-6"
         label="Shell arguments"
         :value="instanceSettings.shellArgs"
         v-model="instanceSettings.shellArgs"
         placeholder="/usr/local/application-wrapper"
         @blur="saveSettings"
+        fill
+        hint="These arguments will be inserted before java is run, see the example below. It's recommended to not change these unless you know what you are doing."
       />
-      <p class="text-muted block mb-6 max-w-xl text-sm">
-        These arguments will be inserted before java is run, see the example below. It's recommended to not change these unless you know what you are doing.
-      </p>
       
       <p class="mb-2 font-bold">Startup preview</p>
       <p class="mb-4 block text-sm">This is for illustrative purposes only, this is not a complete example.</p>

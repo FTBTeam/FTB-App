@@ -5,7 +5,7 @@ import {sendMessage} from '@/core/websockets/websocketsApi';
 import {alertController} from '@/core/controllers/alertController';
 import {InstanceActions} from '@/core/actions/instanceActions';
 import {MoveInstancesHandlerReply, OperationProgressUpdateData, SettingsData} from '@/core/types/javaApi';
-import { ProgressBar, Loader, Modal, UiToggle, UiButton, FTBInput } from '@/components/ui';
+import { ProgressBar, Loader, Modal, UiToggle, UiButton, FTBInput, Input } from '@/components/ui';
 import {dialogsController} from '@/core/controllers/dialogsController';
 import {toTitleCase} from '@/utils/helpers/stringHelpers';
 import {createLogger} from '@/core/logger';
@@ -182,17 +182,7 @@ async function moveInstances() {
       >Software License Information</router-link
       >
     </div>
-
-    <!-- <ftb-toggle label="Enable Analytics: " :value="settingsCopy.enableAnalytics" @change="enableAnalytics"
-                    onColor="bg-primary"/> -->
-    <!--    <ui-toggle-->
-    <!--      label="Use the beta channel"-->
-    <!--      desc="This allows you to opt-in to the beta channel of the FTB App, this version is typically less stable than the normal release channel."-->
-    <!--      :value="localSettings.enablePreview"-->
-    <!--      @input="enablePreview"-->
-    <!--      class="mb-8"-->
-    <!--    />-->
-    <!--    -->
+    
     <ui-toggle
       v-if="!appPlatform.isElectron"
       label="Close Overwolf on Exit"
@@ -232,21 +222,23 @@ async function moveInstances() {
       </div>
       <ui-button size="small" class="mt-6 sm:mt-0 my-2 w-2/7" type="info" @click="refreshCachePlz" :icon="faSync">Refresh Cache</ui-button>
     </div>
-
+    
     <p class="block text-white-700 text-lg font-bold mb-4 mt-6">Misc</p>
-    <FTBInput
-      label="Relocate instances"
-      :value="localSettings.instanceLocation + ' (Current)'"
-      :disabled="true"
-      button="true"
-      buttonText="Relocate / Move"
-      buttonColor="primary"
-      @click="moveInstances"
-    />
-    <small class="text-muted block max-w-xl"
-    >Changing your instance location with instances installed will cause your instances to be moved to the new
-      location automatically.</small
-    >
+    <div class="flex gap-4">
+      <Input
+        class="flex-1"
+        label="Relocate instances"
+        v-model="localSettings.instanceLocation"
+        :disabled="true"
+        fill
+        hint="Changing your instance location with instances installed will cause your instances to be moved to the new
+      location automatically."
+      />
+      <UiButton @click="moveInstances">
+        <FontAwesomeIcon :icon="faFolderOpen" class="mr-2" />
+        <span>Browse</span>
+      </UiButton>
+    </div>
 
     <Modal :open="instanceMoveModalShow" title="Moving instances" :close-on-background-click="false" :has-closer="false">
       <template v-if="!instanceMoveModalComplete">

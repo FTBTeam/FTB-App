@@ -113,19 +113,19 @@ const hiddenSidebar = computed(() => {
     }
     
     &.success {
-      background-color: var(--color-success-button);
+      background-color: var(--color-green-600);
     }
     
     &.error {
-      background-color: var(--color-danger-button);
+      background-color: var(--color-red-600);
     }
     
     &.warning {
-      background-color: var(--color-warning-button);
+      background-color: var(--color-orange-600);
     }
     
     &.info {
-      background-color: var(--color-info-button);
+      background-color: var(--color-blue-600);
     }
   }
   

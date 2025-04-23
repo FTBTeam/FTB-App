@@ -8,6 +8,8 @@ import {ReleaseChannelOptions} from '@/utils/commonOptions';
 import { computed, onMounted, ref } from 'vue';
 import { useAppSettings } from '@/store/appSettingsStore.ts';
 import { toggleBeforeAndAfter } from '@/utils/helpers/asyncHelpers.ts';
+import { Message } from '@/components/ui';
+import { faWarning } from '@fortawesome/free-solid-svg-icons';
 
 type ReleaseChannel = 'release' | 'beta' | 'alpha';
 
@@ -92,11 +94,11 @@ function transformToElectronChannel(channel: ReleaseChannel) {
 <template>
   <div class="app-settings" v-if="localSettings.spec">
     <div class="mb-6">
-      <h1 class="font-bold text-xl mb-2">Advanced</h1>
-      <p class="text-muted flex items-center gap-2">
-        <span class="bg-warning rounded text-white font-bold px-2 py-0.5">Warning</span> 
+      <h1 class="font-bold text-xl mb-4">Advanced</h1>
+      
+      <message header="Warning" type="warning" class="mb-4" :icon="faWarning">
         These settings are for advanced users only, changing these settings could have unintended consequences.
-      </p>
+      </message>
     </div>
 
     <div class="mb-4 border-b border-white border-opacity-25 pb-6" v-if="appPlatform.isElectron">
@@ -104,17 +106,17 @@ function transformToElectronChannel(channel: ReleaseChannel) {
       <div class="flex items-center">
         <div class="block flex-1 mr-2">
           <b>Release Channel</b>
-          <small class="block text-muted mr-6 mt-2">
+          <small class="block text-xs text-muted mr-6 mt-2">
             Feeling adventurous? Switch to the beta or alpha channel to get the latest features before they're released to everyone.
           </small>
         </div>
-  
+        
         <selection2
           :disabled="checkingForUpdates"
           :options="channelOptions"
           v-model="appChannel"
           :style="{width: '192px'}"
-          @change="setAppChannel"
+          @updated="setAppChannel"
         />
       </div>
       

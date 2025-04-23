@@ -16,24 +16,47 @@ import FTBButton from './input/FTBButton.vue'
 import FTBInput from './input/FTBInput.vue'
 import FTBSearchBar from './input/FTBSearchBar.vue'
 import FTBSlider from './input/FTBSlider.vue'
+import Button from './Button/Button.vue'
+import Input from './form/Input/Input.vue'
+import InputNumber from './form/InputNumber/InputNumber.vue'
 
 export {
   ClosablePanel,
   Link,
   Loader,
+  /**
+   * @deprecated Use Message instead
+   */
   Message as UiMessage,
+  Message,
   Popover,
   ProgressBar,
   Selection2,
   UiBadge,
+  /**
+   * @deprecated Use Button instead
+   */
   UiButton,
   UiPagination,
   UiToggle,
   Modal,
   ModalBody,
   ModalFooter,
+  /**
+   * @deprecated Use Button instead
+   */
   FTBButton,
+  /**
+   * @deprecated Use Input instead
+   */
   FTBInput,
+  /**
+   * @deprecated Use Input instead
+   */
   FTBSearchBar,
-  FTBSlider
+  FTBSlider,
+  
+  Button,
+  Input,
+  InputNumber,
 }

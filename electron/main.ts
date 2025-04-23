@@ -278,7 +278,7 @@ app.whenReady().then(() => {
           return new Response(null);
         }
 
-        return await net.fetch(`file://${encodeURI(instancePath)}${url.pathname}`)
+        return await net.fetch(`file://${instancePath}${url.pathname}`)
       }
     }
 

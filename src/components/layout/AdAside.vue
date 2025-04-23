@@ -5,7 +5,7 @@ import { onMounted, useTemplateRef, ref, computed } from 'vue';
 import { useAttachDomEvent } from '@/composables';
 import { constants } from '@/core/constants.ts';
 import { useAds } from '@/composables/useAds.ts';
-import OwAdViewWrapper from '@/components/ui/OwAdViewWrapper.vue';
+import OwAdViewWrapper from '@/components/layout/OwAdViewWrapper.vue';
 
 const logger = createLogger("AdAside.vue");
 const adsHook = useAds();

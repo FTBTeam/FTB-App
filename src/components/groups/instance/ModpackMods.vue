@@ -20,7 +20,7 @@ import UiToggle from '@/components/ui/UiToggle.vue';
 import ClosablePanel from '@/components/ui/ClosablePanel.vue';
 import {createLogger} from '@/core/logger';
 import { ModPack } from '@/core/types/appTypes.ts';
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useAppStore } from '@/store/appStore.ts';
 import platform from '@platform'
 import { faDownload, faFolder, faPlus, faSync } from '@fortawesome/free-solid-svg-icons';
@@ -223,6 +223,10 @@ async function toggleMod(file: ModInfo) {
   }
 }
 
+watch(search, (value) => {
+  onSearch(value);
+})
+
 function onSearch(value: string) {
   search.value = value;
   if (value === '') {
@@ -284,7 +288,7 @@ const installedMods = computed<[number, number][]>(() => {
 <template>
   <div class="modpack-mods">
     <div class="flex mb-8 gap-4 items-center relative z-50">
-      <f-t-b-search-bar placeholder="Search..." :value="search" class="w-full" @input="onSearch" />
+      <FTBSearchBar placeholder="Search..." v-model="search" class="w-full" />
       <template v-if="packInstalled && instance">
         <ui-button type="success" @click="searchingForMods = true" :icon="faPlus" :data-balloon-length="instance.locked ? 'medium' : undefined" :aria-label="instance.locked ? 'This instance is locked, to add more content you will need to unlock it in settings.' : 'Add more mods'" :disabled="instance.locked" />
         <ui-button type="info" @click="updateAll" :icon="faDownload" :data-balloon-length="instance.locked ? 'medium' : undefined" :aria-label="instance.locked ? 'This instance is locked, to add more content you will need to unlock it in settings.' : 'Update all mods'" :disabled="instance.locked || modUpdatesAvailableKeys.length === 0" />

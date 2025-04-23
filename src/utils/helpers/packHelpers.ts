@@ -52,7 +52,7 @@ function _resolveArtwork(packOrInstance: SugaredInstanceJson | InstanceJson | Mo
 
 export function artworkFileOrElse(instance: SugaredInstanceJson, orElse: string = defaultArtwork["square"]) {
   if (instance.artworkFile) {
-    return "ftb://load-pack-asset/" + instance.artworkFile + "?instancePath=" + instance.path;
+    return "ftb://load-pack-asset/" + instance.artworkFile.replace("\\", "/") + "?instancePath=" + instance.path;
   }
   
   return orElse;
