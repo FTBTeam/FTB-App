@@ -43,6 +43,6 @@ const value = defineModel<string>({
     <textarea @blur="() => {
       emit('blur');
       blur();
-    }" @focus="focus"  :placeholder="placeholder" :disabled="disabled" :class="clazz" v-model="value" :rows="rows" :cols="cols" :spellcheck="true" />
+    }" @focus="focus" :spellcheck="spellcheck" :placeholder="placeholder" :disabled="disabled" :class="clazz" v-model="value" :rows="rows" :cols="cols" />
   </AbstractInput>
 </template>

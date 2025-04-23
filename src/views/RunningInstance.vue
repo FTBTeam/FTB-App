@@ -25,6 +25,7 @@ import { IconDefinition } from '@fortawesome/free-brands-svg-icons';
 import { RecycleScroller } from 'vue-virtual-scroller'
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 import { artworkFileOrElse } from '@/utils/helpers/packHelpers.ts';
+import { ElementColorType } from '@/components/ui/UiButton.vue';
 
 type InstanceActionCategory = {
   title: string;
@@ -36,7 +37,7 @@ type InstanceAction = {
   icon: IconDefinition;
   action: (instance: SugaredInstanceJson, router: typeof Router) => void;
   condition?: (context: ConditionContext) => boolean;
-  color?: string;
+  color?: ElementColorType;
   looksLikeButton?: boolean;
 }
 
