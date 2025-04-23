@@ -194,7 +194,14 @@ ipcMain.handle("action/app/change-channel", async (_, data) => {
     log.debug("Latest version", latestVersion)
     log.debug("Current version", currentVersion)
 
-    if (confirm(`A new version of the app is available, would you like to update?, ${latestVersion} -> ${currentVersion}`)) {
+    const result = await dialog.showMessageBox({
+      message: `A new version of the app is available, would you like to update?, ${latestVersion} -> ${currentVersion}`,
+      type: "info",
+      buttons: ["Yes", "No"],
+      defaultId: 0,
+    })
+    
+    if (result.response === 0) {
       updateApp("ChannelChange");
     }
   }

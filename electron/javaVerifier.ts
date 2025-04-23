@@ -6,6 +6,7 @@ import { execSync } from 'child_process';
 import { MetaData } from '@platform';
 import { retrying } from '../src/utils/helpers/asyncHelpers.ts';
 import { prelaunchWindow } from './main.ts';
+import { dialog } from 'electron';
 import AdmZip from 'adm-zip';
 import log from 'electron-log/main'
 
@@ -86,7 +87,11 @@ export class JavaVerifier {
       try {
         fs.rmSync(runtimeHome, { recursive: true, force: true });
       } catch (e) {
-        alert("Failed to remove existing java installation, please remove it manually at " + runtimeHome);
+        dialog.showErrorBox(
+          "Error",
+          "Failed to remove existing java installation, please remove it manually at " + runtimeHome,
+        );
+        
         log.warn("Failed to remove existing java installation", e);
         return;
       }
