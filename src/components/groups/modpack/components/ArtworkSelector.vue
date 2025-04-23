@@ -1,119 +1,121 @@
+<script lang="ts" setup>
+import {resolveArtwork} from '@/utils/helpers/packHelpers';
+import {InstanceJson} from '@/core/types/javaApi';
+import { UiButton } from '@/components/ui';
+import { useAttachDomEvent } from '@/composables';
+import { computed, ref } from 'vue';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { ModPack } from '@/core/types/appTypes.ts';
+import { faTrash, faUpload } from '@fortawesome/free-solid-svg-icons';
+
+const allowedFileTypes = [
+  "image/png",
+  "image/jpeg",
+  "image/gif"
+]
+
+const value = defineModel<File | null>()
+
+const {
+  allowRemove = true,
+  pack = null
+} = defineProps<{
+  allowRemove?: boolean;
+  pack?: InstanceJson | ModPack;
+}>()
+
+const isDraggingOver = ref(false)
+
+useAttachDomEvent<DragEvent>('dragover', onDragStart)
+useAttachDomEvent<DragEvent>('dragleave', onDragEnd)
+useAttachDomEvent<DragEvent>('drop', drop)
+
+function onDragStart(event: DragEvent) {
+  event.preventDefault();
+  event.stopPropagation();
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = 'copy';
+  }
+  isDraggingOver.value = true;
+}
+
+function onDragEnd(event: DragEvent) {
+  event.preventDefault();
+  event.stopPropagation();
+  if (event.x === 0 && event.y === 0) {
+    isDraggingOver.value = false;
+  }
+}
+
+function drop(event: DragEvent) {
+  event.preventDefault();
+  event.stopPropagation();
+  
+  isDraggingOver.value = false;
+  const files = event.dataTransfer?.files;
+  if (!files?.length) {
+    return;
+  }
+  
+  const fileList: File[] = [];
+  for (const item of files) {
+    if (item instanceof File) {
+      fileList.push(item);
+    }
+  }
+  
+  processFileList(fileList);
+}
+
+function processFileList(files: File[]) {
+  console.log(files)
+  let firstValidFile: File | null = null;
+  for (const file of files) {
+    if (allowedFileTypes.includes(file.type)) {
+      firstValidFile = file;
+      break;
+    }
+  }
+  
+  console.log(firstValidFile, firstValidFile?.path)
+  if (firstValidFile) {
+    value.value = firstValidFile;
+  }
+}
+
+const getArtwork = computed(() => {
+  if (value.value) {
+    return "file://" + value.value.arrayBuffer;
+  }
+
+  return resolveArtwork(pack ?? null);
+})
+
+const hovering = isDraggingOver.value;
+</script>
+
 <template>
   <div class="artwork-selector flex items-center gap-6" :class="{'is-hovering': hovering}">
     <div class="drop-indicator" v-if="hovering">
       <div class="text flex flex-col gap-4">
-        <font-awesome-icon icon="upload" size="lg" />
+        <FontAwesomeIcon :icon="faUpload" size="lg" />
         <b>Drop artwork here</b>
       </div>
     </div>
     <img width="120" :src="getArtwork" alt="" />
     <div class="actions flex flex-col items-start">
       <label>
-        <input hidden="hidden" type="file" :accept="allowedFileTypes.join(',')"  @change="processFileList($event.target.files)" />
-        <ui-button type="info" icon="upload">
-          Upload image
-        </ui-button>
+        <input hidden="hidden" type="file" :accept="allowedFileTypes.join(',')"  @change="processFileList(($event.target as any)?.files)" />
+        <UiButton type="info" :icon="faUpload">
+          Update artwork
+        </UiButton>
       </label>
-      <ui-button icon="trash" size="small" class="mt-3" type="warning" v-if="value && allowRemove" @click="() => {
-        $emit('input', null);
-        $emit('change', null);
-      }">
+      <UiButton :icon="faTrash" size="small" class="mt-3" type="warning" v-if="value && allowRemove" @click="value = null">
         Remove
-      </ui-button>
+      </UiButton>
     </div>
   </div>
 </template>
-
-<script lang="ts">
-import {Component, Prop, Vue} from 'vue-property-decorator';
-import {resolveArtwork} from '@/utils/helpers/packHelpers';
-import {InstanceJson} from '@/core/@types/javaApi';
-import {ModPack} from '@/modules/modpacks/types';
-import UiButton from '@/components/ui/UiButton.vue';
-
-@Component({
-  components: {UiButton},
-  methods: {resolveArtwork}
-})
-export default class ArtworkSelector extends Vue {
-  @Prop() value!: File | null;
-  @Prop() pack?: InstanceJson | ModPack;
-
-  @Prop({default: true}) allowRemove!: boolean;
-  
-  isDraggingOver = false;
-  private allowedFileTypes = [
-    "image/png",
-    "image/jpeg",
-    "image/gif"
-  ]
-  
-  mounted() {
-    // Add drag and drop events
-    document.addEventListener("dragover", this.onDragStart);
-    document.addEventListener("dragleave", this.onDragEnd);
-    document.addEventListener("drop", this.drop);
-  }
-  
-  destroyed() {
-    // Remove drag and drop events
-    document.removeEventListener("dragover", this.onDragStart);
-    document.removeEventListener("dragleave", this.onDragEnd);
-    document.removeEventListener("drop", this.drop);
-  }
-  
-  get getArtwork() {
-    if (this.value && "path" in this.value) {
-      return "file://" + this.value.path;
-    }
-    
-    return resolveArtwork(this.pack ?? null);
-  }
-
-  private onDragStart(event: any) {
-    event.preventDefault();
-    event.stopPropagation();
-    event.dataTransfer.dropEffect = 'copy';
-    this.isDraggingOver = true;
-  }
-  
-  private onDragEnd(event: any) {
-    event.preventDefault();
-    event.stopPropagation();
-    if (event.x === 0 && event.y === 0) {
-      this.isDraggingOver = false;
-    }
-  }
-  
-  private drop(event: any) {
-    event.preventDefault();
-    event.stopPropagation();
-    
-    this.isDraggingOver = false;
-    const files = event.dataTransfer.files;
-    this.processFileList(files);
-  }
-  
-  processFileList(files: File[]) {
-    let firstValidFile: File | null = null;
-    for (const file of files) {
-      if (this.allowedFileTypes.includes(file.type)) {
-        firstValidFile = file;
-        break;
-      }
-    }
-
-    if (firstValidFile) {
-      this.$emit('input', firstValidFile);
-      this.$emit('change', firstValidFile);
-    }
-  }
-  
-  get hovering() {
-    return this.isDraggingOver
-  }
-}
-</script>
 
 <style lang="scss" scoped>
 .artwork-selector {

@@ -31,13 +31,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.WillNotClose;
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.BindException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
@@ -49,8 +43,17 @@ import java.util.function.Consumer;
 
 public class Instance {
     private static final Logger LOGGER = LogManager.getLogger();
+    private static final String META_FOLDER_NAME = ".ftbapp";
+    
+    public static final String MODIFICATIONS_FILE_NAME = "modifications.json";
+    public static final String VERSION_MODS_FILE_NAME = "version_mods.json";
+    public static final String VERSION_FILE_NAME = "version.json";
 
     public final Path path;
+    public final Path metaPath;
+    
+    public Path artworkFile;
+    
     public InstanceJson props;
     private @Nullable InstanceModifications modifications;
 
@@ -74,10 +77,13 @@ public class Instance {
         props.category = Objects.requireNonNullElse(category, "Default");
 
         path = Settings.getInstancesDir().resolve(folderNameFor(props));
+        metaPath = path.resolve(META_FOLDER_NAME);
+        
         FileUtils.createDirectories(path);
+        FileUtils.createDirectories(metaPath);
 
         this.versionManifest = versionManifest;
-        this.processArt(modpack, artPath);
+        this.storeArtwork(modpack, artPath);
 
         try {
             saveJson();
@@ -89,61 +95,51 @@ public class Instance {
     // Loading an existing instance.
     public Instance(Path path, Path json) throws IOException {
         this.path = path;
+        this.metaPath = path.resolve(META_FOLDER_NAME);
+        
         props = InstanceJson.load(json);
         loadVersionManifest();
+        
+        if (Files.notExists(metaPath)) {
+            FileUtils.createDirectories(metaPath);
+        }
+        
+        locateArtworkFile();
     }
 
-    private void processArt(ModpackManifest modpack, @Nullable String artPath) {
+    private void storeArtwork(ModpackManifest modpack, @Nullable String artPath) {
         if (artPath != null) {
-            var pathForArt = Path.of(artPath);
-            // TODO: Support webp?
-            if (Files.exists(pathForArt) && (artPath.endsWith(".png") || artPath.endsWith(".jpg") || artPath.endsWith(".jpeg"))) {
-                try (InputStream is = Files.newInputStream(pathForArt)) {
-                    doImportArt(is);
-                    return;
-                } catch (IOException ex) {
-                    LOGGER.error("Failed to import art.", ex);
-                }
+            try {
+                updateArtwork(Path.of(artPath));
+            } catch (IOException ex) {
+                downloadAndUpdateArt(modpack);
             }
+            return;
         }
 
-        ModpackManifest.Art art = modpack.getFirstArt("square");
-        if (art != null) {
-            Path tempFile = null;
-            try {
-                tempFile = Files.createTempFile("art", "");
-                Files.delete(tempFile);
-                DownloadTask task = DownloadTask.builder()
-                        .url(art.getUrl())
-                        .dest(tempFile)
-                        .build();
-                task.execute(null, null);
-                try (InputStream is = Files.newInputStream(tempFile)) {
-                    doImportArt(is);
-                }
-            } catch (IOException ex) {
-                LOGGER.error("Failed to download art.", ex);
-            } finally {
-                if (tempFile != null) {
-                    try {
-                        Files.deleteIfExists(tempFile);
-                    } catch (IOException ex) {
-                        LOGGER.error("Failed to cleanup temp file from art.", ex);
-                    }
-                }
+        downloadAndUpdateArt(modpack);
+    }
+    
+    private void locateArtworkFile() {
+        var metaFiles = FileUtils.listDir(metaPath);
+        for (Path file : metaFiles) {
+            if (file.getFileName().toString().startsWith("artwork")) {
+                // Update the artwork file.
+                artworkFile = metaPath.resolve(file.getFileName().toString());
+                break;
             }
         }
     }
 
     private void loadVersionManifest() throws IOException {
         if (props.installComplete) {
-            Path versionJson = path.resolve("version.json");
+            Path versionJson = metaPath.resolve(VERSION_FILE_NAME);
             if (Files.exists(versionJson)) {
                 versionManifest = JsonUtils.parse(ModpackVersionManifest.GSON, versionJson, ModpackVersionManifest.class);
             } else {
                 versionManifest = ModpackVersionManifest.makeInvalid();
             }
-            Path modificationsJson = path.resolve("modifications.json");
+            Path modificationsJson = metaPath.resolve(MODIFICATIONS_FILE_NAME);
             if (Files.exists(modificationsJson)) {
                 // TODO we need to validate the state of mod modifications.
                 //      Dynamically add/remove them as manual modifications are always possible.
@@ -153,21 +149,69 @@ public class Instance {
         }
     }
 
-    public void importArt(Path file) throws IOException {
-        try (InputStream is = Files.newInputStream(file)) {
-            doImportArt(is);
-            saveJson();
+    public void updateArtwork(Path sourcePath) throws IOException {
+        try (var is = Files.newInputStream(sourcePath)) {
+            var extension = sourcePath.getFileName().toString();
+            if (extension.contains(".")) {
+                extension = extension.substring(extension.lastIndexOf(".") + 1);
+            }
+            
+            updateArtwork(is, extension);
+        } catch (IOException ex) {
+            LOGGER.error("Failed to update artwork.", ex);
+            throw ex;
         }
     }
-
-    private void doImportArt(@WillNotClose InputStream is) throws IOException {
-        BufferedImage resizedArt = ImageUtils.resizeImage(is, 256, 256);
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ImageIO.write(resizedArt, "png", bos);
-        props.art = "data:image/png;base64," + Base64.getEncoder().encodeToString(bos.toByteArray());
-        // folder.jpg is not strictly used, it exists for easy folder navigation.
-        try (OutputStream os = Files.newOutputStream(path.resolve("folder.jpg"))) {
-            ImageIO.write(resizedArt, "jpg", os);
+    
+    public void updateArtwork(InputStream inputStream, String extension) throws IOException {
+        var fileName = "artwork." + extension;
+        var file = this.metaPath.resolve(fileName);
+        
+        // Write the input stream to the file.
+        try {
+            Files.copy(inputStream, file, StandardCopyOption.REPLACE_EXISTING);
+            this.artworkFile = file;
+        } catch (IOException ex) {
+            try {
+                Files.deleteIfExists(file);
+            } catch (IOException ex2) {
+                LOGGER.error("Failed to delete artwork files.", ex2);
+            }
+            
+            LOGGER.error("Failed to write artwork file.", ex);
+            throw ex;
+        }
+    }
+    
+    private void downloadAndUpdateArt(ModpackManifest modpack) {
+        ModpackManifest.Art art = modpack.getFirstArt("square");
+        if (art == null) {
+            return;
+        }
+        
+        Path tempFile = null;
+        try {
+            tempFile = Files.createTempFile("art", "");
+            Files.delete(tempFile);
+            var extension = art.getUrl().substring(art.getUrl().lastIndexOf(".") + 1);
+            DownloadTask task = DownloadTask.builder()
+                .url(art.getUrl())
+                .dest(tempFile)
+                .build();
+            task.execute(null, null);
+            try (InputStream is = Files.newInputStream(tempFile)) {
+                updateArtwork(is, extension);
+            }
+        } catch (IOException ex) {
+            LOGGER.error("Failed to download art.", ex);
+        } finally {
+            if (tempFile != null) {
+                try {
+                    Files.deleteIfExists(tempFile);
+                } catch (IOException ex) {
+                    LOGGER.error("Failed to cleanup temp file from art.", ex);
+                }
+            }
         }
     }
 
@@ -180,7 +224,7 @@ public class Instance {
                 return;
             }
             versionManifest = newManifest.getRight();
-            JsonUtils.write(ModpackVersionManifest.GSON, path.resolve("version.json"), versionManifest, ModpackVersionManifest.class);
+            JsonUtils.write(ModpackVersionManifest.GSON, this.metaPath.resolve(VERSION_FILE_NAME), versionManifest, ModpackVersionManifest.class);
         } catch (IOException ex) {
             LOGGER.warn("Failed to update manifest for modpack. This may be a private pack.", ex);
         }
@@ -190,7 +234,7 @@ public class Instance {
     //       When that happens we can nuke this.
     public @Nullable ModpackVersionModsManifest getModsManifest() {
         ModpackVersionModsManifest manifest = null;
-        Path file = path.resolve(".ftba/version_mods.json");
+        Path file = this.metaPath.resolve(VERSION_MODS_FILE_NAME);
         try {
             manifest = ModpackVersionModsManifest.load(file);
         } catch (IOException | JsonParseException ex) {
@@ -296,29 +340,16 @@ public class Instance {
 
         OperatingSystem os = OperatingSystem.current();
         launcher.withStartTask(ctx -> {
-            // Nuke old files.
-            Files.deleteIfExists(path.resolve("Log4jPatcher-1.0.1.jar"));
-            Files.deleteIfExists(path.resolve("mods/launchertray-1.0.jar"));
-            Files.deleteIfExists(path.resolve("mods/launchertray-progress-1.0.jar"));
-
             InstanceSupportMeta supportMeta = InstanceSupportMeta.update();
             if (supportMeta == null) return; // Should be _incredibly_ rare. But just incase...
 
             List<InstanceSupportMeta.SupportFile> loadingMods = supportMeta.getSupportMods("loading");
             
-            if (this.props.preventMetaModInjection) {
-                LOGGER.info("Preventing meta mod injection.");
-                Files.deleteIfExists(path.resolve("mods/ftb-hide.jar"));
-                Files.deleteIfExists(path.resolve("mods/ftb-progress.jar"));
-            }
-            
             // Only inject custom mods if we have any, and we're not a "custom" instance.
             if (!loadingMods.isEmpty() && !this.isLoaderInstance() && !this.props.preventMetaModInjection) {
-                if (Files.notExists(path.resolve(".no_loading_mods.marker"))) {
-                    for (InstanceSupportMeta.SupportFile file : loadingMods) {
-                        if (!file.canApply(props.modLoader, os)) continue;
-                        file.createTask(path.resolve("mods")).execute(null, null);
-                    }
+                for (InstanceSupportMeta.SupportFile file : loadingMods) {
+                    if (!file.canApply(props.modLoader, os)) continue;
+                    file.createTask(path.resolve("mods")).execute(null, null);
                 }
 
                 AppMain.closeOldClient();
@@ -428,7 +459,7 @@ public class Instance {
     public void saveModifications() {
         try {
             if (modifications != null) {
-                Path modificationsJson = path.resolve("modifications.json");
+                Path modificationsJson = this.metaPath.resolve(MODIFICATIONS_FILE_NAME);
                 InstanceModifications.save(modificationsJson, modifications);
             }
         } catch (IOException ex) {

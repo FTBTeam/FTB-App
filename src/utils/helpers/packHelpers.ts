@@ -1,11 +1,10 @@
-import {ModPack, PackProviders, Versions} from '@/modules/modpacks/types';
-
 import missingArtSquare from '@/assets/images/ftb-missing-pack-art.webp';
 import missingArtSplash from '@/assets/images/ftb-no-pack-splash-normal.webp';
-import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
-import {SearchResultPack} from '@/core/@types/modpacks/packSearch';
-import store from '@/modules/store';
-import {packBlacklist} from '@/core/state/modpacks/modpacksState';
+import {InstanceJson, SugaredInstanceJson} from '@/core/types/javaApi';
+import {SearchResultPack} from '@/core/types/modpacks/packSearch';
+import { ModPack, PackProviders, Versions } from '@/core/types/appTypes.ts';
+import { packBlacklist } from '@/store/modpackStore.ts';
+import { useAppSettings } from '@/store/appSettingsStore.ts';
 
 export type ArtworkTypes = "square" | "splash";
 export type VersionTypes = "release" | "beta" | "alpha" | "archived" | "all" | "hotfix";
@@ -39,16 +38,24 @@ function _resolveArtwork(packOrInstance: SugaredInstanceJson | InstanceJson | Mo
     // It's an instance
     const instance = packOrInstance as SugaredInstanceJson;
     const fallbackArt = fallback?.art.find(e => e.type === artworkType)?.url ?? defaultArtwork[artworkType];
-    if (instance.art === "") {
+    if (instance.artworkFile === "") {
       return fallbackArt;
     }
 
-    return instance.art ?? fallbackArt;
+    return artworkFileOrElse(instance, fallbackArt)
   }
 
   // It's a modpack
   const pack = packOrInstance as ModPack | SearchResultPack;
   return pack.art.find(e => e.type === artworkType)?.url ?? fallback?.art.find(e => e.type === artworkType)?.url ?? defaultArtwork[artworkType];
+}
+
+export function artworkFileOrElse(instance: SugaredInstanceJson, orElse: string = defaultArtwork["square"]) {
+  if (instance.artworkFile) {
+    return "ftb://load-pack-asset/" + instance.artworkFile.replace("\\", "/") + "?instancePath=" + instance.path;
+  }
+  
+  return orElse;
 }
 
 const knownModloaders = [
@@ -161,7 +168,8 @@ export function packUpdateAvailable(instance?: InstanceJson | SugaredInstanceJso
     return undefined;
   }
   
-  const channel = instance.releaseChannel !== "unset" ? instance.releaseChannel : (store.state.settings?.settings.instanceDefaults.updateChannel ?? "release");
+  const appSettingsStore = useAppSettings();
+  const channel = instance.releaseChannel !== "unset" ? instance.releaseChannel : (appSettingsStore.rootSettings?.instanceDefaults.updateChannel ?? "release");
   const allowedTypes: VersionTypes[] = channel === "release" ? ["release"] : (channel === "beta" ? ["release", "beta"] : ["release", "beta", "alpha"]);
   
   const packVersions = apiPack.versions.sort((a, b) => b.id - a.id);

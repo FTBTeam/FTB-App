@@ -1,3 +1,88 @@
+<script lang="ts" setup>
+import {alertController} from '@/core/controllers/alertController';
+import {ReleaseChannelOptions} from '@/utils/commonOptions';
+import {computeAspectRatio, prettyByteFormat} from '@/utils';
+import UiToggle from '@/components/ui/UiToggle.vue';
+import RamSlider from '@/components/groups/modpack/components/RamSlider.vue';
+import {SettingsData} from '@/core/types/javaApi';
+import { Loader, UiButton, Selection2, Input, InputNumber } from '@/components/ui';
+import { useAppSettings } from '@/store/appSettingsStore.ts';
+import { computed, onMounted, ref } from 'vue';
+import { faCode, faUndo } from '@fortawesome/free-solid-svg-icons';
+import TextArea from '@/components/ui/form/TextArea/TextArea.vue';
+
+const appSettingsStore = useAppSettings();
+
+const localSettings = ref({} as SettingsData);
+const lastSettings = ref("")
+
+const loadedSettings = ref(false);
+
+const resolutionId = ref("");
+const usePresets = ref(false);
+
+onMounted(async () => {
+  await appSettingsStore.loadSettings();
+  loadedSettings.value = true;
+
+  // Make a copy of the settings so we don't mutate the vuex state
+  localSettings.value = { ...appSettingsStore.rootSettings } as SettingsData;
+  lastSettings.value = JSON.stringify(localSettings.value)
+
+  resolutionId.value = resolutionList.value
+    .find((e) => e.value === `${localSettings.value.instanceDefaults.width ?? ''}|${localSettings.value.instanceDefaults.height ?? ''}`)
+    ?.value ?? "";
+
+  if (resolutionId.value !== "") {
+    usePresets.value = true;
+  }
+})
+
+function saveMutated() {
+  // Compare the last settings to the current settings, if they are the same, don't save
+  if (lastSettings.value === JSON.stringify(localSettings.value)) {
+    return;
+  }
+
+  alertController.success("Settings saved")
+  appSettingsStore.saveSettings(localSettings.value);
+  lastSettings.value = JSON.stringify(localSettings.value)
+}
+
+function selectResolution(id: string) {
+  const selected = appSettingsStore.systemHardware?.supportedResolutions.find(e => `${e.width}|${e.height}` === id);
+  if (!selected) {
+    return;
+  }
+
+  localSettings.value.instanceDefaults.width = selected.width;
+  localSettings.value.instanceDefaults.height = selected.height;
+  saveMutated();
+}
+
+const resolutionList = computed(() => {
+  const resList = [];
+  resList.push({
+    value: "",
+    label: "Custom",
+    meta: "Custom"
+  });
+
+  for (const res of (appSettingsStore.systemHardware?.supportedResolutions ?? [])) {
+    resList.push({
+      value: `${res.width}|${res.height}`,
+      label: `${res.width} x ${res.height}`,
+      // Calculate the aspect ratio in the form of a 16:9 for example
+      meta: computeAspectRatio(res.width, res.height)
+    })
+  }
+
+  return resList;
+})
+
+const channelOptions = computed(() => ReleaseChannelOptions());
+</script>
+
 <template>
   <div class="instance-settings" v-if="localSettings.spec">
     <div class="mb-6">
@@ -52,14 +137,14 @@
               <b>Width</b>
               <small class="text-muted block mt-2">The Minecraft windows screen width</small>
             </div>
-            <ftb-input class="mb-0" v-model="localSettings.instanceDefaults.width" :value="localSettings.instanceDefaults.width" @blur="saveMutated" />
+            <InputNumber v-model="localSettings.instanceDefaults.width" @blur="saveMutated" />
           </div>
           <div class="flex items-center">
             <div class="block flex-1 mr-2">
               <b>Height</b>
               <small class="text-muted block mt-2">The Minecraft windows screen height</small>
             </div>
-            <ftb-input class="mb-0" v-model="localSettings.instanceDefaults.height" :value="localSettings.instanceDefaults.height" @blur="saveMutated" />
+            <InputNumber v-model="localSettings.instanceDefaults.height" @blur="saveMutated" />
           </div>
         </template>
       </div>
@@ -78,58 +163,54 @@
     <ram-slider class="mb-6" v-model="localSettings.instanceDefaults.memory" @change="saveMutated" />
 
     <div class="flex gap-4 flex-col mb-6">
-      <label class="block tracking-wide text-white-700 font-bold">
-        Java runtime arguments
-      </label>
-
-      <small class="text-muted block -mt-2 max-w-xl">
-        These arguments are appended to your instances upon start, they are normal java arguments. <em>New lines will be removed.</em>
-      </small>
-
-      <textarea
-        placeholder="-TestArgument=120"
+      <TextArea
+        label="Java runtime arguments"
+        class="mb-4"
+        hint="These arguments are appended to your instances upon start, they are normal java arguments. New lines will be removed."
         v-model="localSettings.instanceDefaults.javaArgs"
         @blur="() => {
-          // Remove all new lines and trim the string
-          localSettings.instanceDefaults.javaArgs = localSettings.instanceDefaults.javaArgs.trim().replaceAll(/(\r\n|\n|\r)/gm, '')
-          saveMutated()
-        }"
-        spellcheck="false"
-        rows="4"
-        class="flex-1 mb-0 appearance-none block w-full ftb-btn bg-input text-gray-400 border border-input py-3 px-4 focus:outline-none rounded resize-none break-normal font-mono"
+            // Remove all new lines and trim the string
+            localSettings.instanceDefaults.javaArgs = localSettings.instanceDefaults.javaArgs.trim().replaceAll(/(\r\n|\n|\r)/gm, '')
+            saveMutated()
+          }"
+        fill
+        :spellcheck="false"
+        :rows="4"
       />
 
       <div class="flex gap-4">
-        <ui-button size="small" icon="undo" @click="() => {
+        <UiButton size="small" :icon="faUndo" @click="() => {
             localSettings.instanceDefaults.javaArgs = '-XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=32M'
             saveMutated()
           }">
           Reset to Vanilla defaults
-        </ui-button>
+        </UiButton>
       </div>
     </div>
 
-    <ftb-input
+    <Input
+      class="mb-4"
+      :icon="faCode"
       label="Program arguments"
       :value="localSettings.instanceDefaults.programArgs"
       v-model="localSettings.instanceDefaults.programArgs"
       placeholder="--fullscreen"
       @blur="saveMutated"
+      fill
+      hint="These arguments are appended to the end of the java command, these are typically arguments Minecraft uses."
     />
-    <small class="text-muted block mb-6 max-w-xl">
-      These arguments are appended to the end of the java command, these are typically arguments Minecraft uses.
-    </small>
     
-    <ftb-input
+    <Input
+      class="mb-4"
+      :icon="faCode"
       label="Shell arguments"
       :value="localSettings.instanceDefaults.shellArgs"
       v-model="localSettings.instanceDefaults.shellArgs"
       placeholder="/usr/local/application-wrapper"
       @blur="saveMutated"
+      fill
+      hint="These arguments will be inserted before java is run, see the example below. It's recommended to not change these unless you know what you are doing."
     />
-    <small class="text-muted block mb-6 max-w-xl">
-      These arguments will be inserted before java is run, see the example below. It's recommended to not change these unless you know what you are doing.
-    </small>
     
     <p class="mb-2">Startup preview</p>
     <small class="mb-4 block">This is for illustrative purposes only, this is not a complete example.</small>
@@ -140,113 +221,6 @@
   </div>
   <Loader v-else />
 </template>
-
-<script lang="ts">
-import {Component, Vue} from 'vue-property-decorator';
-
-import {Action, State} from 'vuex-class';
-import {SettingsState} from '@/modules/settings/types';
-import {alertController} from '@/core/controllers/alertController';
-import Selection2 from '@/components/ui/Selection2.vue';
-import {ReleaseChannelOptions} from '@/utils/commonOptions';
-import {computeAspectRatio, prettyByteFormat} from '@/utils';
-import UiToggle from '@/components/ui/UiToggle.vue';
-import RamSlider from '@/components/groups/modpack/components/RamSlider.vue';
-import {SettingsData} from '@/core/@types/javaApi';
-import UiButton from '@/components/ui/UiButton.vue';
-import ProgressBar from '@/components/ui/ProgressBar.vue';
-import Loader from '@/components/ui/Loader.vue';
-import KeyValueEditor from '@/components/groups/modpack/components/KeyValueEditor.vue';
-
-@Component({
-  methods: {prettyByteFormat},
-  components: {
-    KeyValueEditor,
-    Loader,
-    ProgressBar,
-    UiButton,
-    RamSlider,
-    UiToggle,
-    Selection2
-  },
-})
-export default class InstanceSettings extends Vue {
-  @State('settings') public settingsState!: SettingsState;
-  @Action('saveSettings', { namespace: 'settings' }) public saveSettings: any;
-  @Action('loadSettings', { namespace: 'settings' }) public loadSettings: any;
-  
-  localSettings: SettingsData = {} as SettingsData;
-  lastSettings: string = ""
-
-  loadedSettings = false;
-
-  resolutionId = "";
-  usePresets = false;
-  
-  async created() {
-    await this.loadSettings();
-    this.loadedSettings = true;
-
-    // Make a copy of the settings so we don't mutate the vuex state
-    this.localSettings = { ...this.settingsState.settings };
-    this.lastSettings = JSON.stringify(this.localSettings)
-
-    this.resolutionId = this.resolutionList
-      .find((e) => e.value === `${this.localSettings.instanceDefaults.width ?? ''}|${this.localSettings.instanceDefaults.height ?? ''}`)
-      ?.value ?? "";
-    
-    if (this.resolutionId !== "") {
-      this.usePresets = true;
-    }
-  }
-  
-  saveMutated() {
-    // Compare the last settings to the current settings, if they are the same, don't save
-    if (this.lastSettings === JSON.stringify(this.localSettings)) {
-      return;
-    }
-    
-    alertController.success("Settings saved")
-    this.saveSettings(this.localSettings);
-    this.lastSettings = JSON.stringify(this.localSettings)
-  }
-  
-  selectResolution(id: string) {
-    const selected = this.settingsState.hardware.supportedResolutions.find(e => `${e.width}|${e.height}` === id);
-    if (!selected) {
-      return;
-    }
-    
-    this.localSettings.instanceDefaults.width = selected.width;
-    this.localSettings.instanceDefaults.height = selected.height;
-    this.saveMutated();
-  }
-
-  get resolutionList() {
-    const resList = [];
-    resList.push({
-      value: "",
-      label: "Custom",
-      meta: "Custom"
-    });
-
-    for (const res of this.settingsState.hardware.supportedResolutions) {
-      resList.push({
-        value: `${res.width}|${res.height}`,
-        label: `${res.width} x ${res.height}`,
-        // Calculate the aspect ratio in the form of a 16:9 for example
-        meta: computeAspectRatio(res.width, res.height)
-      })
-    }
-
-    return resList;
-  }
-  
-  get channelOptions() {
-    return ReleaseChannelOptions();
-  }
-}
-</script>
 
 <style scoped lang="scss">
 .flex-1 {

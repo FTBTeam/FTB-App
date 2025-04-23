@@ -1,3 +1,21 @@
+<script lang="ts" setup>
+type ProgressType = "primary" | "muted"
+
+const {
+  progress = 0,
+  infinite = false,
+  doProgressAnimation = true,
+  type = 'primary',
+  inverted = false,
+} = defineProps<{
+  progress?: number;
+  infinite?: boolean;
+  doProgressAnimation?: boolean;
+  type?: ProgressType;
+  inverted?: boolean;
+}>()
+</script>
+
 <template>
   <div class="progress" :class="{'infinite': infinite, 'animated': doProgressAnimation, [type]: true}">
     <div class="bar" :style="{
@@ -5,23 +23,6 @@
     }"></div>
   </div>
 </template>
-
-<script lang="ts">
-import {Component, Prop, Vue} from 'vue-property-decorator';
-
-type ProgressType = "primary" | "muted"
-
-@Component
-export default class ProgressBar extends Vue {
-  @Prop({ default: 0 }) progress!: number;
-  @Prop({ default: false }) infinite!: boolean;
-  
-  @Prop({default: true}) doProgressAnimation!: boolean;
-  
-  @Prop({default: 'primary'}) type!: ProgressType;
-  @Prop({default: false}) inverted!: boolean;
-}
-</script>
 
 <style lang="scss" scoped>
 .progress {

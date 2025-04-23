@@ -1,45 +1,43 @@
+<script lang="ts" setup>
+import {InstanceJson, SugaredInstanceJson} from '@/core/types/javaApi';
+import {typeIdToProvider} from '@/utils/helpers/packHelpers';
+import { ModPack } from '@/core/types/appTypes.ts';
+
+const {
+  packInstance,
+  packName,
+  isInstalled = false,
+  instance,
+} = defineProps<{
+  packInstance: ModPack | null;
+  packName: string;
+  isInstalled?: boolean;
+  instance?: SugaredInstanceJson | InstanceJson;
+}>()
+
+const provider = typeIdToProvider(packInstance?.id ?? 0);
+</script>
+
 <template>
   <div class="pack-info">
     <div class="info">
       <div class="name select-text">{{ packName }}</div>
       <div class="desc select-text" v-if="(!instance || !instance.isImport) && !isInstalled">
-        {{ packInstance.name }}
+        {{ packInstance?.name }}
         <template v-if="packInstance && packInstance.authors && packInstance.authors.length">
           by 
           <span v-if='provider === "modpacksch" && packInstance.tags.findIndex(e => e.name.toLowerCase() === "ftb") !== -1'>FTB Team</span>
           <span v-else v-for="(author, i) in packInstance.authors" :key="'athrs' + i">{{ author.name }}</span>
         </template>
         -
-        {{ packInstance.synopsis }}
+        {{ packInstance?.synopsis }}
       </div>
-      <div class="select-text pack-version text-xs px-4 py-1 rounded bg-transparent-black inline-block" v-if="instance && !instance.isImport">
+      <div class="select-text pack-version text-xs px-4 py-1 rounded bg-black/30 inline-block" v-if="instance && !instance.isImport">
         Version {{ instance.version }}
       </div>
     </div>
   </div>
 </template>
-
-<script lang="ts">
-import Vue from 'vue';
-import Component from 'vue-class-component';
-import {Prop} from 'vue-property-decorator';
-import {ModPack} from '@/modules/modpacks/types';
-import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
-import {typeIdToProvider} from '@/utils/helpers/packHelpers';
-
-@Component
-export default class PackTitleHeader extends Vue {
-  @Prop() packInstance?: ModPack | null;
-  @Prop() packName!: string;
-  @Prop({ default: false }) isInstalled!: boolean;
-
-  @Prop() instance!: SugaredInstanceJson | InstanceJson;
-  
-  get provider() {
-    return typeIdToProvider(this.packInstance?.id ?? 0);
-  }
-}
-</script>
 
 <style lang="scss" scoped>
 .pack-info {

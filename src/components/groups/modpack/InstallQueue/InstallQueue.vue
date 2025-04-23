@@ -1,69 +1,58 @@
+<script lang="ts" setup>
+import { computed, ref, useTemplateRef, watch } from 'vue';
+import { useAttachDomEvent } from '@/composables';
+import InstallQueueRow from '@/components/groups/modpack/InstallQueue/InstallQueueRow.vue';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { useInstallStore } from '@/store/installStore.ts';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+
+const installStore = useInstallStore();
+
+const open = ref(false)
+const rootElm = useTemplateRef("root");
+
+watch(() => installStore.currentInstall, () => {
+  if (installStore.installQueue?.length === 0 && installStore.currentInstall) {
+    open.value = true;
+  }
+})
+
+useAttachDomEvent<MouseEvent>('click', close);
+
+function close(event: MouseEvent) {
+  if (!rootElm.value?.contains(event.target as any)) {
+    open.value = false;
+  }
+}
+
+const onlyQueue = computed(() => {
+  return installStore.installQueue.filter(e => e.uuid !== installStore.currentInstall?.request.uuid)
+})
+</script>
+
 <template>
   <transition name="transition-fade">
-    <div class="app-install" v-if="currentInstall || installQueue.length > 0">
+    <div class="app-install" v-if="installStore.currentInstall || installStore.installQueue.length > 0" ref="root">
       <div class="btn flex gap-2 items-center bg-green-500" @click="open = !open">
-        <font-awesome-icon icon="circle-notch" spin />
+        <FontAwesomeIcon :icon="faCircleNotch" spin />
         Downloading
       </div>
 
       <transition name="transition-fade-and-up">
         <div class="dropdown" v-if="open">
-          <div class="group" v-if="currentInstall">
+          <div class="group" v-if="installStore.currentInstall">
             <div class="name">Installing</div>
-            <install-queue-row class="row" :item="currentInstall" :is-install="true" />
+            <InstallQueueRow class="row" :item="installStore.currentInstall" :is-install="true" />
           </div>
           <div class="group" v-if="onlyQueue.length > 0">
             <div class="name">Queue</div>
-            <install-queue-row class="row" v-for="(item, index) in onlyQueue" :key="index" :is-next="index === 0" :item="item" :is-install="false" />
+            <InstallQueueRow class="row" v-for="(item, index) in onlyQueue" :key="index" :is-next="index === 0" :item="item" :is-install="false" />
           </div>
         </div>
       </transition>
     </div>
   </transition>
 </template>
-
-<script lang="ts">
-import {Component, Vue, Watch} from 'vue-property-decorator';
-import {Getter} from 'vuex-class';
-import {ns} from '@/core/state/appState';
-import {InstallRequest, InstallStatus} from '@/core/controllers/InstanceInstallController';
-import InstallQueueRow from '@/components/groups/modpack/InstallQueue/InstallQueueRow.vue';
-
-@Component({
-  components: {InstallQueueRow}
-})
-export default class InstallQueue extends Vue {
-  @Getter("currentInstall", ns("v2/install")) currentInstall!: InstallStatus | null;
-  @Getter("installQueue", ns("v2/install")) installQueue!: InstallRequest[];
-  
-  open = false;
-  
-  @Watch('currentInstall')
-  onCurrentInstallChanged() {
-    if (this.installQueue.length === 0 && this.currentInstall) {
-      this.open = true;
-    }
-  }
-  
-  mounted() {
-    document.addEventListener('click', this.close);
-  }
-  
-  destroyed() {
-  document.removeEventListener('click', this.close);
-  }
-  
-  close(event: any) {
-    if (!this.$el.contains(event.target as any)) {
-      this.open = false;
-    }
-  }
-  
-  get onlyQueue() {
-    return this.installQueue.filter(e => e.uuid !== this.currentInstall?.request.uuid)
-  }
-}
-</script>
 
 <style lang="scss" scoped>
 .group {

@@ -1,28 +1,61 @@
+<script lang="ts" setup>
+import Changelog from '@/components/groups/changelogs/Changelog.vue';
+import Dialogs from '@/components/groups/global/Dialogs.vue';
+import Alerts from '@/components/groups/global/Alerts.vue';
+import {gobbleError} from '@/utils/helpers/asyncHelpers';
+import {sendMessage} from '@/core/websockets/websocketsApi';
+import UiButton from '@/components/ui/UiButton.vue';
+import DevToolsActions from '@/components/layout/DevToolsActions.vue';
+import ContentMenuGlobal from '@/components/groups/global/contextMenu/ContentMenuGlobal.vue';
+import LoginModal from '@/components/groups/auth/LoginModal.vue';
+import LaunchInstanceDialog from '@/components/modals/LaunchInstanceDialog.vue';
+import { Modal, ModalBody, ModalFooter } from '@/components/ui';
+import { useAccountsStore } from '@/store/accountsStore.ts';
+import { useModalStore } from '@/store/modalStore.ts';
+import { ModalButton } from '@/core/types/javaApi';
+
+const modalStore = useModalStore();
+const accountStore = useAccountsStore();
+
+function modalFeedback(button: ModalButton) {
+  gobbleError(async () => {
+    if (!modalStore.modal) {
+      return;
+    }
+
+    await sendMessage("modalCallback", {
+      id: modalStore.modal.id,
+      message: button.message
+    })
+  })
+}
+</script>
+
 <template>
   <div class="global-components">
     <content-menu-global />
     
-    <modal 
-      v-if="modal" 
-      :open="!!modal"
-      @closed="hideModal" 
+    <Modal 
+      v-if="modalStore.modal" 
+      :open="!!modalStore.modal"
+      @closed="() => modalStore.closeModal()" 
       :external-contents="true"
-      :title="modal.title"
+      :title="modalStore.modal.title"
       style="z-index: 50000"
     >
-      <modal-body>
-        <div class="break-all overflow-auto" v-html="modal.message" />
-      </modal-body>
-      <modal-footer>
+      <ModalBody>
+        <div class="break-all overflow-auto" v-html="modalStore.modal.message" />
+      </ModalBody>
+      <ModalFooter>
         <div class="flex justify-end gap-4">
-          <ui-button v-for="(button, index) in modal.buttons" :key="index" @click="modalFeedback(button)" :type="button.type">
+          <UiButton v-for="(button, index) in modalStore.modal.buttons" :key="index" @click="modalFeedback(button)" :type="button.type as any">
             {{ button.name }}            
-          </ui-button>
+          </UiButton>
         </div>
-      </modal-footer>
-    </modal>
-        
-    <LoginModal :open="getSignInOpened" @closed="() => closeSignIn()" />
+      </ModalFooter>
+    </Modal>
+    
+    <LoginModal :open="accountStore.signInOpen" @closed="() => accountStore.openSignIn(false)" />
 
     <!-- Only checks for an update once during startup -->
     <changelog />
@@ -33,56 +66,6 @@
     <dev-tools-actions />
   </div>
 </template>
-
-<script lang="ts">
-import Vue from 'vue';
-import Component from 'vue-class-component';
-import {Action, Getter, State} from 'vuex-class';
-import Changelog from '@/components/groups/changelogs/Changelog.vue';
-import Dialogs from '@/components/groups/global/Dialogs.vue';
-import Alerts from '@/components/groups/global/Alerts.vue';
-import {SocketState} from '@/modules/websocket/types';
-import {gobbleError} from '@/utils/helpers/asyncHelpers';
-import {sendMessage} from '@/core/websockets/websocketsApi';
-import UiButton from '@/components/ui/UiButton.vue';
-import {ModalButton, OpenModalData} from '@/core/@types/javaApi';
-import DevToolsActions from '@/components/layout/DevToolsActions.vue';
-import ContentMenuGlobal from '@/components/groups/global/contextMenu/ContentMenuGlobal.vue';
-import LoginModal from '@/components/groups/auth/LoginModal.vue';
-import LaunchInstanceDialog from '@/components/modals/LaunchInstanceDialog.vue';
-
-@Component({
-  components: {
-    LaunchInstanceDialog,
-    LoginModal,
-    ContentMenuGlobal,
-    DevToolsActions,
-    UiButton,
-    Alerts,
-    Dialogs,
-    Changelog
-  },
-})
-export default class GlobalComponents extends Vue {
-  @Action('hideModal') hideModal: any;
-
-  @Getter('getSignInOpened', { namespace: 'core' }) getSignInOpened: any;
-  @Action('closeSignIn', { namespace: 'core' }) closeSignIn: any;
-  
-  @State('websocket') websocket?: SocketState;
-  
-  get modal() {
-    return this.websocket?.modal as OpenModalData | null | undefined;
-  }
-
-  public modalFeedback(button: ModalButton) {
-    gobbleError(() => sendMessage("modalCallback", {
-      id: this.modal?.id ?? "",
-      message: button.message
-    }))
-  }
-}
-</script>
 
 <style lang="scss" scoped>
 .alerts {

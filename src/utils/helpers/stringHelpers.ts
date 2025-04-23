@@ -74,5 +74,5 @@ export function stringIsEmpty(str: string | undefined | null) {
 }
 
 export function stringOrDefault(str: string | undefined | null, defaultStr: string) {
-  return stringIsEmpty(str) ? defaultStr : str;
+  return stringIsEmpty(str) ? defaultStr : str!;
 }

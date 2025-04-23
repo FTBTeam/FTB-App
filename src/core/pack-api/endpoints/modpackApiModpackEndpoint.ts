@@ -1,6 +1,6 @@
 import {ApiEndpoint} from '@/core/pack-api/endpoints/apiEndpoint';
 import {StatusResult} from '@/core/pack-api/modpackApi';
-import {ModPack, ModpackVersion, PackProviders} from '@/modules/modpacks/types';
+import { ModPack, ModpackVersion, PackProviders } from '@/core/types/appTypes.ts';
 
 type PackIdList = {
   packs: number[];

@@ -1,3 +1,160 @@
+<script lang="ts" setup>
+import appPlatform from '@platform';
+import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
+import {sendMessage} from '@/core/websockets/websocketsApi';
+import {alertController} from '@/core/controllers/alertController';
+import {InstanceActions} from '@/core/actions/instanceActions';
+import {MoveInstancesHandlerReply, OperationProgressUpdateData, SettingsData} from '@/core/types/javaApi';
+import { ProgressBar, Loader, Modal, UiToggle, UiButton, Input } from '@/components/ui';
+import {dialogsController} from '@/core/controllers/dialogsController';
+import {toTitleCase} from '@/utils/helpers/stringHelpers';
+import {createLogger} from '@/core/logger';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { onMounted, ref } from 'vue';
+import { useAppSettings } from '@/store/appSettingsStore.ts';
+import { faCheck, faCopy, faFileZipper, faFolderOpen, faSync } from '@fortawesome/free-solid-svg-icons';
+import { faGithub } from '@fortawesome/free-brands-svg-icons';
+import { useAppStore } from '@/store/appStore.ts';
+
+const appSettingsStore = useAppSettings();
+const appStore = useAppStore();
+
+const logger = createLogger("AppSettings.vue");
+const localSettings = ref<SettingsData>({} as SettingsData);
+
+const working = ref(false);
+const uploadingLogs = ref(false);
+
+const instanceMoveModalShow = ref(false);
+const instanceMoveModalStage = ref("Preparing");
+const instanceMoveModalComplete = ref(false);
+const instanceMoveLocations = ref({old: "", new: ""});
+
+onMounted(async () => {
+  await appSettingsStore.loadSettings()
+  // Make a copy of the settings so we don't mutate the vuex state
+  localSettings.value = { ...appSettingsStore.rootSettings } as any; // TODO: Fix typings
+})
+
+function exitOverwolf(value: boolean): void {
+  localSettings.value.general.exitOverwolf = value;
+  appSettingsStore.saveSettings(localSettings.value);
+  appPlatform.actions.changeExitOverwolfSetting(value);
+}
+
+function openFolder(location: string) {
+  switch (location) {
+    case 'home':
+      toggleBeforeAndAfter(() => appPlatform.io.openFinder(appPlatform.io.appHome()), state => working.value = state)
+      break;
+    case 'instances':
+      toggleBeforeAndAfter(() => appPlatform.io.openFinder(localSettings.value.instanceLocation), state => working.value = state)
+      break;
+    case 'logs':
+      toggleBeforeAndAfter(() => appPlatform.io.openFinder(appPlatform.io.pathJoin(appPlatform.io.appHome(), 'logs')), state => working.value = state)
+      break;
+    default:
+      toggleBeforeAndAfter(() => appPlatform.io.openFinder(location), state => working.value = state)
+      break;
+  }
+}
+
+async function uploadLogData() {
+  uploadingLogs.value = true;
+
+  try {
+    const result = await sendMessage("uploadLogs", {})
+    if (result.path) {
+      await appPlatform.io.openFinder(result.path)
+      alertController.success('Logs saved to ' + result.path)
+    } else {
+      alertController.error('Failed to generate logs, Please let us know in our Discord / Github')
+    }
+  } catch (e) {
+    logger.error("Failed to generate logs", e)
+    alertController.error('Failed to generate logs, Please let us know in our Discord / Github')
+  }
+}
+
+async function refreshCachePlz() {
+  await InstanceActions.clearInstanceCache()
+}
+
+const configData = appPlatform.config
+
+async function moveInstances() {
+  const location: string | null = await new Promise(resolve => {
+    appPlatform.io.selectFolderDialog(localSettings.value.instanceLocation, (path) => {
+      if (path == null) {
+        return;
+      }
+
+      resolve(path);
+    });
+  })
+
+  if (!location) {
+    return;
+  }
+
+  if (!(await dialogsController.createConfirmationDialog("Are you sure?", `This will move all your instances\n\nFrom \`${localSettings.value.instanceLocation}\`\n\nTo \`${location}\`\n\nthis may take a while.`))) {
+    return;
+  }
+
+  const result = await sendMessage("moveInstances", {
+    newLocation: location
+  })
+
+  if (result.state === "error") {
+    return alertController.error(result.error);
+  }
+
+  if (result.state === "processing") {
+    instanceMoveModalShow.value = true;
+    instanceMoveModalStage.value = "Preparing";
+    instanceMoveModalComplete.value = false;
+    instanceMoveLocations.value = {
+      old: localSettings.value.instanceLocation,
+      new: location
+    }
+  }
+
+  const migrationResult = await new Promise((res) => {
+    const onMoveProgress = (data: any) => {
+      if (data.type !== "operationUpdate" && data.type !== "moveInstancesReply") return;
+      if (data.type === "operationUpdate") {
+        const typedData = data as OperationProgressUpdateData;
+        if (typedData.stage === "FINISHED") {
+          // It's done
+        } else {
+          instanceMoveModalStage.value = toTitleCase(typedData.stage.toString().replace("_", " "));
+        }
+      } else {
+        const typedData = data as MoveInstancesHandlerReply;
+        if (typedData.state !== "success") {
+          // It's broken
+          instanceMoveModalShow.value = false;
+          alertController.error(typedData.error);
+          appStore.emitter.off("ws/message", onMoveProgress);
+          res(false);
+        } else {
+          instanceMoveModalComplete.value = true;
+          appStore.emitter.off("ws/message", onMoveProgress);
+          res(true);
+        }
+      }
+    }
+
+    appStore.emitter.on("ws/message", onMoveProgress);
+  })
+
+  if (migrationResult) {
+    localSettings.value.instanceLocation = location;
+    await InstanceActions.clearInstanceCache(false)
+  }
+}
+</script>
+
 <template>
   <div class="app-settings" v-if="localSettings.spec">
     <div class="app-info-section mb-8">
@@ -5,17 +162,17 @@
         <div class="title-value mr-10">
           <div class="title text-muted mb-1">App Version</div>
           <div class="value">
-            <span class="select-text">{{ configData.version }}</span>
+            <span class="select-text">{{ configData?.version }}</span>
             <div class="copy-me inline-block" aria-label="Click to copy" data-balloon-pos="up">
-              <font-awesome-icon
-                @click="copyToClipboard(configData.version)"
+              <FontAwesomeIcon
+                @click="appPlatform.cb.copy(configData?.version)"
                 class="ml-2 cursor-pointer"
-                icon="copy"
+                :icon="faCopy"
                 size="1x"
               />
             </div>
             <a class="cursor-pointer hover:underline" href="https://go.ftb.team/app-feedback" target="_blank"
-            ><font-awesome-icon class="ml-2 cursor-pointer" :icon="['fab', 'github']" size="1x"
+            ><FontAwesomeIcon class="ml-2 cursor-pointer" :icon="faGithub" size="1x"
             /></a>
           </div>
         </div>
@@ -25,45 +182,23 @@
       >Software License Information</router-link
       >
     </div>
-
-    <!-- <ftb-toggle label="Enable Analytics: " :value="settingsCopy.enableAnalytics" @change="enableAnalytics"
-                    onColor="bg-primary"/> -->
-    <!--    <ui-toggle-->
-    <!--      label="Use the beta channel"-->
-    <!--      desc="This allows you to opt-in to the beta channel of the FTB App, this version is typically less stable than the normal release channel."-->
-    <!--      :value="localSettings.enablePreview"-->
-    <!--      @input="enablePreview"-->
-    <!--      class="mb-8"-->
-    <!--    />-->
-    <!--    -->
+    
     <ui-toggle
-      v-if="!platform.isElectron()"
+      v-if="!appPlatform.isElectron"
       label="Close Overwolf on Exit"
       desc="If enabled, we'll automatically close the Overwolf app when you exit the FTB App, can be useful if you don't use Overwolf."
       :value="localSettings.general.exitOverwolf"
       @input="exitOverwolf"
       class="mb-8"
     />
-
-    <p class="block text-white-700 text-lg font-bold mb-4" v-if="platform.isElectron()">Appearance</p>
-
-    <ui-toggle
-      v-if="platform.isElectron()"
-      label="Use systems window style"
-      desc="Instead of using the apps internal Titlebar, we'll use the system's titlebar instead. This setting will restart the app!"
-      v-model="localSettings.appearance.useSystemWindowStyle"
-      @input="toggleSystemStyleWindow"
-      class="mb-8"
-    />
-
-
+    
     <p class="block text-white-700 text-lg font-bold mb-4">Actions</p>
 
     <p class="block text-white-700 font-bold mb-4">Common Folders</p>
     <div class="flex items-center gap-4 mb-6">
-      <ui-button size="small" type="info" icon="folder-open" @click="openFolder('home')" :working="working">Home</ui-button>
-      <ui-button size="small" type="info" icon="folder-open" @click="openFolder('instances')" :working="working">Instances</ui-button>
-      <ui-button size="small" type="info" icon="folder-open" @click="openFolder('logs')" :working="working">Logs</ui-button>
+      <UiButton size="small" type="info" :icon="faFolderOpen" @click="openFolder('home')" :working="working">Home</UiButton>
+      <UiButton size="small" type="info" :icon="faFolderOpen" @click="openFolder('instances')" :working="working">Instances</UiButton>
+      <UiButton size="small" type="info" :icon="faFolderOpen" @click="openFolder('logs')" :working="working">Logs</UiButton>
     </div>
 
     <div class="section logs mb-6 sm:flex items-center">
@@ -74,7 +209,7 @@
           provide these logs to our App team to investigate.
         </p>
       </div>
-      <ui-button :working="uploadingLogs" size="small" class="mt-6 sm:mt-0 my-2 w-2/7" type="info" @click="uploadLogData" icon="file-zipper">Create App Logs ZIP</ui-button>
+      <ui-button :working="uploadingLogs" size="small" class="mt-6 sm:mt-0 my-2 w-2/7" type="info" @click="uploadLogData" :icon="faFileZipper">Create App Logs ZIP</ui-button>
     </div>
 
     <div class="section cache mb-6 sm:flex items-center">
@@ -85,25 +220,27 @@
           the cache, it'll make sure you're running the latest version of all available data.
         </p>
       </div>
-      <ui-button size="small" class="mt-6 sm:mt-0 my-2 w-2/7" type="info" @click="refreshCachePlz" icon="sync">Refresh Cache</ui-button>
+      <ui-button size="small" class="mt-6 sm:mt-0 my-2 w-2/7" type="info" @click="refreshCachePlz" :icon="faSync">Refresh Cache</ui-button>
+    </div>
+    
+    <p class="block text-white-700 text-lg font-bold mb-4 mt-6">Misc</p>
+    <div class="flex gap-4">
+      <Input
+        class="flex-1"
+        label="Relocate instances"
+        v-model="localSettings.instanceLocation"
+        :disabled="true"
+        fill
+        hint="Changing your instance location with instances installed will cause your instances to be moved to the new
+      location automatically."
+      />
+      <UiButton @click="moveInstances">
+        <FontAwesomeIcon :icon="faFolderOpen" class="mr-2" />
+        <span>Browse</span>
+      </UiButton>
     </div>
 
-    <p class="block text-white-700 text-lg font-bold mb-4 mt-6">Misc</p>
-    <ftb-input
-      label="Relocate instances"
-      :value="localSettings.instanceLocation + ' (Current)'"
-      :disabled="true"
-      button="true"
-      buttonText="Relocate / Move"
-      buttonColor="primary"
-      :buttonClick="moveInstances"
-    />
-    <small class="text-muted block max-w-xl"
-    >Changing your instance location with instances installed will cause your instances to be moved to the new
-      location automatically.</small
-    >
-
-    <modal :open="instanceMoveModalShow" title="Moving instances" :close-on-background-click="false" :has-closer="false">
+    <Modal :open="instanceMoveModalShow" title="Moving instances" :close-on-background-click="false" :has-closer="false">
       <template v-if="!instanceMoveModalComplete">
         <div class="wysiwyg mb-6">
           <p>This may take a while, please wait.</p>
@@ -121,205 +258,13 @@
 
       <template #footer v-if="instanceMoveModalComplete">
         <div class="flex justify-end">
-          <ui-button @click="instanceMoveModalShow = false" type="success" icon="check">Done</ui-button>
+          <ui-button @click="instanceMoveModalShow = false" type="success" :icon="faCheck">Done</ui-button>
         </div>
       </template>
-    </modal>
+    </Modal>
   </div>
   <Loader v-else />
 </template>
-
-<script lang="ts">
-import {Component, Vue} from 'vue-property-decorator';
-import {SettingsState} from '@/modules/settings/types';
-import {Action, State} from 'vuex-class';
-import platform from '@/utils/interface/electron-overwolf';
-import UiToggle from '@/components/ui/UiToggle.vue';
-import UiButton from '@/components/ui/UiButton.vue';
-import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
-import {sendMessage} from '@/core/websockets/websocketsApi';
-import {alertController} from '@/core/controllers/alertController';
-import {InstanceActions} from '@/core/actions/instanceActions';
-import {MoveInstancesHandlerReply, OperationProgressUpdateData, SettingsData} from '@/core/@types/javaApi';
-import Loader from '@/components/ui/Loader.vue';
-import ProgressBar from '@/components/ui/ProgressBar.vue';
-import {dialogsController} from '@/core/controllers/dialogsController';
-import {toTitleCase} from '@/utils/helpers/stringHelpers';
-import {emitter} from '@/utils';
-import {createLogger} from '@/core/logger';
-
-@Component({
-  components: {
-    ProgressBar,
-    Loader,
-    UiButton,
-    UiToggle,
-  },
-})
-export default class AppSettings extends Vue {
-  @State('settings') settingsState!: SettingsState;
-  @Action('saveSettings', { namespace: 'settings' }) saveSettings: any;
-  @Action('loadSettings', { namespace: 'settings' }) loadSettings: any;
-
-  private logger = createLogger("Blog.vue");
-  
-  platform = platform;
-  localSettings: SettingsData = {} as SettingsData;
-
-  working = false;
-  uploadingLogs = false;
-
-  instanceMoveModalShow = false;
-  instanceMoveModalStage = "Preparing";
-  instanceMoveModalComplete = false;
-  instanceMoveLocations = {old: "", new: ""};
-
-  async created() {
-    await this.loadSettings();
-
-    // Make a copy of the settings so we don't mutate the vuex state
-    this.localSettings = { ...this.settingsState.settings };
-  }
-
-  // enablePreview(value: boolean): void {
-  //   this.localSettings.enablePreview = value;
-  //   this.saveSettings(this.localSettings);
-  // }
-
-  exitOverwolf(value: boolean): void {
-    this.localSettings.general.exitOverwolf = value;
-    this.saveSettings(this.localSettings);
-    platform.get.actions.changeExitOverwolfSetting(value);
-  }
-
-  toggleSystemStyleWindow(value: boolean): void {
-    this.localSettings.appearance.useSystemWindowStyle = value;
-    this.saveSettings(this.localSettings);
-
-    platform.get.frame.setSystemWindowStyle(value);
-  }
-
-  openFolder(location: string) {
-    switch (location) {
-      case 'home':
-        toggleBeforeAndAfter(() => platform.get.io.openFinder(platform.get.io.appHome()), state => this.working = state)
-        break;
-      case 'instances':
-        toggleBeforeAndAfter(() => platform.get.io.openFinder(this.localSettings.instanceLocation), state => this.working = state)
-        break;
-      case 'logs':
-        toggleBeforeAndAfter(() => platform.get.io.openFinder(platform.get.io.pathJoin(platform.get.io.appHome(), 'logs')), state => this.working = state)
-        break;
-      default:
-        toggleBeforeAndAfter(() => platform.get.io.openFinder(location), state => this.working = state)
-        break;
-    }
-  }
-
-  public async uploadLogData() {
-    this.uploadingLogs = true;
-    try {
-      const result = await sendMessage("uploadLogs", {})
-      if (result.path) {
-        await platform.get.io.openFinder(result.path)
-        alertController.success('Logs saved to ' + result.path)
-      } else {
-        alertController.error('Failed to generate logs, Please let us know in our Discord / Github')
-      }
-    } catch (e) {
-      this.logger.error("Failed to generate logs", e)
-      alertController.error('Failed to generate logs, Please let us know in our Discord / Github')
-    }
-
-    this.uploadingLogs = false;
-  }
-
-  public async refreshCachePlz() {
-    await InstanceActions.clearInstanceCache()
-  }
-
-  public enableVerbose(value: boolean): void {
-    this.localSettings.general.verbose = value;
-    this.saveSettings(this.localSettings);
-  }
-
-  get configData() {
-    return platform.get.config
-  }
-
-  async moveInstances() {
-    const location: string | null = await new Promise(resolve => {
-      platform.get.io.selectFolderDialog(this.localSettings.instanceLocation, (path) => {
-        if (path == null) {
-          return;
-        }
-
-        resolve(path);
-      });
-    })
-
-    if (!location) {
-      return;
-    }
-
-    if (!(await dialogsController.createConfirmationDialog("Are you sure?", `This will move all your instances\n\nFrom \`${this.localSettings.instanceLocation}\`\n\nTo \`${location}\`\n\nthis may take a while.`))) {
-      return;
-    }
-
-    const result = await sendMessage("moveInstances", {
-      newLocation: location
-    })
-
-    if (result.state === "error") {
-      return alertController.error(result.error);
-    }
-
-    if (result.state === "processing") {
-      this.instanceMoveModalShow = true;
-      this.instanceMoveModalStage = "Preparing";
-      this.instanceMoveModalComplete = false;
-      this.instanceMoveLocations = {
-        old: this.localSettings.instanceLocation,
-        new: location
-      }
-    }
-
-    const migrationResult = await new Promise((res) => {
-      const onMoveProgress = (data: any) => {
-        if (data.type !== "operationUpdate" && data.type !== "moveInstancesReply") return;
-        if (data.type === "operationUpdate") {
-          const typedData = data as OperationProgressUpdateData;
-          if (typedData.stage === "FINISHED") {
-            // It's done
-          } else {
-            this.instanceMoveModalStage = toTitleCase(typedData.stage.toString().replaceAll("_", " "));
-          }
-        } else {
-          const typedData = data as MoveInstancesHandlerReply;
-          if (typedData.state !== "success") {
-            // It's broken
-            this.instanceMoveModalShow = false;
-            alertController.error(typedData.error);
-            emitter.off("ws.message", onMoveProgress);
-            res(false);
-          } else {
-            this.instanceMoveModalComplete = true;
-            emitter.off("ws.message", onMoveProgress);
-            res(true);
-          }
-        }
-      }
-
-      emitter.on("ws.message", onMoveProgress);
-    })
-
-    if (migrationResult) {
-      this.localSettings.instanceLocation = location;
-      await InstanceActions.clearInstanceCache(false)
-    }
-  }
-}
-</script>
 
 <style scoped lang="scss">
 .app-info-section {

@@ -1,4 +1,4 @@
-import {JavaLicenses, JavascriptLicenses} from '@/core/@types/external/licenses.types';
+import {JavaLicenses, JavascriptLicenses} from '@/core/types/external/licenses.types';
 
 /**
  * This isn't my final form, I should be more unified and less hacky on some of
@@ -6,10 +6,8 @@ import {JavaLicenses, JavascriptLicenses} from '@/core/@types/external/licenses.
  * methods. Not super ideal. Working for now
  */
 export interface Util {
-  /**
-   * @deprecated don't use
-   */
-  getOsArch: () => string;
+  getOsArch: () => Promise<string>;
+  getOsType: () => Promise<string>;
   getPlatformVersion: () => Promise<string>;
   openUrl: (e: string) => void;
   crypto: {
@@ -19,8 +17,6 @@ export interface Util {
 }
 
 export interface Actions {
-  openModpack: (payload: { name: string; id: string }) => void;
-  openFriends: () => void;
   uploadClientLogs: () => void;
 
   // Res only used on overwolf
@@ -32,7 +28,6 @@ export interface Actions {
 
 export interface CB {
   copy: (e: string) => void;
-  paste: () => string;
 }
 
 export interface Frame {
@@ -40,11 +35,7 @@ export interface Frame {
   min: (windowId: any) => void;
   max: (windowId: any) => void;
   quit: () => void;
-
-  expandWindow: () => void;
-  collapseWindow: () => void;
-
-  
+    
   // Overwolf specific
   getWindowId: () => Promise<string>;
   handleDrag: (event: any, windowId: any) => void;
@@ -65,17 +56,13 @@ export interface InputOutput {
   openFinder(path: string): Promise<boolean>;
   pathJoin(...paths: string[]) : string;
   
-  getLocalAppData: () => string;
   appHome: () => string;
 }
 
 export interface App {
   appData(): Promise<string>;
   appSettings(): Promise<any | null>;
-  appRuntimes(): Promise<string>;
-  runtimeAvailable(): Promise<boolean>;
-  installApp(onStageChange: (stage: string) => void, onUpdate: (data: any) => void, isUpdate: boolean): Promise<void>;
-  updateApp(onStageChange: (stage: string) => void, onUpdate: (data: any) => void): Promise<void>;
+  
   startSubprocess(): Promise<{ 
     port: number;
     secret: string;
@@ -105,5 +92,7 @@ export default interface ElectronOverwolfInterface {
   config: Config;
   io: InputOutput;
   app: App;
-  setupApp: (vm: any) => void;
+  setupApp: () => void;
+  isElectron: boolean;
+  isOverwolf: boolean;
 }

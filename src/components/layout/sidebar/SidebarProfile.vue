@@ -1,9 +1,77 @@
+<script lang="ts" setup>
+import {sendMessage} from '@/core/websockets/websocketsApi';
+import {getMinecraftHead} from '@/utils/helpers/mcsHelpers';
+import {createLogger} from '@/core/logger';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import Popover from '@/components/ui/Popover.vue';
+import {ref} from 'vue';
+import { useAccountsStore } from '@/store/accountsStore.ts';
+import { AuthProfile } from '@/core/types/appTypes.ts';
+import { faEdit, faPlus, faQuestion, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+
+const accountsStore = useAccountsStore();
+
+const { disabled = false } = defineProps<{
+  disabled?: boolean
+}>()
+
+const editMode = ref(false);
+const loading = ref(false);
+
+const logger = createLogger("SidebarProfile.vue")
+
+async function removeProfile(profile: AuthProfile) {
+  loading.value = true;
+
+  try {
+    logger.debug(`Removing profile ${profile.uuid}`)
+    const data = await sendMessage("profiles.remove", {
+      uuid: profile.uuid
+    })
+
+    if (data.success) {
+      await accountsStore.loadProfiles()
+    } else {
+      logger.debug('Failed to remove profile');
+    }
+  } catch (error) {
+    logger.debug('Failed to remove profile due to message errors', error);
+  }
+
+  loading.value = false;
+}
+
+async function setActiveProfile(profile: AuthProfile) {
+  loading.value = true;
+  try {
+    logger.debug(`Setting active profile ${profile.uuid}`)
+    const data = await sendMessage("profiles.setActiveProfile", {
+      uuid: profile.uuid
+    })
+
+    if (data.success) {
+      await accountsStore.loadProfiles()
+    } else {
+      logger.debug('Failed to set active profile');
+    }
+  } catch (error) {
+    logger.debug('Failed to set active profile due to message errors', error);
+  }
+
+  loading.value = false;
+}
+
+function openSignIn() {
+  accountsStore.openSignIn(true);
+}
+</script>
+
 <template>
-  <div class="profile-area" :class="{ disable }">
-    <div class="profile" v-if="(getProfiles && getProfiles.length)">
+  <div class="profile-area" :class="{ disabled }">
+    <div class="profile" v-if="(accountsStore.mcProfiles && accountsStore.mcProfiles.length)">
       <div class="avatar">
         <img
-          :src="getMinecraftHead(getActiveProfile ? getActiveProfile.uuid : null)"
+          :src="getMinecraftHead(accountsStore.mcActiveProfile?.uuid ?? null)"
           alt="Profile"
           class="rounded"
           width="35"
@@ -11,25 +79,25 @@
         />
       </div>
 
-      <div class="profile-switch" v-show="!disable">
+      <div class="profile-switch" v-show="!disabled">
         <section>
           <div class="headings">
             <div class="main">
               <img src="@/assets/images/minecraft.webp" alt="Minecraft grass block" />
               Accounts
             </div>
-            <font-awesome-icon
+            <FontAwesomeIcon
               class="cursor-pointer"
-              v-if="getProfiles.length"
-              :icon="editMode ? 'times' : 'edit'"
+              v-if="accountsStore.mcProfiles.length"
+              :icon="editMode ? faTimes : faEdit"
               @click="editMode = !editMode"
             />
           </div>
-          <div class="accounts" v-if="getProfiles && getProfiles.length">
+          <div class="accounts" v-if="accountsStore.mcProfiles && accountsStore.mcProfiles.length">
             <div
               class="account hoverable"
-              :class="{ loading, active: getActiveProfile.uuid === item.uuid }"
-              v-for="(item, key) in getProfiles"
+              :class="{ loading, active: accountsStore.mcActiveProfile?.uuid === item.uuid }"
+              v-for="(item, key) in accountsStore.mcProfiles"
               :key="key"
               @click="() => setActiveProfile(item)"
             >
@@ -39,104 +107,34 @@
               <div class="name selectable">
                 <div class="username-container" :title="`${item.username} - Click to set as active profile`">
                   <div class="username">{{ item.username }}</div>
-                  <span class="opacity-50" v-if="getActiveProfile.uuid === item.uuid">(active)</span>
+                  <span class="opacity-50" v-if="accountsStore.mcActiveProfile?.uuid === item.uuid">(active)</span>
                 </div>
                 <div
                   class="trash bg-red-500 hover:bg-red-600 transition-colors"
                   :class="{ active: editMode }"
                   @click.stop="() => removeProfile(item)"
                 >
-                  <font-awesome-icon icon="trash" />
+                  <FontAwesomeIcon :icon="faTrash" />
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="add-new" @click="openSignIn()">
-            <div class="add-button px-4 py-2"><font-awesome-icon icon="plus" /> Add account</div>
+          <div class="add-new" @click="() => openSignIn()">
+            <div class="add-button px-4 py-2"><FontAwesomeIcon :icon="faPlus" /> Add account</div>
           </div>
         </section>
       </div>
     </div>
-    <popover text="Sign in to your Minecraft account" v-else>
-      <div class="profile-placeholder" @click="$emit('signin')">
+    <Popover text="Sign in to your Minecraft account" v-else>
+      <div class="profile-placeholder" @click="() => openSignIn()">
         <div class="fake-avatar">
-          <font-awesome-icon icon="question" />
+          <FontAwesomeIcon :icon="faQuestion" />
         </div>
       </div>
-    </popover>
+    </Popover>
   </div>
 </template>
-
-<script lang="ts">
-import Vue from 'vue';
-import Component from 'vue-class-component';
-import {Action, Getter} from 'vuex-class';
-import {AuthProfile} from '@/modules/core/core.types';
-import {Prop} from 'vue-property-decorator';
-import {sendMessage} from '@/core/websockets/websocketsApi';
-import {getMinecraftHead} from '@/utils/helpers/mcsHelpers';
-import {createLogger} from '@/core/logger';
-
-@Component({
-  methods: {getMinecraftHead}
-})
-export default class SidebarProfile extends Vue {
-  @Prop({ default: false }) disable!: boolean;
-
-  @Getter('getProfiles', { namespace: 'core' }) getProfiles!: AuthProfile[];
-  @Getter('getActiveProfile', { namespace: 'core' }) getActiveProfile!: AuthProfile;
-  
-  @Action('openSignIn', { namespace: 'core' }) openSignIn!: any;
-  @Action('loadProfiles', { namespace: 'core' }) loadProfiles: any;
-
-  private logger = createLogger("SidebarProfile.vue")
-  
-  editMode = false;
-  loading = false;
-
-  async removeProfile(profile: AuthProfile) {
-    this.loading = true;
-
-    try {
-      this.logger.debug(`Removing profile ${profile.uuid}`)
-      const data = await sendMessage("profiles.remove", {
-        uuid: profile.uuid
-      })
-
-      if (data.success) {
-        this.loadProfiles();
-      } else {
-        this.logger.debug('Failed to remove profile');
-      }
-    } catch (error) {
-      this.logger.debug('Failed to remove profile due to message errors', error);
-    }
-
-    this.loading = false;
-  }
-
-  async setActiveProfile(profile: AuthProfile) {
-    this.loading = true;
-    try {
-      this.logger.debug(`Setting active profile ${profile.uuid}`)
-      const data = await sendMessage("profiles.setActiveProfile", {
-        uuid: profile.uuid
-      })
-
-      if (data.success) {
-        this.loadProfiles();
-      } else {
-        this.logger.debug('Failed to set active profile');
-      }
-    } catch (error) {
-      this.logger.debug('Failed to set active profile due to message errors', error);
-    }
-
-    this.loading = false;
-  }
-}
-</script>
 
 <style scoped lang="scss">
 .selectable {

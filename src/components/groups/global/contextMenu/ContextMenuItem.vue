@@ -1,75 +1,84 @@
-<template>
-  <div class="items">
-    <div class="item"
-         v-for="(option, key) in options"
-         :key="key"
-         :class="{[option.color ?? 'normal']: true, 'has-children': option.children, 'separator': 'separator' in option, 'working': working[option.title]}"
-         @click.stop="onItemClicked(option)"
-         v-if="!option.predicate || option.predicate(context())">
-      <div class="main">
-        <font-awesome-icon :fixed-width="true" icon="spinner" spin v-if="working[option.title]" />
-        <font-awesome-icon :fixed-width="true" v-else-if="option.icon" :icon="option.icon"/>
-        {{ option.title }}
-      </div>
+<script lang="ts" setup>
+import { MenuItem, MenuOptions } from '@/core/context/menus';
+import NestedContextMenuItem from '@/components/groups/global/contextMenu/ContextMenuItem.vue';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { ref } from 'vue';
+import { faChevronRight, faSpinner } from '@fortawesome/free-solid-svg-icons';
 
-      <font-awesome-icon class="chevron" v-if="option.children" icon="chevron-right"/>
+const {
+  context,
+  options,
+  overflowFix,
+  openToLeft = false
+} = defineProps<{
+  context: () => any;
+  options: MenuOptions<any>;
+  overflowFix: boolean;
+  openToLeft: boolean;
+}>()
 
-      <div class="child" :class="{'overflow-fix': overflowFix, 'open-to-left': openToLeft}" v-if="option.children">
-        <nested-context-menu-item :context="context" :options="option.children" :overflow-fix="overflowFix"
-                                  :open-to-left="openToLeft" @clicked="onItemClicked"/>
-      </div>
-    </div>
-  </div>
-</template>
+const working = ref<Record<string, boolean>>({});
 
-<script lang="ts">
-import {Component, Prop, Vue} from 'vue-property-decorator';
-import {MenuItemOrSeparator, MenuOptions} from '@/core/context/menus';
+const emit = defineEmits<{
+  (e: 'clicked', option: MenuItem<any>): void;
+}>()
 
-@Component({
-  name: 'ContextMenuItem',
-  components: {
-    NestedContextMenuItem: () => import('@/components/groups/global/contextMenu/ContextMenuItem.vue')
+async function onItemClicked(option: MenuItem<any>) {
+  if ("separator" in option) {
+    return;
   }
-})
-export default class ContextMenuItem extends Vue {
-  @Prop() context!: () => any;
-  @Prop() options!: MenuOptions<any>;
-  @Prop() overflowFix!: boolean;
-  @Prop({default: false}) openToLeft!: boolean;
-  
-  working: {
-    [key: string]: boolean
-  } = {};
-  
-  async onItemClicked(option: MenuItemOrSeparator<any>) {
-    if ("separator" in option) {
-      return;
-    }
-    
-    if (this.working[option.title]) {
-      return;
-    }
-    
-    this.working = {
-      ...this.working,
-      [option.title]: true
-    }
-    
-    try {
-      await option.action(this.context!())
-      this.$emit('clicked', option);
-    } catch (e) {
-      console.error(e)
-    } finally {
-      this.working = {
-        ...this.working,
-        [option.title]: false
-      }
+
+  if (working.value[option.title]) {
+    return;
+  }
+
+  working.value = {
+    ...working.value,
+    [option.title]: true
+  }
+
+  try {
+    await option.action(context())
+    emit('clicked', option);
+  } catch (e) {
+    console.error(e)
+  } finally {
+    working.value = {
+      ...working.value,
+      [option.title]: false
     }
   }
 }
 </script>
+
+<template>
+  <div class="items">
+    <template
+         v-for="(option, key) in options"
+         :key="key"
+    >
+      <div v-if="'separator' in option" class="item separator" />
+      <div class="item"
+           v-else
+           :class="{[option.color ?? 'normal']: true, 'has-children': option.children, 'working': working[option.title]}"
+           @click.stop="onItemClicked(option)"
+           v-if="!option.predicate || option.predicate(context())">
+        <div class="main">
+          <FontAwesomeIcon :fixed-width="true" :icon="faSpinner" spin v-if="working[option.title]" />
+          <FontAwesomeIcon :fixed-width="true" v-else-if="option.icon" :icon="option.icon"/>
+          {{ option.title }}
+        </div>
+  
+        <FontAwesomeIcon class="chevron" v-if="option.children" :icon="faChevronRight"/>
+  
+        <div class="child" :class="{'overflow-fix': overflowFix, 'open-to-left': openToLeft}" v-if="option.children">
+          <nested-context-menu-item :context="context" :options="option.children" :overflow-fix="overflowFix"
+                                    :open-to-left="openToLeft" @clicked="onItemClicked"/>
+        </div>
+      </div>
+    </template>
+  </div>
+</template>
 
 <style lang="scss" scoped>
 .item {

@@ -1,3 +1,57 @@
+<script lang="ts" setup>
+import {InstallRequest, InstallStatus} from '@/core/controllers/InstanceInstallController';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { faCircleNotch, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { computed, ref } from 'vue';
+import { useAppStore } from '@/store/appStore.ts';
+
+const {
+  item,
+  isInstall,
+  isNext = false
+} = defineProps<{
+  item: InstallRequest | InstallStatus;
+  isInstall: boolean;
+  isNext?: boolean;
+}>()
+
+const appStore = useAppStore();
+
+const cancelling = ref(false);
+
+async function cancelInstall(item: InstallRequest | InstallStatus) {
+  if (cancelling.value) {
+    return;
+  }
+
+  const uuid = isInstall ? (item as InstallStatus).request.uuid : (item as InstallRequest).uuid;
+
+  cancelling.value = true;
+  try {
+    await appStore.controllers.install.cancelInstall(uuid, isInstall);
+  } catch (e) {
+    console.error(e);
+  }
+  cancelling.value = false;
+}
+
+const request = computed(() => {
+  if (isInstall) {
+    return (item as InstallStatus).request;
+  }
+  
+  return item as InstallRequest;
+})
+
+const status = computed(() => {
+  if (isInstall) {
+    return item as InstallStatus
+  }
+  
+  return null;
+})
+</script>
+
 <template>
   <div class="install-query-row flex gap-4 items-center">
     <div class="name flex-1">
@@ -13,61 +67,12 @@
     </div>
     <div class="actions">
       <div class="btn">
-        <font-awesome-icon icon="times" @click="cancelInstall(item)" v-if="!cancelling" />
-        <font-awesome-icon icon="circle-notch" spin v-else />
+        <FontAwesomeIcon :icon="faTimes" @click="cancelInstall(item)" v-if="!cancelling" />
+        <FontAwesomeIcon :icon="faCircleNotch" spin v-else />
       </div>
     </div>
   </div>
 </template>
-
-<script lang="ts">
-import {Component, Prop, Vue} from 'vue-property-decorator';
-import {InstallRequest, InstallStatus, instanceInstallController} from '@/core/controllers/InstanceInstallController';
-import UiButton from '@/components/ui/UiButton.vue';
-
-@Component({
-  components: {UiButton},
-})
-export default class InstallQueueRow extends Vue {
-  @Prop() item!: InstallRequest | InstallStatus;
-  @Prop() isInstall!: boolean;
-  @Prop({ default: false }) isNext!: boolean;
-
-  cancelling = false;
-  
-  async cancelInstall(item: InstallRequest | InstallStatus) {
-    if (this.cancelling) {
-      return;
-    }
-    
-    const uuid = this.isInstall ? (item as InstallStatus).request.uuid : (item as InstallRequest).uuid;
-
-    this.cancelling = true;
-    try {
-      await instanceInstallController.cancelInstall(uuid, this.isInstall);
-    } catch (e) {
-      console.error(e);
-    }
-    this.cancelling = false;
-  }
-  
-  get request(): InstallRequest {
-    if (this.isInstall) {
-      return (this.item as InstallStatus).request;
-    }
-    
-    return this.item as InstallRequest;
-  }
-  
-  get status(): InstallStatus | null {
-    if (this.isInstall) {
-      return this.item as InstallStatus
-    }
-    
-    return null;
-  }
-}
-</script>
 
 <style lang="scss" scoped>
 .install-query-row {

@@ -1,60 +1,49 @@
-<template>
- <div class="dev-tools-actions" v-if="devModeEnabled">
-     <div class="trigger cursor-pointer" @click="open = !open">
-       <font-awesome-icon icon="code" />
-     </div>
-     <div class="options flex items-center gap-4" v-show="open">
-       <div class="divider ml-4" />
-       <router-link class="item" :to="{ name: 'home' }">
-         <font-awesome-icon icon="home" />
-       </router-link>
-       <font-awesome-icon class="item" icon="fire" @click="openDebugger"/>
-       <font-awesome-icon class="bars" icon="bars" @click="toggleDebugDisableAdAside" />
-       <font-awesome-icon icon="wrench" @click="openDevTools" />
-     </div>
- </div>
-</template>
-
-<script lang="ts">
-import {Component, Vue} from 'vue-property-decorator';
+<script lang="ts" setup>
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
-import {Action} from 'vuex-class';
-import platform from '@/utils/interface/electron-overwolf';
+import appPlatform from '@platform';
+import { useAttachDomEvent } from '@/composables';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { ref } from 'vue';
+import { useAppSettings } from '@/store/appSettingsStore.ts';
+import { faBars, faCode, faFire, faHome, faWrench } from '@fortawesome/free-solid-svg-icons';
 
-@Component
-export default class DevToolsActions extends Vue {
-  @Action('toggleDebugDisableAdAside', { namespace: 'core' }) toggleDebugDisableAdAside!: () => void;
-  
-  open = false;
-  platform = platform;
-  
-  mounted() {
-    document.addEventListener('click', this.onBackgroundClick)
-  }
-  
-  destroyed() {
-    document.removeEventListener('click', this.onBackgroundClick)
-  }
-  
-  onBackgroundClick(event: any) {
-    if (event.target.closest('.dev-tools-actions')) return;
-    this.open = false;
-  }
-  
-  openDebugger() {
-    gobbleError(() => sendMessage("openDebugTools", {}))
-  }
+const appSettings = useAppSettings();
 
-  openDevTools() {
-    this.platform.get.utils.openDevTools();
-  }
-  
-  get devModeEnabled() {
-    return process.env.NODE_ENV === 'development';
-  }
+useAttachDomEvent<MouseEvent>('click', (event) => {
+  if ((event.target as any)?.closest('.dev-tools-actions')) return;
+  open.value = false;
+})
+
+const open = ref(false)
+
+function openDebugger() {
+  gobbleError(() => sendMessage("openDebugTools", {}))
 }
+
+function openDevTools() {
+  appPlatform.utils.openDevTools();
+}
+
+const devModeEnabled = !import.meta.env.PROD;
 </script>
+
+<template>
+ <div class="dev-tools-actions" v-if="devModeEnabled">
+   <div class="trigger cursor-pointer" @click="open = !open">
+     <FontAwesomeIcon :icon="faCode" />
+   </div>
+   <div class="options flex items-center gap-4" v-show="open">
+     <div class="divider ml-4" />
+     <router-link class="item" :to="{ name: 'home' }">
+       <FontAwesomeIcon :icon="faHome" />
+     </router-link>
+     <FontAwesomeIcon class="item" :icon="faFire" @click="openDebugger"/>
+     <FontAwesomeIcon class="bars" :icon="faBars" @click="() => appSettings.toggleDebugAds()" />
+     <FontAwesomeIcon :icon="faWrench" @click="openDevTools" />
+   </div>
+ </div>
+</template>
 
 <style lang="scss" scoped>
 .dev-tools-actions {

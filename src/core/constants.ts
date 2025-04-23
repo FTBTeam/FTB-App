@@ -1,7 +1,5 @@
-const production = process.env.NODE_ENV === "production";
-const platform = process.env.VUE_APP_PLATFORM
-  
-const useStaging = false;
+const production = import.meta.env.PROD;
+const platform = import.meta.env.VITE_RUNTIME_PLATFORM
 
 export const constants = {
   modpacksApi: "https://api.feed-the-beast.com/v1/modpacks",

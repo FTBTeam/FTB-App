@@ -1,6 +1,6 @@
 import {ContextMenu, InstanceMenu, SettingMenu} from '@/core/context/menus';
 import {ContextMenus} from '@/core/context/contextMenus';
-import {emitter} from '@/utils';
+import { useAppStore } from '@/store/appStore.ts';
 
 class ContextController {
   private readonly registry: Map<string, ContextMenu<any>> = new Map();
@@ -21,14 +21,15 @@ class ContextController {
   /**
    * TODO: strengthen the type of context
    */
-  openMenu<T>(name: ContextMenus, pointer: PointerEvent, context: () => T) {
+  openMenu<T>(name: ContextMenus, pointer: PointerEvent | MouseEvent, context: () => T) {
     const menu = this.registry.get(name);
     
     if (!menu) {
       throw new Error(`Attempted to a menu that does not exist ${name}`)
     }
 
-    emitter.emit("context-menu-open", {
+    const appStore = useAppStore();
+    appStore.emitter.emit("action/context-menu-open", {
       pointer: pointer,
       context: context,
       menu: menu

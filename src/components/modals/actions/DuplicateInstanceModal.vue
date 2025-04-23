@@ -1,116 +1,116 @@
+<script lang="ts" setup>
+import { UiButton, Input, ModalBody, ModalFooter } from '@/components/ui';
+import CategorySelector from '@/components/groups/modpack/create/CategorySelector.vue';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { RouterNames } from '@/router';
+import { sendMessage } from '@/core/websockets/websocketsApi';
+import { alertController } from '@/core/controllers/alertController';
+import { equalsIgnoreCase } from '@/utils/helpers/stringHelpers';
+import { useInstanceStore } from '@/store/instancesStore.ts';
+import { onMounted, ref } from 'vue';
+import { safeNavigate } from '@/utils';
+import { faCopy, faSpinner } from '@fortawesome/free-solid-svg-icons';
+
+const {
+  instanceName,
+  uuid,
+  category
+} = defineProps<{
+  instanceName: string;
+  uuid: string;
+  category: string;
+}>();
+
+const emit = defineEmits<{
+  (e: 'finished'): void;
+}>();
+
+const instanceStore = useInstanceStore();
+
+const newName = ref('');
+const newCategory = ref('');
+
+const working = ref(false);
+const done = ref(false);
+const status = ref('');
+
+onMounted(() => {
+  const duplicateCount = getDuplicateNameCount();
+  if (duplicateCount > 1) {
+    newName.value = instanceName + ' (copy ' + (duplicateCount + 1) + ')';
+  } else {
+    newName.value = instanceName + ' (copy)';
+  }
+  newCategory.value = category;
+})
+
+async function duplicate() {
+  if (working.value) {
+    return;
+  }
+
+  working.value = true;
+  status.value = 'Starting duplication';
+
+  const result = await sendMessage("duplicateInstance", {
+    uuid: uuid,
+    newName: newName.value,
+    category: newCategory.value
+  }, 1_000 * 60 * 5); // 5 minutes (this should be more than long enough!)
+
+  if (!result.success) {
+    working.value = false;
+    alertController.error(result.message)
+    return;
+  }
+
+  status.value = 'Refreshing modpacks';
+  instanceStore.addInstance(result.instance)
+
+  status.value = '';
+  done.value = false;
+  working.value = false;
+  newName.value = '';
+
+  await safeNavigate(RouterNames.ROOT_LIBRARY)
+  emit('finished');
+}
+
+function getDuplicateNameCount() {
+  return instanceStore.instances.filter(i => equalsIgnoreCase(i.name, instanceName)).length
+}
+</script>
+
 <template>
   <div>
-    <modal-body>
+    <ModalBody>
       Duplicating {{ instanceName }} will copy all of the contents of this pack to a new instance.
 
-      <ftb-input
-        :value="newName"
+      <Input
         v-model="newName"
         class="mt-4 mb-4"
         label="New instance name"
         :disabled="working || done"
+        fill
       />
       
-      <category-selector v-model="newCategory" />
-    </modal-body>
-    <modal-footer class="flex justify-end">
-      <ftb-button
+      <CategorySelector v-model="newCategory" />
+    </ModalBody>
+    <ModalFooter class="flex justify-end">
+      <UiButton
         :disabled="working || done"
-        class="py-2 px-8"
         color="primary"
-        css-class="text-center text-l"
         @click="duplicate"
       >
         <template v-if="!working && !done">
-          <font-awesome-icon icon="copy" class="mr-2" size="1x" />
+          <FontAwesomeIcon :icon="faCopy" class="mr-2" size="1x" />
           Duplicate
         </template>
         <template v-else>
-          <font-awesome-icon icon="spinner" class="mr-2" spin size="1x" />
+          <FontAwesomeIcon :icon="faSpinner" class="mr-2" spin size="1x" />
           {{ status }}
         </template>
-      </ftb-button>
-    </modal-footer>
+      </UiButton>
+    </ModalFooter>
   </div>
 </template>
-
-<script lang="ts">
-import {Component, Prop, Vue} from 'vue-property-decorator';
-import {Action, Getter} from 'vuex-class';
-import {RouterNames} from '@/router';
-import {sendMessage} from '@/core/websockets/websocketsApi';
-import {alertController} from '@/core/controllers/alertController';
-import {gobbleError} from '@/utils/helpers/asyncHelpers';
-import {ns} from '@/core/state/appState';
-import {AddInstanceFunction} from '@/core/state/instances/instancesState';
-import CategorySelector from '@/components/groups/modpack/create/CategorySelector.vue';
-import {SugaredInstanceJson} from '@/core/@types/javaApi';
-import {equalsIgnoreCase} from '@/utils/helpers/stringHelpers';
-
-@Component({
-  components: {CategorySelector}
-})
-export default class DuplicateInstanceModal extends Vue {
-  @Prop() uuid!: string;
-  @Prop() instanceName!: string;
-  @Prop() category!: string;
-
-  @Getter('instances', ns("v2/instances")) instances!: SugaredInstanceJson[];
-  @Action('addInstance', ns("v2/instances")) addInstance!: AddInstanceFunction;
-  
-  newName = '';
-  newCategory = '';
-
-  working = false;
-  done = false;
-  status = '';
-
-  mounted() {
-    const duplicateCount = this.getDuplicateNameCount();
-    if (duplicateCount > 1) {
-      this.newName = this.instanceName + ' (copy ' + (duplicateCount + 1) + ')';
-    } else {
-      this.newName = this.instanceName + ' (copy)';
-    }
-    this.newCategory = this.category;
-  }
-  
-  async duplicate() {
-    if (this.working) {
-      return;
-    }
-
-    this.working = true;
-    this.status = 'Starting duplication';
-    
-    const result = await sendMessage("duplicateInstance", {
-      uuid: this.uuid,
-      newName: this.newName,
-      category: this.newCategory
-    }, 1_000 * 60 * 5); // 5 minutes (this should be more than long enough!)
-    
-    if (!result.success) {
-      this.working = false;
-      alertController.error(result.message)
-      return;
-    }
-    
-    this.status = 'Refreshing modpacks';
-    await this.addInstance(result.instance)
-    
-    this.status = '';
-    this.done = false;
-    this.working = false;
-    this.newName = '';
-    
-    await gobbleError(() => this.$router.push({ name: RouterNames.ROOT_LIBRARY }));
-    this.$emit('finished');
-  }
-  
-  getDuplicateNameCount() {
-    return this.instances.filter(i => equalsIgnoreCase(i.name, this.instanceName)).length
-  }
-}
-</script>
-
-<style scoped lang="scss"></style>

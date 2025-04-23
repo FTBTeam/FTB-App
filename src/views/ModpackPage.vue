@@ -1,10 +1,82 @@
+<script lang="ts" setup>
+import PackMetaHeading from '@/components/groups/modpack/PackMetaHeading.vue';
+import PackTitleHeader from '@/components/groups/modpack/PackTitleHeader.vue';
+import {ModpackPageTabs} from '@/views/InstancePage.vue';
+import ModpackVersions from '@/components/groups/instance/ModpackVersions.vue';
+import PackBody from '@/components/groups/modpack/PackBody.vue';
+import { ClosablePanel, Loader, Message } from '@/components/ui';
+import ModpackInstallModal from '@/components/modals/ModpackInstallModal.vue';
+import {resolveArtwork, typeIdToProvider} from '@/utils/helpers/packHelpers';
+import {createLogger} from '@/core/logger';
+import { onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { ModPack } from '@/core/types/appTypes.ts';
+import { useModpackStore } from '@/store/modpackStore.ts';
+import { faWarning } from '@fortawesome/free-solid-svg-icons';
+
+const modpackStore = useModpackStore();
+
+const logger = createLogger("ModpackPage.vue")
+const router = useRouter();
+
+const activeTab = ref<ModpackPageTabs>(ModpackPageTabs.OVERVIEW);
+const showVersions = ref(false);
+
+const showInstallBox = ref(false);
+const loading = ref(true);
+const packTypeId = ref(0);
+
+const currentModpack = ref<ModPack | null>(null);
+const error = ref('');
+
+onMounted(async () => {
+  const modpackId = router.currentRoute.value.query.modpackid as string;
+  const packID: number = parseInt(modpackId, 10);
+  
+  const packType = router.currentRoute.value.query.type as string;
+  packTypeId.value = parseInt(packType, 10);
+
+  try {
+    logger.debug("Loading modpack", packID, packTypeId.value)
+    const modpack = await modpackStore.getModpack(packID, typeIdToProvider(packTypeId.value));
+
+    if (modpack) {
+      const copyModpack = Object.assign({}, modpack);
+
+      if (copyModpack.versions) {
+        copyModpack.versions = copyModpack.versions.sort((a, b) => b.id - a.id)
+      }
+      
+      currentModpack.value = copyModpack;
+    }
+  } catch (e) {
+    logger.error("Failed to load modpack", e)
+    loading.value = false;
+    error.value =
+      "Unable to find this modpack, it's possible something has failed to load. Try again in a few minutes...";
+    return;
+  }
+
+  const showInstall = router.currentRoute.value.query.showInstall;
+  if (showInstall === 'true') {
+    logger.debug("Showing install box")
+    showInstallBox.value = true;
+  }
+
+  loading.value = false;
+});
+
+const packSplashArt = resolveArtwork(currentModpack.value, 'splash');
+const packType = typeIdToProvider(packTypeId.value);
+</script>
+
 <template>
   <div class="pack-container" v-if="!loading">
     <div class="pack-page">
       <div v-if="!currentModpack && !loading">
-        <message icon="warning" type="danger" class="m-6">
+        <Message :icon="faWarning" type="danger" class="m-6">
           {{ error ? error : 'Something has gone wrong...' }}
-        </message>
+        </Message>
       </div>
       <div class="pack-page-contents" v-if="currentModpack">
         <header>
@@ -22,7 +94,7 @@
             :api-pack="currentModpack"
           />
 
-          <pack-title-header :pack-instance="currentModpack" :pack-name="currentModpack.name" />
+          <PackTitleHeader :pack-instance="currentModpack" :pack-name="currentModpack.name" />
         </header>
 
         <div class="body">
@@ -34,17 +106,17 @@
             :searchingForMods="false"
             :active-tab="activeTab"
             :isInstalled="false"
-            :instance="null"
+            :instance="undefined"
             :pack-instance="currentModpack"
             :updating-mod-list="false"
           />
         </div>
       </div>
-      <closable-panel :open="showVersions" @close="showVersions = false" title="Versions" subtitle="Upgrade or downgrade your pack version">
-        <modpack-versions
+      <closable-panel v-if="currentModpack" :open="showVersions" @close="showVersions = false" title="Versions" subtitle="Upgrade or downgrade your pack version">
+        <ModpackVersions
           :versions="currentModpack.versions"
           :pack-instance="currentModpack"
-          :instance="null"
+          :instance="undefined"
           :current="null"
           @close="showVersions = false"
         />
@@ -55,94 +127,3 @@
   </div>
   <loader class="mt-20" v-else />
 </template>
-
-<script lang="ts">
-import {Component, Vue} from 'vue-property-decorator';
-import {ModPack, PackProviders} from '@/modules/modpacks/types';
-import {Action} from 'vuex-class';
-import PackMetaHeading from '@/components/groups/modpack/PackMetaHeading.vue';
-import PackTitleHeader from '@/components/groups/modpack/PackTitleHeader.vue';
-import {ModpackPageTabs} from '@/views/InstancePage.vue';
-import ModpackVersions from '@/components/groups/instance/ModpackVersions.vue';
-import PackBody from '@/components/groups/modpack/PackBody.vue';
-import ClosablePanel from '@/components/ui/ClosablePanel.vue';
-import ModpackInstallModal from '@/components/modals/ModpackInstallModal.vue';
-import {resolveArtwork, typeIdToProvider} from '@/utils/helpers/packHelpers';
-import {ns} from '@/core/state/appState';
-import {GetModpack, GetModpackVersion} from '@/core/state/modpacks/modpacksState';
-import Loader from '@/components/ui/Loader.vue';
-import {createLogger} from '@/core/logger';
-
-@Component({
-  name: 'ModpackPage',
-  components: {
-    Loader,
-    ModpackInstallModal,
-    ClosablePanel,
-    ModpackVersions,
-    PackTitleHeader,
-    PackMetaHeading,
-    PackBody,
-  },
-})
-export default class ModpackPage extends Vue {
-  @Action("getModpack", ns("v2/modpacks")) getModpack!: GetModpack;
-  @Action("getVersion", ns("v2/modpacks")) getVersion!: GetModpackVersion;
-  
-  private logger = createLogger("ModpackPage.vue")
-  
-  activeTab: ModpackPageTabs = ModpackPageTabs.OVERVIEW;
-  showVersions = false;
-
-  showInstallBox: boolean = false;
-  loading = true;
-  packTypeId: number = 0;
-  
-  currentModpack: ModPack | null = null;
-  error = '';
-
-  async mounted() {
-    const packID: number = parseInt(this.$route.query.modpackid as string, 10);
-    this.packTypeId = parseInt(this.$route.query.type as string, 10);
-    
-    try {
-      this.logger.debug("Loading modpack", packID, this.packTypeId)
-      const modpack = await this.getModpack({
-        id: packID,
-        provider: typeIdToProvider(this.packTypeId)
-      })
-      
-      if (modpack) {
-        const copyModpack = Object.assign({}, modpack);
-
-        if (copyModpack.versions) {
-          copyModpack.versions = copyModpack.versions.sort((a, b) => b.id - a.id)
-        }
-        this.currentModpack = copyModpack;
-      }
-    } catch (error) {
-      this.logger.error("Failed to load modpack", error)
-      this.loading = false;
-      this.error =
-        "Unable to find this modpack, it's possible something has failed to load. Try again in a few minutes...";
-      return;
-    }
-
-    if (this.$route.query.showInstall === 'true') {
-      this.logger.debug("Showing install box")
-      this.showInstallBox = true;
-    }
-
-    this.loading = false;
-  }
-  
-
-  get packSplashArt() {
-    return resolveArtwork(this.currentModpack, 'splash');
-  }
-  
-  get packType(): PackProviders {
-    return typeIdToProvider(this.packTypeId)
-  }
-}
-</script>

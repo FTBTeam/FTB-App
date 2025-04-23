@@ -1,7 +1,6 @@
-import store from '@/modules/store';
-import {HttpMethod} from '@/core/@types/commonTypes';
+import {HttpMethod} from '@/core/types/commonTypes';
 import {MessageRaw, Nullable, sendMessage} from '@/core/websockets/websocketsApi';
-import {WebRequestData} from '@/core/@types/javaApi';
+import {WebRequestData} from '@/core/types/javaApi';
 import {createLogger} from '@/core/logger';
 import { constants } from '@/core/constants';
 
@@ -13,7 +12,7 @@ interface FetchResponseRaw {
   headers: Record<string, string[]>;
   body: {
     contentType: string;
-    bytes: Buffer;
+    bytes: Uint8Array;
   }
 }
 
@@ -25,10 +24,10 @@ class FetchResponse implements FetchResponseRaw {
   headers: Record<string, string[]>;
   body: {
     contentType: string;
-    bytes: Buffer;
+    bytes: Uint8Array;
   }
   
-  constructor(status: string, statusMessage: string, statusCode: number, statusLine: string, headers: Record<string, string[]>, body: { contentType: string; bytes: Buffer }) {
+  constructor(status: string, statusMessage: string, statusCode: number, statusLine: string, headers: Record<string, string[]>, body: { contentType: string; bytes: Uint8Array }) {
     this.status = status;
     this.statusMessage = statusMessage;
     this.statusCode = statusCode;
@@ -49,7 +48,7 @@ class FetchResponse implements FetchResponseRaw {
   }
   
   public text() {
-    return Buffer.from(this.body.bytes as Uint8Array).toString("utf-8")
+    return new TextDecoder().decode(new Uint8Array(this.body.bytes));
   }
   
   public json<T>() {
@@ -57,14 +56,17 @@ class FetchResponse implements FetchResponseRaw {
       throw new Error(`Unable to extract json data from content type of ${this.body.contentType}... Expected application/json\n\nFull response: ${this.text()}`)
     }
     
-    return JSON.parse(Buffer.from(this.body.bytes as Uint8Array).toString("utf-8")) as T
+    return JSON.parse(new TextDecoder().decode(new Uint8Array(this.body.bytes))) as T
   }
   
-  public raw(): Buffer {
-    return this.body.bytes;
+  public raw(): Uint8Array {
+    return this.body.bytes as Uint8Array
   }
 }
 
+/**
+ * @deprecated Don't use.
+ */
 export class JavaFetch {
   private readonly logger = createLogger("JavaFetch.ts")
   
@@ -145,13 +147,8 @@ export class JavaFetch {
     };
     
     if (this._body !== null) {
-      const byteArray = [];
-      const buff = Buffer.from(this._body as string);
-      
-      for (let i = 0; i < buff.length; i++) {
-        byteArray.push(buff[i])
-      }
-      
+      const byteArray = Array.from(new TextEncoder().encode(this._body as string));
+
       payload.body = {
         contentType: this._contentType,
         // Create a byte array of the content body (u8)

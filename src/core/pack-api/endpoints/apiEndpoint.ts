@@ -1,4 +1,4 @@
-import {HttpMethod} from '@/core/@types/commonTypes';
+import {HttpMethod} from '@/core/types/commonTypes';
 import {JavaFetch} from '@/core/javaFetch';
 import {stringIsEmpty} from '@/utils/helpers/stringHelpers';
 

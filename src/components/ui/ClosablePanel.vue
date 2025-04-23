@@ -1,15 +1,55 @@
+<script lang="ts" setup>
+// TODO: (M#02) Remove this component and replace it with a modal that support full screen
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { onMounted, onUnmounted, ref } from 'vue';
+import appPlatform from '@platform'
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { useAds } from '@/composables/useAds.ts';
+
+const { subtitle = '', scrollable = true } = defineProps<{
+  open: boolean;
+  title: string;
+  subtitle?: string;
+  scrollable?: boolean;
+}>()
+
+const emit = defineEmits<{
+  (e: 'close'): void
+}>()
+
+const ads = useAds()
+const isMac = ref(false);
+
+onMounted(async () => {
+  document.addEventListener('keydown', onEsc)
+  isMac.value = await appPlatform.utils.getOsType() === "mac"
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', onEsc)
+})
+
+function onEsc(event: any) {
+  if (event.key !== 'Escape') {
+    return;
+  }
+
+  emit('close')
+}
+</script>
+
 <template>
-  <transition name="slide-in-out" duration="250">
-    <div v-if="open" class="closable-panel" :class="{'is-mac': isMac, ads: advertsEnabled }" @click.self="close" >
+  <transition name="slide-in-out" :duration="250">
+    <div v-if="open" class="closable-panel" :class="{'is-mac': isMac, ads: ads.adsEnabled }" @click.self="emit('close')" >
       <div class="panel-container">
         <div class="heading">
           <div class="main">
             <div class="title">{{ title }}</div>
             <div class="sub-title">{{ subtitle }}</div>
           </div>
-          <div class="closer" @click="close">
+          <div class="closer" @click="emit('close')">
             Close
-            <font-awesome-icon icon="times" />
+            <FontAwesomeIcon :icon="faTimes" />
           </div>
         </div>
         <div class="content" :class="{ scrollable }">
@@ -19,57 +59,6 @@
     </div>
   </transition>
 </template>
-
-<script lang="ts">
-import Component from 'vue-class-component';
-import Vue from 'vue';
-import {Emit, Prop} from 'vue-property-decorator';
-import Platform from '@/utils/interface/electron-overwolf';
-import os from 'os';
-import {Getter, State} from 'vuex-class';
-import {SettingsState} from '@/modules/settings/types';
-import {adsEnabled} from '@/utils';
-
-// TODO: (M#02) Remove this component and replace it with a modal that support full screen
-@Component
-export default class ClosablePanel extends Vue {
-  @Prop() open!: boolean;
-  @Prop() title!: string;
-  @Prop({ default: '' }) subtitle!: string;
-  @Prop({ default: true }) scrollable!: boolean;
-
-  @Emit('close')
-  close() {}
-
-  mounted() {
-    document.addEventListener('keydown', this.onEsc)
-  }
-  
-  destroyed() {
-    document.removeEventListener('keydown', this.onEsc)
-  }
-  
-  onEsc(event: any) {
-    if (event.key !== 'Escape') {
-      return;
-    }
-    
-    this.close();
-  }
-  
-  platform = Platform;
-  
-  // Apparently OS is safe on overwolf?
-  isMac = os.type() === 'Darwin';
-  
-  @State('settings') public settings!: SettingsState;
-  @Getter("getDebugDisabledAdAside", {namespace: 'core'}) private debugDisabledAdAside!: boolean
-  
-  get advertsEnabled(): boolean {
-    return adsEnabled(this.settings.settings, this.debugDisabledAdAside);
-  }
-}
-</script>
 
 <style scoped lang="scss">
 .closable-panel {

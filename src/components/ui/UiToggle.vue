@@ -1,5 +1,24 @@
+<script lang="ts" setup>
+
+const { disabled = false, label = undefined, desc = undefined, alignRight = false } = defineProps<{
+  disabled?: boolean;
+  label?: string;
+  desc?: string;
+  alignRight?: boolean;
+}>();
+
+const value = defineModel<boolean>()
+const hasText = label || desc;
+
+function toggle() {
+  if (!disabled) {
+    value.value = !value.value;
+  }
+}
+</script>
+
 <template>
-  <div class="ui-toggle" @click="!disabled && input(!value)" :class="{disabled, 'text-based': hasText, 'right': alignRight, 'no-desc': !desc}">
+  <div class="ui-toggle" @click="toggle" :class="{disabled, 'text-based': hasText, 'right': alignRight, 'no-desc': !desc}">
     <div class="toggle" :class="{active: value}">
       <div class="inner" />
     </div>
@@ -10,25 +29,6 @@
     </div>
   </div>
 </template>
-
-<script lang="ts">
-import {Component, Emit, Prop, Vue} from 'vue-property-decorator';
-
-@Component
-export default class UiToggle extends Vue {
-  @Prop() disabled!: boolean;
-  @Prop() label!: string;
-  @Prop() desc!: string;
-  @Prop({default: false}) alignRight!: boolean;
-  
-  @Prop() value!: boolean;
-  @Emit() input(value: boolean) {}
-  
-  get hasText() {
-    return this.label || this.desc;
-  }
-}
-</script>
 
 <style lang="scss" scoped>
 .ui-toggle {
@@ -87,7 +87,7 @@ export default class UiToggle extends Vue {
     
     &::before {
       content: '';
-      background: var(--color-success-button);
+      background: var(--color-green-600);
       opacity: 0;
       border-radius: var(--size);
       position: absolute;
@@ -97,7 +97,7 @@ export default class UiToggle extends Vue {
     }
     
     &.active {
-      background: var(--color-success-button);
+      background: var(--color-green-600);
       
       &::before {
         transform: scaleY(1.3) scaleX(1.2);

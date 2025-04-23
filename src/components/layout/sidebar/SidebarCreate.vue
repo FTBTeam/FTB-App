@@ -1,21 +1,53 @@
+<script lang="ts" setup>
+import CreateInstance from '@/components/groups/modpack/create/CreateInstance.vue';
+import CurseImportInstance from '@/components/groups/modpack/create/CurseImportInstance.vue';
+import {safeNavigate} from '@/utils';
+import {RouterNames} from '@/router';
+import { onMounted, onUnmounted, ref } from 'vue';
+import Popover from '@/components/ui/Popover.vue';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { faCirclePlus, faPlus, faSearch } from '@fortawesome/free-solid-svg-icons';
+
+const { disabled } = defineProps<{
+  disabled?: boolean;
+}>()
+
+const open = ref(false)
+const createOpen = ref(false)
+const curseOpen = ref(false)
+
+onMounted(() => {
+  document.addEventListener('click', close)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', close)
+})
+
+function close(event: any) {
+  if (event.target.closest('.create-instance-container')) return
+  open.value = false
+}
+</script>
+
 <template>
   <div class="create-instance-container">
-    <popover :text="open ? '' : 'Create an instance'">
+    <Popover :text="open ? '' : 'Create an instance'">
       <div class="action-icon" :class="{disabled}" @click="() => {
         if (!disabled) {
           open = true
         }
       }">
-        <font-awesome-icon icon="plus" />
+        <FontAwesomeIcon :icon="faPlus" />
       </div>
-    </popover>
+    </Popover>
     <div class="dropdown" :class="{active: open}">
       <div class="options">
         <div class="option create" @click="() => {
            open = false;
            createOpen = true;
         }">
-          <div class="icon"><font-awesome-icon icon="circle-plus" /></div>
+          <div class="icon"><FontAwesomeIcon :icon="faCirclePlus" /></div>
           <p>Create instance</p>
           <small>Build your own vanilla or modded experience</small>
         </div>
@@ -23,7 +55,7 @@
           safeNavigate(RouterNames.ROOT_BROWSE_PACKS)
           open = false;
         }">
-          <div class="icon"><font-awesome-icon icon="search" /></div>
+          <div class="icon"><FontAwesomeIcon :icon="faSearch" /></div>
           <p>Search for Modpack</p>
           <small>Search FTB Modpacks or CurseForge</small>
         </div>
@@ -32,7 +64,7 @@
 <!--          open = false;-->
 <!--          importOpen = true;-->
 <!--        }">-->
-<!--          <div class="icon"><font-awesome-icon icon="file-import" /></div>-->
+<!--          <div class="icon"><FontAwesomeIcon icon="file-import" /></div>-->
 <!--          <p>Import</p>-->
 <!--          <small>Import instances from other launchers</small>-->
 <!--        </div>-->
@@ -53,45 +85,6 @@
     <curse-import-instance :open="curseOpen" @close="curseOpen = false" />
   </div>
 </template>
-
-<script lang="ts">
-import {Component, Prop, Vue} from 'vue-property-decorator';
-import CreateInstance from '@/components/groups/modpack/create/CreateInstance.vue';
-import CurseImportInstance from '@/components/groups/modpack/create/CurseImportInstance.vue';
-import {safeNavigate} from '@/utils';
-import {RouterNames} from '@/router';
-
-@Component({
-  computed: {
-    RouterNames() {
-      return RouterNames
-    }
-  },
-  methods: {safeNavigate},
-  components: {CurseImportInstance, CreateInstance,}
-})
-export default class SidebarCreate extends Vue {
-  @Prop() disabled!: boolean
-  
-  open = false
-  
-  createOpen = false;
-  curseOpen = false;
-  
-  mounted() {
-    document.addEventListener('click', this.close)
-  }
-  
-  destroyed() {
-    document.removeEventListener('click', this.close)
-  }  
-  
-  close(event: any) {
-    if (event.target.closest('.create-instance-container')) return
-    this.open = false
-  }
-}
-</script>
 
 <style scoped lang="scss">
 .create-instance-container {

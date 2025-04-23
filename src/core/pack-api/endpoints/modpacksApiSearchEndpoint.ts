@@ -1,5 +1,5 @@
 import {ApiEndpoint} from '@/core/pack-api/endpoints/apiEndpoint';
-import {ListPackSearchResults} from '@/core/@types/modpacks/packSearch';
+import {ListPackSearchResults} from '@/core/types/modpacks/packSearch';
 import {Mod} from '@/types';
 import {StatusResult} from '@/core/pack-api/modpackApi';
 

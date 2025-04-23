@@ -1,3 +1,247 @@
+<script lang="ts" setup>
+import ModpackVersions from '@/components/groups/instance/ModpackVersions.vue';
+import PackMetaHeading from '@/components/groups/modpack/PackMetaHeading.vue';
+import PackTitleHeader from '@/components/groups/modpack/PackTitleHeader.vue';
+import PackBody from '@/components/groups/modpack/PackBody.vue';
+import {RouterNames} from '@/router';
+import VersionsBorkedModal from '@/components/modals/VersionsBorkedModal.vue';
+import {SugaredInstanceJson} from '@/core/types/javaApi';
+import {resolveArtwork, typeIdToProvider} from '@/utils/helpers/packHelpers';
+import {alertController} from '@/core/controllers/alertController';
+import {dialogsController} from '@/core/controllers/dialogsController';
+import {modpackApi} from '@/core/pack-api/modpackApi';
+import { UiButton, ClosablePanel, Modal, Message, Input } from '@/components/ui';
+import {createLogger} from '@/core/logger';
+import {InstanceController} from '@/core/controllers/InstanceController';
+import { useRouter } from 'vue-router';
+import { computed, onMounted, ref } from 'vue';
+import { useModpackStore } from '@/store/modpackStore.ts';
+import { useInstanceStore } from '@/store/instancesStore.ts';
+import { useAccountsStore } from '@/store/accountsStore.ts';
+import { ModPack, Versions } from '@/core/types/appTypes.ts';
+import { faPlay } from '@fortawesome/free-solid-svg-icons';
+import { useAppStore } from '@/store/appStore.ts';
+
+const router = useRouter()
+
+const modpackStore = useModpackStore();
+const instancesStore = useInstanceStore();
+const accountsStore = useAccountsStore()
+
+const logger = createLogger("InstancePage.vue");
+
+const packLoading = ref(false);
+const tabs = ModpackPageTabs;
+const activeTab = ref<ModpackPageTabs>(ModpackPageTabs.OVERVIEW);
+
+const apiPack = ref<ModPack | null>(null);
+
+const showVersions = ref(false);
+const offlineMessageOpen = ref(false);
+const offlineUserName = ref('');
+const offlineAllowed = ref(false);
+
+const borkedVersionNotification = ref<string | null>(null);
+const borkedVersionDowngradeId = ref<number | null>(null);
+const borkedVersionIsDowngrade = ref(false);
+
+const packUuid = computed(() => router.currentRoute.value.params.uuid);
+const instance = computed<SugaredInstanceJson | null>(() => {
+  if (!packUuid.value) {
+    return null;
+  }
+  
+  logger.debug(`Getting instance ${packUuid.value}`)
+  return instancesStore.instances.find(e => e.uuid === packUuid.value) ?? null;
+})
+
+onMounted(async () => {
+  if (instance.value == null) {
+    logger.error(`Instance not found ${packUuid.value}`)
+    await router.push(RouterNames.ROOT_LIBRARY);
+    return;
+  }
+
+  const quickNav = router.currentRoute.value.query.quickNav;
+  if (quickNav) {
+    logger.debug(`Quick nav detected, navigating to ${quickNav}`)
+    // Ensure the tab is valid
+    if (Object.values(ModpackPageTabs).includes(quickNav as ModpackPageTabs)) {
+      activeTab.value = quickNav as ModpackPageTabs;
+    } else {
+      logger.error("Invalid quick nav tab")
+    }
+  }
+
+  // TODO: (M#01) Allow to work without this.
+  if (instance.value.id !== -1) {
+    apiPack.value = await modpackStore.getModpack(instance.value.id, typeIdToProvider(instance.value.packType));
+
+    if (!apiPack.value) {
+      activeTab.value = ModpackPageTabs.MODS;
+    }
+  }
+
+  logger.debug("Loading backups")
+
+  // Throwaway error, don't block
+  checkForBorkedVersion().catch(e => logger.error(e))
+
+  if (accountsStore.mcActiveProfile) {
+    logger.debug("Active profile found, allowing offline")
+    offlineAllowed.value = true;
+  }
+
+  if (router.currentRoute.value.query.presentOffline) {
+    logger.debug("Present offline query detected")
+    offlineMessageOpen.value = true;
+  }
+
+  offlineUserName.value = accountsStore.mcActiveProfile?.username ?? "MinecraftPlayer";  
+})
+
+/**
+ * Tries to fetch the current version data and warn the user if the version should be downgraded. Will only request
+ * if the held version is set to `archived`
+ */
+async function checkForBorkedVersion() {
+  logger.debug("Checking for borked version")
+  if (!instance.value?.versionId || !apiPack.value) {
+    return;
+  }
+
+  if (instance.value.versionId === -1) {
+    return;
+  }
+
+  const currentVersion = apiPack.value.versions.find((e) => e.id === instance.value?.versionId);
+  if (!currentVersion || currentVersion.type.toLowerCase() !== 'archived') {
+    return;
+  }
+
+  const apiData = await modpackApi.modpacks.getModpackVersion(instance.value.id, instance.value.versionId, typeIdToProvider(instance.value.packType))
+  if (!apiData) {
+    return;
+  }
+
+  if (apiData.notification) {
+    borkedVersionNotification.value = apiData.notification;
+  }
+
+  // Find a downgrade / upgrade version
+  const nextAvailableVersion = apiPack.value.versions.find((e) => e.type !== 'archived');
+  if (nextAvailableVersion) {
+    logger.debug("Found next available version")
+    borkedVersionDowngradeId.value = nextAvailableVersion.id;
+    if (nextAvailableVersion.id < instance.value.versionId) {
+      logger.debug("Borked version is a downgrade")
+      borkedVersionIsDowngrade.value = true;
+    }
+  }
+}
+
+function closeBorked() {
+  borkedVersionNotification.value = null;
+  borkedVersionDowngradeId.value = null;
+  borkedVersionIsDowngrade.value = false;
+}
+
+function goBack() {
+  if (!hidePackDetails.value) {
+    router.push({ name: RouterNames.ROOT_LIBRARY });
+  } else {
+    activeTab.value = apiPack.value ? ModpackPageTabs.OVERVIEW : ModpackPageTabs.MODS;
+  }
+}
+
+async function launchModPack() {
+  if (instance.value === null) {
+    return;
+  }
+
+  if (instance.value.memory < instance.value.minMemory) {
+    logger.debug("Showing low memory warning")
+    const result = await dialogsController.createConfirmationDialog("Low memory",
+      `You are trying to launch the modpack with memory settings that are below the` +
+      `minimum required.This may cause the modpack to not start or crash frequently.\n\nWe recommend that you` +
+      `increase the assigned memory to at least **${instance.value?.minMemory}MB**\n\nYou can change the memory by going to the settings tab of the modpack and adjusting the memory slider`
+    )
+
+    if (!result) {
+      return
+    }
+  }
+
+  launch();
+}
+
+function launch() {
+  if (instance.value === null) {
+    // HOW
+    return;
+  }
+  
+  logger.debug("Launching instance from instance page")
+  InstanceController.from(instance.value!).play();
+}
+
+function playOffline() {
+  logger.debug("Launching instance in offline mode")
+  
+  // TODO: Fix me
+  // this.$router.push({
+  //   name: RouterNames.ROOT_LAUNCH_PACK,
+  //   query: { uuid: this.instance?.uuid ?? "", offline: 'true', username: this.offlineUserName },
+  // });
+}
+
+function update(version: Versions | null = null): void {
+  const targetVersion = version ?? apiPack.value?.versions.sort((a, b) => b.id - a.id)[0];
+  if (!targetVersion || !instance.value) {
+    logger.error("Failed to find pack for update")
+    return;
+  }
+
+  const appStore = useAppStore();
+  logger.debug(`Requesting update to ${targetVersion.id} ${targetVersion.type}`)
+  appStore.controllers.install.requestUpdate(instance.value, targetVersion, typeIdToProvider(instance.value.packType))
+}
+
+function updateOrDowngrade(versionId: number) {
+  const pack = apiPack.value?.versions.find((e) => e.id === versionId);
+  if (!pack) {
+    logger.error("Failed to find pack for update / downgrade")
+    alertController.error('The selected recovery pack version id was not available...')
+    return;
+  }
+
+  // update
+  update(pack);
+  closeBorked();
+}
+
+function closeOfflineModel() {
+  offlineMessageOpen.value = false;
+  if (router.currentRoute.value.query.presentOffline) {
+    router.push({ name: RouterNames.ROOT_LOCAL_PACK, params: { uuid: instance.value?.uuid ?? "" } });
+  }
+}
+
+const packSplashArt = resolveArtwork(apiPack.value, 'splash');
+const hidePackDetails = computed(() => activeTab.value === ModpackPageTabs.SETTINGS);
+const versionType = apiPack.value?.versions?.find((e) => e.id === instance.value?.versionId)?.type.toLowerCase() ?? 'release';
+</script>
+
+<script lang="ts">
+export enum ModpackPageTabs {
+  OVERVIEW = "overview",
+  MODS = "mods",
+  SETTINGS = "settings",
+  BACKUPS = "backups",
+  WORLDS = "worlds",
+}
+</script>
+
 <template>
   <div class="pack-page">
     <div class="pack-page-contents" v-if="instance">
@@ -31,13 +275,11 @@
           @update="update"
           @tabChange="(e) => (activeTab = e)"
           @showVersion="showVersions = true"
-          @backupsChanged="loadBackups"
           :pack-loading="packLoading"
           :active-tab="activeTab"
           :isInstalled="true"
           :instance="instance"
           :pack-instance="apiPack"
-          :backups="instanceBackups"
           :allow-offline="offlineAllowed"
           @playOffline="offlineMessageOpen = true"
         />
@@ -55,29 +297,29 @@
     </div>
     <p v-else>No modpack found...</p>
     
-    <modal
+    <Modal
       :open="offlineMessageOpen"
       :title="$route.query.presentOffline ? 'Unable to update your profile' : 'Play offline'"
       subTitle="Would you like to play in Offline Mode?"
       @closed="() => closeOfflineModel()"
     >
-      <message type="warning" class="mb-6 wysiwyg">
+      <Message type="warning" class="mb-6 wysiwyg">
         <p>Please be aware, running in offline mode will mean you can not:</p>
         <ul>
           <li>Play on online servers</li>
           <li>Have a custom skin</li>
           <li>Have any profile specific content in-game</li>
         </ul> 
-      </message>
+      </Message>
 
-      <ftb-input placeholder="Steve" label="Username" v-model="offlineUserName" class="text-base" />
+      <Input fill placeholder="Steve" label="Username" v-model="offlineUserName" class="text-base" />
 
       <template #footer>
         <div class="flex justify-end">
-          <ui-button icon="play" type="success" @click="playOffline">Play offline</ui-button>
+          <ui-button :icon="faPlay" type="success" @click="playOffline">Play offline</ui-button>
         </div>
       </template>
-    </modal>
+    </Modal>
 
     <modal
       :open="borkedVersionNotification != null"
@@ -92,295 +334,8 @@
         @action="(e) => updateOrDowngrade(e)"
         :is-downgrade="borkedVersionIsDowngrade"
         :fixed-version="borkedVersionDowngradeId"
-        :notification="borkedVersionNotification"
+        :notification="borkedVersionNotification ?? undefined"
       />
     </modal>
   </div>
 </template>
-
-<script lang="ts">
-import {Component, Vue} from 'vue-property-decorator';
-import {ModPack, Versions} from '@/modules/modpacks/types';
-import {Action, Getter, State} from 'vuex-class';
-import ModpackVersions from '@/components/groups/instance/ModpackVersions.vue';
-import ModpackSettings from '@/components/groups/instance/ModpackSettings.vue';
-import PackMetaHeading from '@/components/groups/modpack/PackMetaHeading.vue';
-import PackTitleHeader from '@/components/groups/modpack/PackTitleHeader.vue';
-import PackBody from '@/components/groups/modpack/PackBody.vue';
-import {AuthProfile} from '@/modules/core/core.types';
-import {RouterNames} from '@/router';
-import ClosablePanel from '@/components/ui/ClosablePanel.vue';
-import VersionsBorkedModal from '@/components/modals/VersionsBorkedModal.vue';
-import {ns} from '@/core/state/appState';
-import {Backup, SugaredInstanceJson} from '@/core/@types/javaApi';
-import {sendMessage} from '@/core/websockets/websocketsApi';
-import {GetModpack} from '@/core/state/modpacks/modpacksState';
-import {resolveArtwork, typeIdToProvider} from '@/utils/helpers/packHelpers';
-import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
-import {alertController} from '@/core/controllers/alertController';
-import {dialogsController} from '@/core/controllers/dialogsController';
-import {modpackApi} from '@/core/pack-api/modpackApi';
-import UiButton from '@/components/ui/UiButton.vue';
-import {waitForWebsockets} from '@/utils';
-import {createLogger} from '@/core/logger';
-import {SocketState} from '@/modules/websocket/types';
-import {InstanceController} from '@/core/controllers/InstanceController';
-
-export enum ModpackPageTabs {
-  OVERVIEW = "overview",
-  MODS = "mods",
-  SETTINGS = "settings",
-  BACKUPS = "backups",
-  WORLDS = "worlds",
-}
-
-@Component({
-  name: 'InstancePage',
-  components: {
-    UiButton,
-    VersionsBorkedModal,
-    ClosablePanel,
-    PackTitleHeader,
-    PackMetaHeading,
-    ModpackSettings,
-    ModpackVersions,
-    PackBody,
-  },
-})
-export default class InstancePage extends Vue {
-  @State('websocket') public websockets!: SocketState;
-  @Getter('instances', ns("v2/instances")) public instances!: SugaredInstanceJson[];
-  @Action("getModpack", ns("v2/modpacks")) getModpack!: GetModpack;
-
-  @Getter('getProfiles', { namespace: 'core' }) public authProfiles!: AuthProfile[];
-  @Getter('getActiveProfile', { namespace: 'core' }) private getActiveProfile!: any;
-
-  private logger = createLogger("InstancePage.vue");
-  
-  packLoading = false;
-
-  // New stuff
-  tabs = ModpackPageTabs;
-  activeTab: ModpackPageTabs = ModpackPageTabs.OVERVIEW;
-
-  apiPack: ModPack | null = null;
-  
-  showVersions = false;
-  offlineMessageOpen = false;
-  offlineUserName = '';
-  offlineAllowed = false;
-
-  instanceBackups: Backup[] = [];
-
-  borkedVersionNotification: string | null = null;
-  borkedVersionDowngradeId: number | null = null;
-  borkedVersionIsDowngrade = false;
-
-  async mounted() {
-    this.logger.debug("Mounted instance page, waiting for websockets")
-    await waitForWebsockets("instancePage", this.websockets.socket)
-    
-    this.logger.debug("Websockets ready, loading instance")
-    if (this.instance == null) {
-      this.logger.error(`Instance not found ${this.$route.params.uuid}`)
-      await this.$router.push(RouterNames.ROOT_LIBRARY);
-      return;
-    }
-    
-    const quickNav = this.$route.query.quickNav;
-    if (quickNav) {
-      this.logger.debug(`Quick nav detected, navigating to ${quickNav}`)
-      // Ensure the tab is valid
-      if (Object.values(ModpackPageTabs).includes(quickNav as ModpackPageTabs)) {
-        this.activeTab = quickNav as ModpackPageTabs; 
-      } else {
-        this.logger.error("Invalid quick nav tab")
-      }
-    }
-    
-    // TODO: (M#01) Allow to work without this.
-    if (this.instance.id !== -1) {
-      this.apiPack = await this.getModpack({
-        id: this.instance.id,
-        provider: typeIdToProvider(this.instance.packType)
-      });
-
-      if (!this.apiPack) {
-        this.activeTab = ModpackPageTabs.MODS;
-      }
-    }
-
-    this.logger.debug("Loading backups")
-    this.loadBackups().catch(e => this.logger.error(e))
-
-    // Throwaway error, don't block
-    this.checkForBorkedVersion().catch(e => this.logger.error(e))
-
-    if (this.getActiveProfile) {
-      this.logger.debug("Active profile found, allowing offline")
-      this.offlineAllowed = true;
-    }
-
-    if (this.$route.query.presentOffline) {
-      this.logger.debug("Present offline query detected")
-      this.offlineMessageOpen = true;
-    }
-    
-    this.offlineUserName = this.getActiveProfile?.username;
-  }
-
-  /**
-   * Tries to fetch the current version data and warn the user if the version should be downgraded. Will only request
-   * if the held version is set to `archived`
-   */
-  private async checkForBorkedVersion() {
-    this.logger.debug("Checking for borked version")
-    if (!this.instance?.versionId || !this.apiPack) {
-      return;
-    }
-    
-    if (this.instance.versionId === -1) {
-      return;
-    }
-
-    const currentVersion = this.apiPack.versions.find((e) => e.id === this.instance?.versionId);
-    if (!currentVersion || currentVersion.type.toLowerCase() !== 'archived') {
-      return;
-    }
-
-    const apiData = await modpackApi.modpacks.getModpackVersion(this.instance.id, this.instance.versionId, typeIdToProvider(this.instance.packType))
-    if (!apiData) {
-      return;
-    }
-    
-    if (apiData.notification) {
-      this.borkedVersionNotification = apiData.notification;
-    }
-
-    // Find a downgrade / upgrade version
-    const nextAvailableVersion = this.apiPack.versions.find((e) => e.type !== 'archived');
-    if (nextAvailableVersion) {
-      this.logger.debug("Found next available version")
-      this.borkedVersionDowngradeId = nextAvailableVersion.id;
-      if (nextAvailableVersion.id < this.instance.versionId) {
-        this.logger.debug("Borked version is a downgrade")
-        this.borkedVersionIsDowngrade = true;
-      }
-    }
-  }
-
-  closeBorked() {
-    this.borkedVersionNotification = null;
-    this.borkedVersionDowngradeId = null;
-    this.borkedVersionIsDowngrade = false;
-  }
-
-  public goBack(): void {
-    if (!this.hidePackDetails) {
-      this.$router.push({ name: RouterNames.ROOT_LIBRARY });
-    } else {
-      this.activeTab = this.apiPack ? ModpackPageTabs.OVERVIEW : ModpackPageTabs.MODS;
-    }
-  }
-
-  public async launchModPack() {
-    if (this.instance === null) {
-      return;
-    }
-
-    if (this.instance.memory < this.instance.minMemory) {
-      this.logger.debug("Showing low memory warning")
-      const result = await dialogsController.createConfirmationDialog("Low memory",
-        `You are trying to launch the modpack with memory settings that are below the` +
-        `minimum required.This may cause the modpack to not start or crash frequently.\n\nWe recommend that you` +
-        `increase the assigned memory to at least **${this.instance?.minMemory}MB**\n\nYou can change the memory by going to the settings tab of the modpack and adjusting the memory slider`
-      )
-      
-      if (!result) {
-        return
-      }
-    }
-    
-    this.launch();
-  }
-
-  public launch() {
-    if (this.instance === null) {
-      // HOW
-      return;
-    }
-    this.logger.debug("Launching instance from instance page")
-    InstanceController.from(this.instance as SugaredInstanceJson).play();
-  }
-
-  public playOffline() {
-    this.logger.debug("Launching instance in offline mode")
-    // this.$router.push({
-    //   name: RouterNames.ROOT_LAUNCH_PACK,
-    //   query: { uuid: this.instance?.uuid ?? "", offline: 'true', username: this.offlineUserName },
-    // });
-  }
-
-  public update(version: Versions | null = null): void {
-    const targetVersion = version ?? this.apiPack?.versions.sort((a, b) => b.id - a.id)[0];
-    if (!targetVersion || !this.instance) {
-      this.logger.error("Failed to find pack for update")
-      return;
-    }
-    
-    this.logger.debug(`Requesting update to ${targetVersion.id} ${targetVersion.type}`)
-    instanceInstallController.requestUpdate(this.instance, targetVersion, typeIdToProvider(this.instance.packType))
-  }
-
-  public updateOrDowngrade(versionId: number) {
-    const pack = this.apiPack?.versions.find((e) => e.id === versionId);
-    if (!pack) {
-      this.logger.error("Failed to find pack for update / downgrade")
-      alertController.error('The selected recovery pack version id was not available...')
-      return;
-    }
-
-    // update
-    this.update(pack);
-    this.closeBorked();
-  }
-
-  public async loadBackups() {
-    const backups = await sendMessage("instanceGetBackups", {
-      uuid: this.instance?.uuid ?? '',
-    })
-
-    this.instanceBackups = backups.backups.sort((a, b) => b.createTime - a.createTime);
-    if (!backups.backups.length) {
-      this.logger.debug("No backups found")
-    }
-  }
-
-  closeOfflineModel() {
-    this.offlineMessageOpen = false;
-    if (this.$route.query.presentOffline) {
-      this.$router.push({ name: RouterNames.ROOT_LOCAL_PACK, params: { uuid: this.instance?.uuid ?? "" } });
-    }
-  }
-  
-  get instance() {
-    this.logger.debug(`Getting instance ${this.$route.params.uuid}`)
-    return this.instances.find(e => e.uuid === this.$route.params.uuid) ?? null;
-  }
-
-  get packSplashArt() {
-    return resolveArtwork(this.apiPack, 'splash');
-  }
-
-  /**
-   * Determines if we need to hide the bulk of the page
-   */
-  get hidePackDetails() {
-    return this.activeTab === ModpackPageTabs.SETTINGS;
-  }
-
-  get versionType() {
-    return this.apiPack?.versions?.find((e) => e.id === this.instance?.versionId)?.type.toLowerCase() ?? 'release';
-  }
-}
-</script>
