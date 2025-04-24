@@ -59,6 +59,17 @@ function close() {
   userPackName.value = "";
   userVanillaVersion.value = -1;
   showVanillaSnapshots.value = false;
+  settingFullscreen.value = false;
+  settingScreenResolution.value = "";
+  settingRam.value = 0;
+  userHeight.value = 0;
+  userWidth.value = 0;
+  userOverrideInstanceDefaults.value = false;
+  userOverridePreferences.value = false;
+  vanillaPack.value = null;
+  userModLoader.value = null;
+  userCategory.value = "Default";
+  loadingVanilla.value = false;
   emit('close');
 }
 

@@ -31,7 +31,7 @@ const userUseLatestLoader = ref(true);
 const userLoaderVersion = ref("");
 
 const emit = defineEmits<{
-  (e: 'select', value: [string, ModLoaderWithPackId]): void;
+  (e: 'select', value: [string, ModLoaderWithPackId] | null): void;
 }>()
 
 onMounted(async () => {
@@ -44,16 +44,19 @@ watch(() => mcVersion, async () => {
 
 function select(loader: string | null, version: string | null): [string, ModLoaderWithPackId] | null {
   if (loader === null || version === null) {
+    emit("select", null);
     return null;
   }
 
   const loaderProvider = availableLoaders.value[loader];
   if (!loaderProvider) {
+    emit("select", null);
     return null;
   }
 
   const modLoader = loaderProvider.find(e => e.version === version);
   if (!modLoader) {
+    emit("select", null);
     return null;
   }
 
