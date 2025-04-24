@@ -196,12 +196,12 @@ async function moveInstances() {
 
     <p class="block text-white-700 font-bold mb-4">Common Folders</p>
     <div class="flex items-center gap-4 mb-6">
-      <UiButton size="small" type="info" :icon="faFolderOpen" @click="openFolder('home')" :working="working">Home</UiButton>
-      <UiButton size="small" type="info" :icon="faFolderOpen" @click="openFolder('instances')" :working="working">Instances</UiButton>
-      <UiButton size="small" type="info" :icon="faFolderOpen" @click="openFolder('logs')" :working="working">Logs</UiButton>
+      <UiButton size="small" :icon="faFolderOpen" @click="openFolder('home')" :working="working">Home</UiButton>
+      <UiButton size="small" :icon="faFolderOpen" @click="openFolder('instances')" :working="working">Instances</UiButton>
+      <UiButton size="small" :icon="faFolderOpen" @click="openFolder('logs')" :working="working">Logs</UiButton>
     </div>
 
-    <div class="section logs mb-6 sm:flex items-center">
+    <div class="section logs mb-6">
       <div class="desc flex-1">
         <p class="font-bold mb-1">Export app logs</p>
         <p class="text-muted pr-10">
@@ -209,10 +209,10 @@ async function moveInstances() {
           provide these logs to our App team to investigate.
         </p>
       </div>
-      <ui-button :working="uploadingLogs" size="small" class="mt-6 sm:mt-0 my-2 w-2/7" type="info" @click="uploadLogData" :icon="faFileZipper">Create App Logs ZIP</ui-button>
+      <ui-button :working="uploadingLogs" class="mt-4" @click="uploadLogData" :icon="faFileZipper">Create App Logs ZIP</ui-button>
     </div>
 
-    <div class="section cache mb-6 sm:flex items-center">
+    <div class="section cache mb-6">
       <div class="desc flex-1">
         <p class="font-bold mb-1">Manage cache</p>
         <p class="text-muted pr-10">
@@ -220,23 +220,26 @@ async function moveInstances() {
           the cache, it'll make sure you're running the latest version of all available data.
         </p>
       </div>
-      <ui-button size="small" class="mt-6 sm:mt-0 my-2 w-2/7" type="info" @click="refreshCachePlz" :icon="faSync">Refresh Cache</ui-button>
+      <ui-button class="mt-4" @click="refreshCachePlz" :icon="faSync">Refresh Cache</ui-button>
     </div>
-    
+
     <p class="block text-white-700 text-lg font-bold mb-4 mt-6">Misc</p>
-    <div class="flex gap-4">
-      <Input
-        class="flex-1"
-        label="Relocate instances"
-        v-model="localSettings.instanceLocation"
-        :disabled="true"
-        fill
-        hint="Changing your instance location with instances installed will cause your instances to be moved to the new
-      location automatically."
-      />
-      <UiButton @click="moveInstances">
-        <FontAwesomeIcon :icon="faFolderOpen" class="mr-2" />
-        <span>Browse</span>
+    
+    <div class="section cache mb-6">
+      <div class="desc flex-1">
+        <p class="font-bold mb-1">Instance location</p>
+        <p class="text-muted pr-10">
+          Changing your instance location with instances installed will cause your instances to be moved to the new
+          location automatically.
+        </p>
+      </div>
+      
+      <code class="select-text py-2 mt-4 block px-4 bg-black/30 rounded border border-white/30 font-mono">
+        {{localSettings.instanceLocation}}
+      </code>
+      
+      <UiButton :icon="faFolderOpen" type="info" class="mt-4" @click="moveInstances" :working="working">
+        Relocate
       </UiButton>
     </div>
 
