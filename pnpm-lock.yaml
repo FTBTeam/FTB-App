@@ -189,6 +189,9 @@ importers:
       vue-tsc:
         specifier: ^2.0.26
         version: 2.2.8(typescript@5.8.2)
+      yaml:
+        specifier: ^2.7.1
+        version: 2.7.1
 
 packages:
 
@@ -3751,6 +3754,9 @@ packages:
       typescript:
         optional: true
 
+  vue-component-type-helpers@2.2.10:
+    resolution: {integrity: sha512-iDUO7uQK+Sab2tYuiP9D1oLujCWlhHELHMgV/cB13cuGbG4qwkLHvtfWb6FzvxrIOPDnU0oHsz2MlQjhYDeaHA==}
+
   vue-component-type-helpers@2.2.8:
     resolution: {integrity: sha512-4bjIsC284coDO9om4HPA62M7wfsTvcmZyzdfR0aUlFXqq4tXxM1APyXpNVxPC8QazKw9OhmZNHBVDA6ODaZsrA==}
 
@@ -3876,6 +3882,11 @@ packages:
 
   yallist@4.0.0:
     resolution: {integrity: sha512-3wdGidZyq5PB084XLES5TpOSRA3wjXAlIWMhum2kRcv/41Sn2emQ0dycQW4uZXLejwKvg6EsvbdlVL+FYEct7A==}
+
+  yaml@2.7.1:
+    resolution: {integrity: sha512-10ULxpnOCQXxJvBgxsn9ptjq6uviG/htZKk9veJGhlqn3w/DxQ631zFF+nlQXLwmImeS5amR2dl2U8sg6U9jsQ==}
+    engines: {node: '>= 14'}
+    hasBin: true
 
   yargs-parser@21.1.1:
     resolution: {integrity: sha512-tVpsJW7DdjecAiFpbIB1e3qxIQsE6NoPc5/eTdrbbIC4h0LVsWhnoa3g+m2HclBIujHzsxZ4VJVA+GUuc2/LBw==}
@@ -4701,7 +4712,7 @@ snapshots:
       ts-dedent: 2.2.0
       type-fest: 2.19.0
       vue: 3.5.13(typescript@5.8.2)
-      vue-component-type-helpers: 2.2.8
+      vue-component-type-helpers: 2.2.10
 
   '@szmarczak/http-timer@1.1.2':
     dependencies:
@@ -7841,6 +7852,8 @@ snapshots:
     optionalDependencies:
       typescript: 5.8.2
 
+  vue-component-type-helpers@2.2.10: {}
+
   vue-component-type-helpers@2.2.8: {}
 
   vue-docgen-api@4.79.2(vue@3.5.13(typescript@5.8.2)):
@@ -7988,6 +8001,8 @@ snapshots:
   y18n@5.0.8: {}
 
   yallist@4.0.0: {}
+
+  yaml@2.7.1: {}
 
   yargs-parser@21.1.1: {}
 

@@ -160,6 +160,7 @@ jobs:
           APPLE_API_KEY: "./apple_api_key.p8"
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
         run: |
+          node ./tooling/release/patchBuilderYaml.js
           pnpm build --publish always -m --x64 --arm64
           
       # Linux build
