@@ -220,7 +220,7 @@ watch(groupBy, onSortChange)
             <header v-if="Object.keys(groupedPacks).length > 1">
               <h2>{{ index }}</h2>
               <span />
-              <div class="collapse" @click="collapseGroup(index)">
+              <div class="collapse-icon" @click="collapseGroup(index)">
                 <FontAwesomeIcon :icon="faChevronDown" />
               </div>
             </header>
@@ -275,7 +275,7 @@ watch(groupBy, onSortChange)
     
     &.collapsed {
       header {
-        .collapse {
+        .collapse-icon {
           svg {
             transform: rotateZ(180deg);
           }
@@ -302,9 +302,8 @@ watch(groupBy, onSortChange)
         background-color: rgba(white, .2);
       }
       
-      .collapse {
+      .collapse-icon {
         cursor: pointer;
-        background-color: pink;
         padding: .18rem 1rem;
         border-radius: 3px;
         background-color: rgba(white, .1);
