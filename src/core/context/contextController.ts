@@ -1,4 +1,4 @@
-import {ContextMenu, InstanceMenu, SettingMenu} from '@/core/context/menus';
+import {ContextMenu, InstanceMenu, RunningInstanceOptionsMenu, SettingMenu} from '@/core/context/menus';
 import {ContextMenus} from '@/core/context/contextMenus';
 import { useAppStore } from '@/store/appStore.ts';
 
@@ -8,6 +8,7 @@ class ContextController {
   constructor() {
     this.register(ContextMenus.INSTANCE_MENU, new InstanceMenu());
     this.register(ContextMenus.NAV_SETTINGS_MENU, new SettingMenu());
+    this.register(ContextMenus.RUNNING_INSTANCE_OPTIONS_MENU, new RunningInstanceOptionsMenu())
   }
 
   private register<T>(name: ContextMenus, menu: ContextMenu<T>) {
@@ -23,7 +24,7 @@ class ContextController {
    */
   openMenu<T>(name: ContextMenus, pointer: PointerEvent | MouseEvent, context: () => T) {
     const menu = this.registry.get(name);
-    
+    console.log("Lmenu", menu, context())
     if (!menu) {
       throw new Error(`Attempted to a menu that does not exist ${name}`)
     }

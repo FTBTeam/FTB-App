@@ -10,7 +10,7 @@ export type InstanceMenuContext = {
   instance: SugaredInstanceJson
 }
 
-const paths = [
+export const generalInstancePaths = [
   ["logs", "Logs"],
   ["crashlogs", "Crash logs"],
   ["mods", "Mods"],
@@ -68,7 +68,7 @@ export class InstanceMenu extends ContextMenu<InstanceMenuContext> {
               await appPlatform.io.openFinder(context.instance.path);
             },
           },
-          ...paths.map((e) => ({
+          ...generalInstancePaths.map((e) => ({
             title: e[1],
             async action(context) {
               await appPlatform.io.openFinder(appPlatform.io.pathJoin(context.instance.path, e[0]));

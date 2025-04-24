@@ -35,7 +35,7 @@ onUnmounted(() => {
 })
 
 function handleOutOfClick(event: MouseEvent) {
-  if ((elmRef.value as any).contains(event.target)) {
+  if (!(elmRef.value as any).contains(event.target)) {
     return;
   }
 

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { UiButton, ProgressBar, Modal } from '@/components/ui';
+import {ProgressBar, UiButton} from '@/components/ui';
 import Router, {RouterNames} from '@/router';
 import {SugaredInstanceJson} from '@/core/types/javaApi';
 import {alertController} from '@/core/controllers/alertController';
@@ -8,11 +8,11 @@ import {sendMessage} from '@/core/websockets/websocketsApi';
 import {safeNavigate} from '@/utils';
 import {createLogger} from '@/core/logger';
 import platform from '@platform';
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import { InstanceMessageData, InstanceRunningData, useRunningInstancesStore } from '@/store/runningInstancesStore.ts';
-import { useRouter } from 'vue-router';
-import { useInstanceStore } from '@/store/instancesStore.ts';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import {computed, onMounted, onUnmounted, ref, watch} from 'vue';
+import {InstanceMessageData, InstanceRunningData, useRunningInstancesStore} from '@/store/runningInstancesStore.ts';
+import {useRouter} from 'vue-router';
+import {useInstanceStore} from '@/store/instancesStore.ts';
+import {FontAwesomeIcon} from '@fortawesome/vue-fontawesome';
 import {
   faArrowLeft,
   faCircleNotch,
@@ -20,17 +20,15 @@ import {
   faFolderOpen,
   faSkullCrossbones,
 } from '@fortawesome/free-solid-svg-icons';
-import { IconDefinition } from '@fortawesome/free-brands-svg-icons';
+import {IconDefinition} from '@fortawesome/free-brands-svg-icons';
 // @ts-ignore (Literally no types :tada:)
-import { RecycleScroller } from 'vue-virtual-scroller'
+import {RecycleScroller} from 'vue-virtual-scroller'
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
-import { artworkFileOrElse } from '@/utils/helpers/packHelpers.ts';
-import { ElementColorType } from '@/components/ui/UiButton.vue';
+import {artworkFileOrElse} from '@/utils/helpers/packHelpers.ts';
+import {ElementColorType} from '@/components/ui/UiButton.vue';
+import {AppContextController} from "@/core/context/contextController.ts";
+import {ContextMenus} from "@/core/context/contextMenus.ts";
 
-type InstanceActionCategory = {
-  title: string;
-  actions: InstanceAction[];
-}
 
 type InstanceAction = {
   title: string;
@@ -45,72 +43,6 @@ type ConditionContext = {
   instance: SugaredInstanceJson;
   instanceFolders: string[];
 }
-
-function folderExists(path: string, folders: string[]) {
-  if (path === '' || !folders.length) {
-    return false;
-  }
-
-  return folders.findIndex((e) => e === path) !== -1;
-}
-
-function openFolderAction(name: string, path: string): InstanceAction {
-  return {
-    title: `${name}`,
-    icon: faFolderOpen,
-    condition: ({instanceFolders}) => folderExists(path, instanceFolders),
-    action: (instance) => {
-      gobbleError(async () => {
-        await platform.io.openFinder(platform.io.pathJoin(instance.path, path))
-      })
-    }
-  } 
-}
-
-const instanceActions: InstanceActionCategory[] = [
-  {
-    title: "Folders",
-    actions: [
-      {
-        title: "Instance folder",
-        icon: faFolderOpen,
-        action: (instance) => {
-          gobbleError(() => {
-            platform.io.openFinder(`${instance.path}`)
-          })
-        }
-      },
-      openFolderAction("Logs", "logs"),
-      openFolderAction("Crash Reports", "crash-reports"),
-      openFolderAction("Backups", "backups"),
-      openFolderAction("Worlds", "saves"),
-      openFolderAction("Configs", "config"),
-      openFolderAction("Mods", "mods"),
-      openFolderAction("Resource packs", "resourcepacks"),
-      openFolderAction("Shaders", "shaderpacks"),
-      openFolderAction("Scripts", "scripts"),
-      openFolderAction("KubeJS", "kubejs"),
-    ]
-  },
-  {
-    title: "Actions",
-    actions: [
-      {
-        title: "Kill instance",
-        icon: faSkullCrossbones,
-        color: "danger",
-        action: (instance) => {
-          gobbleError(() => {
-            sendMessage("instance.kill", {
-              uuid: instance.uuid
-            })
-          })
-        },
-        looksLikeButton: true
-      }
-    ]
-  }
-] 
 
 export interface Bar {
   title: string;
@@ -289,15 +221,6 @@ const messageTypes = {
   "T": "text-green-400",
 }
 
-function runAction(action: InstanceAction) {
-  if (!instance.value) {
-    return;
-  }
-
-  action.action(instance.value, router);
-  showOptions.value = false;
-}
-
 const launchStatus = computed(() => {
   if (hasCrashed.value) {
     return '%s has crashed! 🔥';
@@ -458,7 +381,7 @@ function toggleEnabledLog(type: string) {
           type="info"
           size="small"
           class="!px-4"
-          @click="showOptions = true"
+          @click="(e) => AppContextController.openMenu(ContextMenus.RUNNING_INSTANCE_OPTIONS_MENU, e,() => ({ instance }))"
         >
           <FontAwesomeIcon :icon="faEllipsisVertical" />
         </UiButton>
@@ -477,26 +400,6 @@ function toggleEnabledLog(type: string) {
     >
       <div class="log-item" :class="(messageTypes as any)[item.t]" :key="item.i">{{item.v}}</div>
     </RecycleScroller>
-    
-    <Modal :open="showOptions" title="Instance options" :sub-title="instanceName" @closed="showOptions = false">
-      <div class="action-categories">
-        <div class="category" v-for="category in instanceActions">
-          <div class="title">{{category.title}}</div>
-          <div class="actions">
-            <template v-for="action in category.actions">
-              <UiButton
-                :type="action.color ?? 'secondary'"
-                v-if="!action.condition || (instance && action.condition({instance, instanceFolders}))"
-                @click="runAction(action)"
-              >
-                <FontAwesomeIcon :icon="action.icon" class="mr-2" />
-                {{ action.title }}
-              </UiButton>
-            </template>
-          </div>
-        </div>
-      </div>
-    </Modal>
   </div>
 </template>
 
