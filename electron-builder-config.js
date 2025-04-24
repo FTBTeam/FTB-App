@@ -1,3 +1,5 @@
+import locateSubprocess from './tooling/release/locateSubprocess.cjs';
+
 const config = {
   productName: 'FTB Electron App',
   asar: true,
@@ -38,8 +40,7 @@ const config = {
     artifactName: 'ftb-app-macos-${version}-${arch}.${ext}',
     category: 'public.app-category.games',
     binaries: [
-      "./subprocess/build/libs/app-*.jar",
-      // getPathToLauncher()
+      locateSubprocess(),
     ]
   },
   linux: {
