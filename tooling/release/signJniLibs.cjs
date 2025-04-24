@@ -3,11 +3,14 @@ const fs = require('fs');
 const { execSync } = require('child_process');
 const locateSubprocess = require('./locateSubprocess.cjs');
 
-module.exports = async function (context) {
+module.exports = async function (...args) {
   if (!process.env.GITHUB_REF_NAME) {
     return;
   }
 
+  console.log(args)
+  const context = args[0]; 
+  
   const packer = context.packager;
   const keychainFile = (await packer.codeSigningInfo.value).keychainFile
 
