@@ -33,7 +33,7 @@ const appStore = useAppStore();
 
 const isUnstable = ref(false);
 const showConfirm = ref(false);
-const loadingChanges = ref(false);
+const loadingChanges = ref(true);
 const changes = ref<string | null>(null)
 
 function close() {
@@ -55,8 +55,8 @@ watch(() => open, (newValue) => {
 
   isUnstable.value = latestVersion?.type.toLowerCase() !== 'release';
 
+  loadingChanges.value = true;
   loadChanges()
-    .then(() => (loadingChanges.value = true))
     .catch(e => logger.error("Failed to load changes", e))
     .finally(() => (loadingChanges.value = false));
 })
@@ -82,11 +82,18 @@ async function loadChanges() {
     return;
   }
 
-  modpackApi.modpacks.getChangelog(localInstance.id, latestVersion.id, typeIdToProvider(localInstance.packType))
-    .then(packReq => {
-      changes.value = packReq?.content ?? ""
-    })
-    .catch(_ => alertController.error("Failed to load changelog..."))
+  try {
+    const packReq = await modpackApi.modpacks.getChangelog(localInstance.id, latestVersion.id, typeIdToProvider(localInstance.packType));
+    if (packReq === null) {
+      changes.value = null;
+      return;
+    }
+    
+    changes.value = packReq.content;
+  } catch (e) {
+    console.error(e)
+    alertController.error("Failed to load changelog...")
+  }
 }
 </script>
 

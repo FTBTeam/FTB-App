@@ -24,7 +24,6 @@ class ContextController {
    */
   openMenu<T>(name: ContextMenus, pointer: PointerEvent | MouseEvent, context: () => T) {
     const menu = this.registry.get(name);
-    console.log("Lmenu", menu, context())
     if (!menu) {
       throw new Error(`Attempted to a menu that does not exist ${name}`)
     }
