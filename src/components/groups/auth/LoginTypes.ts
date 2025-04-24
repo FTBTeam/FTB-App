@@ -74,3 +74,19 @@ export interface MinecraftProfileCapes {
 	url: string;
 	alias: string;
 }
+
+export type LoadCodeFn = () => Promise<{
+    userCode: string;
+    deviceCode: string;
+    verificationUri: string;
+    expiresIn: number;
+    interval?: number;
+  } | { error: string }>;
+
+export type CheckForCodeFn = (deviceCode: string) => Promise<
+  {
+    pass: true,
+  } | { error: string } | { data: any }>;
+
+export type OnResultFn = (data: any) => Promise<true | {
+  error: string }>;

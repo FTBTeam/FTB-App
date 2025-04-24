@@ -7,7 +7,7 @@ on:
     branches:
       - main
       - dev
-  
+
 jobs:
   patch-version:
     runs-on: ubuntu-latest
@@ -26,7 +26,7 @@ jobs:
         with:
           name: packageJson
           path: package.json
-          
+
   build-jars:
     needs: patch-version
     strategy:
@@ -67,7 +67,7 @@ jobs:
           name: subprocess-jar-${{ matrix.os }}
           path: |
             subprocess/build/libs/
-  
+
   # Publish
   build-releases:
     name: Prepare releases
@@ -91,7 +91,7 @@ jobs:
         with:
           name: subprocess-jar-${{ matrix.os }}
           path: subprocess/build/libs/
-          
+
       # Validation of jar
       - name: Ensure jar exists
         if: ${{ matrix.os == 'macos-latest' || matrix.os == 'linux-latest' }}
@@ -101,7 +101,7 @@ jobs:
         if: ${{ matrix.os == 'windows-latest' }}
         run: |
           dir subprocess/build/libs/*.jar || exit 1
-          
+
       # Apple app signing
       - name: Write apple id
         if: ${{ matrix.os == 'macos-latest' }}
@@ -110,20 +110,20 @@ jobs:
         run: |
           echo "$APPLE_API_KEY" > apple_api_key.p8
           find apple_api_key.p8 -size +0c || exit 1
-          
+
       # Windows app signing
       - name: Download AzureSignTool from nuget
         if: ${{ matrix.os == 'windows-latest' }}
         run: |
           dotnet tool install --global AzureSignTool --version 5.0.0
-          
+
       # Patch for correct versioning
       - name: Override packageJson
         uses: actions/download-artifact@v4
         with:
           name: packageJson
           path: .
-        
+
       # Setup the PNPM env for all the next steps
       - name: Setup PNPM Env
         run: |
@@ -131,7 +131,7 @@ jobs:
           pnpm config set store-dir .pnpm-store
           pnpm install --no-frozen-lockfile
           pnpm gen:license
-      
+
       # Windows build
       - name: Build frontend (Windows)
         if: ${{ matrix.os == 'windows-latest' }}
@@ -146,7 +146,7 @@ jobs:
           AZURE_KEY_VAULT_TENANT_ID: ${{ secrets.AZURE_KEY_VAULT_TENANT_ID }}
         run: |
           pnpm build --publish always -w --x64
-          
+
       # Mac build
       - name: Build frontend (Macos)
         if: ${{ matrix.os == 'macos-latest' }}
@@ -162,7 +162,7 @@ jobs:
         run: |
           node ./tooling/release/patchBuilderYaml.js
           pnpm build --publish always -m --x64 --arm64
-          
+
       # Linux build
       - name: Build frontend (Linux)
         if: ${{ matrix.os == 'ubuntu-latest' }}
@@ -172,7 +172,7 @@ jobs:
           VUE_APP_TARGET_PLATFORM: ${{ matrix.platform }}
         run: |
           pnpm build --publish always -l --x64 --arm64
-          
+
       # Upload time
       - name: Upload Mac artifacts
         if: ${{ matrix.os == 'macos-latest' }}
@@ -282,7 +282,7 @@ jobs:
           ls -la release
           b2 authorize-account ${{ secrets.AWS_ACCESS_KEY_ID }} ${{ secrets.AWS_SECRET_ACCESS_KEY }} > /dev/null 2>&1
           b2 sync --replace-newer --no-progress release b2://${{ secrets.PUBLISH_BUCKET }}/app
-          
+
   # Publish to Overwolf
   release-overwolf:
     name: Publish Overwolf

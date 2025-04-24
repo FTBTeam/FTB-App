@@ -64,9 +64,6 @@ class FetchResponse implements FetchResponseRaw {
   }
 }
 
-/**
- * @deprecated Don't use.
- */
 export class JavaFetch {
   private readonly logger = createLogger("JavaFetch.ts")
   
