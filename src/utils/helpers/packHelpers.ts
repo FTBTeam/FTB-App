@@ -5,6 +5,7 @@ import {SearchResultPack} from '@/core/types/modpacks/packSearch';
 import { ModPack, PackProviders, Versions } from '@/core/types/appTypes.ts';
 import { packBlacklist } from '@/store/modpackStore.ts';
 import { useAppSettings } from '@/store/appSettingsStore.ts';
+import {toTitleCase} from "@/utils/helpers/stringHelpers.ts";
 
 export type ArtworkTypes = "square" | "splash";
 export type VersionTypes = "release" | "beta" | "alpha" | "archived" | "all" | "hotfix";
@@ -80,11 +81,11 @@ export function resolveModloader(packOrInstance: SugaredInstanceJson | InstanceJ
     // The modloader contains other information so we have to parse it for a known modloader
     const foundLoader = knownModloaders.find(e => instance.modLoader.toLowerCase().includes(e));
     if (foundLoader) {
-      return foundLoader;
+      return toTitleCase(foundLoader);
     }
     
     // For some reason the modloader will be set to the mc version so we have to support that
-    if (instance.modLoader.includes(".")) {
+    if (instance.modLoader.includes(".") || (instance.modLoader.includes("w"))) {
       return "Vanilla";
     }
     
@@ -92,7 +93,8 @@ export function resolveModloader(packOrInstance: SugaredInstanceJson | InstanceJ
   }
   
   const pack = packOrInstance as ModPack;
-  return pack.versions.at(0)?.targets.find(e => e.type === "modloader")?.name ?? "Forge";
+  const targetName = pack.versions.at(0)?.targets.find(e => e.type === "modloader")?.name;
+  return targetName ? toTitleCase(targetName) : "Forge";
 }
 
 export function resolveModLoaderVersion(instance: SugaredInstanceJson | InstanceJson | null) {
