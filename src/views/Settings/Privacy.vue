@@ -31,5 +31,9 @@ onMounted(() => {
        <UiButton class="mt-6" type="primary" @click="appPlatform.app.cpm.openWindow('purposes')">Manage ads</UiButton>
      </div>
    </template>
+
+   <div class="mt-4">
+     platform {{ appPlatform.isElectron ? "Electron" : "Overwolf" }}, showAdPersonalizationButton: {{ showAdPersonalizationButton }}
+   </div>
  </div>
 </template>
