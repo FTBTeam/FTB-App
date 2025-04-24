@@ -80,7 +80,7 @@ function install() {
   }
 }
 
-const packName = apiModpack.value?.name ?? "Loading...";
+const packName = computed(() => apiModpack.value?.name ?? "Loading...");
 const restrictedVersions = computed(() => {
   let versions = sortedApiVersions.value;
   if (allowPreRelease.value) {
