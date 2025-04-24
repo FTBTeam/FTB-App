@@ -3,14 +3,18 @@ const fs = require('fs');
 const { execSync } = require('child_process');
 const locateSubprocess = require('./locateSubprocess.cjs');
 
-module.exports = async function (...args) {
+let hasRepackedJar = false;
+
+module.exports = async function (context) {
   if (!process.env.GITHUB_REF_NAME) {
     return;
   }
 
-  console.log(args)
-  const context = args[0]; 
-  
+  if (context.electronPlatformName !== 'darwin' || hasRepackedJar) {
+    return;  
+  }
+
+  hasRepackedJar = true;
   const packer = context.packager;
   const keychainFile = (await packer.codeSigningInfo.value).keychainFile
 
