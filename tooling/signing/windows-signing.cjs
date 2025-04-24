@@ -1,4 +1,5 @@
 const {execSync} = require("child_process");
+
 const requiredEnv = [
   "AZURE_KEY_VAULT_URL",
   "AZURE_KEY_VAULT_CLIENT_ID",
@@ -11,7 +12,7 @@ const requiredEnv = [
  * Signs any given file using the `AzureSignTool` https://github.com/vcsjones/AzureSignTool/
  * Currently using version `5.0.0`
  */
-exports.default = async (config) => {
+module.exports = async (config) => {
   // Check for required environment variables
   for (const env of requiredEnv) {
     if (!process.env[env]) {
