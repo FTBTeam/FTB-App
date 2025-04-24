@@ -88,6 +88,8 @@ const configData = appPlatform.config;
 </template>
 
 <style scoped lang="scss">
+@import 'tailwindcss/theme' theme(reference);
+
 .settings-sidebar {
   background-color: var(--color-background);
   width: 220px;
@@ -135,7 +137,7 @@ const configData = appPlatform.config;
 
       &.router-link-exact-active,
       &.app-info-item.router-link-active {
-        background: var(--color-primary-button);
+        background: var(--color-green-600);
       }
 
       svg,
