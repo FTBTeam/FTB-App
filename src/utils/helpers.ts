@@ -1,8 +1,6 @@
-
 import Router, {RouterNames} from '@/router';
 import appPlatform from '@platform';
-
-const markdownParser = window.nodeUtils.markdown.parse
+import { marked } from 'marked';
 
 export async function safeNavigate(name: RouterNames, params?: any, query?: any) {
   if (Router.currentRoute.value.name === name) {
@@ -58,4 +56,16 @@ export function computeAspectRatio(width: number, height: number) {
   return `${simplifiedWidth}:${simplifiedHeight}`;
 }
 
-export const parseMarkdown = (input: string) => markdownParser(input);
+marked.use({ hooks: {
+    postprocess(html) {
+      // Add target="_blank" to all links
+      const linkRegex = /<a\s+(?:[^>]*?\s+)?href=(["'])(.*?)\1/gi;
+      return html.replace(linkRegex, (match) => {
+        return match.replace(/<a /, `<a target="_blank" `);
+      });
+    }
+} });
+
+export const parseMarkdown = (input: string) => {
+  return marked.parse(input);
+}

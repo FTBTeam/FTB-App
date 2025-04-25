@@ -81,3 +81,4 @@ frontend
 overwolf/jdk-*/
 dist-electron
 *storybook.log
+.pnpm-store

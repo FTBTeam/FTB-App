@@ -2,16 +2,8 @@ import { contextBridge, ipcRenderer } from 'electron';
 import path from 'node:path';
 import fs from 'node:fs';
 import os from 'node:os';
-import MarkdownIt from 'markdown-it';
 import { fallbackMetaData, loadApplicationMetaData } from '../src/utils/nuturalHelpers.ts';
 import log from 'electron-log/main'
-
-const markdownParser = new MarkdownIt();
-markdownParser.renderer.rules.link_open = function (tokens, idx, options, _, self) {
-  // Ensure the link is opened in a new tab
-  tokens[idx].attrPush(['target', '_blank']);
-  return self.renderToken(tokens, idx, options);
-}
 
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld('ipcRenderer', {
@@ -56,11 +48,6 @@ const nodeUtils = {
   },
   buffer: {
     from: Buffer.from,
-  },
-  markdown: {
-    parse(text: string) {
-      return markdownParser.render(text)
-    }
   },
   app: {
     getMetaData() {
