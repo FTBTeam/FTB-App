@@ -12,7 +12,9 @@ import net.covers1624.quack.gson.JsonUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.function.Function;
@@ -59,9 +61,16 @@ public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigu
             instance.props.locked = getOrDefault(updateJson, "locked", JsonElement::getAsBoolean, instance.props.locked);
             instance.props.preventMetaModInjection = getOrDefault(updateJson, "preventMetaModInjection", JsonElement::getAsBoolean, instance.props.preventMetaModInjection);
             
-            var instanceImage = getOrDefault(updateJson, "instanceImage", JsonElement::getAsString, null);
+            var instanceImage = getOrDefault(updateJson, "instanceImage", JsonElement::getAsJsonObject, null);
             if (instanceImage != null) {
-                instance.updateArtwork(Path.of(instanceImage));
+                if (instanceImage.has("buffer") && instanceImage.has("extension")) {
+                    var buffer = instanceImage.getAsJsonArray("buffer");
+                    var extension = instanceImage.get("extension").getAsString();
+                    
+                    // Creat an input stream from the buffer
+                    var inputStream = new ByteArrayInputStream(buffer.toString().getBytes(StandardCharsets.UTF_8));
+                    instance.updateArtwork(inputStream, extension);
+                }
             }
 
             if (jreRealPath != null) {

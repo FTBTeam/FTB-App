@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import {ProgressBar, UiButton} from '@/components/ui';
-import Router, {RouterNames} from '@/router';
-import {SugaredInstanceJson} from '@/core/types/javaApi';
+import {RouterNames} from '@/router';
 import {alertController} from '@/core/controllers/alertController';
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
@@ -20,29 +19,12 @@ import {
   faFolderOpen,
   faSkullCrossbones,
 } from '@fortawesome/free-solid-svg-icons';
-import {IconDefinition} from '@fortawesome/free-brands-svg-icons';
 // @ts-ignore (Literally no types :tada:)
 import {RecycleScroller} from 'vue-virtual-scroller'
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 import {artworkFileOrElse} from '@/utils/helpers/packHelpers.ts';
-import {ElementColorType} from '@/components/ui/UiButton.vue';
 import {AppContextController} from "@/core/context/contextController.ts";
 import {ContextMenus} from "@/core/context/contextMenus.ts";
-
-
-type InstanceAction = {
-  title: string;
-  icon: IconDefinition;
-  action: (instance: SugaredInstanceJson, router: typeof Router) => void;
-  condition?: (context: ConditionContext) => boolean;
-  color?: ElementColorType;
-  looksLikeButton?: boolean;
-}
-
-type ConditionContext = {
-  instance: SugaredInstanceJson;
-  instanceFolders: string[];
-}
 
 export interface Bar {
   title: string;
@@ -79,7 +61,6 @@ const finishedLoading = ref(false);
 const preInitMessages = ref<Set<string>>(new Set());
 const messages = ref<InstanceMessageData[]>([]);
 const launchProgress = ref<Bar[] | null | undefined>(null);
-const showOptions = ref(false);
 const scrollIntervalRef = ref<any>(null);
 
 const instance = computed(() => instanceStore.instances.find(e => e.uuid === router.currentRoute.value.params.uuid) ?? null);

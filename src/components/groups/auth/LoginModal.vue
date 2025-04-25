@@ -4,8 +4,10 @@ import {sendMessage} from '@/core/websockets/websocketsApi';
 import {alertController} from '@/core/controllers/alertController';
 import DeviceAuthModal from "@/components/groups/auth/DeviceAuthModal.vue";
 import {useAccountsStore} from "@/store/accountsStore.ts";
+import {ref} from "vue";
 
 const accountStore = useAccountsStore();
+const open = ref(false)
 
 const emit = defineEmits<{
   (event: 'closed'): void;
@@ -120,10 +122,11 @@ async function continueTokenFlow(data: any) {
 
 <template>
   <DeviceAuthModal
+    :open="open"
     subtext="Login to Minecraft via your Microsoft account. Clicking the button below will open the Microsoft Login page and copy the code to your clipboard."
     account-type="Microsoft" 
     :load-code="loadInitialCode"
-    :check-for-success="checkForToken"
+    :check-for-success="checkForToken as any"
     :on-result="continueTokenFlow"
     @closed="emit('closed')"
   />

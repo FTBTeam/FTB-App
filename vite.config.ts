@@ -18,7 +18,7 @@ export default defineConfig({
   plugins: [
     vue(),
     tailwindcss(),
-    electron({
+    !isOverwolf && electron({
       main: {
         // Shortcut of `build.lib.entry`.
         entry: 'electron/main.ts',

@@ -14,7 +14,10 @@ const allowedFileTypes = [
   "image/gif"
 ]
 
-const value = defineModel<File | null>()
+const value = defineModel<{
+  buffer: ArrayBuffer,
+  extension: string
+} | null>()
 
 const {
   allowRemove = true,
@@ -68,7 +71,6 @@ function drop(event: DragEvent) {
 }
 
 function processFileList(files: File[]) {
-  console.log(files)
   let firstValidFile: File | null = null;
   for (const file of files) {
     if (allowedFileTypes.includes(file.type)) {
@@ -77,15 +79,22 @@ function processFileList(files: File[]) {
     }
   }
   
-  console.log(firstValidFile, firstValidFile?.path)
   if (firstValidFile) {
-    value.value = firstValidFile;
+    console.log(firstValidFile)
+    firstValidFile.arrayBuffer().then(e => {
+      value.value = {
+        buffer: e,
+        extension: firstValidFile.type.split('/')[1]
+      }
+    });
   }
 }
 
 const getArtwork = computed(() => {
   if (value.value) {
-    return "file://" + value.value.arrayBuffer;
+    const {buffer, extension} = value.value;
+    const blob = new Blob([buffer], { type: `image/${extension}` });
+    return URL.createObjectURL(blob);
   }
 
   return resolveArtwork(pack ?? null);

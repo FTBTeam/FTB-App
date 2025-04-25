@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { InstallRequest, InstallStatus } from '@/core/controllers/InstanceInstallController.ts';
 
-import { ModLoaderUpdateState } from '@/core/types/appTypes.ts';
+import {ModLoaderUpdateState} from '@/core/types/appTypes.ts';
 
 export type InstallState = {
   installQueue: InstallRequest[],

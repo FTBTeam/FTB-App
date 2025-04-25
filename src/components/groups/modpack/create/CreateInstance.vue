@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import ArtworkSelector from '@/components/groups/modpack/components/ArtworkSelector.vue';
+// import ArtworkSelector from '@/components/groups/modpack/components/ArtworkSelector.vue';
 import Selection2, {SelectionOption} from '@/components/ui/Selection2.vue';
 import UiButton from '@/components/ui/UiButton.vue';
 import {stringIsEmpty} from '@/utils/helpers/stringHelpers';
@@ -223,7 +223,7 @@ const screenResolutions = computed( () => {
       </header>
       <div class="about" v-show="step === 0">
         <template v-if="!loadingVanilla">
-          <ArtworkSelector class="mb-6" v-model="userSelectedArtwork" />
+<!--          <ArtworkSelector class="mb-6" v-model="userSelectedArtwork" />-->
           <Input fill label="Name" placeholder="Next best instance!" v-model="userPackName" class="mb-4" />
           <Selection2 :open-up="true" label="Minecraft version" class="mb-4" :options="vanillaVersions" v-model="userVanillaVersion" />
           

@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import DeviceAuthModal from "@/components/groups/auth/DeviceAuthModal.vue";
-import {useAppStore} from "@/store/appStore.ts";
+// import {useAppStore} from "@/store/appStore.ts";
 import * as client from 'openid-client'
 import {ref} from "vue";
 
@@ -35,9 +35,9 @@ async function loadInitialCode() {
   }
 }
 
-async function checkForToken(deviceCode: string) {
+async function checkForToken(_: string) {
   const config = await client.discovery(new URL("https://identity.feed-the-beast.com/realms/FTB"), "ftb-app");
-  const tokens: client.TokenEndpointResponse = await client.pollDeviceAuthorizationGrant(config, responseHolder.value!)
+  const tokens: client.TokenEndpointResponse = await client.pollDeviceAuthorizationGrant(config, ((responseHolder as any).value! as any))
   
   console.log(tokens)
 }
@@ -53,8 +53,8 @@ async function continueTokenFlow(data: any) {
     accountType="FTB"
     :open="open"
     :loadCode="loadInitialCode"
-    :checkForSuccess="checkForToken"
-    :onResult="continueTokenFlow"
+    :checkForSuccess="checkForToken as any"
+    :onResult="continueTokenFlow as any"
     @closed="emit('closed')"
   />
 </template>

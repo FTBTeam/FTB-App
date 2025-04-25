@@ -22,7 +22,7 @@
     "build:bin:mac:arm": "pnpm run build -m --arm64",
     "gen:license": "license-checker --excludePrivatePackages --json --production > licenses.json",
     "overwolf:dev": "node tooling/overwolf/preinit.js && cross-env TARGET_PLATFORM=overwolf cross-env NODE_ENV=development vue-cli-service ow:electron:serve",
-    "overwolf:build": "cross-env TARGET_PLATFORM=overwolf NODE_ENV=production vue-cli-service build --mode overwolf",
+    "overwolf:build": "cross-env TARGET_PLATFORM=overwolf NODE_ENV=production vue-tsc && cross-env NODE_ENV=production vite build --mode overwolf",
     "overwolf:serve": "node tooling/overwolf/preinit.js &&  cross-env TARGET_PLATFORM=overwolf NODE_ENV=development vue-cli-service build --watch --mode overwolf",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"

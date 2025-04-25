@@ -19,7 +19,10 @@ export type SaveJson = {
   height: number;
   fullScreen: boolean;
   releaseChannel: string;
-  instanceImage?: string;
+  instanceImage?: {
+    buffer: Uint8Array,
+    extension: string
+  };
   preventMetaModInjection?: boolean;
   category: string;
   locked: boolean;

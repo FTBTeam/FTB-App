@@ -10,6 +10,22 @@ const versionData = overwolf.windows.getMainWindow().getVersionData();
 
 const owLogger = createLogger('platform/overwolf.ts');
 
+/**
+ * TODO: Remove, electron port issues
+ */
+export type MetaData = {
+  appVersion: string;
+  commit: string;
+  branch: string;
+  released: number;
+  runtime: {
+    version: string;
+    jar: string;
+    env: any[];
+    jvmArgs: any[];
+  };
+}
+
 function parseAndHandleURL(protocolURL: string) {
   handleAction(protocolURL);
   // protocolURL = protocolURL.substring(6, protocolURL.length);

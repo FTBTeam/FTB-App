@@ -8,7 +8,7 @@ import {RouterNames} from '@/router';
 import { ModalBody, Modal, UiToggle, Selection2, ModalFooter, UiButton, Input } from '@/components/ui';
 import { watch, ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import ArtworkSelector from '@/components/groups/modpack/components/ArtworkSelector.vue';
+// import ArtworkSelector from '@/components/groups/modpack/components/ArtworkSelector.vue';
 import CategorySelector from '@/components/groups/modpack/create/CategorySelector.vue';
 import { useModpackStore } from '@/store/modpackStore.ts';
 import { ModPack, PackProviders } from '@/core/types/appTypes.ts';
@@ -127,7 +127,7 @@ function versions() {
   <Modal :open="open" @closed="emit('close')" title="Install instance" :sub-title="packName" :external-contents="true">
     <ModalBody>
       <template v-if="apiModpack">
-        <ArtworkSelector :pack="apiModpack" class="mb-6" v-model="userSelectedArtwork" />
+<!--        <ArtworkSelector :pack="apiModpack" class="mb-6" v-model="userSelectedArtwork" />-->
         <Input fill label="Name" :placeholder="packName" v-model="userPackName" class="mb-4" />
         
         <CategorySelector class="mb-4" v-model="selectedCategory" />
