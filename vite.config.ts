@@ -4,10 +4,12 @@ import electron from 'vite-plugin-electron/simple'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 
-const isOverwolf = process.env.TARGET_PLATFORM === 'overwolf'
+const isOverwolf = process.env.VITE_RUNTIME_PLATFORM === 'overwolf'
+console.log("Is overwolf", isOverwolf, process.env.VITE_RUNTIME_PLATFORM)
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: isOverwolf ? '/dist/desktop' : '/',
   // Define @ alias for src/ directory
   resolve: {
     alias: {
@@ -47,10 +49,14 @@ export default defineConfig({
     }),
   ],
   build: {
+    // Modify the output directory
+    outDir: isOverwolf ? './overwolf/dist/desktop' : './dist',
     rollupOptions: {
       input: {
-        index: path.join(__dirname, 'index.html'),
-        prelaunch: path.join(__dirname, 'prelaunch.html'),
+        index: path.join(__dirname, isOverwolf ? 'index-overwolf.html' : 'index.html'),
+        ...(!isOverwolf ? {
+          prelaunch: path.join(__dirname, 'prelaunch.html')
+        } : {}),
       },
     },
   },

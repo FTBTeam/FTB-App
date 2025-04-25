@@ -137,8 +137,6 @@ jobs:
         if: ${{ matrix.os == 'windows-latest' }}
         env:
           VITE_RUNTIME_PLATFORM: "electron"
-          APP_TARGET_PLATFORM: ${{ matrix.platform }}
-          VUE_APP_TARGET_PLATFORM: ${{ matrix.platform }}
           AZURE_KEY_VAULT_URL: ${{ secrets.AZURE_KEY_VAULT_URL }}
           AZURE_KEY_VAULT_CLIENT_ID: ${{ secrets.AZURE_KEY_VAULT_CLIENT_ID }}
           AZURE_KEY_VAULT_CLIENT_SECRET: ${{ secrets.AZURE_KEY_VAULT_CLIENT_SECRET }}
@@ -152,8 +150,6 @@ jobs:
         if: ${{ matrix.os == 'macos-latest' }}
         env:
           VITE_RUNTIME_PLATFORM: "electron"
-          APP_TARGET_PLATFORM: ${{ matrix.platform }}
-          VUE_APP_TARGET_PLATFORM: ${{ matrix.platform }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           CSC_LINK: ${{ secrets.CSC_LINK }}
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
@@ -168,8 +164,6 @@ jobs:
         if: ${{ matrix.os == 'ubuntu-latest' }}
         env:
           VITE_RUNTIME_PLATFORM: "electron"
-          APP_TARGET_PLATFORM: ${{ matrix.platform }}
-          VUE_APP_TARGET_PLATFORM: ${{ matrix.platform }}
         run: |
           pnpm build --publish always -l --x64 --arm64
 
@@ -230,8 +224,6 @@ jobs:
         env:
           OW_CLI_API_KEY: ${{ secrets.OW_CLI_API_KEY }}
           OW_CLI_EMAIL: ${{ secrets.OW_CLI_EMAIL }}
-          APP_TARGET_PLATFORM: "overwolf"
-          VUE_APP_TARGET_PLATFORM: "overwolf"
           VITE_RUNTIME_PLATFORM: "overwolf"
         run: |
           cp subprocess/build/libs/meta.json overwolf/
