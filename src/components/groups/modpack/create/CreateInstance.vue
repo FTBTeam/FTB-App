@@ -189,7 +189,7 @@ function createInstance() {
     appStore.controllers.install.requestInstall(request)
   }
 
-  emit('close')
+  close()
   safeNavigate(RouterNames.ROOT_LIBRARY);
 }
 
