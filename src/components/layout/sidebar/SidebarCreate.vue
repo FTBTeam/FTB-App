@@ -87,6 +87,8 @@ function close(event: any) {
 </template>
 
 <style scoped lang="scss">
+@import 'tailwindcss/theme' theme(reference);
+
 .create-instance-container {
   position: relative;
   margin-top: 1rem;
@@ -106,7 +108,7 @@ function close(event: any) {
     }
     
     &:hover {
-      background-color: var(--color-success-button);
+      background-color: var(--color-green-600);
     }
   }
   
