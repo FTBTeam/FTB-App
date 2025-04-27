@@ -9,21 +9,29 @@ const {
   context,
   options,
   overflowFix,
-  openToLeft = false
+  openToLeft = false,
+  depth = 0
 } = defineProps<{
   context: () => any;
   options: MenuOptions<any>;
   overflowFix: boolean;
   openToLeft: boolean;
+  depth?: number;
 }>()
 
 const working = ref<Record<string, boolean>>({});
 
 const emit = defineEmits<{
-  (e: 'clicked', option: MenuItem<any>): void;
+  (e: 'clicked', depth: number, option: MenuItem<any>): void;
+  (e: 'close'): void;
 }>()
 
-async function onItemClicked(option: MenuItem<any>) {
+async function onItemClicked(givenDepth: number, option: MenuItem<any>) {
+  if (givenDepth !== depth) {
+    emit('close')
+    return;
+  }
+  
   if ("separator" in option) {
     return;
   }
@@ -39,7 +47,7 @@ async function onItemClicked(option: MenuItem<any>) {
 
   try {
     await option.action(context())
-    emit('clicked', option);
+    emit('clicked', givenDepth, option);
   } catch (e) {
     console.error(e)
   } finally {
@@ -61,7 +69,7 @@ async function onItemClicked(option: MenuItem<any>) {
       <div class="item"
            v-else
            :class="{[option.color ?? 'normal']: true, 'has-children': option.children, 'working': working[option.title]}"
-           @click.stop="onItemClicked(option)"
+           @click.stop="onItemClicked(depth, option)"
            v-if="!option.predicate || option.predicate(context())">
         <div class="main">
           <FontAwesomeIcon :fixed-width="true" :icon="faSpinner" spin v-if="working[option.title]" />
@@ -71,9 +79,9 @@ async function onItemClicked(option: MenuItem<any>) {
   
         <FontAwesomeIcon class="chevron" v-if="option.children" :icon="faChevronRight"/>
   
-        <div class="child" :class="{'overflow-fix': overflowFix, 'open-to-left': openToLeft}" v-if="option.children">
-          <nested-context-menu-item :context="context" :options="option.children" :overflow-fix="overflowFix"
-                                    :open-to-left="openToLeft" @clicked="onItemClicked"/>
+        <div class="child" :class="{'overflow-fix': overflowFix, 'open-to-left': openToLeft}" v-if="option.children" @click.stop.prevent>
+          <nested-context-menu-item :depth="depth + 1" :context="context" :options="option.children" :overflow-fix="overflowFix" @click.stop.prevent
+                                    :open-to-left="openToLeft" @clicked="(innerDepth, o) => onItemClicked(innerDepth, o)"/>
         </div>
       </div>
     </template>

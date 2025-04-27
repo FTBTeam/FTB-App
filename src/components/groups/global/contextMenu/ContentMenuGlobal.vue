@@ -51,7 +51,7 @@ function handleMenuOpen(givenContext: ContextMenuEventContext) {
   })
 }
 
-function onOptionClick(_: MenuItem<any>) {
+function onOptionClick(depth: number, option: MenuItem<any>) {
   handleMenuClose()
 }
 
@@ -118,7 +118,7 @@ function calculateWidth() {
         top: menuY + 'px',
         left: menuX + 'px'
       }">
-        <ContextMenuItem v-if="menu && context" :context="context" :open-to-left="openToLeft" :overflow-fix="overflowFix" @clicked="onOptionClick" :options="menu.options()" />
+        <ContextMenuItem v-if="menu && context" :context="context" :open-to-left="openToLeft" @close="handleMenuClose" :overflow-fix="overflowFix" @clicked="onOptionClick" :options="menu.options()" />
       </div>
     </transition>
   </div>
