@@ -43,6 +43,8 @@ const enabledLogTypes = ref(["Info", "Warn", "Error"]);
 const logTypes = ref(["Info", "Warn", "Error", "Debug", "Trace"]);
 const loading = ref(false);
 
+const logsKey = ref(enabledLogTypes.value.join("|"));
+
 const instanceFolders = ref<string[]>([]);
 const hasCrashed = ref(false);
 const disableFollow = ref(false);
@@ -77,6 +79,7 @@ onMounted(async () => {
 
   if (localStorage.getItem("enabledLogTypes")) {
     enabledLogTypes.value = localStorage.getItem("enabledLogTypes")!.split(",");
+    logsKey.value = enabledLogTypes.value.join("|");
   }
 
   logger.debug("Websockets ready, loading instance")
@@ -249,6 +252,7 @@ function toggleEnabledLog(type: string) {
     enabledLogTypes.value.push(type);
   }
 
+  logsKey.value = enabledLogTypes.value.join("|");
   localStorage.setItem("enabledLogTypes", enabledLogTypes.value.join(","));
 }
 </script>
@@ -370,6 +374,7 @@ function toggleEnabledLog(type: string) {
     </div>
     
     <RecycleScroller
+      :key="logsKey"
       id="log-container"
       :items="logMessages"
       key-field="i"
