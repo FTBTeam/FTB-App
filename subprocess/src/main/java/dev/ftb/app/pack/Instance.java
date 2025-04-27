@@ -783,6 +783,7 @@ public class Instance {
         return computedName + " (" + count + ")".trim();
     }
 
+    @Nullable
     public String resolveBasicModLoader() {
         var modloader = this.props.modLoader.toLowerCase();
         if (modloader.isEmpty()) {
