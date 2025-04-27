@@ -37,16 +37,16 @@ const onlyQueue = computed(() => {
         <FontAwesomeIcon :icon="faCircleNotch" spin />
         Downloading
       </div>
-
+      
       <transition name="transition-fade-and-up">
         <div class="dropdown" v-if="open">
           <div class="group" v-if="installStore.currentInstall">
             <div class="name">Installing</div>
-            <InstallQueueRow class="row" :item="installStore.currentInstall" :is-install="true" />
+            <InstallQueueRow class="row" :entry="installStore.currentInstall" :is-install="true" />
           </div>
           <div class="group" v-if="onlyQueue.length > 0">
             <div class="name">Queue</div>
-            <InstallQueueRow class="row" v-for="(item, index) in onlyQueue" :key="index" :is-next="index === 0" :item="item" :is-install="false" />
+            <InstallQueueRow class="row" v-for="(item, index) in onlyQueue" :key="index" :is-next="index === 0" :entry="item" :is-install="false" />
           </div>
         </div>
       </transition>

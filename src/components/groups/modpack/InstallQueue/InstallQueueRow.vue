@@ -6,11 +6,11 @@ import { computed, ref } from 'vue';
 import { useAppStore } from '@/store/appStore.ts';
 
 const {
-  item,
+  entry,
   isInstall,
   isNext = false
 } = defineProps<{
-  item: InstallRequest | InstallStatus;
+  entry: InstallRequest | InstallStatus;
   isInstall: boolean;
   isNext?: boolean;
 }>()
@@ -37,15 +37,16 @@ async function cancelInstall(item: InstallRequest | InstallStatus) {
 
 const request = computed(() => {
   if (isInstall) {
-    return (item as InstallStatus).request;
+    return (entry as InstallStatus).request;
   }
   
-  return item as InstallRequest;
+  return entry as InstallRequest;
 })
 
 const status = computed(() => {
+  console.log(entry);
   if (isInstall) {
-    return item as InstallStatus
+    return entry as InstallStatus
   }
   
   return null;
@@ -67,7 +68,7 @@ const status = computed(() => {
     </div>
     <div class="actions">
       <div class="btn">
-        <FontAwesomeIcon :icon="faTimes" @click="cancelInstall(item)" v-if="!cancelling" />
+        <FontAwesomeIcon :icon="faTimes" @click="cancelInstall(entry)" v-if="!cancelling" />
         <FontAwesomeIcon :icon="faCircleNotch" spin v-else />
       </div>
     </div>
