@@ -419,8 +419,20 @@ public class Instance {
         return launcher;
     }
 
-    public boolean uninstall() throws IOException {
-        FileUtils.deleteDirectory(path);
+    public boolean uninstall() {
+        com.sun.jna.platform.FileUtils instance = com.sun.jna.platform.FileUtils.getInstance();
+        if (!instance.hasTrash()) {
+            // Hardcore delete.
+            FileUtils.deleteDirectory(path);    
+        } else {
+            try {
+                instance.moveToTrash(path.toFile());
+            } catch (IOException ex) {
+                LOGGER.error("Failed to move instance to trash.", ex);
+                FileUtils.deleteDirectory(path); // Just delete it instead.
+            }
+        }
+        
         Instances.refreshInstances();
         return true;
     }

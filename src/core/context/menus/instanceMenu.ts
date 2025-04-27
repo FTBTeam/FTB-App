@@ -92,8 +92,14 @@ export class InstanceMenu extends ContextMenu<InstanceMenuContext> {
         icon: faTrash,
         color: 'danger',
         async action(context) {
-          if (!(await dialogsController.createConfirmationDialog("Are you sure you want to delete this instance?", `Are you absolutely sure you want to delete \`${context.instance.name}\`? This action can not be undone, all your saves, configs, custom mods, etc will be removed.`))) return;
-          await InstanceController.from(context.instance).deleteInstance();
+          dialogsController.createConfirmationDialog("Are you sure you want to delete this instance?", `Are you absolutely sure you want to delete \`${context.instance.name}\`? This action can not be undone, all your saves, configs, custom mods, etc will be removed.`)
+            .then((result) => {
+              if (!result) return;
+              
+              InstanceController.from(context.instance)
+                .deleteInstance()
+                .catch(console.error)
+            })
         }
       }
     ];
