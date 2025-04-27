@@ -1,25 +1,38 @@
 <script lang="ts" setup>
 
-const { disabled = false, label = undefined, desc = undefined, alignRight = false } = defineProps<{
+import {computed} from "vue";
+
+const { disabled = false, label = undefined, desc = undefined, alignRight = false, value } = defineProps<{
   disabled?: boolean;
   label?: string;
   desc?: string;
   alignRight?: boolean;
+  value?: boolean;
 }>();
 
-const value = defineModel<boolean>()
+const modelValue = defineModel<boolean>()
+
+const emit = defineEmits<{
+  (e: 'input', value: boolean): void;
+}>();
+
 const hasText = label || desc;
 
 function toggle() {
   if (!disabled) {
-    value.value = !value.value;
+    modelValue.value = !modelValue.value;
+    emit('input', modelValue.value);
   }
 }
+
+const actualValue = computed(() => {
+  return modelValue.value ?? value; 
+})
 </script>
 
 <template>
   <div class="ui-toggle" @click="toggle" :class="{disabled, 'text-based': hasText, 'right': alignRight, 'no-desc': !desc}">
-    <div class="toggle" :class="{active: value}">
+    <div class="toggle" :class="{active: actualValue}">
       <div class="inner" />
     </div>
     

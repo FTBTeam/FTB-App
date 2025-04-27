@@ -42,6 +42,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 public class Instance {
+    public static final Set<Long> SPECIAL_LOADER_PACK_IDS = Set.of(
+        81L,  // Vanilla
+        104L, // Forge
+        105L, // Fabric
+        116L  // NeoForge  
+    );
+    
     private static final Logger LOGGER = LogManager.getLogger();
     private static final String META_FOLDER_NAME = ".ftbapp";
     
@@ -233,6 +240,11 @@ public class Instance {
     // TODO, In theory this meta should be getting added to the regular version manifest.
     //       When that happens we can nuke this.
     public @Nullable ModpackVersionModsManifest getModsManifest() {
+        if (SPECIAL_LOADER_PACK_IDS.contains(this.props.id)) {
+            // We don't need to query the mods manifest for these packs.
+            return null;
+        }
+        
         ModpackVersionModsManifest manifest = null;
         Path file = this.metaPath.resolve(VERSION_MODS_FILE_NAME);
         try {
@@ -757,6 +769,25 @@ public class Instance {
         }
         
         return computedName + " (" + count + ")".trim();
+    }
+
+    public String resolveBasicModLoader() {
+        var modloader = this.props.modLoader.toLowerCase();
+        if (modloader.isEmpty()) {
+            return null;
+        }
+        
+        if (modloader.contains("neoforge")) {
+            return "neoforge";
+        } else if (modloader.contains("forge")) {
+            return "forge";
+        } else if (modloader.contains("fabric")) {
+            return "fabric";
+        } else if (modloader.contains("quilt")) {
+            return "quilt";
+        } else {
+            return null;
+        }
     }
 
     // @formatter:off

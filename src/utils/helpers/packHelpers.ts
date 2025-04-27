@@ -205,16 +205,18 @@ export function packUpdateAvailable(instance?: InstanceJson | SugaredInstanceJso
 }
 
 export function compatibleCrossLoaderPlatforms(mcVersion: string, loader: string) {
+  let innerLoader = loader.toLowerCase();
+  
   // fabric and quilt are forever compatible (so far)
-  if (loader === "fabric") {
+  if (innerLoader === "fabric") {
     return ["fabric", "quilt"];
   }
   
   // Forge and NeoForge are compatible with each other during this version range
-  if ((loader === "forge" || loader === "neoforge") && (mcVersion == "1.20.1" || mcVersion === "1.20")) {
+  if ((innerLoader === "forge" || innerLoader === "neoforge") && (mcVersion == "1.20.1" || mcVersion === "1.20")) {
     return ["forge", "neoforge"];
   }
   
   // Otherwise, default to the given input as there is no special handling
-  return [loader];
+  return [innerLoader];
 }

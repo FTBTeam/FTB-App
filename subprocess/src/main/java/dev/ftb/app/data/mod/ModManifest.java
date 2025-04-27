@@ -89,13 +89,21 @@ public class ModManifest {
                 .filter(e -> {
                     Target gameTarget = e.getTarget("game");
                     if (gameTarget == null || !gameTarget.getVersion().equals(mcVersion)) return false;
-
+                    
                     Target loaderTarget = e.getTarget("modloader");
                     if (loaderTarget == null) {
                         // Lots of mods don't have a Forge requirement, as ModLoader selection was introduced after they were added.
                         // By default, we just assume its Forge compatible. If this turns out to be an issue we can perhaps refine it.
                         return modLoader.equals("forge");
                     }
+                    
+                    // #ThanksForge
+                    if (mcVersion.equals("1.20.1") && (modLoader.equals("forge") || modLoader.equals("neoforge"))) {
+                        // 1.20.1 is special as most mods are compatible with both Forge and NeoForge as they're 
+                        // essentially identical. Although this isn't ideal, we'll allow either to be considered compatible
+                        return loaderTarget.getName().equals("forge") || loaderTarget.getName().equals("neoforge");
+                    }
+                    
                     return loaderTarget.getName().equals(modLoader);
                 })
                 .sorted(Comparator.comparingLong(e -> -e.id))

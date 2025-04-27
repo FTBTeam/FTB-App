@@ -28,6 +28,7 @@ import { RecycleScroller } from 'vue-virtual-scroller'
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { Input } from '@/components/ui';
+import {packBlacklist} from "@/store/modpackStore.ts";
 
 type ApiMod = {
   fileId: number;
@@ -84,17 +85,20 @@ onMounted(async () => {
     }
 
     const provider = apiPack.provider === "modpacks.ch" ? "modpack" : "curseforge";
-    const mods = await toggleBeforeAndAfter(
-      () => JavaFetch.modpacksCh(`${provider}/${apiPack.id}/${latestVersion.id}/mods`).execute(), 
-      s => modsLoading.value = s
-    );
-    
-    const loadedApiMods = mods?.json<{ mods: ApiMod[] }>()?.mods;
-    if (!loadedApiMods) {
-      return;
-    }
+    if (!packBlacklist.includes(apiPack.id)) {
+      console.log(packBlacklist, apiPack.id)
+      const mods = await toggleBeforeAndAfter(
+        () => JavaFetch.modpacksCh(`${provider}/${apiPack.id}/${latestVersion.id}/mods`).execute(),
+        s => modsLoading.value = s
+      );
 
-    apiMods.value = loadedApiMods.sort((a, b) => (a.name ?? a.filename).localeCompare((b.name ?? b.filename)))
+      const loadedApiMods = mods?.json<{ mods: ApiMod[] }>()?.mods;
+      if (!loadedApiMods) {
+        return;
+      }
+
+      apiMods.value = loadedApiMods.sort((a, b) => (a.name ?? a.filename).localeCompare((b.name ?? b.filename)))
+    }
   } else {
     getModList().catch(e => logger.error(e))
   }
@@ -293,7 +297,7 @@ const installedMods = computed<[number, number][]>(() => {
         <ui-button type="success" @click="searchingForMods = true" :icon="faPlus" :data-balloon-length="instance.locked ? 'medium' : undefined" :aria-label="instance.locked ? 'This instance is locked, to add more content you will need to unlock it in settings.' : 'Add more mods'" :disabled="instance.locked" />
         <ui-button type="info" @click="updateAll" :icon="faDownload" :data-balloon-length="instance.locked ? 'medium' : undefined" :aria-label="instance.locked ? 'This instance is locked, to add more content you will need to unlock it in settings.' : 'Update all mods'" :disabled="instance.locked || modUpdatesAvailableKeys.length === 0" />
         <ui-button type="info" :icon="faSync" aria-label="Refresh mod list" aria-label-pos="down-right" :disabled="updatingModlist" @click="getModList(true)" />
-        <ui-button type="info" @click="openModsFolder" :icon="faFolder" data-balloon-length="medium" aria-label="Open mods folder" />
+        <ui-button type="info" @click="openModsFolder" :icon="faFolder" data-balloon-length="medium" aria-label="Open mods folder" data-balloon-pos="down-right" />
       </template>
     </div>
     
@@ -348,7 +352,7 @@ const installedMods = computed<[number, number][]>(() => {
               <div class="updating" v-if="!instance.locked && updatingModShas.includes(item.sha1)">
                 <FontAwesomeIcon :spin="true" icon="circle-notch" :fixed-width="true" />
               </div>
-              <ui-toggle class="mr-1" v-if="item.fileName !== ''"  @input="() => toggleMod(item)" :disabled="togglingShas.includes(item.sha1)" />
+              <ui-toggle class="mr-1" v-if="item.fileName !== ''"  @input="() => toggleMod(item)" :value="item.enabled" :disabled="togglingShas.includes(item.sha1)" />
             </div>
           </div>
         </recycle-scroller>

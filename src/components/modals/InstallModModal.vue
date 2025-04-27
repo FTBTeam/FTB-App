@@ -7,8 +7,9 @@ import {BaseData, InstanceJson, OperationProgressUpdateData} from '@/core/types/
 import {compatibleCrossLoaderPlatforms} from '@/utils/helpers/packHelpers';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useAppStore } from '@/store/appStore.ts';
-import { faCheck, faDownload } from '@fortawesome/free-solid-svg-icons';
+import {faCheck, faDownload, faSpinner} from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import {alertController} from "@/core/controllers/alertController.ts";
 
 type InstallProgress = {
   percentage: number;
@@ -80,6 +81,14 @@ function onInstallMessage(data: BaseData & { [key: string]: any }) {
   }
 
   if (data.type === 'instanceInstallModReply') {
+    if (data.status === 'error') {
+      alertController.error("Error installing mod: " + data.message);
+      wsReqId.value = "";
+      installing.value = false;
+      installProgress.value = emptyProgress;
+      return;
+    }
+    
     wsReqId.value = "";
     installing.value = false;
     installProgress.value = emptyProgress;
@@ -121,7 +130,7 @@ async function installMod() {
 }
 
 const options = computed(() => {
-  const crossLoaderPlatforms = compatibleCrossLoaderPlatforms(mcVersion, modLoader);
+  const crossLoaderPlatforms = compatibleCrossLoaderPlatforms(mcVersion, modLoader.toLowerCase());
   return mod!.versions
     .filter(e => e.targets.findIndex(a => a.type === 'modloader' && crossLoaderPlatforms.includes(a.name)) !== -1)
     .filter(e => e.targets.findIndex((a) => a.type === 'game' && a.name === 'minecraft' && a.version === mcVersion) !== -1)
@@ -143,12 +152,7 @@ const options = computed(() => {
           :title="mod ? mod.name : 'Loading...'" :sub-title="!installing && finishedInstalling ? 'Installed!' : `Select the version you want to install`" :external-contents="true"
    >
      <modal-body v-if="mod">
-       <div class="py-6" v-if="!installing && !finishedInstalling">
-         <div class="flex gap-4 mb-4">
-           <FontAwesomeIcon :icon="faDownload" size="xl" />
-           <b class="text-lg block">Install {{ mod.name }}</b>
-         </div>
-         
+       <div class="py-4" v-if="!installing && !finishedInstalling">
          <selection2
            label="Select mod version"
            v-model="selectedVersion"
@@ -157,19 +161,18 @@ const options = computed(() => {
        </div>
 
        <div v-if="!installing && !finishedInstalling" class="pt-8">
-         <div class="flex items-center gap-4 mb-6">
-           <img src="../../assets/curse-logo.svg" alt="CurseForge logo" width="40" />
-           <b class="text-lg block">About mod installs</b>
+         <div class="flex items-center gap-4 mb-4">
+           <img src="../../assets/curse-logo.svg" alt="CurseForge logo" width="26" />
+           <b class="block">About mod installs</b>
          </div>
-         <hr class="curse-border block mb-4" />
-         <p class="text-muted mb-4">🎉 Each mod install from the FTB App directly supports the mod developers through the CurseForge reward system!</p>
-         <b class="block mb-2">Dependencies</b>
-         <p class="mb-2 text-muted">If the mod depends on other mods on the CurseForge platform, the app will try and resolve these dependencies for you and install them as well.</p>
-         <p class="text-muted">Sometimes this does not work and you'll have to install the dependencies manually.</p>
+         <ul class="flex flex-col gap-3">
+           <li>❤️ Each mod install directly supports CurseForge Developers!</li>
+           <li>🛠️ We'll do our best to install mod dependencies for you</li>
+         </ul>
        </div>
 
        <div class="installing mt-6 mb-4" v-if="!finishedInstalling && installing">
-         <div class="progress font-bold"><font-awesome-icon icon="spinner" spin class="mr-2" /> Installing</div>
+         <div class="progress font-bold"><font-awesome-icon :icon="faSpinner" spin class="mr-2" /> Installing</div>
          <div class="stats">
            <div class="stat">
              <div class="text">Progress</div>
@@ -179,7 +182,7 @@ const options = computed(() => {
        </div>
 
        <p v-if="!installing && finishedInstalling">
-         <span class="block">{{ mod.name }} has been installed!</span>
+         <span class="block">Mod has been installed! Thank you for support CurseForge developers ❤️</span>
        </p>
      </modal-body>
 

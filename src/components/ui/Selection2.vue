@@ -106,7 +106,7 @@ function select(option: SelectionOption) {
 
 <template>
   <div class="select-box" :class="{disabled}">
-    <div class="label" v-if="label && !icon">{{ label }}</div>
+    <div class="inline-block text-xs font-bold uppercase text-white/80 mb-2 transition-color duration-300" v-if="label && !icon">{{ label }}</div>
     <div class="selection outline-none rounded bg-black/20 border border-white/30 hover:border-white/60 transition-color duration-300" :class="{ open }" ref="selection" :id="id" @click="open = !open">
       <div class="main" v-if="!icon">
         <div class="item with-empty" v-if="!selected">
