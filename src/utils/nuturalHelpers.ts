@@ -1,4 +1,5 @@
 import { MetaData } from '@platform';
+import dayjs from "dayjs";
 
 type Joiner = (...paths: string[]) => string;
 
@@ -34,7 +35,7 @@ export const fallbackMetaData: MetaData = {
   appVersion: "Unknown",
   commit: "Unknown",
   branch: "release",
-  released: new Date().getTime(),
+  released: dayjs().unix(),
   runtime: {
     version: "21", // If we're using this, something has gone wrong
     jar: "app.jar", // If we're using this, something has gone wrong

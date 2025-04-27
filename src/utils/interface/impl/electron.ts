@@ -3,6 +3,7 @@ import { handleAction } from '@/core/protocol/protocolActions.ts';
 import { parseArgs } from '@/utils/interface/electron-helpers.ts';
 import { getAppHome, jreHome } from '@/utils/nuturalHelpers.ts';
 import { retrying } from '@/utils/helpers/asyncHelpers.ts';
+import dayjs from "dayjs";
 
 const { fs, os, path } = window.nodeUtils;
 
@@ -54,7 +55,7 @@ const Electron: ElectronOverwolfInterface = {
   config: {
     version: metaData.appVersion ?? 'Missing Version File',
     commit: metaData.commit ?? 'Missing Version File',
-    dateCompiled: metaData.released.toString() ?? new Date().getTime(),
+    dateCompiled: metaData.released ?? dayjs().unix(),
     branch: metaData.branch ?? 'release'
   },
 

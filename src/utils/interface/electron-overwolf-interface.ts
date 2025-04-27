@@ -44,7 +44,7 @@ export interface Frame {
 
 export interface Config {
   version: string;
-  dateCompiled: string;
+  dateCompiled: number;
   commit: string;
   branch: string
 }
