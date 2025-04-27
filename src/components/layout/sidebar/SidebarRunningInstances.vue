@@ -32,10 +32,24 @@ const runningWithData = computed(() => runningInstancesStore.instances
     ...e,
     instance: instanceStore.instances.find(i => i.uuid === e.uuid)
   })))
+
+function navigateToOrOpen() {
+  // Failsafe if one instance closes and the panel is open but we're left with one instance
+  if (panelOpen.value) {
+    panelOpen.value = false;
+    return;
+  }
+  
+  if (runningInstancesStore.instances.length > 1) {
+    panelOpen.value = !panelOpen.value;
+  } else {
+    showRunningInstance(runningInstancesStore.instances[0].uuid);
+  }
+}
 </script>
 
 <template>
- <div class="sidebarRunningInstances flex justify-center mt-4" @click="panelOpen = !panelOpen" v-if="runningWithData.length > 0" ref="root">
+ <div class="sidebarRunningInstances flex justify-center mt-4" @click="navigateToOrOpen" v-if="runningWithData.length > 0" ref="root">
    <div class="relative cursor-pointer" style="max-width: 40px; max-height: 40px;">
      <img class="rounded border border-gray-700" v-if="firstLoadedInstance.instance" :src="artworkFileOrElse(firstLoadedInstance.instance)" />
      <div class="bg-gray-600 bg-opacity-75 font-bold rounded text-xs absolute text-center" style="min-width: 1.5em; bottom: -.25rem; right: -.25rem;">{{runningWithData.length}}</div>
