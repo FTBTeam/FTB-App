@@ -22,7 +22,7 @@ import { ModPack } from '@/core/types/appTypes.ts';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useAppStore } from '@/store/appStore.ts';
 import platform from '@platform'
-import { faDownload, faFolder, faPlus, faSearch, faSync } from '@fortawesome/free-solid-svg-icons';
+import {faCircleNotch, faDownload, faFolder, faPlus, faSearch, faSync} from '@fortawesome/free-solid-svg-icons';
 // @ts-ignore (Literally no types :tada:)
 import { RecycleScroller } from 'vue-virtual-scroller'
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
@@ -350,9 +350,9 @@ const installedMods = computed<[number, number][]>(() => {
                 <FontAwesomeIcon :icon="faDownload" :fixed-width="true" />
               </div>
               <div class="updating" v-if="!instance.locked && updatingModShas.includes(item.sha1)">
-                <FontAwesomeIcon :spin="true" icon="circle-notch" :fixed-width="true" />
+                <FontAwesomeIcon :spin="true" :icon="faCircleNotch" :fixed-width="true" />
               </div>
-              <ui-toggle class="mr-1" v-if="item.fileName !== ''"  @input="() => toggleMod(item)" :value="item.enabled" :disabled="togglingShas.includes(item.sha1)" />
+              <ui-toggle class="mr-1" :use-model="false" v-if="item.fileName !== ''"  @input="() => toggleMod(item)" :value="item.enabled" :disabled="togglingShas.includes(item.sha1)" />
             </div>
           </div>
         </recycle-scroller>

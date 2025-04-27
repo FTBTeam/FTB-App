@@ -2,12 +2,13 @@
 
 import {computed} from "vue";
 
-const { disabled = false, label = undefined, desc = undefined, alignRight = false, value } = defineProps<{
+const { disabled = false, label = undefined, desc = undefined, alignRight = false, value, useModel = true } = defineProps<{
   disabled?: boolean;
   label?: string;
   desc?: string;
   alignRight?: boolean;
   value?: boolean;
+  useModel?: boolean;
 }>();
 
 const modelValue = defineModel<boolean>()
@@ -26,7 +27,11 @@ function toggle() {
 }
 
 const actualValue = computed(() => {
-  return modelValue.value ?? value; 
+  if (useModel) {
+    return modelValue.value;
+  } else {
+    return value;
+  }
 })
 </script>
 

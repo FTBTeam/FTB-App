@@ -101,6 +101,19 @@ public class InstanceModifications {
         public void setState(ModOverrideState state) { this.state = state; }
         public void setFileName(String fileName) { this.fileName = fileName; }
         // @formatter:on
+
+
+        @Override
+        public String toString() {
+            return "ModOverride{" +
+                "state=" + state +
+                ", fileName='" + fileName + '\'' +
+                ", id=" + id +
+                ", sha1='" + sha1 + '\'' +
+                ", curseProject=" + curseProject +
+                ", curseFile=" + curseFile +
+                '}';
+        }
     }
 
     public enum ModOverrideState {
