@@ -59,6 +59,19 @@ function close() {
   userPackName.value = "";
   userVanillaVersion.value = -1;
   showVanillaSnapshots.value = false;
+  
+  userModLoader.value = null;
+  userCategory.value = "Default";
+  vanillaPack.value = null;
+  loadingVanilla.value = false;
+  fatalError.value = false;
+  userOverrideInstanceDefaults.value = false;
+  userOverridePreferences.value = false;
+  settingFullscreen.value = false;
+  settingScreenResolution.value = "";
+  settingRam.value = 0;
+  userHeight.value = 0;
+  userWidth.value = 0;
   emit('close');
 }
 
@@ -194,7 +207,7 @@ const vanillaVersions = computed<SelectionOption[]>(() => {
   }
   
   return vanillaPack.value?.versions
-    .filter(e => e.type.toLowerCase() === "release" || ((e.type.toLowerCase() === "alpha" || e.type.toLowerCase() === "beta") && showVanillaSnapshots))
+    .filter(e => e.type.toLowerCase() === "release" || ((e.type.toLowerCase() === "alpha" || e.type.toLowerCase() === "beta") && showVanillaSnapshots.value))
     .sort((a, b) => b.id - a.id)
     .map(e => ({
       label: e.name,

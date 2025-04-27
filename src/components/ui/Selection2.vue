@@ -107,7 +107,7 @@ function select(option: SelectionOption) {
 <template>
   <div class="select-box" :class="{disabled}">
     <div class="label" v-if="label && !icon">{{ label }}</div>
-    <div class="selection" :class="{ open }" ref="selection" :id="id" @click="open = !open">
+    <div class="selection outline-none rounded bg-black/20 border border-white/30 hover:border-white/60 transition-color duration-300" :class="{ open }" ref="selection" :id="id" @click="open = !open">
       <div class="main" v-if="!icon">
         <div class="item with-empty" v-if="!selected">
           <div class="badge empty">_</div>
@@ -161,12 +161,9 @@ function select(option: SelectionOption) {
   }
 
   .selection {
-    background: #252525;
-    border-radius: 5px;
     padding: 0.55rem;
     cursor: pointer;
     position: relative;
-    border: 1px solid #1b1b1b;
 
     .main {
       padding-right: 2rem;
