@@ -10,6 +10,7 @@ import dev.ftb.app.pack.Instance;
 import dev.ftb.app.storage.settings.Settings;
 import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.PathTypeAdapter;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -44,13 +45,15 @@ public class InstalledInstancesHandler implements IMessageHandler<InstalledInsta
         public final Path path;
         
         public final List<String> rootDirs = new ArrayList<>();
+        
+        @Nullable
         public final String artworkFile;
         
         public SugaredInstanceJson(Instance instance) {
             super(instance.props);
             
             this.path = instance.path;
-            this.artworkFile = instance.path.relativize(instance.artworkFile).toString();
+            this.artworkFile = instance.logoArtwork.getBase64Image();
 
             try (var files = Files.list(this.path)) {
                 this.rootDirs.addAll(

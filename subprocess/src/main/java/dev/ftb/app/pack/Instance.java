@@ -55,11 +55,11 @@ public class Instance {
     public static final String MODIFICATIONS_FILE_NAME = "modifications.json";
     public static final String VERSION_MODS_FILE_NAME = "version_mods.json";
     public static final String VERSION_FILE_NAME = "version.json";
-
+    
+    public final InstanceArtwork logoArtwork;
+    
     public final Path path;
     public final Path metaPath;
-    
-    public Path artworkFile;
     
     public InstanceJson props;
     private @Nullable InstanceModifications modifications;
@@ -90,6 +90,7 @@ public class Instance {
         FileUtils.createDirectories(metaPath);
 
         this.versionManifest = versionManifest;
+        this.logoArtwork = new InstanceArtwork("logo", metaPath);
         this.storeArtwork(modpack, artPath);
 
         try {
@@ -103,6 +104,7 @@ public class Instance {
     public Instance(Path path, Path json) throws IOException {
         this.path = path;
         this.metaPath = path.resolve(META_FOLDER_NAME);
+        this.logoArtwork = new InstanceArtwork("logo", metaPath);
         
         props = InstanceJson.load(json);
         loadVersionManifest();
@@ -110,8 +112,6 @@ public class Instance {
         if (Files.notExists(metaPath)) {
             FileUtils.createDirectories(metaPath);
         }
-        
-        locateArtworkFile();
     }
 
     private void storeArtwork(ModpackManifest modpack, @Nullable String artPath) {
@@ -125,17 +125,6 @@ public class Instance {
         }
 
         downloadAndUpdateArt(modpack);
-    }
-    
-    private void locateArtworkFile() {
-        var metaFiles = FileUtils.listDir(metaPath);
-        for (Path file : metaFiles) {
-            if (file.getFileName().toString().startsWith("artwork")) {
-                // Update the artwork file.
-                artworkFile = metaPath.resolve(file.getFileName().toString());
-                break;
-            }
-        }
     }
 
     private void loadVersionManifest() throws IOException {
@@ -170,24 +159,8 @@ public class Instance {
         }
     }
     
-    public void updateArtwork(InputStream inputStream, String extension) throws IOException {
-        var fileName = "artwork." + extension;
-        var file = this.metaPath.resolve(fileName);
-        
-        // Write the input stream to the file.
-        try {
-            Files.copy(inputStream, file, StandardCopyOption.REPLACE_EXISTING);
-            this.artworkFile = file;
-        } catch (IOException ex) {
-            try {
-                Files.deleteIfExists(file);
-            } catch (IOException ex2) {
-                LOGGER.error("Failed to delete artwork files.", ex2);
-            }
-            
-            LOGGER.error("Failed to write artwork file.", ex);
-            throw ex;
-        }
+    public void updateArtwork(InputStream inputStream, String extension) {
+        this.logoArtwork.saveImage(inputStream, extension);
     }
     
     private void downloadAndUpdateArt(ModpackManifest modpack) {

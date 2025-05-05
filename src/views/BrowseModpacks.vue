@@ -42,7 +42,8 @@ onMounted(() => {
     toggleBeforeAndAfter(async () => {
       const data = await Promise.all([
         await modpackApi.modpacks.getModpacks(),
-        await modpackApi.modpacks.getPrivatePacks()
+        // TODO: Add back.
+        // await modpackApi.modpacks.getPrivatePacks()
       ])
 
       const allPackIds = new Set(data.flatMap(e => e?.packs ?? []));

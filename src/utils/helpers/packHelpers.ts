@@ -54,12 +54,7 @@ function _resolveArtwork(packOrInstance: SugaredInstanceJson | InstanceJson | Mo
 
 export function artworkFileOrElse(instance: SugaredInstanceJson, orElse: string = defaultArtwork["square"]) {
   if (instance.artworkFile) {
-    // TODO: Validate (It no work :cry:)
-    if (appPlatform.isOverwolf) {
-      return `file://${instance.path}/${instance.artworkFile}`
-    }
-    
-    return "ftb://load-pack-asset/" + instance.artworkFile.replace("\\", "/") + "?instancePath=" + instance.path;
+    return instance.artworkFile;
   }
   
   return orElse;

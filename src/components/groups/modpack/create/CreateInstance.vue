@@ -21,6 +21,7 @@ import { ModPack } from '@/core/types/appTypes.ts';
 import { useAppSettings } from '@/store/appSettingsStore.ts';
 import { faArrowLeft, faArrowRight, faBoxes, faInfo, faPuzzlePiece } from '@fortawesome/free-solid-svg-icons';
 import { useAppStore } from '@/store/appStore.ts';
+import ArtworkSelector from "@/components/groups/modpack/components/ArtworkSelector.vue";
 
 const appStore = useAppStore();
 const appSettingsStore = useAppSettings();
@@ -31,7 +32,7 @@ const emit = defineEmits<{ (e: 'close'): void }>()
 
 const step = ref(0);
 
-const userSelectedArtwork = ref<File | null>(null);
+const userSelectedArtwork = ref<string | null>(null);
 const userPackName = ref("");
 const userVanillaVersion = ref(-1);
 const userModLoader = ref<[string, ModLoaderWithPackId] | null>(null)
@@ -156,7 +157,7 @@ const canProceed = computed(() => {
 function createInstance() {
   const sharedData = {
     name: userPackName.value,
-    logo: userSelectedArtwork.value?.path ?? "",
+    logo: userSelectedArtwork.value ?? null,
     versionName: "",
     private: false,
     category: userCategory.value,
@@ -236,7 +237,7 @@ const screenResolutions = computed( () => {
       </header>
       <div class="about" v-show="step === 0">
         <template v-if="!loadingVanilla">
-<!--          <ArtworkSelector class="mb-6" v-model="userSelectedArtwork" />-->
+          <ArtworkSelector class="mb-6" v-model="userSelectedArtwork" />
           <Input fill label="Name" placeholder="Next best instance!" v-model="userPackName" class="mb-4" />
           <Selection2 :open-up="true" label="Minecraft version" class="mb-4" :options="vanillaVersions" v-model="userVanillaVersion" />
           

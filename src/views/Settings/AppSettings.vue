@@ -73,6 +73,8 @@ async function uploadLogData() {
   } catch (e) {
     logger.error("Failed to generate logs", e)
     alertController.error('Failed to generate logs, Please let us know in our Discord / Github')
+  } finally {
+    uploadingLogs.value = false;
   }
 }
 

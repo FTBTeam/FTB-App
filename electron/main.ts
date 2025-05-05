@@ -267,24 +267,14 @@ app.on('activate', async () => {
 app.whenReady().then(() => {
   createPreLaunchWindow();
   
-  protocol.handle(protocolSpace, async (event) => {
-    if (event.url) {
-      if (event.url.startsWith(protocolSpace + "://load-pack-asset/")) {
-        // Parse and get the query data
-        const url = new URL(event.url);
-        const instancePath = url.searchParams.get("instancePath");
-        if (!instancePath) {
-          log.error("No instance path found in URL")
-          return new Response(null);
-        }
-
-        return await net.fetch(`file://${instancePath}${url.pathname}`)
-      }
-    }
-    
-    return new Response(null);
-  })
+  // protocol.handle(protocolSpace, async (event) => {
+  //   if (event.url) {
+  //   }
+  //  
+  //   return new Response(null);
+  // })
 })
+
 app.on("open-url", async (_, customSchemeData) => {
   if (win) {
     win.webContents.send('parseProtocolURL', customSchemeData);

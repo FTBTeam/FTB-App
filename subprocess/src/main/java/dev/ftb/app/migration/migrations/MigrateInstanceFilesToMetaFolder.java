@@ -81,8 +81,8 @@ public class MigrateInstanceFilesToMetaFolder implements Migration {
                 }
             }
             
-            // Now migrate the artwork files
-            migrationArtwork(instance);
+            // Migrate the artwork from the json to the artwork handler
+            migrateArtwork(instance);
             
             // Finally, attempt to remove the folder.jpeg as windows hardly supports it anymore
             var folderJpeg = instance.path.resolve("folder.jpg");
@@ -99,7 +99,7 @@ public class MigrateInstanceFilesToMetaFolder implements Migration {
         return true;
     }
 
-    private void migrationArtwork(Instance instance) {
+    private void migrateArtwork(Instance instance) {
         if (instance.props.art == null || instance.props.art.isEmpty()) {
             return; // It's already migrated.
         }

@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Base64;
 import java.util.function.Function;
 
 public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigureData> {
@@ -61,15 +62,21 @@ public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigu
             instance.props.locked = getOrDefault(updateJson, "locked", JsonElement::getAsBoolean, instance.props.locked);
             instance.props.preventMetaModInjection = getOrDefault(updateJson, "preventMetaModInjection", JsonElement::getAsBoolean, instance.props.preventMetaModInjection);
             
-            var instanceImage = getOrDefault(updateJson, "instanceImage", JsonElement::getAsJsonObject, null);
-            if (instanceImage != null) {
-                if (instanceImage.has("buffer") && instanceImage.has("extension")) {
-                    var buffer = instanceImage.getAsJsonArray("buffer");
-                    var extension = instanceImage.get("extension").getAsString();
-                    
-                    // Creat an input stream from the buffer
-                    var inputStream = new ByteArrayInputStream(buffer.toString().getBytes(StandardCharsets.UTF_8));
-                    instance.updateArtwork(inputStream, extension);
+            var instanceImage = getOrDefault(updateJson, "instanceImage", JsonElement::getAsString, null);
+            if (instanceImage != null && instanceImage.startsWith("data:")) {
+                try {
+                    String[] parts = instanceImage.split(",");
+                    // Eww
+                    String type = parts[0].split(";")[0].split(":")[1].split("/")[1];
+                    String base64Data = parts[1];
+
+                    // Create a input stream from the base64 data
+                    byte[] decodedBytes = Base64.getDecoder().decode(base64Data);
+                    ByteArrayInputStream inputStream = new ByteArrayInputStream(decodedBytes);
+                    instance.logoArtwork.saveImage(inputStream, type);
+                    inputStream.close();
+                } catch (IOException e) {
+                    LOGGER.error("Failed to save instance image", e);
                 }
             }
 

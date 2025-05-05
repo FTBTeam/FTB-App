@@ -61,10 +61,7 @@ const jreSelection = ref('');
 const javaVersions = ref<JavaInstall[]>([]);
 const deleting = ref(false);
 
-const imageFile = ref<{
-  buffer: ArrayBuffer,
-  extension: string
-} | null>(null);
+const imageFile = ref<string | null>(null);
 const resolutionId = ref("");
 
 const userSelectModLoader = ref(false);
@@ -289,11 +286,7 @@ const resolutionList = computed(() => {
 
 watch(imageFile, (value) => {
   if (value) {
-    instanceSettings.value.instanceImage = {
-      extension: value.extension,
-      // convert arraybuffer to byte array
-      buffer: new Uint8Array()//Object.freeze(new Uint8Array(value.buffer))
-    }
+    instanceSettings.value.instanceImage = value
     saveSettings();
   }
 })

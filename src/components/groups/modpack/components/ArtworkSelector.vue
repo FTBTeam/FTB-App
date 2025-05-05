@@ -11,13 +11,11 @@ import { faTrash, faUpload } from '@fortawesome/free-solid-svg-icons';
 const allowedFileTypes = [
   "image/png",
   "image/jpeg",
+  "image/jpg",
   "image/gif"
 ]
 
-const value = defineModel<{
-  buffer: ArrayBuffer,
-  extension: string
-} | null>()
+const value = defineModel<string | null>()
 
 const {
   allowRemove = true,
@@ -80,21 +78,22 @@ function processFileList(files: File[]) {
   }
   
   if (firstValidFile) {
-    console.log(firstValidFile)
-    firstValidFile.arrayBuffer().then(e => {
-      value.value = {
-        buffer: e,
-        extension: firstValidFile.type.split('/')[1]
-      }
-    });
+    new Promise<string>((res, rej) => {
+      const reader = new FileReader();
+
+      reader.onload = () => res(reader.result as string);
+      reader.onerror = rej;
+
+      reader.readAsDataURL(firstValidFile);
+    })
+      .then(e => value.value = e)
+      .catch(console.error)
   }
 }
 
 const getArtwork = computed(() => {
   if (value.value) {
-    const {buffer, extension} = value.value;
-    const blob = new Blob([buffer], { type: `image/${extension}` });
-    return URL.createObjectURL(blob);
+    return value.value;
   }
 
   return resolveArtwork(pack ?? null);
