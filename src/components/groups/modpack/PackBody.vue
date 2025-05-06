@@ -16,7 +16,7 @@ import { useRunningInstancesStore } from '@/store/runningInstancesStore.ts';
 import { localiseNumber } from '@/utils/helpers/stringHelpers.ts';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { ModPack } from '@/core/types/appTypes.ts';
-import { standardDateTime, timeFromNow } from '@/utils/helpers/dateHelpers.ts';
+import {standardDate, standardDateTime, timeFromNow} from '@/utils/helpers/dateHelpers.ts';
 import { packBlacklist } from '@/store/modpackStore.ts';
 import { faGithub } from '@fortawesome/free-brands-svg-icons';
 import {
@@ -112,6 +112,12 @@ const issueTracker = computed(() => {
 
   return "https://go.ftb.team/support-modpack"
 });
+
+const isLoaderPack = computed(() => {
+  if (!instance) return false;
+
+  return packBlacklist.includes(instance.id);
+})
   
 function bisectPromo() {
   const baseUrl = `https://bisecthosting.com/ftb?r=app-modpack-`;
@@ -180,7 +186,7 @@ function cursePackBody() {
               :localInstance="instance"
               @update="emit('update')"
             />
-            <div class="option" v-if="packInstance && !isVanilla" @click="() => emit('showVersion')">
+            <div class="option" v-if="packInstance && !isVanilla && !isLoaderPack" @click="() => emit('showVersion')">
               Versions
               <FontAwesomeIcon :icon="faCodeBranch" class="ml-2" />
             </div>
@@ -282,7 +288,7 @@ function cursePackBody() {
               :title="standardDateTime(packInstance.released || packInstance.updated)"
             >
               <div class="name">Released</div>
-              <div class="value font-sans">{{ standardDateTime(packInstance.released || packInstance.updated) }}</div>
+              <div class="value font-sans">{{ standardDate(packInstance.released || packInstance.updated) }}</div>
             </div>
             <div
               class="stat"
@@ -290,7 +296,7 @@ function cursePackBody() {
               :title="standardDateTime(packInstance.versions[0].updated)"
             >
               <div class="name">Updated</div>
-              <div class="value font-sans">{{ standardDateTime(packInstance.versions[0].updated) }}</div>
+              <div class="value font-sans">{{ standardDate(packInstance.versions[0].updated) }}</div>
             </div>
           </div>
           
@@ -306,7 +312,7 @@ function cursePackBody() {
           <router-link
             v-for="(tag, i) in tags"
             :key="`tag-${i}`"
-            :to="{ name: 'browseModpacks', params: { search: tag.name } }"
+            :to="{ name: 'browseModpacks', query: { search: tag.name } }"
             class="tag"
             >{{ tag.name }}</router-link
           >
@@ -358,6 +364,8 @@ function cursePackBody() {
 </template>
 
 <style lang="scss" scoped>
+@import 'tailwindcss/theme' theme(reference);
+
 .action-heading {
   padding: 1rem 1.5rem 1.5rem;
   background-color: rgba(black, 0.2);
@@ -514,7 +522,7 @@ function cursePackBody() {
       transition: background-color .25s ease-in-out;
       
       &:hover {
-        background-color: var(--color-success-button);
+        background-color: var(--color-green-600);
       }
     }
   }

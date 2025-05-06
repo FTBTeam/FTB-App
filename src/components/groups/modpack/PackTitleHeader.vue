@@ -2,6 +2,8 @@
 import {InstanceJson, SugaredInstanceJson} from '@/core/types/javaApi';
 import {typeIdToProvider} from '@/utils/helpers/packHelpers';
 import { ModPack } from '@/core/types/appTypes.ts';
+import {computed} from "vue";
+import {packBlacklist} from "@/store/modpackStore.ts";
 
 const {
   packInstance,
@@ -16,6 +18,24 @@ const {
 }>()
 
 const provider = typeIdToProvider(packInstance?.id ?? 0);
+
+const modloaderVersion = computed(() => {
+  if (!instance) return;
+  
+  const loader = instance.modLoader.toLowerCase();
+  if (loader.startsWith("fabric")) {
+    return `Fabric ${loader.slice(loader.lastIndexOf("-") + 1) ?? "Unknown"}`;
+  } else if (loader.includes("forge") && !loader.includes("neoforge")) {
+    return `Forge ${loader.slice(loader.lastIndexOf("-") + 1) ?? "Unknown"}`;
+  } else if (loader.includes("neoforge")) {
+    return `NeoForge ${loader.split("-")[1] ?? "Unknown"}`;
+  }
+})
+
+const isLoader = computed(() => {
+  if (!instance) return false;
+  return packBlacklist.includes(instance.id)
+})
 </script>
 
 <template>
@@ -32,8 +52,11 @@ const provider = typeIdToProvider(packInstance?.id ?? 0);
         -
         {{ packInstance?.synopsis }}
       </div>
-      <div class="select-text pack-version text-xs px-4 py-1 rounded bg-black/30 inline-block" v-if="instance && !instance.isImport">
-        Version {{ instance.version }}
+      <div class="inline-flex items-center gap-2">
+        <div class="select-text text-xs px-4 py-1 rounded bg-black/30 inline-block" v-if="instance && !instance.isImport && !isLoader">
+          Version {{ instance.version }}
+        </div>
+        <div class="select-text text-xs px-4 py-1 rounded bg-black/30 inline-block" v-if="modloaderVersion">{{modloaderVersion}}</div>
       </div>
     </div>
   </div>

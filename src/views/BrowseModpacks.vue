@@ -32,12 +32,6 @@ onMounted(() => {
     currentTab.value = router.currentRoute.value.query.provider as PackProviders;
   }
   
-  if (router.currentRoute.value.query.search) {
-    searchValue.value = router.currentRoute.value.query.search as string;
-    searchPacks();
-    return;
-  }
-  
   try {
     toggleBeforeAndAfter(async () => {
       const data = await Promise.all([
@@ -56,6 +50,12 @@ onMounted(() => {
     }, (state) => loadingInitialPacks.value = state);
   } catch (error) {
     logger.error("Failed to load packs", error);
+  }
+
+  if (router.currentRoute.value.query.search) {
+    searchValue.value = router.currentRoute.value.query.search as string;
+    searchPacks();
+    return;
   }
 })
 
@@ -80,6 +80,10 @@ const debouncedSearch = debounce(() => {
 }, 500);
 
 async function changeTab(tab: PackProviders) {
+  if (currentTab.value === tab) {
+    return;
+  }
+  
   // Update the route
   await safeNavigate(RouterNames.ROOT_BROWSE_PACKS, { provider: tab })
 

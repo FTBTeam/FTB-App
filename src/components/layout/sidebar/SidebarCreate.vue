@@ -7,13 +7,15 @@ import { onMounted, onUnmounted, ref } from 'vue';
 import Popover from '@/components/ui/Popover.vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faCirclePlus, faPlus, faSearch } from '@fortawesome/free-solid-svg-icons';
+import {useGlobalStore} from "@/store/globalStore.ts";
 
 const { disabled } = defineProps<{
   disabled?: boolean;
 }>()
 
+const globalStore = useGlobalStore();
+
 const open = ref(false)
-const createOpen = ref(false)
 const curseOpen = ref(false)
 
 onMounted(() => {
@@ -45,7 +47,7 @@ function close(event: any) {
       <div class="options">
         <div class="option create" @click="() => {
            open = false;
-           createOpen = true;
+           globalStore.updateCreateInstanceVisibility(true)
         }">
           <div class="icon"><FontAwesomeIcon :icon="faCirclePlus" /></div>
           <p>Create instance</p>
@@ -81,7 +83,7 @@ function close(event: any) {
       </div>
     </div>
     
-    <create-instance :open="createOpen" @close="createOpen = false" />
+    <create-instance :open="globalStore.createInstanceVisible" @close="globalStore.updateCreateInstanceVisibility(false)" />
     <curse-import-instance :open="curseOpen" @close="curseOpen = false" />
   </div>
 </template>

@@ -18,11 +18,12 @@ import {
   faArrowDownAZ,
   faArrowDownZA,
   faChevronDown,
-  faFolder,
+  faFolder, faPlus,
   faSearch,
   faSort,
 } from '@fortawesome/free-solid-svg-icons';
 import { Input } from '@/components/ui';
+import {useGlobalStore} from "@/store/globalStore.ts";
 
 const groupOptions = [
   ['Category', 'category'],
@@ -49,6 +50,7 @@ const groupByOptions = createOrderedOptions(groupOptions)
 
 const instanceStore = useInstanceStore();
 const modpackStore = useModpackStore();
+const globalStore = useGlobalStore();
 
 const loadingFeatured = ref(false);
 const searchTerm = ref('');
@@ -246,11 +248,12 @@ watch(groupBy, onSortChange)
           It looks like your library is empty, you can search for new modpacks to install or pick from our recommendations below.
         </p>
         <div class="flex gap-6 mb-8">
+          <UiButton type="success" :icon="faPlus" @click="globalStore.updateCreateInstanceVisibility(true)">Create your own</UiButton>
           <router-link to="/browseModpacks">
             <UiButton :wider="true" type="info" :icon="faSearch">Browse FTB Modpacks</UiButton>
           </router-link>
           <router-link :to="{ name: RouterNames.ROOT_BROWSE_PACKS, query: { provider: 'curseforge' } }">
-            <UiButton :icon="faSearch">Browse CurseForge Modpacks</UiButton>
+            <UiButton type="info" :icon="faSearch">Browse CurseForge Modpacks</UiButton>
           </router-link>
         </div>
         
