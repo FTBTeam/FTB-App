@@ -3,6 +3,12 @@ asar: true
 appId: dev.ftb.app
 copyright: Copyright © 2025 - Feed The Beast Ltd
 generateUpdatesFilesForAllChannels: true
+files:
+  # Exclude everything, then include just the files we need
+  - '!**/*'
+  - '**/node_modules/**/*'
+  - '**/dist/**/*'
+  - '**/dist-electron/**/*'
 publish:
   provider: generic
   url: https://piston.feed-the-beast.com/app

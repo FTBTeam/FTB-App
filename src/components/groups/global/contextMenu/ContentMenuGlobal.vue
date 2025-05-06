@@ -51,7 +51,7 @@ function handleMenuOpen(givenContext: ContextMenuEventContext) {
   })
 }
 
-function onOptionClick(depth: number, option: MenuItem<any>) {
+function onOptionClick(_: number, __: MenuItem<any>) {
   handleMenuClose()
 }
 

@@ -1,4 +1,4 @@
-import { net, protocol, app, BrowserWindow, ipcMain, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import { autoUpdater } from 'electron-updater';

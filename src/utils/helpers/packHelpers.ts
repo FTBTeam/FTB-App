@@ -6,7 +6,6 @@ import { ModPack, PackProviders, Versions } from '@/core/types/appTypes.ts';
 import { packBlacklist } from '@/store/modpackStore.ts';
 import { useAppSettings } from '@/store/appSettingsStore.ts';
 import {toTitleCase} from "@/utils/helpers/stringHelpers.ts";
-import appPlatform from '@platform'
 
 export type ArtworkTypes = "square" | "splash";
 export type VersionTypes = "release" | "beta" | "alpha" | "archived" | "all" | "hotfix";

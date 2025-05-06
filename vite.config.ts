@@ -9,7 +9,7 @@ console.log("Is overwolf", isOverwolf, process.env.VITE_RUNTIME_PLATFORM)
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: isOverwolf ? '/dist/desktop' : '/',
+  base: isOverwolf ? '/dist/desktop' : undefined,
   // Define @ alias for src/ directory
   resolve: {
     alias: {
