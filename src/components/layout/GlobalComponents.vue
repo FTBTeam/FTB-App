@@ -14,12 +14,9 @@ import { useAccountsStore } from '@/store/accountsStore.ts';
 import { useModalStore } from '@/store/modalStore.ts';
 import { ModalButton } from '@/core/types/javaApi';
 import FtbAuthModal from "@/components/groups/auth/FtbAuthModal.vue";
-import {ref} from "vue";
 
 const modalStore = useModalStore();
 const accountStore = useAccountsStore();
-
-const openTmp = ref(false);
 
 function modalFeedback(button: ModalButton) {
   gobbleError(async () => {
@@ -60,9 +57,7 @@ function modalFeedback(button: ModalButton) {
     </Modal>
     
     <LoginModal :open="accountStore.signInOpen" @closed="() => accountStore.openSignIn(false)" />
-    <FtbAuthModal :open="openTmp" @closed="() => openTmp = false" />
-    
-    <div @click="openTmp = true">Hello</div>
+    <FtbAuthModal :open="accountStore.signInFtbOpen" @closed="() => accountStore.openSignInFtb(false)" />
 
     <!-- Only checks for an update once during startup -->
     <changelog />

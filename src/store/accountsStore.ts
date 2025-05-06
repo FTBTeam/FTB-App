@@ -5,7 +5,8 @@ import { AuthProfile } from '@/core/types/appTypes.ts';
 type AccountsState = {
   mcProfiles: AuthProfile[];
   mcActiveProfile: AuthProfile | null;
-  
+  ftbAccount: unknown;
+  signInFtbOpen: boolean;
   signInOpen: boolean;
 }
 
@@ -14,13 +15,18 @@ export const useAccountsStore = defineStore("accounts", {
     return {
       mcProfiles: [],
       mcActiveProfile: null,
-      signInOpen: false
+      signInOpen: false,
+      signInFtbOpen: false,
+      ftbAccount: null,
     }
   },
 
   actions: {
     openSignIn(open = true) {
       this.signInOpen = open;
+    },
+    openSignInFtb(open = true) {
+      this.signInFtbOpen = open;
     },
     async loadProfiles() {
       const result = await sendMessage("profiles.get", {});

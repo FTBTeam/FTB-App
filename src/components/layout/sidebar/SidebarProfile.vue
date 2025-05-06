@@ -123,6 +123,9 @@ function openSignIn() {
           <div class="add-new" @click="() => openSignIn()">
             <div class="add-button px-4 py-2"><FontAwesomeIcon :icon="faPlus" /> Add account</div>
           </div>
+          <div class="add-new mt-2" @click="() => accountsStore.openSignInFtb()">
+            <div class="add-button px-4 py-2"><FontAwesomeIcon :icon="faPlus" /> Sign in with FTB</div>
+          </div>
         </section>
       </div>
     </div>
