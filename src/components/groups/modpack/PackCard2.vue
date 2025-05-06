@@ -126,8 +126,10 @@ function _versionName() {
 <template>
   <div>
     <div class="pack-card-v2" :class="{'installing': isInstalling}" @click="() => openInstancePage()" @click.right="(e) => openInstanceMenu(e)">
-      <div class="artwork-container">
-        <img :src="packLogo" alt="Modpack Artwork">
+      <div class="artwork-container aspect-square">
+        <div class="flex h-full items-center justify-center rounded bg-black/20">
+          <img class="object-contain" :src="packLogo" alt="Modpack Artwork">
+        </div>
         <div class="notifiers">
           <div class="notifier modloader" aria-label="Minecraft Forge" data-balloon-pos="down-right" v-if="modloader === 'forge'">
             <img width="30" src="../../../assets/images/forge.svg" alt="" />
