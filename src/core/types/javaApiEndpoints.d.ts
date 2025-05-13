@@ -44,6 +44,7 @@ export type ApiEndpoints = 	"installedInstances" |
 	"videoCache" |
 	"getJavas" |
 	"profiles.remove" |
+	"accounts.store-oauth" |
 	"modalCallback" |
 	"setInstanceArt" |
 	"uninstallInstance" |

@@ -487,6 +487,18 @@ export interface SetActiveProfileHandlerReply extends PrivateBaseData {
     success: boolean;
 }
 
+export interface StoreFtbAccountHandlerData extends BaseData {
+    token: string;
+    idToken: string;
+    refreshToken: string;
+    expiresIn: number;
+    refreshExpiresIn: number;
+}
+
+export interface StoreFtbAccountHandlerReply extends StoreFtbAccountHandlerData {
+    success: boolean;
+}
+
 export interface StorageGetAllHandlerReply extends BaseData {
     response: string;
 }

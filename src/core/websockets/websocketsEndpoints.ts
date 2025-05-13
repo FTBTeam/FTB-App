@@ -71,7 +71,7 @@ import {
   StorageGetHandlerData,
   StorageGetHandlerReply,
   StoragePutHandlerData,
-  StoragePutHandlerReply,
+  StoragePutHandlerReply, StoreFtbAccountHandlerData, StoreFtbAccountHandlerReply,
   UninstallInstanceData,
   UninstallInstanceDataReply,
   UpdateInstanceData,
@@ -147,6 +147,7 @@ const endpoints = {
   instanceOverrideModLoader:      io<InstanceOverrideModLoaderData, InstanceOverrideModLoaderDataReply>(),
   videoCache:                     io<VideoCacheHandlerData, VideoCacheHandlerReply>(),
   moveInstances:                  io<MoveInstancesHandlerData, MoveInstancesHandlerReply>(),
+  "accounts.store-oauth":         io<StoreFtbAccountHandlerData, StoreFtbAccountHandlerReply>(),
 } satisfies Record<ApiEndpoints, EndpointDefinition<any, any>>;
 
 export type EmptyMessageResponse = {}

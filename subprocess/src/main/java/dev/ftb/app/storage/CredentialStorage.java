@@ -60,6 +60,11 @@ public class CredentialStorage {
         save();
     }
     
+    public void setMultiple(Map<String, String> items) {
+        credentials.putAll(items);
+        save();
+    }
+    
     public void remove(String key) {
         credentials.remove(key);
         save();

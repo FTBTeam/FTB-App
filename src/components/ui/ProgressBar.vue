@@ -25,6 +25,8 @@ const {
 </template>
 
 <style lang="scss" scoped>
+@import 'tailwindcss/theme' theme(reference);
+
 .progress {
   width: 100%;
   height: 10px;
@@ -35,7 +37,7 @@ const {
   
   .bar {
     height: 100%;
-    background: var(--color-primary-button);
+    background: var(--color-green-600);
   }
   
   &.muted .bar {
@@ -70,7 +72,7 @@ const {
   }
 
   &.infinite::after {
-    background-color: var(--color-primary-button);
+    background-color: var(--color-green-600);
     animation: leftToRight2 3s ease-in-out infinite;
 
     @keyframes leftToRight2 {
