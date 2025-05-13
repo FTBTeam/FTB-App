@@ -7,13 +7,13 @@ import {sendMessage} from '@/core/websockets/websocketsApi';
 import UiButton from '@/components/ui/UiButton.vue';
 import DevToolsActions from '@/components/layout/DevToolsActions.vue';
 import ContentMenuGlobal from '@/components/groups/global/contextMenu/ContentMenuGlobal.vue';
-import LoginModal from '@/components/groups/auth/LoginModal.vue';
+import MicrosoftLoginModal from '@/components/groups/auth/MicrosoftLoginModal.vue';
 import LaunchInstanceDialog from '@/components/modals/LaunchInstanceDialog.vue';
 import { Modal, ModalBody, ModalFooter } from '@/components/ui';
 import { useAccountsStore } from '@/store/accountsStore.ts';
 import { useModalStore } from '@/store/modalStore.ts';
 import { ModalButton } from '@/core/types/javaApi';
-import FtbAuthModal from "@/components/groups/auth/FtbAuthModal.vue";
+import FtbLoginModal from "@/components/groups/auth/FtbLoginModal.vue";
 
 const modalStore = useModalStore();
 const accountStore = useAccountsStore();
@@ -56,8 +56,8 @@ function modalFeedback(button: ModalButton) {
       </ModalFooter>
     </Modal>
     
-    <LoginModal :open="accountStore.signInOpen" @closed="() => accountStore.openSignIn(false)" />
-    <FtbAuthModal :open="accountStore.signInFtbOpen" @closed="() => accountStore.openSignInFtb(false)" />
+    <MicrosoftLoginModal :open="accountStore.signInOpen" @closed="() => accountStore.openSignIn(false)" />
+    <FtbLoginModal :open="accountStore.signInFtbOpen" @closed="() => accountStore.openSignInFtb(false)" />
 
     <!-- Only checks for an update once during startup -->
     <changelog />

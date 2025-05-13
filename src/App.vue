@@ -19,6 +19,7 @@ import { useAppSettings } from '@/store/appSettingsStore.ts';
 import { useAppStore } from '@/store/appStore.ts';
 import { createLogger } from '@/core/logger.ts';
 import { retrying } from '@/utils/helpers/asyncHelpers.ts';
+import {getOrCreateOauthClient} from "@/utils";
 
 const logger = createLogger("App.vue")
 
@@ -103,6 +104,9 @@ async function initAppLoad() {
     accountStore.loadProfiles(),
     instanceStore.loadInstances()
   ])
+  
+  // Set this up early so we're not waiting for the user to click
+  getOrCreateOauthClient().catch(logger.error)
 }
 
 function refreshHandler(data: any) {

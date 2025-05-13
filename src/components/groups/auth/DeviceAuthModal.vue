@@ -2,7 +2,11 @@
 import dayjs, {Dayjs} from 'dayjs';
 import appPlatform from '@platform';
 import { UiButton, Loader, Message, ProgressBar, Modal } from '@/components/ui';
-import {CheckForCodeFn, DeviceAuthResponse, LoadCodeFn, OnResultFn} from '@/components/groups/auth/LoginTypes';
+import {
+  CheckForCodeReturn,
+  DeviceAuthResponse, DeviceCodeHolder,
+  LoadCodeReturn, OnResultReturn,
+} from '@/components/groups/auth/LoginTypes';
 import {alertController} from '@/core/controllers/alertController';
 import { onUnmounted, watch, ref } from 'vue';
 import { safeLinkOpen } from '@/utils';
@@ -13,13 +17,17 @@ const {
   loadCode,
   checkForSuccess,
   onResult,
+  requiresPolling = true,
+  showQrCode = true,
   accountType,
-  subtext
+  subtext,
 } = defineProps<{
   open: boolean;
-  loadCode: LoadCodeFn,
-  checkForSuccess: CheckForCodeFn;
-  onResult: OnResultFn;
+  loadCode: () => Promise<LoadCodeReturn>,
+  checkForSuccess: (deviceCode: DeviceCodeHolder) => Promise<CheckForCodeReturn>;
+  onResult: (data: any) => Promise<OnResultReturn>;
+  requiresPolling?: boolean;
+  showQrCode?: boolean;
   accountType: string;
   subtext: string;
 }>()
@@ -36,11 +44,8 @@ const loadingCode = ref(false);
 const error = ref("");
 
 const startedFlowAt = ref<Dayjs | null>(null);
-const userCode = ref("");
-const deviceCode = ref("");
-const verificationUri = ref("");
-const expiresIn = ref(0);
 const pollingInterval = ref(1000);
+const deviceCodeData = ref<DeviceCodeHolder | null>(null);
 
 const pollRef = ref< number | null>(null);
 const pollLock = ref(false);
@@ -61,8 +66,12 @@ onUnmounted(() => {
 })
 
 async function copyAndOpen() {
-  await navigator.clipboard.writeText(userCode.value);
-  appPlatform.utils.openUrl(verificationUri.value);
+  if (!deviceCodeData.value) {
+    return;
+  }
+  
+  await navigator.clipboard.writeText(deviceCodeData.value?.user_code);
+  appPlatform.utils.openUrl(deviceCodeData.value?.verification_uri);
 }
 
 async function retryInitialCode() {
@@ -88,11 +97,7 @@ async function loadInitialCode() {
     }
 
     error.value = "";
-    userCode.value = data.userCode;
-    deviceCode.value = data.deviceCode;
-    verificationUri.value = data.verificationUri;
-    expiresIn.value = data.expiresIn;
-
+    deviceCodeData.value = data;
     if (data.interval) {
       // This is returned in seconds, we need it in milliseconds
       pollingInterval.value = data.interval * 1000;
@@ -112,10 +117,15 @@ async function checkForToken() {
   if (pollLock.value) {
     return;
   }
+  
+  // This won't happen but we have to check for it anyway
+  if (!deviceCodeData.value) {
+    return;
+  }
 
   pollLock.value = true;
   try {
-    const data = await checkForSuccess(deviceCode.value);
+    const data = await checkForSuccess(deviceCodeData.value);
     if ("pass" in data) {
       // We're just waiting for the user to login
       return;
@@ -151,9 +161,13 @@ function pollForToken() {
     remainingTime.value = expiresInAsPercentage();
   }, 1000) as unknown as number; // Update every second
 
-  pollRef.value = setInterval(async () => {
-    await checkForToken();
-  }, pollingInterval.value) as unknown as number;
+  if (requiresPolling) {
+    pollRef.value = setInterval(async () => {
+      await checkForToken();
+    }, pollingInterval.value) as unknown as number;
+  } else {
+    checkForToken().catch(console.error)
+  }
 }
 
 function stopPolling() {
@@ -168,10 +182,7 @@ function stopPolling() {
   timerRef.value = null;
   pollRef.value = null;
   startedFlowAt.value = null;
-  deviceCode.value = "";
-  userCode.value = "";
-  verificationUri.value = "";
-  expiresIn.value = 0;
+  deviceCodeData.value = null;
   pollLock.value = false;
   pollingInterval.value = 1000;
 }
@@ -182,7 +193,6 @@ async function continueTokenFlow(data: any) {
   deviceCodeDone.value = true;
   loggingIn.value = true;
   try {
-    console.log(data);
     const result = await onResult(typedData);
     if (result !== true && "error" in result) {
       alertController.error("Failed to login, please try again.");
@@ -212,12 +222,12 @@ function onClose() {
 function expiresInAsPercentage() {
   // Take the started time and add the expires in time to get the end time
   // Then figure out a 0 - 100% value based on the current time
-  if (!startedFlowAt.value || !expiresIn.value) {
+  if (!startedFlowAt.value || !deviceCodeData.value?.expires_in) {
     return 0;
   }
 
   // For example: If expires in is 900 seconds and we started 10 seconds ago, we should be at ~1.1%
-  const end = startedFlowAt.value.add(expiresIn.value, "second");
+  const end = startedFlowAt.value.add(deviceCodeData.value?.expires_in, "second");
   const now = dayjs();
 
   // If we're past the end time, we're at 100%
@@ -244,27 +254,27 @@ function expiresInAsPercentage() {
         {{ error }}
       </Message>
 
-      <div class="code font-bold text-4xl py-4 px-6 rounded-lg mb-4 text-center select-text" v-if="userCode && !error">
-        <span>{{ userCode }}</span>
+      <div class="code font-bold text-4xl py-4 px-6 rounded-lg mb-4 text-center select-text" v-if="deviceCodeData?.user_code && !error">
+        <span>{{ deviceCodeData?.user_code }}</span>
       </div>
 
-      <div v-if="expiresIn && startedFlowAt" class="mb-6">
+      <div v-if="deviceCodeData?.expires_in && startedFlowAt" class="mb-6">
         <ProgressBar type="muted" :inverted="true" :do-progress-animation="false" :progress="remainingTime / 100" />
         
-        <p class="text-muted mb-2 text-center mt-2">Token expires {{ startedFlowAt.add(expiresIn, "second").fromNow() }}</p>
+        <p class="text-muted mb-2 text-center mt-2">Token expires {{ startedFlowAt.add(deviceCodeData?.expires_in ?? 0, "second").fromNow() }}</p>
       </div>
       
-      <UiButton :icon="faExternalLink" size="large" :full-width="true" v-if="userCode && !error" @click="copyAndOpen" class="mt-2 w-full" type="primary">Copy and Open</UiButton>
+      <UiButton :icon="faExternalLink" size="large" :full-width="true" v-if="deviceCodeData?.user_code && !error" @click="copyAndOpen" class="mt-2 w-full" type="primary">Copy and Open</UiButton>
 
-      <hr class="mt-6 border-white border-opacity-25" v-if="verificationUri" />
+      <hr class="mt-6 border-white border-opacity-25" v-if="deviceCodeData?.verification_uri" />
       
-      <div class="flex items-center gap-6 mt-8" v-if="verificationUri">
-        <div class="bg-white rounded p-2">
+      <div class="flex items-center gap-6 mt-8" v-if="deviceCodeData?.verification_uri">
+        <div class="bg-white rounded p-2" v-if="showQrCode">
           <img src="../../../assets/images/ms-link-qr-code.svg" alt="Microsoft Logo" width="100" />
         </div>
         <div class="flex-1">
           <p class="select-text block text-white text-opacity-75">If the button above does not work, try
-            <a :href="verificationUri" @click="safeLinkOpen" class="text-white text-opacity-100 hover:underline cursor-pointer">{{ verificationUri }}</a> on any device.<br/><br/>Or try the QR code on your phone for quicker setup.</p>
+            <a :href="deviceCodeData?.verification_uri" @click="safeLinkOpen" class="text-white text-opacity-100 hover:underline cursor-pointer">{{ deviceCodeData?.verification_uri }}</a> on any device.<span v-if="showQrCode"><br/><br/>Or try the QR code on your phone for quicker setup.</span></p>
         </div>
       </div>
 

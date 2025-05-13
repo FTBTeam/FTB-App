@@ -1,6 +1,7 @@
 import Router, {RouterNames} from '@/router';
 import appPlatform from '@platform';
 import { marked } from 'marked';
+import * as client from 'openid-client'
 
 export async function safeNavigate(name: RouterNames, params?: any, query?: any) {
   if (Router.currentRoute.value.name === name) {
@@ -68,4 +69,14 @@ marked.use({ hooks: {
 
 export const parseMarkdown = (input: string) => {
   return marked.parse(input);
+}
+
+
+let config: client.Configuration | null = null;
+export async function getOrCreateOauthClient(): Promise<client.Configuration> {
+  if (!config) {
+    config = await client.discovery(new URL("https://identity.feed-the-beast.com/realms/FTB"), "ftb-app");
+  }
+  
+  return config;
 }

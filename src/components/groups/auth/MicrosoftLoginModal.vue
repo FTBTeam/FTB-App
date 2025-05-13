@@ -5,6 +5,12 @@ import {alertController} from '@/core/controllers/alertController';
 import DeviceAuthModal from "@/components/groups/auth/DeviceAuthModal.vue";
 import {useAccountsStore} from "@/store/accountsStore.ts";
 import {ref} from "vue";
+import {
+  CheckForCodeReturn,
+  DeviceCodeHolder,
+  LoadCodeReturn,
+  OnResultReturn
+} from "@/components/groups/auth/LoginTypes.ts";
 
 const accountStore = useAccountsStore();
 const open = ref(false)
@@ -13,7 +19,7 @@ const emit = defineEmits<{
   (event: 'closed'): void;
 }>()
 
-async function loadInitialCode() {
+async function loadInitialCode(): Promise<LoadCodeReturn> {
   const req: any = await JavaFetch.create(`https://login.microsoftonline.com/consumers/oauth2/v2.0/devicecode`)
     .method("POST")
     .contentType("application/x-www-form-urlencoded")
@@ -36,14 +42,15 @@ async function loadInitialCode() {
   }
   
   return {
-    userCode: data.user_code,
-    deviceCode: data.device_code,
-    verificationUri: data.verification_uri,
-    expiresIn: data.expires_in,
+    user_code: data.user_code,
+    device_code: data.device_code,
+    verification_uri: data.verification_uri,
+    expires_in: data.expires_in,
+    interval: data.interval,
   }
 }
 
-async function checkForToken(deviceCode: string) {
+async function checkForToken(deviceCode: DeviceCodeHolder): Promise<CheckForCodeReturn> {
   try {
     const req: any = await JavaFetch.create("https://login.microsoftonline.com/consumers/oauth2/v2.0/token")
       .method("POST")
@@ -51,7 +58,7 @@ async function checkForToken(deviceCode: string) {
       .body(new URLSearchParams({
         client_id: "f23e8ba8-f46b-41ed-b5c0-7994f2ebbbf8",
         grant_type: "urn:ietf:params:oauth:grant-type:device_code",
-        device_code: deviceCode
+        device_code: deviceCode.device_code
       }).toString())
       .execute();
 
@@ -99,7 +106,7 @@ async function checkForToken(deviceCode: string) {
   return {error: "Failed to get the token, a retry maybe resolve the issue."};
 }
 
-async function continueTokenFlow(data: any) {
+async function continueTokenFlow(data: any): Promise<OnResultReturn> {
   try {
     const res = await sendMessage("profiles.ms.authenticate", {
       liveExpires: data.expires_in as any,
@@ -126,7 +133,7 @@ async function continueTokenFlow(data: any) {
     subtext="Login to Minecraft via your Microsoft account. Clicking the button below will open the Microsoft Login page and copy the code to your clipboard."
     account-type="Microsoft" 
     :load-code="loadInitialCode"
-    :check-for-success="checkForToken as any"
+    :check-for-success="checkForToken"
     :on-result="continueTokenFlow"
     @closed="emit('closed')"
   />

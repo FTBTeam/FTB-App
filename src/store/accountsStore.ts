@@ -1,6 +1,6 @@
-import { defineStore } from 'pinia';
-import { sendMessage } from '@/core/websockets/websocketsApi.ts';
-import { AuthProfile } from '@/core/types/appTypes.ts';
+import {defineStore} from 'pinia';
+import {sendMessage} from '@/core/websockets/websocketsApi.ts';
+import {AuthProfile} from '@/core/types/appTypes.ts';
 
 type AccountsState = {
   mcProfiles: AuthProfile[];
