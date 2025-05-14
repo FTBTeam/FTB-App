@@ -50,6 +50,9 @@ importers:
       vue:
         specifier: ^3.4.21
         version: 3.5.13(typescript@5.8.2)
+      vue-gtag:
+        specifier: ^3.5.0
+        version: 3.5.0(vue-router@4.5.0(vue@3.5.13(typescript@5.8.2)))(vue@3.5.13(typescript@5.8.2))
       vue-router:
         specifier: ^4.5.0
         version: 4.5.0(vue@3.5.13(typescript@5.8.2))
@@ -3740,6 +3743,15 @@ packages:
     resolution: {integrity: sha512-n9ENAcs+40awPZMsas7STqjkZiVlIjxIKgiJr5rSohDP0/JCrD9VtlzNojafsA1MChm/hz2h3PDtUedx3lbgfA==}
     peerDependencies:
       vue: '>=2'
+
+  vue-gtag@3.5.0:
+    resolution: {integrity: sha512-eycDX/wg0iQSxSMn8dm+oQ7HxfHxzMxF7UPzqVlE8MaDqS8p9iTmjIyZfurMN5Jb8n4bcZMK08pEydSu2wR22w==}
+    peerDependencies:
+      vue: ^3.5.13
+      vue-router: ^4.5.0
+    peerDependenciesMeta:
+      vue-router:
+        optional: true
 
   vue-inbrowser-compiler-independent-utils@4.71.1:
     resolution: {integrity: sha512-K3wt3iVmNGaFEOUR4JIThQRWfqokxLfnPslD41FDZB2ajXp789+wCqJyGYlIFsvEQ2P61PInw6/ph5iiqg51gg==}
@@ -7822,6 +7834,12 @@ snapshots:
       ts-map: 1.0.3
       vue: 3.5.13(typescript@5.8.2)
       vue-inbrowser-compiler-independent-utils: 4.71.1(vue@3.5.13(typescript@5.8.2))
+
+  vue-gtag@3.5.0(vue-router@4.5.0(vue@3.5.13(typescript@5.8.2)))(vue@3.5.13(typescript@5.8.2)):
+    dependencies:
+      vue: 3.5.13(typescript@5.8.2)
+    optionalDependencies:
+      vue-router: 4.5.0(vue@3.5.13(typescript@5.8.2))
 
   vue-inbrowser-compiler-independent-utils@4.71.1(vue@3.5.13(typescript@5.8.2)):
     dependencies:
