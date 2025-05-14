@@ -103,7 +103,7 @@ public class MicrosoftRequests {
         return standardJsonReq(
             STANDARD_REQ
                 .url("https://api.minecraftservices.com/entitlements/license?requestId=" + UUID.randomUUID())
-                .header("Authorization", "Bearer " + accessToken),
+                .header("Authorization", "Bearer " + accessToken).get(),
             json -> json.has("items")
         );
     }
@@ -220,6 +220,7 @@ public class MicrosoftRequests {
     
     private static void logRequestData(Request request) {
         LOGGER.info("Requesting: {}", request.url());
+        LOGGER.info("Method: {}", request.method());
         logHeaders("Request", request.headers());
     }
     
