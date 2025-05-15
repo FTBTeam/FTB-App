@@ -11,7 +11,6 @@ import GlobalComponents from './components/layout/GlobalComponents.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { alertController } from '@/core/controllers/alertController.ts';
 import { useInstanceStore } from '@/store/instancesStore.ts';
-import { useAds } from '@/composables/useAds.ts';
 import appPlatform from '@platform';
 import { constants } from '@/core/constants.ts';
 import { useAccountsStore } from '@/store/accountsStore.ts';

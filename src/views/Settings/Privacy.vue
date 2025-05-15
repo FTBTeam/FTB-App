@@ -7,8 +7,15 @@ const showAdPersonalizationButton = ref(false);
 
 onMounted(() => {
   appPlatform.app.cpm.required().then((required) => {
+    console.log("Required check", required)
     showAdPersonalizationButton.value = required;
   });
+  
+  new Promise(async (res) => {
+    const re = await appPlatform.app.cpm.required()
+    console.log(re)
+    res(null)
+  })
 })
 </script>
 
