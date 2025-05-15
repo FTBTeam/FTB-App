@@ -40,7 +40,7 @@ function onEsc(event: any) {
 
 <template>
   <transition name="slide-in-out" :duration="250">
-    <div v-if="open" class="closable-panel" :class="{'is-mac': isMac, ads: ads.adsEnabled }" @click.self="emit('close')" >
+    <div v-if="open" class="closable-panel" :class="{'is-mac': isMac, ads: ads.adsEnabled.value }" @click.self="emit('close')" >
       <div class="panel-container">
         <div class="heading">
           <div class="main">

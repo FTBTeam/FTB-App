@@ -49,14 +49,13 @@ const devModeEnabled = !import.meta.env.PROD;
 .dev-tools-actions {
   position: fixed;
   padding: 0.5rem 1rem;
-  bottom: 1rem;
+  bottom: 9rem;
   background-color: black;
   z-index: 1000;
   border-radius: 5px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: center;
-  left: 5rem;
+  left: .6rem;
 
   .divider {
     height: 1rem;

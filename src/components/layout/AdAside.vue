@@ -107,51 +107,47 @@ async function loadAds(id: string, emitPlaceholderUpdate: (state: boolean) => vo
 </script>
 
 <template>
-  <div class="ad-aside" :class="{ 'electron': isElectron }">
-    <template v-if="!hideAds">
-      <div class="ad-container ads overwolf" v-if="!isElectron" key="adside-ad-type-ow">
-        <div class="ad-holder small" v-if="!isSmallDisplay && !disableSmallerAd">
-          <div
-            v-if="!isElectron"
-            v-show="adsHook.adsEnabled ?? true"
-            id="ow-ad-second"
-            ref="adRefSecond"
-            style="max-width: 300px; max-height: 250px;"
-          />
-          <div class='place-holder small' v-if="!isElectron && showAdTwoPlaceholder" />
-        </div>
-  
-        <div class="ad-holder">
-          <div
-            v-if="!isElectron"
-            v-show="adsHook.adsEnabled ?? true"
-            id="ow-ad"
-            ref="adRef"
-            style="max-width: 400px; max-height: 600px;"
-          />
-  
-          <div class='place-holder' v-if="!isElectron && showAdOnePlaceholder">
-            <img src="@/assets/images/ftb-logo.svg" class="mb-8" width="70" alt="FTB Logo">
-            <p class="mb-1">Thank you for supporting FTB ❤️</p>
-            <p>Ads support FTB & CurseForge Authors!</p>
-          </div>
+  <div class="ad-aside" :class="{ 'electron': isElectron }" v-if="adsHook.adsEnabled.value && !hideAds">
+    <div class="ad-container ads overwolf" v-if="!isElectron" key="adside-ad-type-ow">
+      <div class="ad-holder small" v-if="!isSmallDisplay && !disableSmallerAd">
+        <div
+          v-if="!isElectron"
+          id="ow-ad-second"
+          ref="adRefSecond"
+          style="max-width: 300px; max-height: 250px;"
+        />
+        <div class='place-holder small' v-if="!isElectron && showAdTwoPlaceholder" />
+      </div>
+
+      <div class="ad-holder">
+        <div
+          v-if="!isElectron"
+          id="ow-ad"
+          ref="adRef"
+          style="max-width: 400px; max-height: 600px;"
+        />
+
+        <div class='place-holder' v-if="!isElectron && showAdOnePlaceholder">
+          <img src="@/assets/images/ftb-logo.svg" class="mb-8" width="70" alt="FTB Logo">
+          <p class="mb-1">Thank you for supporting FTB ❤️</p>
+          <p>Ads support FTB & CurseForge Authors!</p>
         </div>
       </div>
-  
-      <div class="ad-container ads" v-else key="adside-ad-type">
-        <div class="ad-holder small" v-if="!disableSmallerAd">
-          <div style="width: 300px; height: 250px; background: transparent;">
-            <OwAdViewWrapper />
-          </div>
-        </div>
-        
-        <div class="ad-holder">
-          <div style="width: 400px; height: 600px; background: transparent;">
-            <OwAdViewWrapper />
-          </div>
+    </div>
+
+    <div class="ad-container ads" v-else key="adside-ad-type">
+      <div class="ad-holder small" v-if="!disableSmallerAd">
+        <div style="width: 300px; height: 250px; background: transparent;">
+          <OwAdViewWrapper />
         </div>
       </div>
-    </template>
+      
+      <div class="ad-holder">
+        <div style="width: 400px; height: 600px; background: transparent;">
+          <OwAdViewWrapper />
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 

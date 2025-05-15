@@ -81,3 +81,11 @@ export interface DiscordWidget {
   }[];
   presence_count: number;
 }
+
+export interface AppNotification {
+  id: string
+  title: string
+  description: string
+  semverRange: string
+  validUntil: string
+}

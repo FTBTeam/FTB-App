@@ -457,6 +457,11 @@ export interface AuthenticateMsProfileHandlerReply extends PrivateBaseData {
     message: string;
 }
 
+export interface GetFtbAccountHandlerReply extends PrivateBaseData {
+    success: boolean;
+    authData: CompleteTokenData;
+}
+
 export interface GetProfilesHandlerReply extends PrivateBaseData {
     profiles: SharableData[];
     activeProfile: SharableData;
@@ -487,7 +492,7 @@ export interface SetActiveProfileHandlerReply extends PrivateBaseData {
     success: boolean;
 }
 
-export interface StoreFtbAccountHandlerData extends BaseData {
+export interface StoreFtbAccountHandlerData extends PrivateBaseData {
     token: string;
     idToken: string;
     refreshToken: string;
@@ -497,6 +502,7 @@ export interface StoreFtbAccountHandlerData extends BaseData {
 
 export interface StoreFtbAccountHandlerReply extends StoreFtbAccountHandlerData {
     success: boolean;
+    completeToken: CompleteTokenData;
 }
 
 export interface StorageGetAllHandlerReply extends BaseData {
@@ -619,6 +625,12 @@ export interface Stage {
 export interface Dimension {
     width: number;
     height: number;
+}
+
+export interface CompleteTokenData extends StoreFtbAccountHandlerData {
+    loggedInAt: number;
+    expiresAt: number;
+    refreshExpiresAt: number;
 }
 
 export interface SharableData {

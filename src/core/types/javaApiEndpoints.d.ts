@@ -41,6 +41,7 @@ export type ApiEndpoints = 	"installedInstances" |
 	"instanceModToggle" |
 	"storage.get" |
 	"appInit" |
+	"accounts.get-oauth" |
 	"videoCache" |
 	"getJavas" |
 	"profiles.remove" |

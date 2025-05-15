@@ -267,8 +267,8 @@ ipcMain.handle("ow/cpm/is-required", async () => {
 })
 
 ipcMain.handle("ow/cpm/open-window", async (_, data) => {
-  (app as any).overwolf.openCMPWindow({
-    tab: data ?? "purposes"
+  (app as any).overwolf.openAdPrivacySettingsWindow({
+    purposes: data ?? "purposes"
   });
 });
 

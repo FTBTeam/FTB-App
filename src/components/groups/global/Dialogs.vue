@@ -27,7 +27,7 @@ function closeTopDialog() {
 
 <template>
   <transition name="transition-fade" :duration="250">
-    <div class="dialog-container" :class="{ads: ads.adsEnabled}" v-if="dialogStore.dialogs.length" @click.self="closeTopDialog">
+    <div class="dialog-container" :class="{ads: ads.adsEnabled.value}" v-if="dialogStore.dialogs.length" @click.self="closeTopDialog">
       <transition-group class="stacker" tag="div" name="transition-fade" :duration="250">
         <div
           v-for="(dialog, index) in dialogStore.dialogs"

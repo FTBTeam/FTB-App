@@ -20,6 +20,7 @@ import { useAppStore } from '@/store/appStore.ts';
 import { createLogger } from '@/core/logger.ts';
 import { retrying } from '@/utils/helpers/asyncHelpers.ts';
 import {getOrCreateOauthClient} from "@/utils";
+import {AppNotification} from "@/types.ts";
 
 const logger = createLogger("App.vue")
 
@@ -29,7 +30,6 @@ const appSettingsStore = useAppSettings();
 const accountStore = useAccountsStore();
 const router = useRouter()
 const instanceStore = useInstanceStore();
-const ads = useAds()
 
 const isMac = ref(false);
 const startingSubprocess = ref(false)
@@ -38,7 +38,7 @@ const showOnboarding = ref(false)
 
 onMounted(() => {
   logger.info("App started on ", constants.platform)
-  startApplication().catch(logger.error)
+  startApplication().catch((e) => logger.error(e))
 
   startNetworkMonitor()
   appPlatform.utils.getOsType().then(e => isMac.value = e === "mac")
@@ -92,7 +92,7 @@ watch(() => wsStore.ready, (value) => {
   if (value) {
     requiredDataLoading.value = true;
     initAppLoad()
-      .then(() => checkForFirstRun().catch(logger.error))
+      .then(() => checkForFirstRun().catch((e) => logger.error(e)))
       .finally(() => requiredDataLoading.value = false)
   }
 })
@@ -105,8 +105,12 @@ async function initAppLoad() {
     instanceStore.loadInstances()
   ])
   
+  lookForNotifications().catch((e) => logger.error(e))
+  
   // Set this up early so we're not waiting for the user to click
-  getOrCreateOauthClient().catch(logger.error)
+  getOrCreateOauthClient()
+    .finally(() => accountStore.loadFtbAccount().catch((e) => logger.error(e)))
+    .catch((e) => logger.error(e))
 }
 
 function refreshHandler(data: any) {
@@ -139,6 +143,37 @@ function startNetworkMonitor() {
   });
 }
 
+async function lookForNotifications() {
+  try {
+    const req = await fetch(`${constants.metaApi}/app/notifications`);
+    const res = await req.json() as AppNotification[]
+    if (!res || !req.ok || !Array.isArray(res)) {
+      return;
+    }
+    
+    const seenNotificationsRaw = localStorage.getItem("seenNotifications") ?? "[]"
+    const seenNotifications = JSON.parse(seenNotificationsRaw) as string[]
+    
+    const newNotifications = res.filter(e => !seenNotifications.includes(e.id))
+    if (newNotifications.length === 0) {
+      return;
+    }
+    
+    for (const notification of newNotifications) {
+      alertController.warning(`${notification.title}\n${notification.description}`, {
+        persistent: true,
+        onClose: () => {
+          // Update the seen notifications
+          seenNotifications.push(notification.id)
+          localStorage.setItem("seenNotifications", JSON.stringify(seenNotifications))
+        }
+      })
+    }
+  } catch (e) {
+    logger.error("Failed to fetch notifications", e);
+  }
+}
+
 const showSidebar = computed(() => !router.currentRoute.value.path.startsWith('/settings'))
 </script>
 
@@ -157,7 +192,7 @@ const showSidebar = computed(() => !router.currentRoute.value.path.startsWith('/
             <router-view v-if="!requiredDataLoading" />
             <loader v-else />
           </div>
-          <ad-aside v-show="ads.adsEnabled" :hide-ads="showOnboarding" />
+          <ad-aside :hide-ads="showOnboarding" />
         </template>
       </main>
     </div>

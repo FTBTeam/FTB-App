@@ -86,6 +86,7 @@ public class WebSocketHandler {
         register("profiles.is-valid", AccountIsValidHandler.Data.class, new AccountIsValidHandler());
         
         register("accounts.store-oauth", StoreFtbAccountHandler.Data.class, new StoreFtbAccountHandler());
+        register("accounts.get-oauth", BaseData.class, new GetFtbAccountHandler());
         
         register("storage.put", StoragePutHandler.Data.class, new StoragePutHandler());
         register("storage.get", StorageGetHandler.Data.class, new StorageGetHandler());

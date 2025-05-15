@@ -15,7 +15,7 @@ import {
   DuplicateInstanceHandlerReply,
   DuplicateInstanceHandlerRequest,
   FileHashData,
-  FileHashDataReply,
+  FileHashDataReply, GetFtbAccountHandlerReply,
   GetInstanceFoldersHandlerReply,
   GetInstanceFoldersHandlerRequest,
   GetJavasData,
@@ -148,6 +148,7 @@ const endpoints = {
   videoCache:                     io<VideoCacheHandlerData, VideoCacheHandlerReply>(),
   moveInstances:                  io<MoveInstancesHandlerData, MoveInstancesHandlerReply>(),
   "accounts.store-oauth":         io<StoreFtbAccountHandlerData, StoreFtbAccountHandlerReply>(),
+  "accounts.get-oauth":           io<BaseData, GetFtbAccountHandlerReply>(),
 } satisfies Record<ApiEndpoints, EndpointDefinition<any, any>>;
 
 export type EmptyMessageResponse = {}

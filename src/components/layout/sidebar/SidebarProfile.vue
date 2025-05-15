@@ -4,10 +4,12 @@ import {getMinecraftHead} from '@/utils/helpers/mcsHelpers';
 import {createLogger} from '@/core/logger';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import Popover from '@/components/ui/Popover.vue';
-import {ref} from 'vue';
+import {ref, useTemplateRef} from 'vue';
 import { useAccountsStore } from '@/store/accountsStore.ts';
 import { AuthProfile } from '@/core/types/appTypes.ts';
 import { faEdit, faPlus, faQuestion, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import {UiButton} from "@/components/ui";
+import {useAttachDomEvent} from "@/composables";
 
 const accountsStore = useAccountsStore();
 
@@ -17,6 +19,17 @@ const { disabled = false } = defineProps<{
 
 const editMode = ref(false);
 const loading = ref(false);
+const open = ref(false);
+
+const sidebarRef = useTemplateRef<HTMLDivElement>("sidebarRef");
+
+useAttachDomEvent<MouseEvent>('click', event => {
+  if (sidebarRef.value?.contains(event.target as Node)) {
+    return;
+  }
+
+  open.value = false;
+});
 
 const logger = createLogger("SidebarProfile.vue")
 
@@ -63,13 +76,19 @@ async function setActiveProfile(profile: AuthProfile) {
 
 function openSignIn() {
   accountsStore.openSignIn(true);
+  open.value = false;
+}
+
+function openSignInFtb() {
+  accountsStore.openSignInFtb(true);
+  open.value = false;
 }
 </script>
 
 <template>
-  <div class="profile-area" :class="{ disabled }">
+  <div class="profile-area" :class="{ disabled }" ref="sidebarRef">
     <div class="profile" v-if="(accountsStore.mcProfiles && accountsStore.mcProfiles.length)">
-      <div class="avatar">
+      <div class="avatar cursor-pointer" @click="() => open = !open">
         <img
           :src="getMinecraftHead(accountsStore.mcActiveProfile?.uuid ?? null)"
           alt="Profile"
@@ -79,11 +98,41 @@ function openSignIn() {
         />
       </div>
 
-      <div class="profile-switch" v-show="!disabled">
+      <div class="profile-switch" :class="{open}" v-show="!disabled">
+        <section class="mb-8">
+          <div class="headings">
+            <div class="main">
+              FTB Account
+            </div>
+            <FontAwesomeIcon
+              class="cursor-pointer"
+              v-if="accountsStore.mcProfiles.length"
+              :icon="editMode ? faTimes : faEdit"
+              @click="editMode = !editMode"
+            />
+          </div>
+
+          <div class="accounts">
+            <div v-if="accountsStore.ftbAccount" class="account">
+              <div v-if="accountsStore.ftbAccount.accountData.picture">
+                <div class="avatar">
+                  <img :src="accountsStore.ftbAccount.accountData.picture" alt="Profile" class="rounded-lg w-[40px] h-[40px] aspect-square" />
+                </div>
+              </div>
+
+              <div>
+                <p class="font-bold">{{ accountsStore.ftbAccount.accountData.preferred_username ?? accountsStore.ftbAccount.accountData.given_name ?? "Unknown?" }}</p>
+                <p class="text-sm" v-if="accountsStore.isPatreon">Patreon Member</p>
+              </div>
+            </div>
+          </div>
+
+          <UiButton v-if="!accountsStore.ftbAccount" size="small" type="primary" :icon="faPlus" @click="() => openSignInFtb()">Add FTB Account</UiButton>
+        </section>
+        
         <section>
           <div class="headings">
             <div class="main">
-              <img src="@/assets/images/minecraft.webp" alt="Minecraft grass block" />
               Accounts
             </div>
             <FontAwesomeIcon
@@ -93,9 +142,10 @@ function openSignIn() {
               @click="editMode = !editMode"
             />
           </div>
+          
           <div class="accounts" v-if="accountsStore.mcProfiles && accountsStore.mcProfiles.length">
             <div
-              class="account hoverable"
+              class="account"
               :class="{ loading, active: accountsStore.mcActiveProfile?.uuid === item.uuid }"
               v-for="(item, key) in accountsStore.mcProfiles"
               :key="key"
@@ -119,13 +169,8 @@ function openSignIn() {
               </div>
             </div>
           </div>
-
-          <div class="add-new" @click="() => openSignIn()">
-            <div class="add-button px-4 py-2"><FontAwesomeIcon :icon="faPlus" /> Add account</div>
-          </div>
-          <div class="add-new mt-2" @click="() => accountsStore.openSignInFtb()">
-            <div class="add-button px-4 py-2"><FontAwesomeIcon :icon="faPlus" /> Sign in with FTB</div>
-          </div>
+          
+          <UiButton size="small" type="primary" :icon="faPlus" @click="() => openSignIn()">Add Minecraft Account</UiButton>
         </section>
       </div>
     </div>
@@ -172,7 +217,6 @@ function openSignIn() {
 }
 
 .profile-area {
-  position: relative;
   margin-top: 0.5rem;
 
   &.disable {
@@ -193,74 +237,43 @@ function openSignIn() {
     -webkit-user-drag: none;
   }
 
-  &:hover {
-    .profile-switch {
-      transform: scale(1);
-      opacity: 1;
-    }
-
-    .profile-switch section:not(:last-child) {
-      transform: translateY(0);
-      transition-delay: 0.15s;
-      box-shadow: 0 0 1.5rem rgba(0, 0, 0, 0.3);
-      opacity: 1;
-    }
-  }
-
   .profile-switch {
     position: absolute;
-    left: calc(100% - 1rem);
-    bottom: 1rem;
-    min-width: 300px;
-    padding-left: 2rem;
+    left: 100%;
+    top: 0;
+    width: 320px;
+    height: calc(100% - 1px);
     z-index: 1000;
-    transform: scale(0);
     opacity: 0;
-    transform-origin: 2rem 100%;
+    background-color: #363636;
+    border-left: 1px solid rgba(white, .1);
+    border-right: 1px solid rgba(white, .1);
+    padding: 1rem;
 
-    transition: transform 0.2s ease-in-out, opacity 0.2s ease-in-out;
-
-    section {
-      padding: 1.2rem;
-      background-color: #161313;
-      border-radius: 5px;
-      box-shadow: 0 0 1.5rem rgba(0, 0, 0, 0.3);
-      position: relative;
-
-      &:not(:last-child) {
-        margin-bottom: 0.3rem;
-        transform: translateY(50%);
-        transform-origin: left bottom;
-        box-shadow: 0 0 1.5rem rgba(0, 0, 0, 0);
-        opacity: 0;
-
-        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, opacity 0.2s ease-in-out;
-      }
+    transition: transform 0.2s ease-in-out, opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
+    transform: translateX(1rem);
+    visibility: hidden;
+    
+    &.open {
+      visibility: visible;
+      transform: translateX(0);
+      opacity: 1;
     }
 
-    &::after {
-      content: '';
-      position: absolute;
-      left: 2rem;
-      bottom: 0;
-      width: 0;
-      height: 0;
-      border-right: 1rem solid transparent;
-      border-bottom: 1rem solid transparent;
-      border-top: 1rem solid #161313;
-      transform: rotateZ(-45deg);
+    section {
+      position: relative;
     }
 
     .headings {
       display: flex;
       align-items: center;
-      color: rgba(white, 0.9);
       margin-bottom: 1.2rem;
 
       .main {
         display: flex;
         align-items: center;
         flex: 1;
+        font-weight: bold;
       }
 
       .fa-edit {
@@ -300,6 +313,9 @@ function openSignIn() {
       position: relative;
       z-index: 1;
       max-height: 280px;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
     }
 
     .account {
@@ -307,6 +323,10 @@ function openSignIn() {
       align-items: center;
       position: relative;
       transition: background-color 0.2s ease-in-out;
+      border-radius: 5px;
+      cursor: pointer;
+      padding: .5rem;
+      border: 1px solid rgba(white, 0.1);
 
       &.loading {
         cursor: not-allowed;
@@ -317,28 +337,7 @@ function openSignIn() {
       }
 
       &.active {
-        background-color: black;
-
-        .ms-identifier {
-          background-color: black;
-        }
-      }
-
-      &.hoverable {
-        padding: 0.8rem 1rem;
-        border-radius: 5px;
-        &:not(:last-child) {
-          margin-bottom: 0.5rem;
-        }
-        cursor: pointer;
-
-        &:hover {
-          background-color: var(--color-primary-button);
-
-          .ms-identifier {
-            background-color: black;
-          }
-        }
+        background-color: rgba(white, 0.1);
       }
 
       .avatar {

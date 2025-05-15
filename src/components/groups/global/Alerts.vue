@@ -38,7 +38,16 @@ function onSimpleAlert(data: Alert) {
   createAlert();
 }
 
-function removeAlert(alert: AlertWithUuid) {
+function removeAlert(alert: AlertWithUuid, force = false) {
+  if (alert.persistent && !force) {
+    return;
+  }
+  
+  // Call the callback if it exists
+  if (alert.onClose) {
+    alert.onClose();
+  }
+  
   alerts.value = alerts.value.filter(a => a.uuid !== alert.uuid)
 }
 
@@ -71,10 +80,11 @@ const hiddenSidebar = computed(() => {
          :key="alert.uuid"
          :class="[alert.type]"
          :style="{zIndex: 5000 - index}"
-         @click="removeAlert(alert)"
+         @click="removeAlert(alert, true)"
     >
       <FontAwesomeIcon :icon="typeIcons[alert.type]"/>
-      {{ alert.message }}
+      <p class="whitespace-pre-wrap">{{ alert.message }}</p>
+      <FontAwesomeIcon :icon="faTimesCircle" class="ml-2 p-1" v-if="alert.persistent" @click.stop="removeAlert(alert, true)" />
     </div>
   </transition-group>
 </template>

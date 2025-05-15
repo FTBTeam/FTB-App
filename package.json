@@ -104,9 +104,11 @@
       "@fortawesome/free-solid-svg-icons",
       "@overwolf/ow-cli",
       "@overwolf/ow-electron",
+      "@parcel/watcher",
       "core-js",
       "deasync",
       "electron",
+      "esbuild",
       "fsevents",
       "utf-8-validate",
       "yorkie"

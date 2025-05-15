@@ -45,6 +45,7 @@ async function checkForToken(deviceData: DeviceCodeHolder): Promise<CheckForCode
       return { data: tokens }
     }
   } catch (e) {
+    // TODO: This is fatal! We need to stop the flow here!
     logger.warn("Error while polling for token", e);
   }
   
@@ -64,20 +65,12 @@ async function continueTokenFlow(data: any): Promise<OnResultReturn> {
       refreshToken: typedData.refresh_token!,
       expiresIn: typedData.expires_in!,
       refreshExpiresIn: data.refresh_expires_in!,
+      notViableForLogging: true
     })
     
     if (res.success) {
       // Use the token & the config to get the user info
-      try {
-        // TODO: See if we can not do this?
-        const userInfo = await client.fetchUserInfo(await getOrCreateOauthClient(), typedData.access_token, client.skipSubjectCheck)
-        console.log("User info", userInfo)
-      } catch (e) {
-        console.error(e)
-        logger.error("Failed to get user info", e)
-        alertController.error("Failed to get user info, a retry maybe resolve the issue.")
-      }
-      return true;
+      accountStore.ftbAccountManager.init(res.completeToken).catch((e) => logger.error(e))
     }
   } catch (e) {
     logger.error("Unable to continue token flow", e)
