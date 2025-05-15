@@ -32,11 +32,12 @@ win:
   target:
     - nsis
   artifactName: ftb-app-win-${version}-${arch}.${ext}
-  sign: ./tooling/signing/windows-signing.cjs
-  signingHashAlgorithms:
-    - sha256
+  signtoolOptions:
+    sign: ./tooling/signing/windows-signing.cjs
+    signingHashAlgorithms:
+      - sha256
+    publisherName: Feed The Beast Ltd
   icon: ./resources/icons/app-icon-windows.ico
-  publisherName: Feed The Beast Ltd
 mac:
   hardenedRuntime: true
   gatekeeperAssess: false

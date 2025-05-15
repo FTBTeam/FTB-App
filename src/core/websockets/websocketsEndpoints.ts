@@ -66,7 +66,7 @@ import {
   SettingsConfigureData,
   SettingsConfigureDataReply,
   SettingsInfoData,
-  SettingsInfoDataReply,
+  SettingsInfoDataReply, SignOutFTBAccountHandlerReply,
   StorageGetAllHandlerReply,
   StorageGetHandlerData,
   StorageGetHandlerReply,
@@ -149,6 +149,7 @@ const endpoints = {
   moveInstances:                  io<MoveInstancesHandlerData, MoveInstancesHandlerReply>(),
   "accounts.store-oauth":         io<StoreFtbAccountHandlerData, StoreFtbAccountHandlerReply>(),
   "accounts.get-oauth":           io<BaseData, GetFtbAccountHandlerReply>(),
+  "accounts.sign-out":            io<BaseData, SignOutFTBAccountHandlerReply>(),
 } satisfies Record<ApiEndpoints, EndpointDefinition<any, any>>;
 
 export type EmptyMessageResponse = {}

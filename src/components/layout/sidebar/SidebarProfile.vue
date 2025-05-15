@@ -123,6 +123,7 @@ function openSignInFtb() {
               <div>
                 <p class="font-bold">{{ accountsStore.ftbAccount.accountData.preferred_username ?? accountsStore.ftbAccount.accountData.given_name ?? "Unknown?" }}</p>
                 <p class="text-sm" v-if="accountsStore.isPatreon">Patreon Member</p>
+                <FontAwesomeIcon :icon="faTrash" v-if="editMode" @click.stop="() => accountsStore.signOutFtb()" />
               </div>
             </div>
           </div>

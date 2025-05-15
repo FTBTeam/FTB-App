@@ -131,6 +131,14 @@ export class FtbAccountManager {
     return JSON.parse(decoded);
   }
   
+  public signOut() {
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
+    }
+    
+    this.tokenData = null;
+  }
+  
   get isExpired() {
     if (!this.tokenData) return true;
     

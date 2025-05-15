@@ -492,6 +492,10 @@ export interface SetActiveProfileHandlerReply extends PrivateBaseData {
     success: boolean;
 }
 
+export interface SignOutFTBAccountHandlerReply extends BaseData {
+    success: boolean;
+}
+
 export interface StoreFtbAccountHandlerData extends PrivateBaseData {
     token: string;
     idToken: string;
@@ -627,7 +631,12 @@ export interface Dimension {
     height: number;
 }
 
-export interface CompleteTokenData extends StoreFtbAccountHandlerData {
+export interface CompleteTokenData {
+    token: string;
+    idToken: string;
+    refreshToken: string;
+    expiresIn: number;
+    refreshExpiresIn: number;
     loggedInAt: number;
     expiresAt: number;
     refreshExpiresAt: number;

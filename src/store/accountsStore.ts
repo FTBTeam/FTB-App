@@ -77,6 +77,13 @@ export const useAccountsStore = defineStore("accounts", {
       }
       
       this.ftbAccountManager.init(accountData.authData); 
+    },
+    async signOutFtb() {
+      this.ftbAccountManager.signOut();
+      this.ftbAccount = null;
+      this.ftbLoggingIn = false;
+      
+      await sendMessage("accounts.sign-out", {});
     }
   }
 })

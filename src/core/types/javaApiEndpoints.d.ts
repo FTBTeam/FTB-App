@@ -33,6 +33,7 @@ export type ApiEndpoints = 	"installedInstances" |
 	"storage.get-all" |
 	"uploadLogs" |
 	"profiles.ms.authenticate" |
+	"accounts.sign-out" |
 	"openDebugTools" |
 	"getInstanceFolders" |
 	"instanceVersionInfo" |

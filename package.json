@@ -15,7 +15,7 @@
   "scripts": {
     "dev": "cross-env TARGET_PLATFORM=electron NODE_ENV=development vite",
     "dev:ads": "cross-env SHOW_ADS=true pnpm run dev",
-    "build": "cross-env NODE_ENV=production vue-tsc && cross-env NODE_ENV=production vite build && electron-builder --config ./electron-builder.yml",
+    "build": "cross-env NODE_ENV=production vue-tsc && cross-env NODE_ENV=production vite build && ow-electron-builder --config ./electron-builder.yml",
     "build:bin:all:64": "pnpm run build -wl --x64",
     "build:bin:all:arm": "pnpm run build -l --arm64",
     "build:bin:mac:64": "pnpm run build -m --x64",
@@ -31,7 +31,6 @@
     "node": "^22"
   },
   "dependencies": {
-    "@tailwindcss/vite": "^4.0.14",
     "@types/object-inspect": "^1.8.4",
     "adm-zip": "^0.5.10",
     "balloon-css": "^1.2.0",
@@ -43,7 +42,6 @@
     "openid-client": "^6.4.2",
     "pinia": "^3.0.1",
     "semver": "^7.6.2",
-    "tailwindcss": "^4.0.14",
     "vue": "^3.4.21",
     "vue-gtag": "^3.5.0",
     "vue-router": "^4.5.0",
@@ -51,6 +49,8 @@
     "wysiwyg.css": "^0.0.4"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.1.7",
+    "tailwindcss": "^4.1.7",
     "@chromatic-com/storybook": "^3",
     "@electron/notarize": "^2.3.0",
     "@fortawesome/fontawesome-svg-core": "^6.1.1",
@@ -105,6 +105,7 @@
       "@overwolf/ow-cli",
       "@overwolf/ow-electron",
       "@parcel/watcher",
+      "@tailwindcss/oxide",
       "core-js",
       "deasync",
       "electron",
