@@ -3,6 +3,7 @@ import {MessageRaw, Nullable, sendMessage} from '@/core/websockets/websocketsApi
 import {WebRequestData} from '@/core/types/javaApi';
 import {createLogger} from '@/core/logger';
 import { constants } from '@/core/constants';
+import {useAccountsStore} from "@/store/accountsStore.ts";
 
 interface FetchResponseRaw {
   status: string;
@@ -88,8 +89,13 @@ export class JavaFetch {
   }
   
   public static modpacksChPrivate(endpoint: string) {
-    // TODO: Implement private api key
-    return JavaFetch.create(constants.modpacksApi + "/" + endpoint)
+    const javaFetch = JavaFetch.create(constants.modpacksApi + "/" + endpoint);
+    // Inject the authoization header
+    const accountStore = useAccountsStore();
+    if (accountStore.ftbAccount && accountStore.ftbAccount.idTokenData) {
+      javaFetch.header("Authorization", `Bearer ${accountStore.ftbAccount.idTokenData}`);
+    }
+    return javaFetch
   }
   
   //#endregion

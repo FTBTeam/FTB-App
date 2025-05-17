@@ -19,7 +19,7 @@ type AccountsState = {
   mcActiveProfile: AuthProfile | null;
   ftbAccount: {
     accountData: FTBAccountData;
-    idTokenData: JWTIdTokenData | null; // 
+    idTokenData: JWTIdTokenData | null;
   } | null;
   ftbAccountManager: FtbAccountManager;
   ftbLoggingIn: boolean;
@@ -59,12 +59,14 @@ export const useAccountsStore = defineStore("accounts", {
       const profiles = result.profiles.map(
         (a) => ({username: a.minecraftName, uuid: a.uuid} as AuthProfile),
       );
-
+      
       if (result.activeProfile) {
         this.mcActiveProfile = {
           username: result.activeProfile.minecraftName,
           uuid: result.activeProfile.uuid,
         };
+      } else {
+        this.mcActiveProfile = null;
       }
       
       this.mcProfiles = profiles

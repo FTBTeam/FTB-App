@@ -1,11 +1,14 @@
 package dev.ftb.app.util;
 
+import com.google.gson.Gson;
+import dev.ftb.app.api.handlers.profiles.StoreFtbAccountHandler;
+import dev.ftb.app.storage.CredentialStorage;
 import net.covers1624.quack.net.DownloadAction;
 import dev.ftb.app.Constants;
 import okhttp3.Request;
 
-public class ModpacksChUtils {
-    public static String API_TOKEN = "";
+public class ModpackApiUtils {
+    public static String API_TOKEN;
     
     public static PackType byteToPackType(byte packType) {
         return switch (packType) {
@@ -26,15 +29,31 @@ public class ModpacksChUtils {
     }
     
     public static void injectBearerHeader(Request.Builder builder) {
-//        if (USER_PROVIDED_CREDENTIALS != null && USER_PROVIDED_CREDENTIALS.usesBearerAuth()) {
-//            builder.addHeader("Authorization", "Bearer " + USER_PROVIDED_CREDENTIALS.apiSecret());
-//        }
+        if (API_TOKEN != null) {
+            builder.addHeader("Authorization", "Bearer " + API_TOKEN);
+        }
     }
     
     public static void injectBearerHeader(DownloadAction action) {
-//        if (USER_PROVIDED_CREDENTIALS != null && USER_PROVIDED_CREDENTIALS.usesBearerAuth()) {
-//            action.addRequestHeader("Authorization", "Bearer " + USER_PROVIDED_CREDENTIALS.apiSecret());
-//        }
+        if (API_TOKEN != null) {
+            action.addRequestHeader("Authorization", "Bearer " + API_TOKEN);
+        }
+    }
+    
+    public static void loadPrivateToken() {
+        // Set the API key if we have it
+        String accountData = CredentialStorage.getInstance().get("ftbAccount");
+        if (accountData != null) {
+            // Parse it
+            try {
+                StoreFtbAccountHandler.CompleteTokenData authData = new Gson().fromJson(accountData, StoreFtbAccountHandler.CompleteTokenData.class);
+                if (authData != null && authData.idToken != null) {
+                    API_TOKEN = authData.idToken;
+                }
+            } catch (Exception e) {
+                // Ignore
+            }
+        }
     }
 
     public enum PackType {

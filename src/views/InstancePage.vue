@@ -187,12 +187,7 @@ function launch() {
 
 function playOffline() {
   logger.debug("Launching instance in offline mode")
-  
-  // TODO: Fix me
-  // this.$router.push({
-  //   name: RouterNames.ROOT_LAUNCH_PACK,
-  //   query: { uuid: this.instance?.uuid ?? "", offline: 'true', username: this.offlineUserName },
-  // });
+  InstanceController.from(instance.value!).playOffline(offlineUserName.value);
 }
 
 function update(version: Versions | null = null): void {
@@ -222,9 +217,6 @@ function updateOrDowngrade(versionId: number) {
 
 function closeOfflineModel() {
   offlineMessageOpen.value = false;
-  if (router.currentRoute.value.query.presentOffline) {
-    router.push({ name: RouterNames.ROOT_LOCAL_PACK, params: { uuid: instance.value?.uuid ?? "" } });
-  }
 }
 
 const packSplashArt = resolveArtwork(apiPack.value, 'splash');
@@ -316,7 +308,10 @@ export enum ModpackPageTabs {
 
       <template #footer>
         <div class="flex justify-end">
-          <ui-button :icon="faPlay" type="success" @click="playOffline">Play offline</ui-button>
+          <ui-button :icon="faPlay" type="success" @click="() => {
+            playOffline()
+            closeOfflineModel()
+          }">Play offline</ui-button>
         </div>
       </template>
     </Modal>

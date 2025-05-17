@@ -7,7 +7,7 @@ import com.google.gson.JsonParseException;
 import dev.ftb.app.Constants;
 import dev.ftb.app.install.FileValidation;
 import dev.ftb.app.install.ModCollector;
-import dev.ftb.app.util.ModpacksChUtils;
+import dev.ftb.app.util.ModpackApiUtils;
 import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.net.DownloadAction;
@@ -64,10 +64,10 @@ public class ModManifest {
         StringWriter sw = new StringWriter();
         DownloadAction action = new OkHttpDownloadAction()
                 .setClient(Constants.httpClient())
-                .setUrl(ModpacksChUtils.getModpacksApi() + "/mod/" + id)
+                .setUrl(ModpackApiUtils.getModpacksApi() + "/mod/" + id)
                 .setDest(sw);
         
-        ModpacksChUtils.injectBearerHeader(action);
+        ModpackApiUtils.injectBearerHeader(action);
         action.execute();
 
         return JsonUtils.parse(GSON, sw.toString(), ModManifest.class);

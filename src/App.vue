@@ -8,7 +8,7 @@ import { Loader } from '@/components/ui';
 import Onboarding from '@/components/modals/Onboarding.vue';
 import { DevToolsActions } from '@/components/layout';
 import GlobalComponents from './components/layout/GlobalComponents.vue';
-import { computed, onMounted, ref, watch } from 'vue';
+import {computed, onMounted, onUnmounted, ref, watch} from 'vue';
 import { alertController } from '@/core/controllers/alertController.ts';
 import { useInstanceStore } from '@/store/instancesStore.ts';
 import appPlatform from '@platform';
@@ -43,8 +43,11 @@ onMounted(() => {
   appPlatform.utils.getOsType().then(e => isMac.value = e === "mac")
 
   // Remove the old one if needed (typically app restarts (soft))
-  appStore.emitter.off("ws/message", refreshHandler)
   appStore.emitter.on("ws/message", refreshHandler)
+})
+
+onUnmounted(() => {
+  appStore.emitter.off("ws/message", refreshHandler)
 })
 
 async function startApplication() {
@@ -114,6 +117,7 @@ async function initAppLoad() {
 
 function refreshHandler(data: any) {
   if (data?.type === "refreshInstancesRequest") {
+    logger.info("Refreshing instances per request")
     instanceStore.loadInstances();
   }
 }

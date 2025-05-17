@@ -45,8 +45,8 @@ async function checkForToken(deviceData: DeviceCodeHolder): Promise<CheckForCode
       return { data: tokens }
     }
   } catch (e) {
-    // TODO: This is fatal! We need to stop the flow here!
     logger.warn("Error while polling for token", e);
+    return { error: "Failed to get the token, a retry maybe resolve the issue." }
   }
   
   return { pass: true }
@@ -71,6 +71,7 @@ async function continueTokenFlow(data: any): Promise<OnResultReturn> {
     if (res.success) {
       // Use the token & the config to get the user info
       accountStore.ftbAccountManager.init(res.completeToken).catch((e) => logger.error(e))
+      return true;
     }
   } catch (e) {
     logger.error("Unable to continue token flow", e)

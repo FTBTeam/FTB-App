@@ -41,17 +41,28 @@ export class InstanceController {
   static from(instance: SugaredInstanceJson | InstanceJson) {
     return new InstanceController(instance);
   }
-  
+
   async play(profileUuid: string | null = null) {
+    return this._play(profileUuid, null);
+  }
+  
+  async playOffline(offlineUsername: string | null = null) {
+    return this._play(null, offlineUsername);
+  }
+  
+  private async _play(profileUuid: string | null = null, offlineUsername: string | null = null) {
     const runningInstancesStore = useRunningInstancesStore();
     
     InstanceController.logger.debug(`Playing instance ${this.instance.uuid}`);
     
-    InstanceController.logger.debug("Fetching active profile");
-    const activeProfile = getProfileOrDefaultToActive(profileUuid);
-    if (!activeProfile) {
-      InstanceController.logger.warn("Failed to get active profile");
-      return;
+    let activeProfile;
+    if (!offlineUsername) {
+      InstanceController.logger.debug("Fetching active profile");
+      activeProfile = getProfileOrDefaultToActive(profileUuid);
+      if (!activeProfile) {
+        InstanceController.logger.warn("Failed to get active profile");
+        return;
+      }
     }
     
     const loadingStatus: LaunchingStatus = {
@@ -64,27 +75,29 @@ export class InstanceController {
     
     runningInstancesStore.updateLaunchingStatus(loadingStatus)
 
-    InstanceController.logger.debug("Checking profile");
-    const checkResult = await safeCheckProfileActive(activeProfile.uuid);
-    if (checkResult !== "VALID") {
-      InstanceController.logger.warn("Failed to check profile");
-      
-      if (checkResult === "TOTAL_FAILURE") {
-        loadingStatus.loggingIn = false;
-        loadingStatus.error = "Failed to check profile";
-        runningInstancesStore.updateLaunchingStatus(loadingStatus)
+    if (!offlineUsername && activeProfile) {
+      InstanceController.logger.debug("Checking profile");
+      const checkResult = await safeCheckProfileActive(activeProfile.uuid);
+      if (checkResult !== "VALID") {
+        InstanceController.logger.warn("Failed to check profile");
+
+        if (checkResult === "TOTAL_FAILURE") {
+          loadingStatus.loggingIn = false;
+          loadingStatus.error = "Failed to check profile";
+          runningInstancesStore.updateLaunchingStatus(loadingStatus)
+          return;
+        }
+
+        if (checkResult === "NOT_LOGGED_IN") {
+          const accountsStore = useAccountsStore();
+          InstanceController.logger.debug("Profile is not logged in, asking the user to sign in");
+          // Get the user to log back in again
+          runningInstancesStore.clearLaunchingStatus()
+          accountsStore.openSignIn()
+        }
+
         return;
       }
-      
-      if (checkResult === "NOT_LOGGED_IN") {
-        const accountsStore = useAccountsStore();
-        InstanceController.logger.debug("Profile is not logged in, asking the user to sign in");
-        // Get the user to log back in again
-        runningInstancesStore.clearLaunchingStatus()
-        accountsStore.openSignIn()
-      }
-      
-      return;
     }
     
     loadingStatus.loggingIn = false;
@@ -96,8 +109,8 @@ export class InstanceController {
     const result = await sendMessage("launchInstance", {
       uuid: this.instance.uuid,
       extraArgs: "",
-      offline: false,
-      offlineUsername: "",
+      offline: !!offlineUsername,
+      offlineUsername: offlineUsername || "",
       cancelLaunch: null
     }, 1000 * 60 * 10) // 10 minutes It's a long time, but we don't want to timeout too early
 

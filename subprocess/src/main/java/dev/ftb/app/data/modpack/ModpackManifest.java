@@ -5,7 +5,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.JsonAdapter;
 import dev.ftb.app.Constants;
-import dev.ftb.app.util.ModpacksChUtils;
+import dev.ftb.app.util.ModpackApiUtils;
 import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.HashCodeAdapter;
 import net.covers1624.quack.gson.JsonUtils;
@@ -44,7 +44,7 @@ public class ModpackManifest {
 
     @Nullable
     public static ModpackManifest queryManifest(long packId, boolean isPrivate, byte packType) throws IOException, JsonParseException {
-        String url = ModpacksChUtils.getModpacksEndpoint(isPrivate, packType) + packId;
+        String url = ModpackApiUtils.getModpacksEndpoint(isPrivate, packType) + packId;
         LOGGER.info("Querying Modpack version manifest: {}", url);
         StringWriter sw = new StringWriter();
         DownloadAction action = new OkHttpDownloadAction()
@@ -53,7 +53,7 @@ public class ModpackManifest {
                 .setUrl(url)
                 .setDest(sw);
         
-        ModpacksChUtils.injectBearerHeader(action);
+        ModpackApiUtils.injectBearerHeader(action);
         
         action.execute();
 

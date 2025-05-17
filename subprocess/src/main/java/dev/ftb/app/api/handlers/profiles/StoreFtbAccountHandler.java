@@ -4,8 +4,10 @@ import com.google.gson.Gson;
 import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.api.data.PrivateBaseData;
+import dev.ftb.app.api.data.other.RequestInstanceRefresh;
 import dev.ftb.app.api.handlers.IMessageHandler;
 import dev.ftb.app.storage.CredentialStorage;
+import dev.ftb.app.util.ModpackApiUtils;
 
 import java.time.Instant;
 
@@ -18,6 +20,8 @@ public class StoreFtbAccountHandler implements IMessageHandler<StoreFtbAccountHa
         
         completeToken.token = data.token;
         completeToken.idToken = data.idToken;
+        // Update the API token
+        ModpackApiUtils.API_TOKEN = data.idToken;
         completeToken.refreshToken = data.refreshToken;
         completeToken.expiresIn = data.expiresIn;
         completeToken.refreshExpiresIn = data.refreshExpiresIn;
@@ -35,6 +39,7 @@ public class StoreFtbAccountHandler implements IMessageHandler<StoreFtbAccountHa
         
         // Return the token back for convenience
         WebSocketHandler.sendMessage(new Reply(data, completeToken));
+        WebSocketHandler.sendMessage(new RequestInstanceRefresh());
     }
 
     // This data is used, we just json it so we don't need to worry about it
