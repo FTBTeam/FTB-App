@@ -7,15 +7,8 @@ const showAdPersonalizationButton = ref(false);
 
 onMounted(() => {
   appPlatform.app.cpm.required().then((required) => {
-    console.log("Required check", required)
     showAdPersonalizationButton.value = required;
   });
-  
-  new Promise(async (res) => {
-    const re = await appPlatform.app.cpm.required()
-    console.log(re)
-    res(null)
-  })
 })
 </script>
 
@@ -38,9 +31,5 @@ onMounted(() => {
        <UiButton class="mt-6" type="primary" @click="appPlatform.app.cpm.openWindow('purposes')">Manage ads</UiButton>
      </div>
    </template>
-
-   <div class="mt-4">
-     platform {{ appPlatform.isElectron ? "Electron" : "Overwolf" }}, showAdPersonalizationButton: {{ showAdPersonalizationButton }}
-   </div>
  </div>
 </template>
