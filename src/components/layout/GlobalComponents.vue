@@ -14,6 +14,7 @@ import { useAccountsStore } from '@/store/accountsStore.ts';
 import { useModalStore } from '@/store/modalStore.ts';
 import { ModalButton } from '@/core/types/javaApi';
 import FtbLoginModal from "@/components/groups/auth/FtbLoginModal.vue";
+import ModpackPreview from "@/components/groups/global/modpackPreview/ModpackPreview.vue";
 import ImagePreview from "@/components/groups/global/imagePreview/ImagePreview.vue";
 
 const modalStore = useModalStore();
@@ -35,6 +36,7 @@ function modalFeedback(button: ModalButton) {
 
 <template>
   <div class="global-components">
+    <ModpackPreview />
     <content-menu-global />
     <ImagePreview />
     

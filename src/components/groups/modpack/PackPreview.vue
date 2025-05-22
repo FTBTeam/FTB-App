@@ -12,6 +12,7 @@ import { useRouter } from 'vue-router';
 import { PackProviders } from '@/core/types/appTypes.ts';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { RouterNames } from '@/router';
+import {useGlobalStore} from "@/store/globalStore.ts";
 
 const {
   packId,
@@ -27,6 +28,7 @@ const showInstall = ref(false);
 const { apiModpack, fetchModpack } = useFetchingPack();
 const installStore = useInstallStore();
 const router = useRouter()
+const globalStore = useGlobalStore();
 
 onMounted(() => {
   if (!partialPack && !packId) {
@@ -84,10 +86,7 @@ const isInstalling = computed(() => {
 
 <template>
   <div class="pack-preview-container">
-    <div class="pack-preview" v-if="packData" @click="router.push({
-      name: RouterNames.ROOT_PREVIEW_PACK,
-      query: { modpackid: '' + packData.id, type: '' + (provider === 'curseforge' ? 1 : 0) },
-    })">
+    <div class="pack-preview" v-if="packData" @click="() => globalStore.openModpackPreview(packData?.id, packData?.platform)">
       <div class="splash-art" v-if="artwork" :style="{ backgroundImage: `url(${artwork})` }" />
       <div class="logo">
         <img :src="logo" :alt="`Pack art for ${packData.name}`" />
