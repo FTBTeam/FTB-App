@@ -105,7 +105,7 @@ function select(option: SelectionOption) {
 </script>
 
 <template>
-  <div class="select-box" :class="{disabled}">
+  <div class="select-box text-sm" :class="{disabled}">
     <div class="inline-block text-xs font-bold uppercase text-white/80 mb-2 transition-color duration-300" v-if="label && !icon">{{ label }}</div>
     <div class="selection outline-none rounded bg-black/20 border border-white/30 hover:border-white/60 transition-color duration-300" :class="{ open }" ref="selection" :id="id" @click="open = !open">
       <div class="main" v-if="!icon">
@@ -122,7 +122,7 @@ function select(option: SelectionOption) {
           <div class="meta" v-if="selected.meta">{{ selected.meta }}</div>
         </div>
 
-        <FontAwesomeIcon class="arrow" :icon="faChevronDown" />
+        <FontAwesomeIcon size="sm" class="arrow" :icon="faChevronDown" />
       </div>
       
       <div class="main-icon" v-else>
@@ -161,7 +161,7 @@ function select(option: SelectionOption) {
   }
 
   .selection {
-    padding: 0.55rem;
+    padding: 0.40rem;
     cursor: pointer;
     position: relative;
 
@@ -173,8 +173,9 @@ function select(option: SelectionOption) {
       position: absolute;
       top: 50%;
       transform: translateY(-50%);
-      right: 1rem;
+      right: .5rem;
       transition: transform 0.25s ease-in-out;
+      opacity: .8;
     }
 
     &.open {
@@ -287,6 +288,7 @@ function select(option: SelectionOption) {
         text-overflow: ellipsis;
         white-space: nowrap;
         font-weight: bold;
+        padding-left: 0.25rem;
       }
 
       .meta {

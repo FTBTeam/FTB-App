@@ -21,7 +21,7 @@ export interface ModPack {
   name: string;
   type: string;
   updated: number;
-  released: number | 'unknown';
+  released: number;
   tags: ModPackTag[];
   notification: string;
   links: ModPackLink[];
@@ -95,6 +95,9 @@ export interface Art {
   id: number;
   type: string;
   updated: number;
+  title: string;
+  description?: string;
+  descriptionHtml?: string;
 }
 
 export interface Authors {
@@ -106,7 +109,7 @@ export interface Authors {
 }
 
 export interface Versions {
-  specs: VersionSpecs[];
+  specs: VersionSpecs;
   id: number;
   name: string;
   type: string;
@@ -135,4 +138,48 @@ export interface ModPackTag {
 export type ModLoaderUpdateState = {
   instanceId: string;
   packetId: string;
+}
+
+export interface ModpackModsResponse {
+  status: string
+  updated: number
+  refreshed: number
+  type: string
+  plays: number
+  installs: number
+  changelog: string
+  parent: number
+  notification: string
+  links: any[]
+  id: number
+  uid: string
+  name: string
+  private: boolean
+  targets: Targets[]
+  specs: VersionSpecs
+  mods: ModpackMod[]
+}
+
+export interface ModpackMod {
+  fileId: number
+  name?: string
+  synopsis?: string
+  icon?: string
+  curseSlug?: string
+  curseProject?: number
+  curseFile?: number
+  curseAuthors?: {
+    id: number
+    name: string
+    url: string
+  }[]
+  stored: number
+  size: number
+  filename: string
+}
+
+export type ImagePreview = {
+  name?: string;
+  description?: string;
+  url: string;
 }

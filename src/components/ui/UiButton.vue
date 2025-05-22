@@ -48,7 +48,7 @@ export type ElementStandardSizing = 'small' | 'normal' | 'large';
 export function colorFromElementColorType(type: ElementColorType, disabled: boolean = false, working = false) {
   switch (type) {
     case 'primary': return 'bg-indigo-600' + (!disabled && !working ? ' hover:bg-indigo-500' : '');
-    case 'secondary': return 'bg-slate-600' + (!disabled && !working ? ' hover:bg-slate-500' : '');
+    case 'secondary': return 'bg-[#434548]' + (!disabled && !working ? ' hover:bg-[#61646B]' : '');
     case 'success': return 'bg-green-600' + (!disabled && !working ? ' hover:bg-green-500' : '');
     case 'danger': return 'bg-red-600' + (!disabled && !working ? ' hover:bg-red-500' : '');
     case 'warning': return 'bg-orange-600' + (!disabled && !working ? ' hover:bg-orange-500' : '');

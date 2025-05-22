@@ -14,6 +14,7 @@ import { useAccountsStore } from '@/store/accountsStore.ts';
 import { useModalStore } from '@/store/modalStore.ts';
 import { ModalButton } from '@/core/types/javaApi';
 import FtbLoginModal from "@/components/groups/auth/FtbLoginModal.vue";
+import ImagePreview from "@/components/groups/global/imagePreview/ImagePreview.vue";
 
 const modalStore = useModalStore();
 const accountStore = useAccountsStore();
@@ -35,6 +36,7 @@ function modalFeedback(button: ModalButton) {
 <template>
   <div class="global-components">
     <content-menu-global />
+    <ImagePreview />
     
     <Modal 
       v-if="modalStore.modal" 
