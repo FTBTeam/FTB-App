@@ -40,7 +40,7 @@ const userPackName = ref("");
 const userSelectedArtwork = ref<File | null>(null);
 
 const emit = defineEmits<{
-  (event: 'close'): void;
+  (event: 'close', installed: boolean): void;
 }>()
 
 watch(() => open, async (newValue) => {
@@ -71,7 +71,7 @@ function install() {
     provider,
   })
 
-  emit('close')
+  emit('close', true)
 
   if (router.currentRoute.value.name !== RouterNames.ROOT_LIBRARY) {
     router.push({
@@ -124,7 +124,7 @@ function versions() {
 </script>
 
 <template>
-  <Modal :open="open" @closed="emit('close')" title="Install instance" :sub-title="packName" :external-contents="true">
+  <Modal :open="open" @closed="emit('close', false)" title="Install instance" :sub-title="packName" :external-contents="true">
     <ModalBody>
       <template v-if="apiModpack">
 <!--        <ArtworkSelector :pack="apiModpack" class="mb-6" v-model="userSelectedArtwork" />-->

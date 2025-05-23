@@ -112,5 +112,8 @@
       </div>
     </div>
   </transition>
-  <modpack-install-modal @close="showInstallModal = false" v-if="modpack" :open="showInstallModal" :pack-id="modpack.id" :provider="modpack.provider === 'modpacks.ch' ? 'modpacksch' : 'curseforge'" />
+  <modpack-install-modal @close="(v) => {
+    showInstallModal = false;
+    if (v) globalStore.closeModpackPreview();
+  }" v-if="modpack" :open="showInstallModal" :pack-id="modpack.id" :provider="modpack.provider === 'modpacks.ch' ? 'modpacksch' : 'curseforge'" />
 </template>

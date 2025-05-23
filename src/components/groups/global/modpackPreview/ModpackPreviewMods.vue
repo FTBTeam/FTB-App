@@ -10,6 +10,7 @@ import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 import {faQuestion, faSearch} from "@fortawesome/free-solid-svg-icons";
 import {prettyByteFormat} from "@/utils";
 import {SelectionOptions} from "@/components/ui/Selection2.vue";
+import {useGlobalStore} from "@/store/globalStore.ts";
 
 const {
   modpack
@@ -18,13 +19,14 @@ const {
 }>()
 
 const modpackStore = useModpackStore();
+const globalStore = useGlobalStore();
 
 const version = ref<ModpackVersion | null>(null)
 const mods = ref<ModpackMod[] | null>(null)
 const loading = ref(false)
 const search = ref("")
 const sortBy = ref<"name" | "size" | "authors">("name")
-const viewMode = ref<'list' | 'grid' | 'table'>("table")
+const viewMode = ref<'list' | 'grid' | 'table'>("list")
 const orderBy = ref<'asc' | 'desc'>("asc")
 
 onMounted(() => {
@@ -113,6 +115,10 @@ const finalMods = computed(() => {
   return sortedMods;
 })
 
+function iconClicked(mod: ModpackMod) {
+  globalStore.openImagePreview({ url: mod.icon, name: mod.name });
+}
+
 const sortOptions: SelectionOptions = [
   { label: "Name", value: "name" },
   { label: "Size", value: "size" },
@@ -147,16 +153,16 @@ const orderOptions: SelectionOptions = [
 
     <div class="grid grid-cols-3 gap-6" v-if="viewMode === 'grid'">
       <div v-for="(mod, index) in finalMods" :key="index">
-        <div class="bg-black/20 aspect-square flex items-center justify-center rounded-lg relative">
-          <img class="rounded-lg" v-if="mod.icon" :src="mod.icon" />
+        <div class="bg-black/20 cursor-pointer aspect-square flex items-center justify-center rounded-lg relative">
+          <img @click="iconClicked(mod)" class="rounded-lg cursor-pointer" v-if="mod.icon" :src="mod.icon" />
 
           <div v-if="mod.curseAuthors" class="absolute bottom-2 left-2 flex gap-1 flex-wrap items-start">
-            <a class="bg-black/70 backdrop-blur rounded px-1 text-sm text-white/80" target="_blank" :href="author.url" v-for="(author, index) in mod.curseAuthors.slice(0, 2)" :key="index">
+            <a @click.stop class="bg-black/70 backdrop-blur rounded px-1 text-sm text-white/80" target="_blank" :href="author.url" v-for="(author, index) in mod.curseAuthors.slice(0, 2)" :key="index">
               {{ (index === 0 ? 'By ' : '') + author.name }}
             </a>
           </div>
         </div>
-        <div :title="mod.name ?? mod.filename" class="font-bold mt-2 text-lg mb-1 line-clamp-2">{{ mod.name ?? mod.filename }}</div>
+        <a :href="`https://www.curseforge.com/minecraft/mc-mods/${mod.curseSlug}`" target="_blank" :title="mod.name ?? mod.filename" class="font-bold mt-2 text-lg mb-1 line-clamp-2">{{ mod.name ?? mod.filename }}</a>
         <p :title="mod.synopsis ?? '' + mod.size" class="line-clamp-2 opacity-85">{{mod.synopsis ?? prettyByteFormat(mod.size)}}</p>
       </div>
     </div>
@@ -171,10 +177,10 @@ const orderOptions: SelectionOptions = [
       <div class="flex flex-col gap-3">
         <div class="flex gap-6" v-for="(mod, index) in finalMods" :key="index">
           <div class="w-8">
-            <img :src="mod.icon" v-if="mod.icon" alt="Mod Icon" class="w-8 h-8 rounded-lg" />
+            <img @click="iconClicked(mod)" :src="mod.icon" v-if="mod.icon" alt="Mod Icon" class="w-8 h-8 rounded-lg" />
           </div>
           <div class="w-2/4" v-if="mod.name">
-            <div>{{mod.name}}</div>
+            <a :href="`https://www.curseforge.com/minecraft/mc-mods/${mod.curseSlug}`" target="_blank">{{mod.name}}</a>
             <div :title="mod.synopsis" class="text-sm opacity-85 line-clamp-1" v-if="mod.synopsis">{{mod.synopsis}}</div>
           </div>
           <div class="w-2/4" v-if="!mod.name">
@@ -193,7 +199,7 @@ const orderOptions: SelectionOptions = [
     <div class="flex flex-col gap-6" v-if="viewMode === 'list'">
       <div v-for="(mod, index) in finalMods" :key="index" class="flex items-center gap-6">
         <template v-if="mod.curseProject">
-          <img :src="mod.icon" alt="Mod Icon" class="w-12 h-12 rounded-lg" />
+          <img @click="iconClicked(mod)" :src="mod.icon" alt="Mod Icon" class="cursor-pointer w-12 h-12 rounded-lg" />
           <div>
             <a class="hover:underline" :href="`https://www.curseforge.com/minecraft/mc-mods/${mod.curseSlug}`" target="_blank">
               <h2 class="text-lg font-semibold">{{ mod.name }}</h2>
