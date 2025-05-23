@@ -35,6 +35,10 @@ const configData = appPlatform.config;
           <FontAwesomeIcon :icon="faGamepad" />
           <span>Instance Defaults</span>
         </router-link>
+        <router-link :to="{ name: RouterNames.SETTINGS_GAME_OPTIONS }" class="item">
+          <FontAwesomeIcon :icon="faGamepad" />
+          <span>Game Options</span>
+        </router-link>
         <router-link :to="{ name: RouterNames.SETTINGS_DOWNLOAD }" class="item">
           <FontAwesomeIcon :icon="faDownload" />
           <span>Downloads</span>

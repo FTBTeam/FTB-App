@@ -11,6 +11,7 @@ export enum RouterNames {
   ROOT_PREVIEW_PACK = 'modpackpage',
   ROOT_RUNNING_INSTANCE = 'running-instance',
   SETTINGS_INSTANCE = 'instance-settings',
+  SETTINGS_GAME_OPTIONS = 'game-options',
   SETTINGS_ADVANCED = "advanced-settings",
   SETTINGS_DOWNLOAD = 'download-settings',
   SETTINGS_APP = 'app-settings',
@@ -83,6 +84,11 @@ const router = createRouter({
           path: 'privacy',
           name: RouterNames.SETTINGS_PRIVACY,
           component: () => import(/* webpackChunkName: "settings" */ './views/Settings/Privacy.vue'),
+        },
+        {
+          path: 'game-options',
+          name: RouterNames.SETTINGS_GAME_OPTIONS,
+          component: () => import(/* webpackChunkName: "settings" */ './views/Settings/GameOptions.vue'),
         },
         {
           path: 'advanced',
