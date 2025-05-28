@@ -89,6 +89,19 @@ public class ModpackVersionModsManifest {
         public String getFilename() { return Objects.requireNonNull(filename); }
         // @formatter:on
 
+        public static Mod fromLookupResponse(ModsLookupManifest.Datum datum) {
+            var mod = new Mod();
+            mod.fileId = datum.fileID();
+            mod.name = datum.name();
+            mod.synopsis = datum.synopsis();
+            mod.icon = datum.icon();
+            mod.curseSlug = datum.curseSlug();
+            mod.curseProject = datum.curseProject();
+            mod.curseFile = datum.curseFile();
+            mod.stored = datum.stored();
+            mod.filename = datum.filename();
+            return mod;
+        }
 
         @Override
         public String toString() {

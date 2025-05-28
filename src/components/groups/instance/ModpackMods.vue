@@ -2,6 +2,7 @@
 import FindMods from '@/components/groups/instance/FindMods.vue';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {
+  AllRichModData,
   BaseData,
   CurseMetadata,
   InstanceJson,
@@ -138,14 +139,23 @@ onUnmounted(() => {
 })
 
 function onModUpdateEvent(data: BaseData & any) {
-  if (data.type !== "instanceModUpdate" && data.type !== "instanceInstallModReply" && data.type !== "instanceModRichData") {
+  if (data.type !== "instanceModUpdate" && data.type !== "instanceInstallModReply" && data.type !== "instanceAllModRichData") {
     return;
   }
 
-  if (data.type === "instanceModRichData") {
-    const mod = modlist.value.find(e => e.sha1 === data.file.sha1);
-    if (mod) {
-      mod.curse = data.richData;
+  if (data.type === "instanceAllModRichData") {
+    const typedData = data as AllRichModData;
+    console.log(data)
+    for (const richDataContainer of typedData.richModData) {
+      const { file, richData } = richDataContainer;
+      if (!richData) {
+        continue;
+      }
+      
+      const mod = modlist.value.find(e => e.sha1 === file.sha1);
+      if (mod) {
+        mod.curse = richData;
+      }
     }
 
     return;

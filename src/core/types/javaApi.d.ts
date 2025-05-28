@@ -114,11 +114,20 @@ export interface InstanceModsData extends BaseData {
     _private: boolean;
 }
 
+export interface AllRichModData extends InstanceModsData {
+    richModData: RichModDataBinding[];
+}
+
 export interface InstanceModsDataReply extends InstanceModsData {
     files: ModInfo[];
 }
 
 export interface RichModData extends InstanceModsData {
+    file: ModInfo;
+    richData: CurseMetadata;
+}
+
+export interface RichModDataBinding {
     file: ModInfo;
     richData: CurseMetadata;
 }
