@@ -42,7 +42,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 public class Instance {
-    public static final Set<Long> SPECIAL_LOADER_PACK_IDS = Set.of(
+    private static final Set<Long> SPECIAL_LOADER_PACK_IDS = Set.of(
         81L,  // Vanilla
         104L, // Forge
         105L, // Fabric
@@ -213,7 +213,7 @@ public class Instance {
     // TODO, In theory this meta should be getting added to the regular version manifest.
     //       When that happens we can nuke this.
     public @Nullable ModpackVersionModsManifest getModsManifest() {
-        if (SPECIAL_LOADER_PACK_IDS.contains(this.props.id)) {
+        if (this.isCustom()) {
             // We don't need to query the mods manifest for these packs.
             return null;
         }
@@ -331,7 +331,7 @@ public class Instance {
             List<InstanceSupportMeta.SupportFile> loadingMods = supportMeta.getSupportMods("loading");
             
             // Only inject custom mods if we have any, and we're not a "custom" instance.
-            if (!loadingMods.isEmpty() && !this.isLoaderInstance() && !this.props.preventMetaModInjection) {
+            if (!loadingMods.isEmpty() && !this.isCustom() && !this.props.preventMetaModInjection) {
                 for (InstanceSupportMeta.SupportFile file : loadingMods) {
                     if (!file.canApply(props.modLoader, os)) continue;
                     file.createTask(path.resolve("mods")).execute(null, null);
@@ -550,6 +550,14 @@ public class Instance {
                 if (!override.getState().added() && !override.getState().updated()) continue;
 
                 Path file = modsDir.resolve(override.getFileName());
+                long murmurHash = -1;
+                try {
+                    var fileBytes = Files.readAllBytes(file);
+                    murmurHash = HashingUtils.createCurseForgeMurmurHash(fileBytes);
+                } catch (IOException ex) {
+                    LOGGER.error("Error reading file for override: {}. Unable to process this whilst generating mods list.", override.getFileName(), ex);
+                }
+                
                 CurseMetadata ids;
                 if (rich) {
                     ids = Constants.CURSE_METADATA_CACHE.getCurseMeta(override.getCurseProject(), override.getCurseFile());
@@ -563,7 +571,7 @@ public class Instance {
                         override.getState().enabled(),
                         tryGetSize(file),
                         override.getSha1(),
-                        null,
+                        String.valueOf(murmurHash),
                         ids
                 ));
             }
@@ -709,19 +717,13 @@ public class Instance {
 
     /**
      * Checks if this instance is a loader instance. Aka: The instance is a vanilla, forge, fabric, or neo instance.
-     * <p>
-     * Without doing requests, this is basically the easiest way to check if this is a custom modpack or not.
-     * 81,  // Vanilla
-     * 104, // Forge
-     * 105, // Fabric
-     * 116  // NeoForge
      */
-    public boolean isLoaderInstance() {
-        if (this.props.id == 0 || this.props.versionId == 0) {
+    public boolean isCustom() {
+        if (this.props.id == 0 || this.props.versionId == 0 || this.props.id == -1 || this.props.versionId == -1) {
             return false;
         }
 
-        return this.props.id == 81 || this.props.id == 104 || this.props.id == 105 || this.props.id == 116;
+        return SPECIAL_LOADER_PACK_IDS.contains(this.props.id);
     }
 
     /**

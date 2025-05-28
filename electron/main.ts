@@ -201,16 +201,6 @@ async function createWindow() {
     return { action: 'deny' };
   });
   
-  // A failsafe for if the main window ever isn't on localhost, it'll be redirected pack
-  win.webContents.on('did-navigate', (_, url) => {
-    if (!VITE_DEV_SERVER_URL) {
-      if (!url.startsWith(protocolSpace)) {
-        win?.loadFile(path.join(RENDERER_DIST, 'index.html')).catch(log.error)
-        log.log("Redirecting to app URL");
-      }
-    }
-  });
-
   win.on('closed', () => {
     // Kill the subprocess if it's running
     if (subprocess !== null && !preserveSubprocess) {
