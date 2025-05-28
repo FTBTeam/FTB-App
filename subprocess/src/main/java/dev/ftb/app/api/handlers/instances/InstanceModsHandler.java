@@ -128,12 +128,12 @@ public class InstanceModsHandler implements IMessageHandler<InstanceModsData> {
                     for (var mod : richDataMods) {
                         if (mod.richData() == null) continue; // not possible, stopping ide complaints
                         ModManifest manifest = Constants.MOD_VERSION_CACHE.queryMod(mod.richData().curseProject()).join();
-                        if (manifest == null) return;
+                        if (manifest == null) continue;
 
                         var version = manifest.findLatestCompatibleVersion(modLoader.getName(), mcVersion);
-                        if (version == null) return;
+                        if (version == null) continue;
 
-                        if (version.getId() <= mod.richData().curseFile()) return;
+                        if (version.getId() <= mod.richData().curseFile()) continue;
                         WebSocketHandler.sendMessage(new InstanceModsData.UpdateAvailable(
                             data,
                             mod.file(),
@@ -148,7 +148,9 @@ public class InstanceModsHandler implements IMessageHandler<InstanceModsData> {
                         ));
                     }
                 })
-                .thenRunAsync(() -> WebSocketHandler.sendMessage(new InstanceModsData.UpdateCheckingFinished(data)), AppMain.taskExeggutor);
+                .thenRunAsync(() -> 
+                    WebSocketHandler.sendMessage(new InstanceModsData.UpdateCheckingFinished(data)
+                ), AppMain.taskExeggutor);
     }
     
 //    private static @Nullable CurseMetadata lookupCurseData(InstanceModsData data, @Nullable CurseMetadata meta, CompletableFuture<ModpackVersionModsManifest> modsManifestFuture, ModInfo mod) {

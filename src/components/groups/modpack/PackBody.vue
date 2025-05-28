@@ -330,7 +330,8 @@ function cursePackBody() {
 
       <!-- Tab views, we're not using the router because it's a pain-->
       <modpack-mods
-        v-if="activeTab === tabs.MODS && !isVanilla"
+        v-if="!isVanilla"
+        v-show="activeTab === tabs.MODS"
         :api-pack="packInstance"
         :pack-installed="isInstalled"
         :instance="instance"
