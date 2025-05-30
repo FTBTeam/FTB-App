@@ -551,11 +551,21 @@ public class Instance {
 
                 Path file = modsDir.resolve(override.getFileName());
                 long murmurHash = -1;
-                try {
-                    var fileBytes = Files.readAllBytes(file);
-                    murmurHash = HashingUtils.createCurseForgeMurmurHash(fileBytes);
-                } catch (IOException ex) {
-                    LOGGER.error("Error reading file for override: {}. Unable to process this whilst generating mods list.", override.getFileName(), ex);
+                if (!Files.exists(file)) {
+                    // If t he file does not exist, it might be disabled, let's try that one as well
+                    file = modsDir.resolve(override.getFileName() + ".disabled");
+                    if (!Files.exists(file)) {
+                        file = null;
+                    }
+                }
+
+                if (file != null) {
+                    try {
+                        var fileBytes = Files.readAllBytes(file);
+                        murmurHash = HashingUtils.createCurseForgeMurmurHash(fileBytes);
+                    } catch (IOException ex) {
+                        LOGGER.error("Error reading file for override: {}. Unable to process this whilst generating mods list.", override.getFileName(), ex);
+                    }
                 }
                 
                 CurseMetadata ids;

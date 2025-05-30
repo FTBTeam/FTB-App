@@ -74,9 +74,6 @@ public class InstanceModsHandler implements IMessageHandler<InstanceModsData> {
                     if (modsManifest != null) {
                         resolvedMods.addAll(modsManifest.getMods());
                     }
-
-                    System.out.println("Looking up mod hashes: " + allHashes.size());
-                    System.out.println("Out of " + mods.size() + " mods, " + knownFileNames.size() + " are known, and " + allHashes.size() + " have hashes.");
                     
                     if (!allHashes.isEmpty()) {
                         var client = Constants.httpClient();
