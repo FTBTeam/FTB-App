@@ -1,6 +1,24 @@
+<script lang="ts" setup>
+import { UiButton, Modal } from '@/components/ui';
+import appPlatform from '@platform';
+
+const emit = defineEmits<{
+  (e: 'accepted'): void;
+}>();
+
+function showManageWindow(tab: 'purposes' | 'features' | 'vendors' = 'purposes') {
+  appPlatform.app.cpm.openWindow(tab);
+}
+
+function accept() {
+  appPlatform.app.cpm.setFirstLaunched();
+  emit('accepted');
+}
+</script>
+
 <template>
  <div class="onboarding">
-    <modal :permanent="true" :open="true" title="Privacy">
+    <Modal :permanent="true" :open="true" title="Privacy">
       <p>
         <b>FTB App</b> may display in-app ads to help provide you with a free high-quality app.
         In order to deliver ads that are relevant for you, <b>FTB App</b> and trusted <a class="underline cursor-pointer hover:text-blue-500" @click.prevent="showManageWindow('vendors')">ad vendors</a>
@@ -16,36 +34,10 @@
       
       <template #footer>
         <div class="flex gap-4 justify-end">
-          <ui-button @click="showManageWindow()">Manage</ui-button>
-          <ui-button type="success" @click="accept()">Next</ui-button>
+          <UiButton @click="showManageWindow()">Manage</UiButton>
+          <UiButton type="success" @click="accept()">Next</UiButton>
         </div>
       </template>
-    </modal>
+    </Modal>
  </div>
 </template>
-
-<script lang="ts">
-import {Component, Vue} from 'vue-property-decorator';
-import UiButton from '@/components/ui/UiButton.vue';
-import platform from '@/utils/interface/electron-overwolf';
-
-@Component({
-  components: {UiButton}
-})
-export default class Onboarding extends Vue {
-  platform = platform;
-  
-  showManageWindow(tab: 'purposes' | 'features' | 'vendors' = 'purposes') {
-    this.platform.get.app.cpm.openWindow(tab);
-  }
-
-  accept() {
-    this.platform.get.app.cpm.setFirstLaunched();
-    this.$emit('accepted');
-  }
-}
-</script>
-
-<style lang="scss" scoped>
-
-</style>

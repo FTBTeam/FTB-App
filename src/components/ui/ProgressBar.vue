@@ -1,3 +1,21 @@
+<script lang="ts" setup>
+type ProgressType = "primary" | "muted"
+
+const {
+  progress = 0,
+  infinite = false,
+  doProgressAnimation = true,
+  type = 'primary',
+  inverted = false,
+} = defineProps<{
+  progress?: number;
+  infinite?: boolean;
+  doProgressAnimation?: boolean;
+  type?: ProgressType;
+  inverted?: boolean;
+}>()
+</script>
+
 <template>
   <div class="progress" :class="{'infinite': infinite, 'animated': doProgressAnimation, [type]: true}">
     <div class="bar" :style="{
@@ -6,24 +24,9 @@
   </div>
 </template>
 
-<script lang="ts">
-import {Component, Prop, Vue} from 'vue-property-decorator';
-
-type ProgressType = "primary" | "muted"
-
-@Component
-export default class ProgressBar extends Vue {
-  @Prop({ default: 0 }) progress!: number;
-  @Prop({ default: false }) infinite!: boolean;
-  
-  @Prop({default: true}) doProgressAnimation!: boolean;
-  
-  @Prop({default: 'primary'}) type!: ProgressType;
-  @Prop({default: false}) inverted!: boolean;
-}
-</script>
-
 <style lang="scss" scoped>
+@import 'tailwindcss/theme' theme(reference);
+
 .progress {
   width: 100%;
   height: 10px;
@@ -34,7 +37,7 @@ export default class ProgressBar extends Vue {
   
   .bar {
     height: 100%;
-    background: var(--color-primary-button);
+    background: var(--color-green-600);
   }
   
   &.muted .bar {
@@ -69,7 +72,7 @@ export default class ProgressBar extends Vue {
   }
 
   &.infinite::after {
-    background-color: var(--color-primary-button);
+    background-color: var(--color-green-600);
     animation: leftToRight2 3s ease-in-out infinite;
 
     @keyframes leftToRight2 {

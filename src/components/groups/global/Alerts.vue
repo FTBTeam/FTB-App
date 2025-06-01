@@ -1,80 +1,93 @@
+<script lang="ts" setup>
+import {Alert} from '@/core/controllers/alertController';
+import {Queue} from '@/utils/std/queue';
+import { useRouter } from 'vue-router';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { onMounted, onBeforeUnmount, ref, computed } from 'vue';
+import { faCheckCircle, faExclamationCircle, faInfoCircle, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { useAppStore } from '@/store/appStore.ts';
+
+type AlertWithUuid = Alert & { uuid: string }
+
+const router = useRouter();
+const appStore = useAppStore();
+
+const typeIcons = {
+  success: faCheckCircle,
+  error: faTimesCircle,
+  warning: faExclamationCircle,
+  info: faInfoCircle,
+}
+
+const alerts = ref<AlertWithUuid[]>([]);
+const alertsQueue = ref<Queue<AlertWithUuid>>(new Queue());
+
+onMounted(() => {
+  appStore.emitter.on("alert/simple", onSimpleAlert);
+})
+
+onBeforeUnmount(() => {
+  appStore.emitter.off("alert/simple", onSimpleAlert);
+})
+
+function onSimpleAlert(data: Alert) {
+  // Submit the alert to the queue
+  alertsQueue.value.enqueue({...data, uuid: Math.random().toString(36).substring(7)});
+
+  // Check the queue
+  createAlert();
+}
+
+function removeAlert(alert: AlertWithUuid, force = false) {
+  if (alert.persistent && !force) {
+    return;
+  }
+  
+  // Call the callback if it exists
+  if (alert.onClose) {
+    alert.onClose();
+  }
+  
+  alerts.value = alerts.value.filter(a => a.uuid !== alert.uuid)
+}
+
+function createAlert() {
+  if (alertsQueue.value.isEmpty()) return;
+  if (alerts.value.length > 5) return;
+
+  const alert = alertsQueue.value.dequeue();
+  if (!alert) return;
+
+  alerts.value.push(alert);
+
+  setTimeout(() => {
+    removeAlert(alert);
+
+    // Check if there are more alerts to show as they could be in the queue
+    createAlert();
+  }, 5000)
+}
+
+const hiddenSidebar = computed(() => {
+  return router.currentRoute.value.path.startsWith('/settings');
+});
+</script>
+
 <template>
-  <transition-group name="jump-in" duration="150" class="alerts-container" :class="{'no-sidebar': hiddenSidebar}" v-if="alerts.length" tag="div">
+  <transition-group name="jump-in" :duration="150" class="alerts-container" :class="{'no-sidebar': hiddenSidebar}" v-if="alerts.length" tag="div">
     <div class="alert"
          v-for="(alert, index) in alerts"
          :key="alert.uuid"
          :class="[alert.type]"
          :style="{zIndex: 5000 - index}"
-         @click="removeAlert(alert)"
+         @click="removeAlert(alert, true)"
     >
-      <font-awesome-icon :icon="typeIcons[alert.type]"/>
-      {{ alert.message }}
+      <FontAwesomeIcon :icon="typeIcons[alert.type]"/>
+      <p class="whitespace-pre-wrap">{{ alert.message }}</p>
+      <FontAwesomeIcon :icon="faTimesCircle" class="ml-2 p-1" v-if="alert.persistent" @click.stop="removeAlert(alert, true)" />
     </div>
   </transition-group>
 </template>
-
-<script lang="ts">
-import {Component, Vue} from 'vue-property-decorator';
-import {Alert} from '@/core/controllers/alertController';
-import {Queue} from '@/utils/std/queue';
-import {emitter} from '@/utils';
-
-type AlertWithUuid = Alert & { uuid: string }
-
-@Component
-export default class Alerts extends Vue {
-  typeIcons = {
-    success: "check-circle",
-    error: "times-circle",
-    warning: "exclamation-circle",
-    info: "info-circle",
-  }
-  
-  alerts: AlertWithUuid[] = [];
-  alertsQueue: Queue<AlertWithUuid> = new Queue();
-  
-  mounted() {
-    (emitter as any).on("alert.simple", this.onSimpleAlert);
-  }
-  
-  destroyed() {
-    (emitter as any).off("alert.simple", this.onSimpleAlert);
-  }
-  
-  onSimpleAlert(data: Alert) {
-    // Submit the alert to the queue
-    this.alertsQueue.enqueue({...data, uuid: Math.random().toString(36).substring(7)});
-
-    // Check the queue
-    this.createAlert();
-  }
-
-  removeAlert(alert: AlertWithUuid) {
-    this.alerts = this.alerts.filter(a => a.uuid !== alert.uuid)
-  }
-  
-  createAlert() {
-    if (this.alertsQueue.isEmpty()) return;
-    if (this.alerts.length > 5) return;
-    
-    const alert = this.alertsQueue.dequeue();
-    if (!alert) return;
-    
-    this.alerts.push(alert);
-    
-    setTimeout(() => {
-      this.removeAlert(alert);
-      
-      // Check if there are more alerts to show as they could be in the queue
-      this.createAlert();
-    }, 5000)
-  }
-
-  get hiddenSidebar() {
-    return this.$route.path.startsWith('/settings');
-  }
-}
-</script>
 
 <style lang="scss" scoped>
 .alerts-container {
@@ -110,19 +123,19 @@ export default class Alerts extends Vue {
     }
     
     &.success {
-      background-color: var(--color-success-button);
+      background-color: var(--color-green-600);
     }
     
     &.error {
-      background-color: var(--color-danger-button);
+      background-color: var(--color-red-600);
     }
     
     &.warning {
-      background-color: var(--color-warning-button);
+      background-color: var(--color-orange-600);
     }
     
     &.info {
-      background-color: var(--color-info-button);
+      background-color: var(--color-blue-600);
     }
   }
   

@@ -1,5 +1,5 @@
 import {sendMessage} from '@/core/websockets/websocketsApi';
-import store from '@/modules/store';
+import { useAccountsStore } from '@/store/accountsStore.ts';
 
 export type LimitedCheckResult = "VALID" | "NOT_LOGGED_IN" | "TOTAL_FAILURE"
 
@@ -34,13 +34,15 @@ async function checkProfileActive(profileUuid: string): Promise<LimitedCheckResu
 }
 
 async function refreshProfile(profileUuid: string): Promise<boolean> {
+  const accountStore = useAccountsStore();
+  
   const res = await sendMessage("profiles.refresh", {
     profileUuid: profileUuid
   })
   
   if (res.success) {
     // Get the app to reload the profiles
-    await store.dispatch('core/loadProfiles');
+    await accountStore.loadProfiles()  
     return true;
   }
   

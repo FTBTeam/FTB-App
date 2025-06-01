@@ -1,27 +1,98 @@
+<script lang="ts" setup>
+import {prettyByteFormat} from '@/utils';
+import {alertController} from '@/core/controllers/alertController';
+import {sendMessage} from '@/core/websockets/websocketsApi';
+import {gobbleError} from '@/utils/helpers/asyncHelpers';
+import {RouterNames} from '@/router';
+import CategorySelector from '@/components/groups/modpack/create/CategorySelector.vue';
+import { useRouter } from 'vue-router';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { ModalFooter, ModalBody, Modal, UiButton } from '@/components/ui';
+import { ref, useTemplateRef } from 'vue';
+import { faFileZipper, faTrash, faUpload } from '@fortawesome/free-solid-svg-icons';
+import { useAppStore } from '@/store/appStore.ts';
+
+const router = useRouter()
+const appStore = useAppStore();
+
+const { open } = defineProps<{
+  open?: boolean;
+}>()
+
+const emit = defineEmits<{
+  (event: 'close'): void;
+}>()
+
+const activeFile = ref<any>(null);
+const category = ref("Default");
+
+const inputRef = useTemplateRef('fileInputRef');
+
+async function fileAttach(event: any) {
+  const file = event.dataTransfer?.files[0] ?? event.target?.files[0] ?? null;
+  if (file == null || !file.name.endsWith('.zip')) {
+    alertController.warning('Please select a valid .zip file.')
+    return;
+  }
+
+  const res = await sendMessage('checkCurseZip', {
+    path: file.path ?? 'invalid-path-name-to-break-the-java-size-by-default'
+  });
+
+  if (!res.success) {
+    alertController.error(res.message ?? "We're unable to detect a CurseForge pack in this zip file.")
+    return;
+  }
+
+  activeFile.value = {
+    name: file.name,
+    size: file.size,
+    path: file.path,
+  };
+}
+
+async function  installZip() {
+  if (!activeFile.value) {
+    return;
+  }
+
+  await appStore.controllers.install.requestImport(activeFile.value.path, category.value)
+  activeFile.value = null;
+
+  await gobbleError(() => {
+    router.push({
+      name: RouterNames.ROOT_LIBRARY
+    })
+  })
+
+  emit('close')
+}
+</script>
+
 <template>
-  <modal :open="open" @closed="close" :external-contents="true" title="Import from CurseForge" sub-title="Import instances from a CurseForge .zip export file">
-    <modal-body>
+  <modal :open="open" @closed="emit('close')" :external-contents="true" title="Import from CurseForge" sub-title="Import instances from a CurseForge .zip export file">
+    <ModalBody>
       <div
         class="drop-area"
         :class="{'has-file': activeFile}"
-        @click="$refs.fileInputRef.click()"
+        @click="inputRef?.click()"
         @dragenter.prevent
         @dragleave.prevent
         @dragover.prevent
         @drop.prevent="fileAttach($event)"
       >
-        <font-awesome-icon icon="upload" class="mr-2" size="2x" />
+        <FontAwesomeIcon :icon="faUpload" class="mr-2" size="2x" />
         <p>Drag & Drop a file or select a file</p>
         <input type="file" @change="fileAttach($event)" accept="application/zip" hidden ref="fileInputRef" />
       </div>
 
-      <transition name="transition-fade" duration="250">
+      <transition name="transition-fade" :duration="250">
         <p v-if="activeFile" class="font-bold mt-4 text-base mb-2">Selected file</p>
       </transition>
       
-      <transition name="transition-fade" duration="250">
+      <transition name="transition-fade" :duration="250">
         <div class="file flex items-center p-4 pl-6" v-if="activeFile">
-          <font-awesome-icon icon="file-zipper" size="2x" class="mr-6" />
+          <FontAwesomeIcon :icon="faFileZipper" size="2x" class="mr-6" />
           <div class="text flex-1">
             <div class="name font-bold">{{ activeFile.name }}</div>
             <div class="size opacity-75">
@@ -29,89 +100,23 @@
             </div>
           </div>
           <div class="delete" @click="activeFile = null">
-            <font-awesome-icon icon="trash" />
+            <FontAwesomeIcon :icon="faTrash" />
           </div>
         </div>
       </transition>
 
       <category-selector class="mt-4" label="Import to category" v-model="category" />
-    </modal-body>
+    </ModalBody>
     
-    <modal-footer>
+    <ModalFooter>
       <div class="flex justify-end">
-        <ui-button :wider="true" :disabled="!activeFile" type="success" icon="upload" @click="installZip">
+        <UiButton :wider="true" :disabled="!activeFile" type="success" :icon="faUpload" @click="installZip">
           Install
-        </ui-button>
+        </UiButton>
       </div>
-    </modal-footer>
+    </ModalFooter>
   </modal>
 </template>
-
-<script lang="ts">
-import {Component, Emit, Prop, Vue} from 'vue-property-decorator';
-import ModalBody from '@/components/ui/modal/ModalBody.vue';
-import Modal from '@/components/ui/modal/Modal.vue';
-import {prettyByteFormat} from '@/utils';
-import UiButton from '@/components/ui/UiButton.vue';
-import {alertController} from '@/core/controllers/alertController';
-import {sendMessage} from '@/core/websockets/websocketsApi';
-import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
-import {gobbleError} from '@/utils/helpers/asyncHelpers';
-import {RouterNames} from '@/router';
-import CategorySelector from '@/components/groups/modpack/create/CategorySelector.vue';
-
-@Component({
-  components: {CategorySelector, UiButton, Modal, ModalBody},
-  methods: {prettyByteFormat}
-})
-export default class CurseImportInstance extends Vue {
-  @Prop() open!: boolean;
-  @Emit() close() {}
-  
-  activeFile: any = null;
-  category = "Default"
-  
-  async fileAttach(event: any) {
-    const file = event.dataTransfer?.files[0] ?? event.target?.files[0] ?? null;
-    if (file == null || !file.name.endsWith('.zip')) {
-      alertController.warning('Please select a valid .zip file.')
-      return;
-    }
-
-    const res = await sendMessage('checkCurseZip', {
-      path: file.path ?? 'invalid-path-name-to-break-the-java-size-by-default'
-    });
-    
-    if (!res.success) {
-      alertController.error(res.message ?? "We're unable to detect a CurseForge pack in this zip file.")
-      return;
-    }
-    
-    this.activeFile = {
-      name: file.name,
-      size: file.size,
-      path: file.path,
-    };
-  }
-
-  async installZip() {
-    if (!this.activeFile) {
-      return;
-    }
-
-    await instanceInstallController.requestImport(this.activeFile.path, this.category)
-    this.activeFile = null;
-    
-    await gobbleError(() => {
-      this.$router.push({
-        name: RouterNames.ROOT_LIBRARY
-      })
-    })
-    
-    this.close();
-  }
-}
-</script>
 
 <style lang="scss" scoped>
 .drop-area {

@@ -1,6 +1,6 @@
 package dev.ftb.app;
 
-import dev.ftb.app.util.ModpacksChUtils;
+import dev.ftb.app.util.ModpackApiUtils;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 
@@ -8,11 +8,11 @@ import java.util.concurrent.CompletableFuture;
 
 public class Analytics {
     public static void sendInstallRequest(long packID, long packVersion, byte packType) {
-        lazyGetRequest(ModpacksChUtils.getModpacksEndpoint(false, packType) + "/" + packID + "/" + packVersion + "/install");
+        lazyGetRequest(ModpackApiUtils.getModpacksEndpoint(false, packType) + "/" + packID + "/" + packVersion + "/install");
     }
 
     public static void sendPlayRequest(long packID, long packVersion, byte packType) {
-        lazyGetRequest(ModpacksChUtils.getModpacksEndpoint(false, packType) + "/" + packID + "/" + packVersion + "/play");
+        lazyGetRequest(ModpackApiUtils.getModpacksEndpoint(false, packType) + "/" + packID + "/" + packVersion + "/play");
     }
 
     /**

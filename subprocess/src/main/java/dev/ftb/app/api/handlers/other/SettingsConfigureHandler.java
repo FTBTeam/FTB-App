@@ -21,7 +21,7 @@ public class SettingsConfigureHandler implements IMessageHandler<SettingsConfigu
             var newSettings = data.settings.toString();
 
             if (originalSettings.equals(newSettings)) {
-                WebSocketHandler.sendMessage(new SettingsConfigureData.Reply(data, "success"));
+                WebSocketHandler.sendMessage(new SettingsConfigureData.Reply(data, "success", data.settings));
                 return;
             }
 
@@ -35,10 +35,10 @@ public class SettingsConfigureHandler implements IMessageHandler<SettingsConfigu
             // Dispatch the event
             SettingsChangeUtil.onSettingsChanged(Settings.getSettings());
             
-            WebSocketHandler.sendMessage(new SettingsConfigureData.Reply(data, "success"));
+            WebSocketHandler.sendMessage(new SettingsConfigureData.Reply(data, "success", data.settings));
         } catch (Exception e) {
             LOGGER.error("Failed to handle settings change event.", e);
-            WebSocketHandler.sendMessage(new SettingsConfigureData.Reply(data, "failed"));
+            WebSocketHandler.sendMessage(new SettingsConfigureData.Reply(data, "failed", null));
         }
     }
 }

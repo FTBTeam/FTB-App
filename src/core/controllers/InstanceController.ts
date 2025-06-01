@@ -1,12 +1,13 @@
-import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
+import {InstanceJson, SugaredInstanceJson} from '@/core/types/javaApi';
 import {sendMessage} from '@/core/websockets/websocketsApi';
-import store from '@/modules/store';
 import {createLogger} from '@/core/logger';
-import {LaunchingStatus} from '@/core/state/misc/runningState';
 import {getProfileOrDefaultToActive} from '@/core/auth/authProfileSelector';
 import {safeCheckProfileActive} from '@/core/auth/authValidChecker';
 import {safeNavigate} from '@/utils';
 import {RouterNames} from '@/router';
+import { LaunchingStatus, useRunningInstancesStore } from '@/store/runningInstancesStore.ts';
+import { useInstanceStore } from '@/store/instancesStore.ts';
+import { useAccountsStore } from '@/store/accountsStore.ts';
 
 export type SaveJson = {
   name: string;
@@ -40,15 +41,28 @@ export class InstanceController {
   static from(instance: SugaredInstanceJson | InstanceJson) {
     return new InstanceController(instance);
   }
-  
+
   async play(profileUuid: string | null = null) {
+    return this._play(profileUuid, null);
+  }
+  
+  async playOffline(offlineUsername: string | null = null) {
+    return this._play(null, offlineUsername);
+  }
+  
+  private async _play(profileUuid: string | null = null, offlineUsername: string | null = null) {
+    const runningInstancesStore = useRunningInstancesStore();
+    
     InstanceController.logger.debug(`Playing instance ${this.instance.uuid}`);
     
-    InstanceController.logger.debug("Fetching active profile");
-    const activeProfile = getProfileOrDefaultToActive(profileUuid);
-    if (!activeProfile) {
-      InstanceController.logger.warn("Failed to get active profile");
-      return;
+    let activeProfile;
+    if (!offlineUsername) {
+      InstanceController.logger.debug("Fetching active profile");
+      activeProfile = getProfileOrDefaultToActive(profileUuid);
+      if (!activeProfile) {
+        InstanceController.logger.warn("Failed to get active profile");
+        return;
+      }
     }
     
     const loadingStatus: LaunchingStatus = {
@@ -59,41 +73,44 @@ export class InstanceController {
       step: "Checking profile",
     }
     
-    await store.dispatch('v2/running/updateLaunchingStatus', loadingStatus);
+    runningInstancesStore.updateLaunchingStatus(loadingStatus)
 
-    InstanceController.logger.debug("Checking profile");
-    const checkResult = await safeCheckProfileActive(activeProfile.uuid);
-    if (checkResult !== "VALID") {
-      InstanceController.logger.warn("Failed to check profile");
-      
-      if (checkResult === "TOTAL_FAILURE") {
-        loadingStatus.loggingIn = false;
-        loadingStatus.error = "Failed to check profile";
-        await store.dispatch('v2/running/updateLaunchingStatus', loadingStatus);
+    if (!offlineUsername && activeProfile) {
+      InstanceController.logger.debug("Checking profile");
+      const checkResult = await safeCheckProfileActive(activeProfile.uuid);
+      if (checkResult !== "VALID") {
+        InstanceController.logger.warn("Failed to check profile");
+
+        if (checkResult === "TOTAL_FAILURE") {
+          loadingStatus.loggingIn = false;
+          loadingStatus.error = "Failed to check profile";
+          runningInstancesStore.updateLaunchingStatus(loadingStatus)
+          return;
+        }
+
+        if (checkResult === "NOT_LOGGED_IN") {
+          const accountsStore = useAccountsStore();
+          InstanceController.logger.debug("Profile is not logged in, asking the user to sign in");
+          // Get the user to log back in again
+          runningInstancesStore.clearLaunchingStatus()
+          accountsStore.openSignIn()
+        }
+
         return;
       }
-      
-      if (checkResult === "NOT_LOGGED_IN") {
-        InstanceController.logger.debug("Profile is not logged in, asking the user to sign in");
-        // Get the user to log back in again
-        await store.dispatch('v2/running/clearLaunchingStatus');
-        await store.dispatch('core/openSignIn')
-      }
-      
-      return;
     }
     
     loadingStatus.loggingIn = false;
     loadingStatus.starting = true;
     loadingStatus.step = "Starting instance";
-    await store.dispatch('v2/running/updateLaunchingStatus', loadingStatus);
+    runningInstancesStore.updateLaunchingStatus(loadingStatus)
 
     InstanceController.logger.debug("Sending launch handshake");
     const result = await sendMessage("launchInstance", {
       uuid: this.instance.uuid,
       extraArgs: "",
-      offline: false,
-      offlineUsername: "",
+      offline: !!offlineUsername,
+      offlineUsername: offlineUsername || "",
       cancelLaunch: null
     }, 1000 * 60 * 10) // 10 minutes It's a long time, but we don't want to timeout too early
 
@@ -108,17 +125,18 @@ export class InstanceController {
       
       InstanceController.logger.warn("Failed to launch instance", result);
       loadingStatus.starting = false;
-      await store.dispatch('v2/running/updateLaunchingStatus', loadingStatus);
+      runningInstancesStore.updateLaunchingStatus(loadingStatus)
       return;
     }
 
-    await store.dispatch('v2/running/clearLaunchingStatus');
+    runningInstancesStore.clearLaunchingStatus()
     
     InstanceController.logger.debug("Navigating to running instance");
     await safeNavigate(RouterNames.ROOT_RUNNING_INSTANCE, {uuid: this.instance.uuid});
   }
   
   async updateInstance(data: SaveJson) {
+    const instancesStore = useInstanceStore();
     InstanceController.logger.debug("Updating instance", data);
     const result = await sendMessage("instanceConfigure", {
       uuid: this.instance.uuid,
@@ -126,8 +144,7 @@ export class InstanceController {
     })
 
     if (result.status === "success") {
-      // Update the store
-      await store.dispatch('v2/instances/updateInstance', result.instanceJson);
+      instancesStore.updateInstance(result.instanceJson)
       return result;
     }
 
@@ -142,8 +159,8 @@ export class InstanceController {
     });
 
     if (result.status === 'success') {
-      // Remove it from the store
-      await store.dispatch('v2/instances/removeInstance', this.instance.uuid);
+      const instanceStore = useInstanceStore();
+      instanceStore.removeInstance(this.instance.uuid)
       return true;
     }
     

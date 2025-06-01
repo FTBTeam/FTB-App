@@ -1,24 +1,89 @@
+<script lang="ts" setup>
+import appPlatform from '@platform';
+import SidebarProfile from '@/components/layout/sidebar/SidebarProfile.vue';
+import { RouterNames } from '@/router';
+import SidebarCreate from '@/components/layout/sidebar/SidebarCreate.vue';
+import { AppContextController } from '@/core/context/contextController';
+import { ContextMenus } from '@/core/context/contextMenus';
+import SidebarRunningInstances from '@/components/layout/sidebar/SidebarRunningInstances.vue';
+import Popover from '@/components/ui/Popover.vue';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { faBookOpen, faCode, faCog, faHome, faInfoCircle, faRss, faSearch } from '@fortawesome/free-solid-svg-icons';
+import { constants } from '@/core/constants.ts';
+
+const navigation = [
+  {
+    name: 'Home',
+    to: RouterNames.HOME,
+    icon: faHome,
+  },
+  {
+    name: 'Library',
+    to: RouterNames.ROOT_LIBRARY,
+    icon: faBookOpen,
+  },
+  {
+    name: 'Browse',
+    to: RouterNames.ROOT_BROWSE_PACKS,
+    icon: faSearch,
+  },
+  {
+    name: 'Blog',
+    to: RouterNames.ROOT_BLOG,
+    icon: faRss,
+  },
+  {
+    name: 'Support',
+    to: RouterNames.SUPPORT,
+    icon: faInfoCircle,
+  },
+  {
+    name: 'Settings',
+    to: RouterNames.SETTINGS_APP,
+    icon: faCog,
+  },
+];
+
+if (constants.isDevelopment) {
+  navigation.push({
+    name: 'Dev',
+    to: RouterNames.DEV_HOME,
+    icon: faCode,
+  });
+}
+
+function openPromo(): void {
+  appPlatform.utils.openUrl('https://bisecthosting.com/ftb?r=app-icon');
+}
+
+function navItemRightClick(event: MouseEvent, item: typeof navigation[0]): void {
+  if (item.to === RouterNames.SETTINGS_APP) {
+    AppContextController.openMenu(ContextMenus.NAV_SETTINGS_MENU, event, () => {});
+  }
+}
+</script>
+
 <template>
-  <div class="sidebar small" :class="{ 'is-transparent': isTransparent }">
+  <div class="sidebar small">
     <sidebar-create />
     
     <div class="nav-items nav-main mt-2">      
-      <popover :text="item.name" v-for="(item, index) in navigation" :key="index">
-        <router-link :to="{ name: item.to }">
-          <div class="nav-item" @click.right="e => navItemRightClick(e, item)">
-            <div class="icon"><font-awesome-icon :icon="item.icon" class="mr-3" /></div>
+      <Popover :text="item.name" v-for="(item, index) in navigation" :key="index">
+        <RouterLink :to="{ name: item.to }">
+          <div class="nav-item" @click.right="(e) => navItemRightClick(e, item)">
+            <div class="icon"><FontAwesomeIcon :icon="item.icon" class="mr-3" /></div>
           </div>
-        </router-link>
-      </popover>
+        </RouterLink>
+      </Popover>
 
-      <sidebar-running-instances />
+      <SidebarRunningInstances />
     </div>
 
     <div class="nav-items">
-      <sidebar-profile class="block" @signin="openSignIn()" />
+      <SidebarProfile class="block" />
     </div>
     
-    <popover text="Setup a server with BisectHosting" class="w-full">
+    <Popover text="Setup a server with BisectHosting" class="w-full">
       <img
         @click="openPromo"
         src="../../../assets/images/branding/bh-logo.svg"
@@ -27,94 +92,9 @@
         draggable="false"
         alt="Bisect Hosting Logo"
       />
-    </popover>
+    </Popover>
   </div>
 </template>
-
-<script lang="ts">
-import {Component, Prop, Vue, Watch} from 'vue-property-decorator';
-import {Action} from 'vuex-class';
-import platform from '@/utils/interface/electron-overwolf';
-import SidebarProfile from '@/components/layout/sidebar/SidebarProfile.vue';
-import {RouterNames} from '@/router';
-import SidebarCreate from '@/components/layout/sidebar/SidebarCreate.vue';
-import {AppContextController} from '@/core/context/contextController';
-import {ContextMenus} from '@/core/context/contextMenus';
-import SidebarRunningInstances from '@/components/layout/sidebar/SidebarRunningInstances.vue';
-
-@Component({
-  components: {SidebarRunningInstances, SidebarCreate, SidebarProfile },
-})
-export default class Sidebar extends Vue {
-  @Prop({ default: false }) isTransparent!: boolean;
-
-  @Action('openSignIn', { namespace: 'core' }) public openSignIn: any;
-
-  currentRoute: string | null | undefined = '';
-
-  mounted() {
-    this.currentRoute = this.$route.name;
-  }
-
-  navigation = [
-    {
-      name: 'Home',
-      to: RouterNames.HOME,
-      icon: 'home',
-    },
-    {
-      name: 'Library',
-      to: RouterNames.ROOT_LIBRARY,
-      icon: 'book-open',
-    },
-    {
-      name: 'Browse',
-      to: RouterNames.ROOT_BROWSE_PACKS,
-      icon: 'search',
-    },
-    // {
-    //   name: 'Discover',
-    //   to: RouterNames.ROOT_DISCOVER,
-    //   icon: 'globe-europe',
-    // },
-    {
-      name: "Favorites",
-      to: RouterNames.ROOT_FAVORITES,
-      icon: 'star',
-    },
-    {
-      name: 'Blog',
-      to: RouterNames.ROOT_BLOG,
-      icon: 'rss',
-    },
-    {
-      name: 'Support',
-      to: RouterNames.SUPPORT,
-      icon: 'info-circle',
-    },
-    {
-      name: 'Settings',
-      to: RouterNames.SETTINGS_APP,
-      icon: 'cog',
-    },
-  ];
-
-  @Watch('$route.name')
-  onRouteChange(value: string) {
-    this.currentRoute = value;
-  }
-
-  public openPromo(): void {
-    platform.get.utils.openUrl('https://bisecthosting.com/ftb?r=app-icon');
-  }
-
-  navItemRightClick(event: PointerEvent, item: typeof this.navigation[0]) {
-    if (item.to === RouterNames.SETTINGS_APP) {
-      AppContextController.openMenu(ContextMenus.NAV_SETTINGS_MENU, event, () => {});
-    }
-  }
-}
-</script>
 
 <style scoped lang="scss">
 .sidebar {

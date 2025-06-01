@@ -1,5 +1,3 @@
-import {emitter} from '@/utils';
-import store from '@/modules/store';
 import {
   CancelInstallInstanceDataReply,
   InstallInstanceDataReply,
@@ -8,13 +6,18 @@ import {
   OperationProgressUpdateData,
   Stage,
   SugaredInstanceJson
-} from '@/core/@types/javaApi';
+} from '@/core/types/javaApi';
 import {toTitleCase} from '@/utils/helpers/stringHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
-import {PackProviders, Versions} from '@/modules/modpacks/types';
 import {alertController} from '@/core/controllers/alertController';
-import platform from '@/utils/interface/electron-overwolf';
+import appPlatform from '@platform';
 import {createLogger} from '@/core/logger';
+import { useInstallStore } from '@/store/installStore.ts';
+import { PackProviders, Versions } from '@/core/types/appTypes.ts';
+import { useInstanceStore } from '@/store/instancesStore.ts';
+import { EmitEvents } from '@/store/appStore.ts';
+import { Emitter } from 'mitt';
+import { artworkFileOrElse } from '@/utils/helpers/packHelpers.ts';
 
 export type InstallRequest = {
   uuid: string;
@@ -72,12 +75,14 @@ const betterStageNames: Map<Stage, string> = new Map([
 /**
  * Instance install controller backed by a vuex store queue
  */
-class InstanceInstallController {
+export class InstanceInstallController {
   private logger = createLogger('InstanceInstallController.ts');
   private installLock = false;
 
-  constructor() {
-    emitter.on('ws.message', async (data: any) => {
+  constructor(
+    private readonly emitter: Emitter<EmitEvents>
+  ) {
+    this.emitter.on('ws/message', async (data: any) => {
       if (data.type === 'instanceOverrideModLoaderReply') {
         const typedData = data as InstanceOverrideModLoaderDataReply;
         this.handleOverrideState(typedData);
@@ -98,7 +103,7 @@ class InstanceInstallController {
     this.logger.debug('Install requested', request);
 
     this.queue.push({
-      uuid: platform.get.utils.crypto.randomUUID(),
+      uuid: appPlatform.utils.crypto.randomUUID(),
       ...request,
     });
 
@@ -111,11 +116,11 @@ class InstanceInstallController {
     this.logger.debug('Update requested', instance, version, provider);
 
     this.queue.push({
-      uuid: platform.get.utils.crypto.randomUUID(), // Not the same as the instance uuid
+      uuid: appPlatform.utils.crypto.randomUUID(), // Not the same as the instance uuid
       id: instance.id,
       version: typeof version === 'object' ? version.id : version,
       name: instance.name,
-      logo: instance.art,
+      logo: artworkFileOrElse(instance as SugaredInstanceJson),
       updatingInstanceUuid: instance.uuid,
       category: instance.category,
       provider,
@@ -131,7 +136,7 @@ class InstanceInstallController {
     this.logger.debug('Import requested', path, category);
 
     this.queue.push({
-      uuid: platform.get.utils.crypto.randomUUID(),
+      uuid: appPlatform.utils.crypto.randomUUID(),
       id: -1,
       version: -1,
       name: 'Import',
@@ -149,10 +154,11 @@ class InstanceInstallController {
 
   public async cancelInstall(uuid: string, isInstall = false) {
     this.logger.debug('Cancel requested', uuid);
+    const installStore = useInstallStore()
 
     if (isInstall) {
       // Get the current install request
-      const currentInstall = store.state['v2/install'].currentInstall;
+      const currentInstall = installStore.currentInstall;
       if (currentInstall == null) {
         return;
       }
@@ -195,13 +201,14 @@ class InstanceInstallController {
   }
 
   private async checkQueue() {
+    const installStore = useInstallStore()
     if (this.queue.length === 0 || this.installLock) {
       return;
     }
 
     this.logger.debug('Checking queue');
     this.logger.debug('Queue items', this.queue.length);
-    const request = await store.dispatch('v2/install/popInstallQueue', {root: true}) as InstallRequest | null;
+    const request = installStore.popInstallQueue()
     if (request == null) {
       this.logger.debug('Queue is empty');
       return;
@@ -241,7 +248,7 @@ class InstanceInstallController {
         id: parseInt(request.id as string, 10),
         version: parseInt(request.version as string, 10),
         _private: request.private,
-        packType: !request.provider ? 0 : (request.provider === 'modpacksch' ? 0 : 1), // TODO: (M#01) Support other providers
+        packType: !request.provider ? 0 : (request.provider === 'modpacksch' ? 0 : 1),
         importFrom: null,
         name: request.name,
         artPath: request.logo,
@@ -264,6 +271,7 @@ class InstanceInstallController {
 
     let knownInstanceUuid = '';
     let continuePast = false;
+    const instanceStore = useInstanceStore();
 
     // Make the installation request!
     this.logger.debug('Attempting to install instance');
@@ -279,7 +287,7 @@ class InstanceInstallController {
 
       if (installResponse.instanceData && !isUpdate) {
         // Don't add if it's an update otherwise we'll have two instances
-        store.dispatch(`v2/instances/addInstance`, installResponse.instanceData, {root: true});
+        instanceStore.addInstance(installResponse.instanceData)
       }
 
       knownInstanceUuid = installResponse.instanceData.uuid;
@@ -309,7 +317,7 @@ class InstanceInstallController {
 
       const instanceInstaller = (data: InstallInstanceDataReply | OperationProgressUpdateData) => {
         const finish = (result: InstallResult) => {
-          emitter.off('ws.message', instanceInstaller as any);
+          this.emitter.off('ws/message', instanceInstaller as any);
           this.updateInstallStatus(null);
           resolve(result);
         };
@@ -373,27 +381,24 @@ class InstanceInstallController {
           });
         }
       };
-
-      emitter.on('ws.message', instanceInstaller as any);
+      
+      this.emitter.on('ws/message', instanceInstaller as any);
     });
 
     this.logger.debug('Install result', installRequest);
-    console.log(installRequest)
     if (installRequest.success && installRequest.instance) {
       // Success! We always update as we've already added the instance to the store, this will toggle the installed state for the card.
-      store.dispatch(`v2/instances/updateInstance`, installRequest.instance, {root: true});
+      instanceStore.updateInstance(installRequest.instance)
       alertController.success(`Successfully installed ${request.name}`);
     } else if (installRequest.success && !installRequest.instance) {
       alertController.success(`Successfully synced ${request.name}`);
-      store.dispatch('v2/instances/loadInstances', undefined, {
-        root: true
-      });
+      instanceStore.loadInstances();
     } else if (!installRequest.success && installRequest.cancel) {
       alertController.info(`Cancelled install for ${request.name}`);
     } else {
       alertController.error(`Failed to install ${request.name} due to an unknown error`);
       if (knownInstanceUuid && installRequest.shouldRemove) {
-        store.dispatch(`v2/instances/removeInstance`, knownInstanceUuid, {root: true});
+        instanceStore.removeInstance(knownInstanceUuid)
       }
     }
 
@@ -403,17 +408,21 @@ class InstanceInstallController {
   }
 
   private updateInstallStatus(status: InstallStatus | null) {
-    store.commit('v2/install/SET_CURRENT_INSTALL', status);
+    const installStore = useInstallStore()
+    installStore.currentInstall = status;
   }
 
   private get queue() {
-    return store.state['v2/install'].installQueue;
+    const installStore = useInstallStore()
+    return installStore.installQueue;
   }
 
   /**
    * Handles modloader overloading state updating
    */
   private handleOverrideState(typedData: InstanceOverrideModLoaderDataReply) {
+    const installStore = useInstallStore()
+    
     const status = typedData.status;
     if (status === 'prepare') {
       this.logger.debug('Preparing modloader update, unable override the state');
@@ -422,16 +431,17 @@ class InstanceInstallController {
 
     if (status === 'error' || status === 'success') {
       const packetId = typedData.requestId;
+      const instanceStore = useInstanceStore();
 
-      const updateFromPacketId = store.state['v2/install'].currentModloaderUpdate.find(e => e.packetId === packetId);
+      const updateFromPacketId = installStore.currentModloaderUpdate.find(e => e.packetId === packetId);
       if (!updateFromPacketId) {
         return;
       }
 
-      const instance = store.state['v2/instances'].instances.find(e => e.uuid === updateFromPacketId.instanceId);
+      const instance = instanceStore.instances.find(e => e.uuid === updateFromPacketId.instanceId);
 
-      // Rmeove the modloader update
-      store.commit('v2/install/REMOVE_MODLOADER_UPDATE', packetId);
+      // remove the modloader update
+      installStore.removeModloaderUpdate(packetId)
 
       if (status === 'error') {
         alertController.error(`Failed to update modloader due to ${typedData.message ?? 'an unknown error'}`);
@@ -445,5 +455,3 @@ class InstanceInstallController {
     }
   }
 }
-
-export const instanceInstallController = new InstanceInstallController();

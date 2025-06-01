@@ -3,7 +3,7 @@ package dev.ftb.app.data.modpack;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import dev.ftb.app.Constants;
-import dev.ftb.app.util.ModpacksChUtils;
+import dev.ftb.app.util.ModpackApiUtils;
 import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.io.IOUtils;
@@ -41,7 +41,7 @@ public class ModpackVersionModsManifest {
     }
 
     public static ModpackVersionModsManifest query(long packId, long versionId, boolean isPrivate, byte packType) throws IOException, JsonParseException {
-        String url = ModpacksChUtils.getModpacksEndpoint(isPrivate, packType) + packId + "/" + versionId + "/mods";
+        String url = ModpackApiUtils.getModpacksEndpoint(isPrivate, packType) + packId + "/" + versionId + "/mods";
         LOGGER.info("Querying Modpack version mods manifest: {}", url);
         StringWriter sw = new StringWriter();
         DownloadAction action = new OkHttpDownloadAction()
@@ -49,7 +49,7 @@ public class ModpackVersionModsManifest {
                 .setUrl(url)
                 .setDest(sw);
         
-        ModpacksChUtils.injectBearerHeader(action);
+        ModpackApiUtils.injectBearerHeader(action);
         action.execute();
 
         return JsonUtils.parse(GSON, sw.toString(), ModpackVersionModsManifest.class);
@@ -89,6 +89,19 @@ public class ModpackVersionModsManifest {
         public String getFilename() { return Objects.requireNonNull(filename); }
         // @formatter:on
 
+        public static Mod fromLookupResponse(ModsLookupManifest.Datum datum) {
+            var mod = new Mod();
+            mod.fileId = datum.fileID();
+            mod.name = datum.name();
+            mod.synopsis = datum.synopsis();
+            mod.icon = datum.icon();
+            mod.curseSlug = datum.curseSlug();
+            mod.curseProject = datum.curseProject();
+            mod.curseFile = datum.curseFile();
+            mod.stored = datum.stored();
+            mod.filename = datum.filename();
+            return mod;
+        }
 
         @Override
         public String toString() {

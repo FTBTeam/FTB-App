@@ -1,7 +1,113 @@
+<script lang="ts" setup>
+import {createLogger} from '@/core/logger';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { computed, onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
+import { faChevronDown } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition } from '@fortawesome/free-brands-svg-icons';
+
+export type SelectionOptions = SelectionOption[];
+export type SelectionOption = {
+  label: string;
+  value: any;
+  badge?: {
+    color?: string;
+    text: string;
+    icon?: IconDefinition
+  };
+  meta?: any;
+};
+
+const logger = createLogger(`Selection2.vue`);
+const {
+  label = '',
+  icon = null,
+  direction = 'left',
+  minWidth = 0,
+  placeholder = 'Select option',
+  options = [],
+  badgeEnd = false,
+  allowDeselect = false,
+  openUp = false,
+  disabled = false,
+} = defineProps<{
+  label?: string;
+  icon?: IconDefinition | null;
+  direction?: 'left' | 'right';
+  minWidth?: number;
+  placeholder?: string;
+  options?: SelectionOptions;
+  badgeEnd?: boolean;
+  allowDeselect?: boolean;
+  openUp?: boolean;
+  disabled?: boolean;
+}>()
+
+const value = defineModel<string | number | null>({
+  default: null
+})
+
+const emit = defineEmits<{
+  (e: 'updated', value: string | null): void
+}>()
+
+const open = ref(false);
+const selectionRef = useTemplateRef('selection')
+const id = Math.random().toString(36).substring(2, 9);
+
+onMounted(() => {
+  if (options.length) {
+    // Check for duplicate keys and warn
+    const keys = options.map(o => o.value);
+    const uniqueKeys = new Set(keys);
+    if (keys.length !== uniqueKeys.size) {
+      logger.warn("Duplicate keys detected in selection options for: " + label);
+    }
+  }
+
+  document.addEventListener('click', handleDocumentClick);
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleDocumentClick);
+})
+
+const selected = computed(() => {
+  return (options ?? []).find(o => o.value === value.value) ?? null
+});
+
+function handleDocumentClick(event: any) {
+  // Check if the click was inside the selection box and that selection box has the same id as this one
+  const closest = event.target.closest('.selection');
+  if (closest && closest.id === id) {
+    return;
+  }
+
+  open.value = false;
+}
+
+function select(option: SelectionOption) {
+  if (option.value === value) {
+    if (allowDeselect) {
+      value.value = null;
+      emit('updated', null)
+    }
+    
+    open.value = false;
+    selectionRef.value?.blur();
+    return;
+  }
+  
+  value.value = option.value;
+  emit('updated', option.value)
+  open.value = false;
+  selectionRef.value?.blur();
+}
+</script>
+
 <template>
-  <div class="select-box" :class="{disabled}">
-    <div class="label" v-if="label && !icon">{{ label }}</div>
-    <div class="selection" :class="{ open }" ref="selection" :id="id" @click="open = !open">
+  <div class="select-box text-sm" :class="{disabled}">
+    <div class="inline-block text-xs font-bold uppercase text-white/80 mb-2 transition-color duration-300" v-if="label && !icon">{{ label }}</div>
+    <div class="selection outline-none rounded bg-black/20 border border-white/30 hover:border-white/60 transition-color duration-300" :class="{ open }" ref="selection" :id="id" @click="open = !open">
       <div class="main" v-if="!icon">
         <div class="item with-empty" v-if="!selected">
           <div class="badge empty">_</div>
@@ -16,17 +122,17 @@
           <div class="meta" v-if="selected.meta">{{ selected.meta }}</div>
         </div>
 
-        <font-awesome-icon class="arrow" icon="chevron-down" />
+        <FontAwesomeIcon size="sm" class="arrow" :icon="faChevronDown" />
       </div>
       
       <div class="main-icon" v-else>
-        <font-awesome-icon :fixed-width="true" :icon="icon" />
+        <FontAwesomeIcon :fixed-width="true" :icon="icon" />
       </div>
 
       <div class="dropdown" @click.stop :class="{'open-up': openUp, [direction]: true}" :style="{width: (minWidth === 0 ? undefined : minWidth + 'px')}">
         <div class="item list-item" :class="{'no-badge': !option.badge}" v-for="(option, index) in options" :key="index" @click="() => select(option)">
           <div v-if="!badgeEnd && option.badge" class="badge" :style="{ backgroundColor: option.badge.color }">
-            <font-awesome-icon v-if="option.badge.icon" :icon="option.badge.icon" class="mr-1" />
+            <FontAwesomeIcon v-if="option.badge.icon" :icon="option.badge.icon" class="mr-1" />
             {{ option.badge.text }}
           </div>
           <div class="text">{{ option.label }}</div>
@@ -41,102 +147,9 @@
   </div>
 </template>
 
-<script lang="ts">
-import {Component, Emit, Prop, Vue} from 'vue-property-decorator';
-import {createLogger} from '@/core/logger';
-
-export type SelectionOptions = SelectionOption[];
-export type SelectionOption = {
-  label: string;
-  value: any;
-  badge?: {
-    color?: string;
-    text: string;
-    icon?: string | string[];
-  };
-  meta?: any;
-};
-
-@Component
-export default class Selection2 extends Vue {
-  private logger = createLogger(`Selection2.vue`);
-  
-  @Prop() label!: string;
-  @Prop({default: null}) icon!: string | string[] | null;
-  @Prop({default: 'left'}) direction!: 'left' | 'right';
-  @Prop({default: 0}) minWidth!: number;
-  
-  @Prop({ default: 'Select option' }) placeholder!: string;
-  @Prop({ default: () => [] }) options!: SelectionOptions;
-  
-  @Prop({ default: false }) badgeEnd!: boolean;
-  @Prop({default: false}) allowDeselect!: boolean;
-  
-  @Prop({default: false}) openUp!: boolean;
-  @Prop({default: false}) disabled!: boolean;
-  
-  @Prop({default: null}) value!: any;
-  @Emit() change(value: any) {
-    return value;
-  }
-  
-  open = false;
-  
-  id = Math.random().toString(36).substring(2, 9);
-  
-  mounted() {
-    if (this.options.length) {
-      // Check for duplicate keys and warn
-      const keys = this.options.map(o => o.value);
-      const uniqueKeys = new Set(keys);
-      if (keys.length !== uniqueKeys.size) {
-        this.logger.warn( "Duplicate keys detected in selection options for: " + this.label ?? "unknown");
-      }
-    }
-    
-    document.addEventListener('click', this.handleDocumentClick);
-  }
-
-  handleDocumentClick(event: any) {
-    // Check if the click was inside the selection box and that selection box has the same id as this one
-    const closest = event.target.closest('.selection');
-    if (closest && closest.id === this.id) {
-      return;
-    }
-    
-    this.open = false;
-  }
-  
-  destroyed() {
-    document.removeEventListener('click', this.handleDocumentClick);
-  }
-  
-  select(option: SelectionOption) {
-    if (option.value === this.value) {
-      if (this.allowDeselect) {
-        this.$emit('input', null)
-        this.$emit('change', null)
-      }
-      this.open = false;
-      // Forcefully deselect the dropdown
-      (this.$refs['selection'] as any).blur();
-      return;
-    }
-
-    this.$emit('input', option.value)
-    this.$emit('change', option.value)
-    this.open = false;
-    // Forcefully deselect the dropdown
-    (this.$refs['selection'] as any).blur();
-  }
-  
-  get selected() {
-    return this.options.find(o => o.value === this.value) ?? null;
-  }
-}
-</script>
-
 <style scoped lang="scss">
+@use "sass:color";
+
 .select-box {
   &.disabled {
     opacity: 0.5;
@@ -148,12 +161,9 @@ export default class Selection2 extends Vue {
   }
 
   .selection {
-    background: #252525;
-    border-radius: 5px;
-    padding: 0.55rem;
+    padding: 0.40rem;
     cursor: pointer;
     position: relative;
-    border: 1px solid #1b1b1b;
 
     .main {
       padding-right: 2rem;
@@ -163,8 +173,9 @@ export default class Selection2 extends Vue {
       position: absolute;
       top: 50%;
       transform: translateY(-50%);
-      right: 1rem;
+      right: .5rem;
       transition: transform 0.25s ease-in-out;
+      opacity: .8;
     }
 
     &.open {
@@ -191,7 +202,7 @@ export default class Selection2 extends Vue {
       width: 100%;
       border-radius: 5px;
       box-shadow: 0 5px 0.5rem rgba(black, 0.2);
-      border: 1px solid lighten(black, 10);
+      border: 1px solid color.adjust(black, $lightness: 10%);
       z-index: 1000;
       padding: 1rem;
       max-height: 240px;
@@ -277,6 +288,7 @@ export default class Selection2 extends Vue {
         text-overflow: ellipsis;
         white-space: nowrap;
         font-weight: bold;
+        padding-left: 0.25rem;
       }
 
       .meta {

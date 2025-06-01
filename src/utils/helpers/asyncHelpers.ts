@@ -30,3 +30,20 @@ export async function runBeforeAndAfter<T>(before: () => void, after: () => void
 export async function toggleBeforeAndAfter<T>(promise: () => Promise<T>, onStageChange: (state: boolean) => void): Promise<T> {
   return runBeforeAndAfter(() => onStageChange(true), () => onStageChange(false), promise);
 }
+
+export async function retrying<T>(fn: () => Promise<T>, attempts = 3, delay = 1_000): Promise<T> {
+  let attempt = 0;
+  let lastError: Error | null = null;
+  
+  while (attempt < attempts) {
+    try {
+      return await fn();
+    } catch (e) {
+      lastError = e as Error;
+      await new Promise((resolve) => setTimeout(resolve, delay)); // Wait for a second
+      attempt++;
+    }
+  }
+
+  throw lastError;
+}

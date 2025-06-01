@@ -1,11 +1,11 @@
-import {ModPack, PackProviders, Versions} from '@/modules/modpacks/types';
-
 import missingArtSquare from '@/assets/images/ftb-missing-pack-art.webp';
 import missingArtSplash from '@/assets/images/ftb-no-pack-splash-normal.webp';
-import {InstanceJson, SugaredInstanceJson} from '@/core/@types/javaApi';
-import {SearchResultPack} from '@/core/@types/modpacks/packSearch';
-import store from '@/modules/store';
-import {packBlacklist} from '@/core/state/modpacks/modpacksState';
+import {InstanceJson, SugaredInstanceJson} from '@/core/types/javaApi';
+import {SearchResultPack} from '@/core/types/modpacks/packSearch';
+import { ModPack, PackProviders, Versions } from '@/core/types/appTypes.ts';
+import { packBlacklist } from '@/store/modpackStore.ts';
+import { useAppSettings } from '@/store/appSettingsStore.ts';
+import {toTitleCase} from "@/utils/helpers/stringHelpers.ts";
 
 export type ArtworkTypes = "square" | "splash";
 export type VersionTypes = "release" | "beta" | "alpha" | "archived" | "all" | "hotfix";
@@ -39,16 +39,24 @@ function _resolveArtwork(packOrInstance: SugaredInstanceJson | InstanceJson | Mo
     // It's an instance
     const instance = packOrInstance as SugaredInstanceJson;
     const fallbackArt = fallback?.art.find(e => e.type === artworkType)?.url ?? defaultArtwork[artworkType];
-    if (instance.art === "") {
+    if (instance.artworkFile === "") {
       return fallbackArt;
     }
 
-    return instance.art ?? fallbackArt;
+    return artworkFileOrElse(instance, fallbackArt)
   }
 
   // It's a modpack
   const pack = packOrInstance as ModPack | SearchResultPack;
   return pack.art.find(e => e.type === artworkType)?.url ?? fallback?.art.find(e => e.type === artworkType)?.url ?? defaultArtwork[artworkType];
+}
+
+export function artworkFileOrElse(instance: SugaredInstanceJson, orElse: string = defaultArtwork["square"]) {
+  if (instance.artworkFile) {
+    return instance.artworkFile;
+  }
+  
+  return orElse;
 }
 
 const knownModloaders = [
@@ -73,11 +81,11 @@ export function resolveModloader(packOrInstance: SugaredInstanceJson | InstanceJ
     // The modloader contains other information so we have to parse it for a known modloader
     const foundLoader = knownModloaders.find(e => instance.modLoader.toLowerCase().includes(e));
     if (foundLoader) {
-      return foundLoader;
+      return toTitleCase(foundLoader);
     }
     
     // For some reason the modloader will be set to the mc version so we have to support that
-    if (instance.modLoader.includes(".")) {
+    if (instance.modLoader.includes(".") || (instance.modLoader.includes("w"))) {
       return "Vanilla";
     }
     
@@ -85,7 +93,8 @@ export function resolveModloader(packOrInstance: SugaredInstanceJson | InstanceJ
   }
   
   const pack = packOrInstance as ModPack;
-  return pack.versions.at(0)?.targets.find(e => e.type === "modloader")?.name ?? "Forge";
+  const targetName = pack.versions.at(0)?.targets.find(e => e.type === "modloader")?.name;
+  return targetName ? toTitleCase(targetName) : "Forge";
 }
 
 export function resolveModLoaderVersion(instance: SugaredInstanceJson | InstanceJson | null) {
@@ -161,7 +170,8 @@ export function packUpdateAvailable(instance?: InstanceJson | SugaredInstanceJso
     return undefined;
   }
   
-  const channel = instance.releaseChannel !== "unset" ? instance.releaseChannel : (store.state.settings?.settings.instanceDefaults.updateChannel ?? "release");
+  const appSettingsStore = useAppSettings();
+  const channel = instance.releaseChannel !== "unset" ? instance.releaseChannel : (appSettingsStore.rootSettings?.instanceDefaults.updateChannel ?? "release");
   const allowedTypes: VersionTypes[] = channel === "release" ? ["release"] : (channel === "beta" ? ["release", "beta"] : ["release", "beta", "alpha"]);
   
   const packVersions = apiPack.versions.sort((a, b) => b.id - a.id);
@@ -189,16 +199,18 @@ export function packUpdateAvailable(instance?: InstanceJson | SugaredInstanceJso
 }
 
 export function compatibleCrossLoaderPlatforms(mcVersion: string, loader: string) {
+  let innerLoader = loader.toLowerCase();
+  
   // fabric and quilt are forever compatible (so far)
-  if (loader === "fabric") {
+  if (innerLoader === "fabric") {
     return ["fabric", "quilt"];
   }
   
   // Forge and NeoForge are compatible with each other during this version range
-  if ((loader === "forge" || loader === "neoforge") && (mcVersion == "1.20.1" || mcVersion === "1.20")) {
+  if ((innerLoader === "forge" || innerLoader === "neoforge") && (mcVersion == "1.20.1" || mcVersion === "1.20")) {
     return ["forge", "neoforge"];
   }
   
   // Otherwise, default to the given input as there is no special handling
-  return [loader];
+  return [innerLoader];
 }

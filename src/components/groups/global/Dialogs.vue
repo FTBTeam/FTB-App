@@ -1,17 +1,44 @@
+<script lang="ts" setup>
+import {parseMarkdown} from '@/utils';
+import UiButton from '@/components/ui/UiButton.vue';
+import { useAttachDomEvent } from '@/composables';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { useDialogsStore } from '@/store/dialogStore.ts';
+import { useAds } from '@/composables/useAds.ts';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
+
+const dialogStore = useDialogsStore();
+const ads = useAds()
+
+useAttachDomEvent<KeyboardEvent>('keydown', (event) => {
+  if (event.key !== 'Escape') {
+    return;
+  }
+
+  closeTopDialog();
+})
+
+function closeTopDialog() {
+  if (dialogStore.dialogs.length) {
+    dialogStore.closeDialog(dialogStore.dialogs[dialogStore.dialogs.length - 1]);
+  }
+}
+</script>
+
 <template>
-  <transition name="transition-fade" duration="250">
-    <div class="dialog-container" :class="{ads: advertsEnabled}" v-if="dialogs.length" @click.self="closeTopDialog">
-      <transition-group class="stacker" tag="div" name="transition-fade" duration="250">
+  <transition name="transition-fade" :duration="250">
+    <div class="dialog-container" :class="{ads: ads.adsEnabled.value}" v-if="dialogStore.dialogs.length" @click.self="closeTopDialog">
+      <transition-group class="stacker" tag="div" name="transition-fade" :duration="250">
         <div
-          v-for="(dialog, index) in dialogs"
+          v-for="(dialog, index) in dialogStore.dialogs"
           :key="`dialog-${index}`"
           class="dialog"
-          :class="{[dialog.type]: true, 'active': index === dialogs.length - 1}"
+          :class="{[dialog.type as string]: true, 'active': index === dialogStore.dialogs.length - 1}"
         >
           <div class="modal-contents" :style="`
-            z-index: ${(501 + (dialogs.length - 1) - ((dialogs.length - 1) - index))};
-            transform: scale(${1 - (((dialogs.length - 1) - index) * .1)}) translateX(-${15 * ((dialogs.length - 1) - index)}px);
-            opacity: ${1 - ((dialogs.length - 1) - index) * 0.2};
+            z-index: ${(501 + (dialogStore.dialogs.length - 1) - ((dialogStore.dialogs.length - 1) - index))};
+            transform: scale(${1 - (((dialogStore.dialogs.length - 1) - index) * .1)}) translateX(-${15 * ((dialogStore.dialogs.length - 1) - index)}px);
+            opacity: ${1 - ((dialogStore.dialogs.length - 1) - index) * 0.2};
           `">
             <div class="modal-header" :class="{'no-subtitle': !dialog.subTitle}">
               <div class="modal-heading">
@@ -19,7 +46,7 @@
                 <div class="subtitle" v-if="dialog.subTitle">{{ dialog.subTitle }}</div>
               </div>
               <div class="modal-closer" @click="() => closeTopDialog()">
-                <font-awesome-icon class="closer" icon="times" />
+                <FontAwesomeIcon class="closer" :icon="faTimes" />
               </div>
             </div>
             
@@ -27,14 +54,14 @@
               
             <div class="modal-footer">
               <div class="buttons">
-                <ui-button v-for="(button, index) in dialog.buttons"
+                <UiButton v-for="(button, index) in dialog.buttons"
                             :working="dialog.working"
                             :key="index"
                             :type="button.type === 'error' ? 'danger' : button.type"
                             :icon="button.icon"
                             @click="button.action">
                     {{ button.text }}
-                </ui-button>
+                </UiButton>
               </div>
             </div>
           </div>
@@ -43,55 +70,6 @@
     </div>
   </transition>
 </template>
-
-<script lang="ts">
-import {Component, Vue} from 'vue-property-decorator';
-import {Dialog} from '@/core/state/misc/dialogsState';
-import {ns} from '@/core/state/appState';
-import {Action, Getter, State} from 'vuex-class';
-import {adsEnabled, parseMarkdown} from '@/utils';
-import UiButton from '@/components/ui/UiButton.vue';
-import {SettingsState} from '@/modules/settings/types';
-
-@Component({
-  components: {UiButton}
-})
-export default class Dialogs extends Vue {
-  @Getter("dialogs", ns("v2/dialogs")) dialogs!: Dialog[];
-  @Action("closeDialog", ns("v2/dialogs")) closeDialog!: (dialog: Dialog) => void;
-
-  parseMarkdown = parseMarkdown
-
-  mounted() {
-    document.addEventListener('keydown', this.onEsc)
-  }
-
-  destroyed() {
-    document.removeEventListener('keydown', this.onEsc)
-  }
-
-  onEsc(event: any) {
-    if (event.key !== 'Escape') {
-      return;
-    }
-
-    this.closeTopDialog();
-  }
-  
-  closeTopDialog() {
-    if (this.dialogs.length) {
-      this.closeDialog(this.dialogs[this.dialogs.length - 1]);
-    }
-  }
-  
-  @State('settings') public settings!: SettingsState;
-  @Getter("getDebugDisabledAdAside", {namespace: 'core'}) private debugDisabledAdAside!: boolean
-
-  get advertsEnabled(): boolean {
-    return adsEnabled(this.settings.settings, this.debugDisabledAdAside);
-  }
-}
-</script>
 
 <style lang="scss" scoped>
 .dialog-container {
@@ -109,7 +87,6 @@ export default class Dialogs extends Vue {
     width: calc(100% - 400px);
   }
   
-
   .stacker {
     position: relative;
     z-index: 500;

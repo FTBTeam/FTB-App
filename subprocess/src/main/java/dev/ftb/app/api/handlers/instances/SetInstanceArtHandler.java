@@ -36,7 +36,7 @@ public class SetInstanceArtHandler implements IMessageHandler<SetInstanceArtData
         }
 
         try {
-            instance.importArt(path);
+            instance.updateArtwork(path);
         } catch (IOException ex) {
             LOGGER.warn("Failed to import art: {}", path, ex);
             WebSocketHandler.sendMessage(new SetInstanceArtData.Reply(data, "error", "Failed to import art: " + ex.getClass().getName() + ": " + ex.getMessage()));
