@@ -16,7 +16,7 @@ import {
   faArrowLeft,
   faCircleNotch,
   faEllipsisVertical,
-  faFolderOpen, faPlay,
+  faFolderOpen,
   faSkullCrossbones,
 } from '@fortawesome/free-solid-svg-icons';
 // @ts-ignore (Literally no types :tada:)

@@ -116,7 +116,7 @@ const finalMods = computed(() => {
 })
 
 function iconClicked(mod: ModpackMod) {
-  globalStore.openImagePreview({ url: mod.icon, name: mod.name });
+  globalStore.openImagePreview({ url: mod.icon ?? "", name: mod.name });
 }
 
 const sortOptions: SelectionOptions = [

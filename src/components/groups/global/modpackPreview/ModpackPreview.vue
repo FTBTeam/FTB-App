@@ -83,7 +83,7 @@
                 <div class="flex gap-7 text-shadow mt-3">
                   <Stat title="Installs" :value="modpack.installs" />
                   <Stat v-if="modpack.provider !== 'curseforge'" title="Plays" :value="modpack.plays" />
-                  <Stat title="Released" :value="dayjs.unix(modpack.released).format('DD MMM, YYYY')" />
+                  <Stat title="Released" :value="dayjs.unix(modpack.released === 'unknown' ? 0 : modpack.released).format('DD MMM, YYYY')" />
                 </div>
               </div>
             </div>

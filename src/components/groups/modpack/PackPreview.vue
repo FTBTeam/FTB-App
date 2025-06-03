@@ -8,10 +8,8 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { computed, onMounted, ref } from 'vue';
 import { useFetchingPack } from '@/components/groups/modpack/useFetchingPack.ts';
 import { useInstallStore } from '@/store/installStore.ts';
-import { useRouter } from 'vue-router';
 import { PackProviders } from '@/core/types/appTypes.ts';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
-import { RouterNames } from '@/router';
 import {useGlobalStore} from "@/store/globalStore.ts";
 
 const {
@@ -27,7 +25,6 @@ const {
 const showInstall = ref(false);
 const { apiModpack, fetchModpack } = useFetchingPack();
 const installStore = useInstallStore();
-const router = useRouter()
 const globalStore = useGlobalStore();
 
 onMounted(() => {
@@ -86,7 +83,7 @@ const isInstalling = computed(() => {
 
 <template>
   <div class="pack-preview-container">
-    <div class="pack-preview" v-if="packData" @click="() => globalStore.openModpackPreview(packData?.id, packData?.platform)">
+    <div class="pack-preview" v-if="packData" @click="() => globalStore.openModpackPreview(packData?.id ?? 0, packData?.platform ?? 'modpacksch')">
       <div class="splash-art" v-if="artwork" :style="{ backgroundImage: `url(${artwork})` }" />
       <div class="logo">
         <img :src="logo" :alt="`Pack art for ${packData.name}`" />

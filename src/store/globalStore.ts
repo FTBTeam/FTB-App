@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia';
-import {ImagePreview, ModPack, PackProviders} from "@/core/types/appTypes.ts";
-import {SearchResultPack} from "@/core/types/modpacks/packSearch.ts";
+import {ImagePreview, PackProviders} from "@/core/types/appTypes.ts";
 
 type GlobalStore = {
   createInstanceVisible: boolean;

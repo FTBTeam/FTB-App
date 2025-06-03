@@ -1,5 +1,4 @@
 import { Action, ActionContext, ActionType } from '../protocolActions';
-import router, { RouterNames } from '@/router';
 import {useGlobalStore} from "@/store/globalStore.ts";
 
 export class ModpackInstallAction implements Action {
@@ -26,6 +25,6 @@ export class ModpackInstallAction implements Action {
     }
 
     const globalStore = useGlobalStore();
-    globalStore.openModpackPreview(query, type === '0' ? 'modpacksch' : 'curseforge');
+    globalStore.openModpackPreview(Number(packId), type === '0' ? 'modpacksch' : 'curseforge');
   }
 }
