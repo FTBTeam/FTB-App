@@ -7,7 +7,7 @@ import com.google.gson.JsonParseException;
 import dev.ftb.app.Constants;
 import dev.ftb.app.install.FileValidation;
 import dev.ftb.app.install.ModCollector;
-import dev.ftb.app.util.ModpacksChUtils;
+import dev.ftb.app.util.ModpackApiUtils;
 import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.net.DownloadAction;
@@ -64,10 +64,10 @@ public class ModManifest {
         StringWriter sw = new StringWriter();
         DownloadAction action = new OkHttpDownloadAction()
                 .setClient(Constants.httpClient())
-                .setUrl(ModpacksChUtils.getModpacksApi() + "/mod/" + id)
+                .setUrl(ModpackApiUtils.getModpacksApi() + "/mod/" + id)
                 .setDest(sw);
         
-        ModpacksChUtils.injectBearerHeader(action);
+        ModpackApiUtils.injectBearerHeader(action);
         action.execute();
 
         return JsonUtils.parse(GSON, sw.toString(), ModManifest.class);
@@ -89,13 +89,21 @@ public class ModManifest {
                 .filter(e -> {
                     Target gameTarget = e.getTarget("game");
                     if (gameTarget == null || !gameTarget.getVersion().equals(mcVersion)) return false;
-
+                    
                     Target loaderTarget = e.getTarget("modloader");
                     if (loaderTarget == null) {
                         // Lots of mods don't have a Forge requirement, as ModLoader selection was introduced after they were added.
                         // By default, we just assume its Forge compatible. If this turns out to be an issue we can perhaps refine it.
                         return modLoader.equals("forge");
                     }
+                    
+                    // #ThanksForge
+                    if (mcVersion.equals("1.20.1") && (modLoader.equals("forge") || modLoader.equals("neoforge"))) {
+                        // 1.20.1 is special as most mods are compatible with both Forge and NeoForge as they're 
+                        // essentially identical. Although this isn't ideal, we'll allow either to be considered compatible
+                        return loaderTarget.getName().equals("forge") || loaderTarget.getName().equals("neoforge");
+                    }
+                    
                     return loaderTarget.getName().equals(modLoader);
                 })
                 .sorted(Comparator.comparingLong(e -> -e.id))

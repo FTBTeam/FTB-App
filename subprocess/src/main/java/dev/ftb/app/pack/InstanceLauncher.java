@@ -16,6 +16,7 @@ import dev.ftb.app.minecraft.jsons.VersionListManifest;
 import dev.ftb.app.minecraft.jsons.VersionManifest;
 import dev.ftb.app.minecraft.jsons.VersionManifest.AssetIndex;
 import dev.ftb.app.util.StreamGobblerLog;
+import dev.ftb.app.util.mc.MinecraftVersion;
 import dev.ftb.app.util.mc.MinecraftVersions;
 import net.covers1624.jdkutils.JavaInstall;
 import net.covers1624.jdkutils.JavaVersion;
@@ -320,26 +321,36 @@ public class InstanceLauncher {
             Path javaExecutable;
             if (instance.props.embeddedJre) {
                 String javaTarget = instance.versionManifest.getTargetVersion("runtime");
-                Path javaHome;
-                if (javaTarget == null) {
-                    LOGGER.warn("VersionManifest does not specify java runtime version. Falling back to Vanilla major version, latest.");
-                    JavaVersion version = getJavaVersion();
-                    javaHome = Constants.getJdkManager().provisionJdk(
-                            new ProvisionRequest.Builder()
-                                    .forVersion(version)
-                                    .preferJRE(true)
-                                    .downloadListener(progressTracker.requestListener())
-                                    .build()
-                    );
-                } else {
-                    javaHome = Constants.getJdkManager().provisionJdk(
-                            new ProvisionRequest.Builder()
-                                    .withSemver(javaTarget)
-                                    .preferJRE(true)
-                                    .downloadListener(progressTracker.requestListener())
-                                    .build()
-                    );
+                
+                String modLoader = instance.resolveBasicModLoader();
+                Path javaHome = null;
+                
+                ProvisionRequest.Builder provisionBuilder = new ProvisionRequest.Builder()
+                    .preferJRE(true)
+                    .downloadListener(progressTracker.requestListener());
+                
+                if (modLoader != null && modLoader.equals("fabric")) {
+                    // Fabric is special as it basically works with any minecraft version so instead of asking
+                    // fabric which version we should run, we instead just ask out internal lookup.
+                    var minecraftVersion = instance.getMcVersion();
+                    MinecraftVersion parsedVersion = MinecraftVersions.INSTANCE.parse(minecraftVersion);
+                    if (parsedVersion != null) {
+                        var parsedJavaVersion = JavaVersion.parse(String.valueOf(parsedVersion.javaVersion()));
+                        if (parsedJavaVersion != null) {
+                            javaHome = Constants.getJdkManager().provisionJdk(provisionBuilder.forVersion(parsedJavaVersion).build()); 
+                        }
+                    }
                 }
+
+                if (javaHome == null) {
+                    if (javaTarget == null) {
+                        LOGGER.warn("VersionManifest does not specify java runtime version. Falling back to Vanilla major version, latest.");
+                        javaHome = Constants.getJdkManager().provisionJdk(provisionBuilder.forVersion(getJavaVersion()).build());
+                    } else {
+                        javaHome = Constants.getJdkManager().provisionJdk(provisionBuilder.withSemver(javaTarget).build());
+                    }
+                }
+                
                 LOGGER.info("Java home: {}", javaHome);
                 LOGGER.info("Java home: {}", javaHome.toString());
                 LOGGER.info("Java home: {}", javaHome.toUri());

@@ -34,17 +34,20 @@ public class InstanceInstallModHandler implements IMessageHandler<InstanceInstal
         }
 
         InstanceModifications modifications = instance.getModifications();
-        ModpackVersionManifest.Target modLoader = modifications != null ? modifications.getModLoaderOverride() : null;
+        var modLoader = modifications != null ? modifications.getModLoaderOverride() : null;
+        String modloaderName;
         if (modLoader == null) {
-            modLoader = instance.versionManifest.findTarget("modloader");
+            modloaderName = instance.resolveBasicModLoader();
+        } else {
+            modloaderName = modLoader.getName();
         }
 
-        if (modLoader == null) {
+        if (modloaderName == null || modloaderName.isEmpty()) {
             WebSocketHandler.sendMessage(new InstanceInstallModData.Reply(data, "error", "Instance does not have a ModLoader installed."));
             return;
         }
 
-        ModInstaller modInstaller = new ModInstaller(instance, mcVersion, modLoader.getName(), data.modId, data.versionId);
+        ModInstaller modInstaller = new ModInstaller(instance, mcVersion, modloaderName, data.modId, data.versionId);
 
         try {
             modInstaller.resolve();

@@ -3,7 +3,10 @@ package dev.ftb.app.api.data.instances;
 import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.data.mod.CurseMetadata;
 import dev.ftb.app.data.mod.ModInfo;
+import org.apache.commons.lang3.tuple.Pair;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.List;
 import java.util.UUID;
 
@@ -35,6 +38,21 @@ public class InstanceModsData extends BaseData {
             this.richData = richData;
         }
     }
+    
+    public static class AllRichModData extends InstanceModsData {
+        public final List<RichModDataBinding> richModData;
+        
+        public AllRichModData(InstanceModsData data, List<RichModDataBinding> richModData) {
+            type = "instanceAllModRichData";
+            this.requestId = data.requestId;
+            this.richModData = richModData;
+        }
+    }
+    
+    public record RichModDataBinding(
+        ModInfo file,
+        @Nullable CurseMetadata richData
+    ) {} 
 
     public static class UpdateAvailable extends InstanceModsData {
 

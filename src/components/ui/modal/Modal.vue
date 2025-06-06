@@ -1,6 +1,71 @@
+<script lang="ts" setup>
+import { onMounted, onUnmounted } from 'vue';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { useAds } from '@/composables/useAds.ts';
+
+const {
+  title,
+  subTitle = '',
+  hasCloser = true,
+  open,
+  size = 'small',
+  permanent = false,
+  closeOnBackgroundClick = true,
+  externalContents = false,
+} = defineProps<{
+  title: string;
+  subTitle?: string;
+  hasCloser?: boolean;
+  open: boolean;
+  size?: ModalSizes;
+  permanent?: boolean;
+  closeOnBackgroundClick?: boolean;
+  externalContents?: boolean;
+}>()
+
+const emit = defineEmits<{
+  (e: 'closed'): void;
+}>();
+
+const ads = useAds();
+
+onMounted(() => {
+  document.addEventListener('keydown', onEsc)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', onEsc)
+})
+
+function onEsc(event: any) {
+  if (event.key !== 'Escape') {
+    return;
+  }
+
+  close(true);
+}
+
+function close(background = false): void {
+  if (!closeOnBackgroundClick && background) {
+    return;
+  }
+
+  if (permanent) {
+    return;
+  }
+
+  emit('closed');
+}
+</script>
+
+<script lang="ts">
+export type ModalSizes = 'small' | 'medium' | 'large';
+</script>
+
 <template>
   <Transition name="fade-and-grow">
-    <div v-if="open" class="modal-container" :class="{ads: advertsEnabled}" @mousedown.self="() => close(true)">      
+    <div v-if="open" class="modal-container" :class="{ads: ads.adsEnabled.value}" @mousedown.self="() => close(true)">      
       <div class="modal-contents" :class="`${size}`">
         <div class="modal-header" :class="{'no-subtitle': !subTitle}">
           <div class="modal-heading">
@@ -8,7 +73,7 @@
             <div class="subtitle" v-if="subTitle">{{ subTitle }}</div>
           </div>
           <div class="modal-closer" v-if="!permanent && hasCloser" @click="() => close(false)">
-            <font-awesome-icon class="closer" icon="times" />
+            <FontAwesomeIcon class="closer" :icon="faTimes" />
           </div>
         </div>
         <slot v-if="externalContents"></slot>
@@ -24,73 +89,6 @@
     </div>
   </Transition>
 </template>
-
-<script lang="ts">
-import {Component, Prop, Vue} from 'vue-property-decorator';
-import Platform from '../../../utils/interface/electron-overwolf';
-import {Getter, State} from 'vuex-class';
-import {SettingsState} from '@/modules/settings/types';
-import {adsEnabled} from '@/utils';
-
-export enum ModalSizes {
-  SMALL = 'small',
-  MEDIUM = 'medium',
-  LARGE = 'large',
-}
-
-@Component
-export default class Modal extends Vue {
-  @Prop() title!: string;
-  @Prop({ default: '' }) subTitle!: string;
-  @Prop({ default: true }) hasCloser!: boolean;
-
-  @Prop() open!: boolean;
-  @Prop({ default: ModalSizes.SMALL }) size!: ModalSizes;
-  @Prop({ default: false }) permanent!: boolean;
-
-  @Prop({ default: true }) closeOnBackgroundClick!: boolean;
-  @Prop({ default: false }) externalContents!: boolean;
-  
-  @State('settings') public settings!: SettingsState;
-  @Getter("getDebugDisabledAdAside", {namespace: 'core'}) private debugDisabledAdAside!: boolean
-  
-  get isOverwolf() {
-    return Platform.isOverwolf();
-  }
-
-  mounted() {
-    document.addEventListener('keydown', this.onEsc)
-  }
-
-  destroyed() {
-    document.removeEventListener('keydown', this.onEsc)
-  }
-
-  onEsc(event: any) {
-    if (event.key !== 'Escape') {
-      return;
-    }
-
-    this.close(true);
-  }
-  
-  public close(background = false): void {
-    if (!this.closeOnBackgroundClick && background) {
-      return;
-    }
-
-    if (this.permanent) {
-      return;
-    }
-
-    this.$emit('closed');
-  }
-  
-  get advertsEnabled(): boolean {
-    return adsEnabled(this.settings.settings, this.debugDisabledAdAside);
-  }
-}
-</script>
 
 <style lang="scss" scoped>
 .modal-container {

@@ -1,22 +1,31 @@
-import MarkdownIt from 'markdown-it';
 import Router, {RouterNames} from '@/router';
-
-const markdownParser = new MarkdownIt();
-markdownParser.renderer.rules.link_open = function (tokens, idx, options, env, self) {
-  tokens[idx].attrSet('onclick', 'event.preventDefault(); window.platform.get.utils.openUrl(this.href);');
-  return self.renderToken(tokens, idx, options);
-}
+import appPlatform from '@platform';
+import { marked } from 'marked';
+import * as client from 'openid-client'
 
 export async function safeNavigate(name: RouterNames, params?: any, query?: any) {
-  if (Router.currentRoute.name === name) {
+  if (Router.currentRoute.value.name === name) {
     return;
   }
   
   try {
     await Router.push({name, params, query});
   } catch (e) {
+    console.warn("Failed to navigate", e);
     // Ignore
   }
+}
+
+export async function safeLinkOpen(event: any) {
+  event.preventDefault();
+  let urlTarget = event.target;
+
+  if (event.target?.tagName !== 'A') {
+    // Get the closest parent link
+    urlTarget = event.target?.closest('a');
+  }
+
+  appPlatform.utils.openUrl(urlTarget.href);
 }
 
 // Sizes of various byte amounts
@@ -48,4 +57,26 @@ export function computeAspectRatio(width: number, height: number) {
   return `${simplifiedWidth}:${simplifiedHeight}`;
 }
 
-export const parseMarkdown = (input: string) => markdownParser.render(input);
+marked.use({ hooks: {
+    postprocess(html) {
+      // Add target="_blank" to all links
+      const linkRegex = /<a\s+(?:[^>]*?\s+)?href=(["'])(.*?)\1/gi;
+      return html.replace(linkRegex, (match) => {
+        return match.replace(/<a /, `<a target="_blank" `);
+      });
+    }
+} });
+
+export const parseMarkdown = (input: string) => {
+  return marked.parse(input);
+}
+
+
+let config: client.Configuration | null = null;
+export async function getOrCreateOauthClient(): Promise<client.Configuration> {
+  if (!config) {
+    config = await client.discovery(new URL("https://identity.feed-the-beast.com/realms/FTB"), "ftb-app");
+  }
+  
+  return config;
+}

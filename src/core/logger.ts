@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
-import {constants} from '@/core/constants';
 import inspect from 'object-inspect';
+import log from 'electron-log/renderer';
 
 enum LogLevel {
   SILLY = "silly",
@@ -64,11 +64,7 @@ class Logger {
     }
     
     let logMethod = this.levelToMethod(level) 
-    if (constants.isProduction) {
-      // prod does not play nicely with other types of logging
-      logMethod = console.log
-    }
-    
+
     // Remap the args to use stringify-object
     args = args.map((arg) => {
       if (typeof arg === "object") {
@@ -107,17 +103,17 @@ class Logger {
   private levelToMethod(level: LogLevel) {
     switch (level) {
       case LogLevel.SILLY:
-        return console.log
+        return log.debug
       case LogLevel.DEBUG:
-        return console.log
+        return log.debug
       case LogLevel.INFO:
-        return console.log
+        return log.log
       case LogLevel.WARN:
-        return console.warn
+        return log.warn
       case LogLevel.ERROR:
-        return console.error
+        return log.error
       case LogLevel.DEV:
-        return console.log
+        return log.log
     }
   }
   
@@ -134,7 +130,7 @@ class Logger {
       case LogLevel.ERROR:
         return true
       case LogLevel.DEV:
-        return process.env.NODE_ENV === "development"
+        return !import.meta.env.PROD
     }
   }
 }

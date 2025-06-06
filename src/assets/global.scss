@@ -1,3 +1,6 @@
+@use "modals";
+@use "animations";
+
 :root {
   --curse-color-hsl: 15 87% 58%;
   --curse-color: hsl(var(--curse-color-hsl));
@@ -10,22 +13,21 @@ html,
 body {
   height: 100%;
   width: 100%;
-  background-color: var(--color-background);
   user-select: none;
-}
-
-#app {
-  background-color: var(--color-background);
-  margin: 0;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  color: var(--color-text);
-  height: 100%;
 }
 
-@import "modals";
-@import "animations";
+html, body, #app {
+  background-color: #2A2A2A;
+  color: #FFFFFF;
+  margin: 0;
+}
+
+#app {
+  height: 100%;
+}
 
 .pack-page {
   position: relative;

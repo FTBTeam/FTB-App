@@ -1,10 +1,10 @@
-const fs = require("fs");
-const path = require("path");
-const zip = require('adm-zip')
+import fs from 'fs';
+import path from 'path';
+import zip from 'adm-zip';
 
 const javaApi = `https://api.adoptopenjdk.net/v3/assets/version`
 
-async function installJre(javaVersion, javaPath) {
+export async function installJre(javaVersion, javaPath) {
   const url = javaApi + `/${javaVersion}?architecture=x64&image_type=jre&jvm_impl=hotspot&os=windows&page=0&page_size=10&project=jdk&release_type=ga&semver=true&sort_method=DEFAULT&sort_order=DESC&vendor=eclipse`;
   console.log("Downloading Java from " + url)
   const response = await fetch(url)
@@ -52,7 +52,4 @@ async function installJre(javaVersion, javaPath) {
   fs.rmSync(filePath)
 }
 
-module.exports = {
-  javaVersion: "21.0.3+9-jre",
-  installJre
-}
+export const javaVersion = "21.0.3+9-jre"

@@ -18,10 +18,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static dev.ftb.app.data.InstanceModifications.ModOverrideState.*;
 
@@ -136,7 +133,7 @@ public class ModInstaller implements ModCollector {
 
             long totalSize = 0;
             List<Task> tasks = new ArrayList<>(toInstall.size());
-            List<ModOverride> allOverrides = modifications.getOverrides();
+            List<ModOverride> overrides = modifications.getOverrides();
             List<ModOverride> oldOverrides = new ArrayList<>();
             List<ModOverride> newOverrides = new ArrayList<>(toInstall.size());
             for (Pair<ModManifest, ModManifest.Version> toInstall : toInstall) {
@@ -178,8 +175,8 @@ public class ModInstaller implements ModCollector {
                 }
 
                 if (selfExisting != null) {
-                    ModOverride existingOverride = FastStream.of(allOverrides)
-                            .filter(e -> e.getCurseProject() == modId || e.getId() == selfExisting.fileId())
+                    ModOverride existingOverride = FastStream.of(overrides)
+                            .filter(e -> e.getCurseProject() == modId && e.getId() == selfExisting.fileId())
                             .firstOrDefault();
                     if (existingOverride != null) {
                         oldOverrides.add(existingOverride);
@@ -221,8 +218,8 @@ public class ModInstaller implements ModCollector {
 
             instance.setModified(true);
             instance.saveJson();
-            modifications.getOverrides().removeAll(oldOverrides);
-            modifications.getOverrides().addAll(newOverrides);
+            overrides.removeAll(oldOverrides);
+            overrides.addAll(newOverrides);
             instance.saveModifications();
 
             LOGGER.info("Finished!");

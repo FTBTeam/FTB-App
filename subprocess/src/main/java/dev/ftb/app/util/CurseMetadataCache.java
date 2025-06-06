@@ -165,10 +165,10 @@ public class CurseMetadataCache {
             LOGGER.info("Querying metadata for {}", murmur);
             DownloadAction action = new OkHttpDownloadAction()
                     .setClient(Constants.httpClient())
-                    .setUrl(ModpacksChUtils.getModpacksApi() + "/mod/lookup/" + murmur)
+                    .setUrl(ModpackApiUtils.getModpacksApi() + "/mod/lookup/" + murmur)
                     .setDest(sw);
             
-            ModpacksChUtils.injectBearerHeader(action);
+            ModpackApiUtils.injectBearerHeader(action);
             action.execute();
 
             FileLookupResponse resp = JsonUtils.parse(GSON, sw.toString(), FileLookupResponse.class);

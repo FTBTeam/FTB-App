@@ -1,5 +1,6 @@
-import store from '@/modules/store';
-import {Dialog, DialogButton} from '@/core/state/misc/dialogsState';
+import { Dialog, DialogButton, useDialogsStore } from '@/store/dialogStore.ts';
+import { IconDefinition } from '@fortawesome/free-brands-svg-icons';
+import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 class DialogHolder {
   private readonly _dialog: Dialog;
@@ -10,11 +11,14 @@ class DialogHolder {
   
   setWorking(working: boolean) {
     this._dialog.working = working;
-    store.dispatch('v2/dialogs/updateDialog', this._dialog);
+    const dialogStore = useDialogsStore();
+    dialogStore.updateDialog(this._dialog)
   }
   
   close() {
-    store.dispatch('v2/dialogs/closeDialog', this._dialog);
+
+    const dialogStore = useDialogsStore();
+    dialogStore.closeDialog(this._dialog)
   }
   
   get dialog() {
@@ -33,14 +37,14 @@ class DialogsController {
         .withType("warning")
         .withButton(button("Cancel")
           .withType("error")
-          .withIcon("times")
+          .withIcon(faTimes)
           .withAction(() => {
             holder.close();
           })
           .build())
         .withButton(button("Confirm")
           .withType("success")
-          .withIcon("check")
+          .withIcon(faCheck)
           .withAction(() => {
             resolve(true);
             holder.close(); // The close action will also do this but this will just make sure
@@ -48,12 +52,14 @@ class DialogsController {
           .build())
         .build());
 
-      store.dispatch('v2/dialogs/openDialog', holder.dialog);
+      const dialogStore = useDialogsStore();
+      dialogStore.openDialog(holder.dialog)
     })
   }
   
   createDialog(dialog: Dialog) {
-    store.dispatch('v2/dialogs/openDialog', dialog);
+    const dialogStore = useDialogsStore();
+    dialogStore.openDialog(dialog)
     return new DialogHolder(dialog);
   }
 }
@@ -197,7 +203,7 @@ export class FormBuilder {
  */
 export class ButtonBuilder {
   action?: () => void;
-  icon?: string;
+  icon?: IconDefinition;
   type?: "error" | "warning" | "info" | "success";
   
   private constructor(
@@ -213,7 +219,7 @@ export class ButtonBuilder {
     return this;
   }
   
-  withIcon(icon: string) {
+  withIcon(icon: IconDefinition) {
     this.icon = icon;
     return this;
   }

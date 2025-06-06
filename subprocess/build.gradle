@@ -280,7 +280,7 @@ def standardTypescriptSettings = (GenerateTask task, File file) -> {
 }
 
 tasks.named("generateTypeScript", GenerateTask) {
-    standardTypescriptSettings(it, project.file("../src/core/@types/javaApi.d.ts"))
+    standardTypescriptSettings(it, project.file("../src/core/types/javaApi.d.ts"))
     classPatterns = [
             'dev.ftb.app.api.handlers.instances.InstalledInstancesHandler$SugaredInstanceJson',
             'dev.ftb.app.api.data.*',

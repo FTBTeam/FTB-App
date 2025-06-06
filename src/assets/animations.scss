@@ -1,9 +1,9 @@
 .transition-fade-enter-active,
 .transition-fade-leave-active {
-  transition: opacity var(--transition-duration);
+  transition: opacity var(--transition-duration) ease;
 }
 
-.transition-fade-enter,
+.transition-fade-enter-from,
 .transition-fade-leave-to {
   opacity: 0;
 }
@@ -13,7 +13,7 @@
   transition: opacity var(--transition-duration), transform var(--transition-duration);
 }
 
-.transition-fade-and-up-enter,
+.transition-fade-and-up-enter-from,
 .transition-fade-and-up-leave-to {
   opacity: 0;
   transform: translateY(8px);

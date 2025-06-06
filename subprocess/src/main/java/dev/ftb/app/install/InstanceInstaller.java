@@ -126,7 +126,7 @@ public class InstanceInstaller extends InstanceOperation {
         ModpackVersionModsManifest oldMods = null;
         ModpackVersionModsManifest newMods = null;
 
-        Path instanceVersionFile = instance.getDir().resolve("version.json");
+        Path instanceVersionFile = instance.metaPath.resolve(Instance.VERSION_FILE_NAME);
         if (!Files.exists(instanceVersionFile)) {
             oldManifest = null;
             operationType = OperationType.FRESH_INSTALL;
@@ -291,7 +291,7 @@ public class InstanceInstaller extends InstanceOperation {
                 instance.saveModifications();
             }
 
-            JsonUtils.write(GSON, instance.getDir().resolve("version.json"), manifest);
+            JsonUtils.write(GSON, instance.metaPath.resolve(Instance.VERSION_FILE_NAME), manifest);
 
             instance.props.installComplete = true;
             instance.props.versionId = manifest.getId();

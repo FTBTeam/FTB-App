@@ -8,7 +8,7 @@ import com.google.gson.annotations.SerializedName;
 import dev.ftb.app.Constants;
 import dev.ftb.app.install.FileValidation;
 import dev.ftb.app.util.FileUtils;
-import dev.ftb.app.util.ModpacksChUtils;
+import dev.ftb.app.util.ModpackApiUtils;
 import dev.ftb.app.util.PathRequestBody;
 import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.HashCodeAdapter;
@@ -127,7 +127,7 @@ public class ModpackVersionManifest {
 
     @Nullable
     public static ModpackVersionManifest queryManifest(long packId, long versionId, boolean isPrivate, byte packType) throws IOException, JsonParseException {        
-        return queryManifest(ModpacksChUtils.getModpacksEndpoint(isPrivate, packType) + packId + "/" + versionId);
+        return queryManifest(ModpackApiUtils.getModpacksEndpoint(isPrivate, packType) + packId + "/" + versionId);
     }
 
     @Nullable
@@ -140,7 +140,7 @@ public class ModpackVersionManifest {
                 .setUrl(url)
                 .setDest(sw);
         
-        ModpacksChUtils.injectBearerHeader(action);
+        ModpackApiUtils.injectBearerHeader(action);
         
         action.execute();
 
@@ -158,10 +158,10 @@ public class ModpackVersionManifest {
         LOGGER.info("Converting pack '{}'.", manifest);
 
         Request.Builder builder = new Request.Builder()
-                .url(ModpacksChUtils.getModpacksApi() + "/curseforge/import")
+                .url(ModpackApiUtils.getModpacksApi() + "/curseforge/import")
                 .put(new PathRequestBody(manifest));
         
-        ModpacksChUtils.injectBearerHeader(builder);
+        ModpackApiUtils.injectBearerHeader(builder);
         
         try (Response response = Constants.httpClient().newCall(builder.build()).execute()) {
             ResponseBody body = response.body();

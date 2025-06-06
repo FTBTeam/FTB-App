@@ -1,166 +1,152 @@
-<template>
-  <modal :open="open" @closed="close" title="Install instance" :sub-title="packName" :external-contents="true">
-    <modal-body>
-      <template v-if="apiModpack">
-        <artwork-selector :pack="apiModpack" class="mb-6" v-model="userSelectedArtwork" />
-        <ftb-input label="Name" :placeholder="packName" v-model="userPackName" class="mb-4" />
-        
-        <category-selector class="mb-4" v-model="selectedCategory" />
+<script lang="ts" setup>
+import {timeFromNow} from '@/utils/helpers/dateHelpers';
+import {getColorForReleaseType} from '@/utils';
+import {toTitleCase} from '@/utils/helpers/stringHelpers';
+import {isValidVersion} from '@/utils/helpers/packHelpers';
+import appPlatform from '@platform';
+import {RouterNames} from '@/router';
+import { ModalBody, Modal, UiToggle, Selection2, ModalFooter, UiButton, Input } from '@/components/ui';
+import { watch, ref, computed } from 'vue';
+import { useRouter } from 'vue-router';
+// import ArtworkSelector from '@/components/groups/modpack/components/ArtworkSelector.vue';
+import CategorySelector from '@/components/groups/modpack/create/CategorySelector.vue';
+import { useModpackStore } from '@/store/modpackStore.ts';
+import { ModPack, PackProviders } from '@/core/types/appTypes.ts';
+import { faDownload } from '@fortawesome/free-solid-svg-icons';
+import { useAppStore } from '@/store/appStore.ts';
 
-        <ui-toggle label="Show advanced options" v-model="useAdvanced" />
-        <selection2 :open-up="true" v-if="useAdvanced" label="Version" :options="versions" v-model="selectedVersionId" class="mb-4 mt-6" />
+const modpackStore = useModpackStore();
+const router = useRouter();
+const appStore = useAppStore();
+
+const {
+  open,
+  packId,
+  provider = "modpacksch",
+} = defineProps<{
+  open: boolean;
+  packId: number;
+  provider: PackProviders;
+}>()
+
+const apiModpack = ref<ModPack | null>(null);
+const selectedVersionId = ref("");
+const selectedCategory = ref("Default");
+
+const allowPreRelease = ref(false);
+const useAdvanced = ref(false);
+
+const userPackName = ref("");
+const userSelectedArtwork = ref<File | null>(null);
+
+const emit = defineEmits<{
+  (event: 'close', installed: boolean): void;
+}>()
+
+watch(() => open, async (newValue) => {
+  if (newValue && !apiModpack.value) {
+    apiModpack.value = await modpackStore.getModpack(packId, provider);
+
+    userPackName.value = apiModpack.value?.name ?? "";
+
+    // No stable versions, default to pre-release
+    if (!hasStableVersion.value) {
+      allowPreRelease.value = true;
+      useAdvanced.value = true;
+    }
+
+    selectedVersionId.value = restrictedVersions.value[0].id.toString() ?? "";
+  }
+})
+
+function install() {
+  appStore.controllers.install.requestInstall({
+    id: packId,
+    category: selectedCategory.value,
+    version: parseInt(selectedVersionId.value ?? sortedApiVersions.value[0].id),
+    // Name fallback but it's not really needed
+    name: userPackName.value ?? apiModpack.value?.name ?? "failed-to-name-the-modpack-somehow-" + appPlatform.utils.crypto.randomUUID().split("-")[0],
+    logo: userSelectedArtwork.value?.path ?? null, // The backend will default for us.
+    private: apiModpack.value?.private ?? false,
+    provider,
+  })
+
+  emit('close', true)
+
+  if (router.currentRoute.value.name !== RouterNames.ROOT_LIBRARY) {
+    router.push({
+      name: RouterNames.ROOT_LIBRARY
+    })
+  }
+}
+
+const packName = computed(() => apiModpack.value?.name ?? "Loading...");
+const restrictedVersions = computed(() => {
+  let versions = sortedApiVersions.value;
+  if (allowPreRelease.value) {
+    versions = versions.filter(e => isValidVersion(e.type, "all"))
+  } else {
+    versions = versions.filter(e => isValidVersion(e.type, "release"))
+  }
+
+  return versions;
+})
+
+const sortedApiVersions = computed(() => {
+  return (apiModpack.value && apiModpack.value.versions)
+    ? [...apiModpack.value.versions].sort((a, b) => b.id - a.id)
+    : [];
+})
+
+const hasStableVersion = computed(() => {
+  return apiModpack.value?.versions
+    .some(e => isValidVersion(e.type, "release")) ?? false
+})
+
+const hasUnstableVersions = computed(() => {
+  return apiModpack.value?.versions
+    .some(e => isValidVersion(e.type, "alpha") || isValidVersion(e.type, "beta") || isValidVersion(e.type, "hotfix"))
+})
+
+function versions() {
+  return restrictedVersions.value
+    .sort((a, b) => b.id - a.id)
+    .map(e => ({
+      value: e.id.toString(),
+      label: e.name,
+      meta: timeFromNow(e.updated),
+      badge: {
+        color: getColorForReleaseType(e.type),
+        text: toTitleCase(e.type)
+      }
+    }))
+}
+</script>
+
+<template>
+  <Modal :open="open" @closed="emit('close', false)" title="Install instance" :sub-title="packName" :external-contents="true">
+    <ModalBody>
+      <template v-if="apiModpack">
+<!--        <ArtworkSelector :pack="apiModpack" class="mb-6" v-model="userSelectedArtwork" />-->
+        <Input fill label="Name" :placeholder="packName" v-model="userPackName" class="mb-4" />
         
-        <ui-toggle
+        <CategorySelector class="mb-4" v-model="selectedCategory" />
+
+        <UiToggle label="Show advanced options" v-model="useAdvanced" />
+        <Selection2 :open-up="true" v-if="useAdvanced" label="Version" :options="versions()" v-model="selectedVersionId" class="mb-4 mt-6" />
+        
+        <UiToggle
           v-if="useAdvanced && hasUnstableVersions"
           v-model="allowPreRelease"
           label="Show pre-release builds (Stable by default)" 
           desc="Feeling risky? Enable pre-release builds to get access to Alpha and Beta versions of the Modpack"
         />
       </template>
-    </modal-body>
-    <modal-footer class="flex justify-end">
-      <ui-button :wider="true" type="success" icon="download" @click="install">
+    </ModalBody>
+    <ModalFooter class="flex justify-end">
+      <UiButton :wider="true" type="success" :icon="faDownload" @click="install">
         Install
-      </ui-button>
-    </modal-footer>
-  </modal>
+      </UiButton>
+    </ModalFooter>
+  </Modal>
 </template>
-
-<script lang="ts">
-import {Component, Emit, Prop, Vue, Watch} from 'vue-property-decorator';
-import {ModPack, PackProviders} from '@/modules/modpacks/types';
-import {ns} from '@/core/state/appState';
-import {Action, Getter} from 'vuex-class';
-import {GetModpack} from '@/core/state/modpacks/modpacksState';
-import Selection2 from '@/components/ui/Selection2.vue';
-import {timeFromNow} from '@/utils/helpers/dateHelpers';
-import {getColorForReleaseType} from '@/utils';
-import {toTitleCase} from '@/utils/helpers/stringHelpers';
-import {isValidVersion, resolveArtwork} from '@/utils/helpers/packHelpers';
-import ArtworkSelector from '@/components/groups/modpack/components/ArtworkSelector.vue';
-import {instanceInstallController} from '@/core/controllers/InstanceInstallController';
-import platform from '@/utils/interface/electron-overwolf';
-import {RouterNames} from '@/router';
-import UiButton from '@/components/ui/UiButton.vue';
-import CategorySelector from '@/components/groups/modpack/create/CategorySelector.vue';
-import UiToggle from '@/components/ui/UiToggle.vue';
-
-@Component({
-  components: {UiToggle, CategorySelector, UiButton, ArtworkSelector, Selection2},
-  methods: {
-    resolveArtwork
-  }
-})
-export default class ModpackInstallModal extends Vue {
-  @Action("getModpack", ns("v2/modpacks")) getModpack!: GetModpack;
-  @Getter("categories", ns("v2/instances")) categories!: string[];
-  
-  @Prop() open!: boolean;
-  @Emit("close") close() {}
-  
-  @Prop() packId!: number;
-  @Prop() uuid?: string;
-  @Prop({default: "modpacksch" as PackProviders}) provider!: PackProviders; 
-  
-  apiModpack: ModPack | null = null;
-  selectedVersionId = "";
-  selectedCategory = "Default";
-
-  allowPreRelease = false;
-  useAdvanced = false;
-
-  userPackName = "";
-  userSelectedArtwork: File | null = null;
-  
-  @Watch("open")
-  async onOpenChanged() {
-    if (this.open && !this.apiModpack) {
-      this.apiModpack = await this.getModpack({
-        id: this.packId, 
-        provider: this.provider
-      });
-      
-      this.userPackName = this.apiModpack?.name ?? "";
-      
-      // No stable versions, default to pre-release
-      if (!this.hasStableVersion) {
-        this.allowPreRelease = true;
-        this.useAdvanced = true;
-      }
-      
-      this.selectedVersionId = this.restrictedVersions[0].id.toString() ?? "";
-    }
-  }
-
-  install() {
-    instanceInstallController.requestInstall({
-      id: this.packId,
-      category: this.selectedCategory,
-      version: parseInt(this.selectedVersionId ?? this.sortedApiVersions[0].id),
-      // Name fallback but it's not really needed
-      name: this.userPackName ?? this.apiModpack?.name ?? "failed-to-name-the-modpack-somehow-" + platform.get.utils.crypto.randomUUID().split("-")[0],
-      logo: this.userSelectedArtwork?.path ?? null, // The backend will default for us.
-      private: this.apiModpack?.private ?? false,
-      provider: this.provider,
-    })
-    
-    this.close();
-    if (this.$route.name !== RouterNames.ROOT_LIBRARY) {
-      this.$router.push({
-        name: RouterNames.ROOT_LIBRARY
-      })
-    }
-  }
-  
-  get packName() {
-    return this.apiModpack?.name ?? "Loading...";
-  }
-  
-  get versions() {
-    let versions = this.restrictedVersions
-    
-    return versions
-      .sort((a, b) => b.id - a.id)
-      .map(e => ({
-        value: e.id.toString(),
-        label: e.name,
-        meta: timeFromNow(e.updated),
-        badge: {
-          color: getColorForReleaseType(e.type),
-          text: toTitleCase(e.type)
-        }
-      }))
-  }
-  
-  get restrictedVersions() {
-    let versions = this.sortedApiVersions;
-    if (this.allowPreRelease) {
-      versions = versions.filter(e => isValidVersion(e.type, "all"))
-    } else {
-      versions = versions.filter(e => isValidVersion(e.type, "release"))
-    }
-
-    return versions
-  }
-  
-  get sortedApiVersions() {
-    return (this.apiModpack && this.apiModpack.versions) 
-      ? [...this.apiModpack.versions].sort((a, b) => b.id - a.id) 
-      : [];
-  }
-  
-  get hasStableVersion() {
-    return this.apiModpack?.versions
-      .some(e => isValidVersion(e.type, "release")) ?? false
-  }
-  
-  get hasUnstableVersions() {
-    return this.apiModpack?.versions
-      .some(e => isValidVersion(e.type, "alpha") || isValidVersion(e.type, "beta") || isValidVersion(e.type, "hotfix"))
-  }
-}
-</script>
-
-<style lang="scss" scoped>
-
-</style>

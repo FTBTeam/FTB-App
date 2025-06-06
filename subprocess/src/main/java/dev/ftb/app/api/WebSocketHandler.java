@@ -85,6 +85,10 @@ public class WebSocketHandler {
         register("profiles.refresh", RefreshAuthenticationProfileHandler.Data.class, new RefreshAuthenticationProfileHandler());
         register("profiles.is-valid", AccountIsValidHandler.Data.class, new AccountIsValidHandler());
         
+        register("accounts.store-oauth", StoreFtbAccountHandler.Data.class, new StoreFtbAccountHandler());
+        register("accounts.get-oauth", BaseData.class, new GetFtbAccountHandler());
+        register("accounts.sign-out", BaseData.class, new SignOutFTBAccountHandler());
+        
         register("storage.put", StoragePutHandler.Data.class, new StoragePutHandler());
         register("storage.get", StorageGetHandler.Data.class, new StorageGetHandler());
         register("storage.get-all", BaseData.class, new StorageGetAllHandler());
@@ -167,7 +171,7 @@ public class WebSocketHandler {
     
     private static void writeEndpointsToTypeFile() throws IOException {
         var runningDir = System.getProperty("user.dir");
-        var outputFile = Path.of(runningDir, "..", "src", "core", "@types", "javaApiEndpoints.d.ts");
+        var outputFile = Path.of(runningDir, "..", "src", "core", "types", "javaApiEndpoints.d.ts");
         
         StringBuilder output = new StringBuilder("""
             /**

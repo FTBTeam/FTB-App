@@ -15,7 +15,7 @@ import {
   DuplicateInstanceHandlerReply,
   DuplicateInstanceHandlerRequest,
   FileHashData,
-  FileHashDataReply,
+  FileHashDataReply, GetFtbAccountHandlerReply,
   GetInstanceFoldersHandlerReply,
   GetInstanceFoldersHandlerRequest,
   GetJavasData,
@@ -66,12 +66,12 @@ import {
   SettingsConfigureData,
   SettingsConfigureDataReply,
   SettingsInfoData,
-  SettingsInfoDataReply,
+  SettingsInfoDataReply, SignOutFTBAccountHandlerReply,
   StorageGetAllHandlerReply,
   StorageGetHandlerData,
   StorageGetHandlerReply,
   StoragePutHandlerData,
-  StoragePutHandlerReply,
+  StoragePutHandlerReply, StoreFtbAccountHandlerData, StoreFtbAccountHandlerReply,
   UninstallInstanceData,
   UninstallInstanceDataReply,
   UpdateInstanceData,
@@ -81,9 +81,9 @@ import {
   VideoCacheHandlerReply,
   WebRequestData,
   WebRequestDataResponse
-} from '@/core/@types/javaApi';
+} from '@/core/types/javaApi';
 import {Nullable} from '@/core/websockets/websocketsApi';
-import {ApiEndpoints} from '@/core/@types/javaApiEndpoints';
+import {ApiEndpoints} from '@/core/types/javaApiEndpoints';
 
 export type EndpointDefinition<Input, Output> = {
   input: Input;
@@ -147,6 +147,9 @@ const endpoints = {
   instanceOverrideModLoader:      io<InstanceOverrideModLoaderData, InstanceOverrideModLoaderDataReply>(),
   videoCache:                     io<VideoCacheHandlerData, VideoCacheHandlerReply>(),
   moveInstances:                  io<MoveInstancesHandlerData, MoveInstancesHandlerReply>(),
+  "accounts.store-oauth":         io<StoreFtbAccountHandlerData, StoreFtbAccountHandlerReply>(),
+  "accounts.get-oauth":           io<BaseData, GetFtbAccountHandlerReply>(),
+  "accounts.sign-out":            io<BaseData, SignOutFTBAccountHandlerReply>(),
 } satisfies Record<ApiEndpoints, EndpointDefinition<any, any>>;
 
 export type EmptyMessageResponse = {}

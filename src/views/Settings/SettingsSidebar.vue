@@ -1,7 +1,26 @@
+<script lang="ts" setup>
+import appPlatform from '@platform';
+import {RouterNames} from '@/router';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { standardDateTime, timeFromNow } from '@/utils/helpers/dateHelpers.ts';
+import { Popover } from '@/components/ui';
+import {
+  faArrowLeft, faCogs,
+  faDownload,
+  faGamepad, faInfo,
+  faRocket,
+  faShuffle,
+  faUserSecret,
+} from '@fortawesome/free-solid-svg-icons';
+
+const configData = appPlatform.config;
+</script>
+
+
 <template>
   <div class="settings-sidebar">
     <router-link to="/" class="back">
-      <font-awesome-icon icon="arrow-left" class="mr-2" />
+      <FontAwesomeIcon :icon="faArrowLeft" class="mr-2" />
       Back to app
     </router-link>
 
@@ -9,27 +28,27 @@
       <nav>
         <div class="heading">Settings</div>
         <router-link :to="{ name: RouterNames.SETTINGS_APP }" class="item">
-          <font-awesome-icon icon="rocket" />
+          <FontAwesomeIcon :icon="faRocket" />
           <span>App</span>
         </router-link>
         <router-link :to="{ name: RouterNames.SETTINGS_INSTANCE }" class="item">
-          <font-awesome-icon icon="gamepad" />
+          <FontAwesomeIcon :icon="faGamepad" />
           <span>Instance Defaults</span>
         </router-link>
         <router-link :to="{ name: RouterNames.SETTINGS_DOWNLOAD }" class="item">
-          <font-awesome-icon icon="cloud-download-alt" />
+          <FontAwesomeIcon :icon="faDownload" />
           <span>Downloads</span>
         </router-link>
         <router-link :to="{ name: RouterNames.SETTINGS_PROXY }" class="item">
-          <font-awesome-icon icon="shuffle" />
+          <FontAwesomeIcon :icon="faShuffle" />
           <span>Proxy</span>
         </router-link>
         <router-link :to="{ name: RouterNames.SETTINGS_PRIVACY }" class="item">
-          <font-awesome-icon icon="user-secret" />
+          <FontAwesomeIcon :icon="faUserSecret" />
           <span>Privacy</span>
         </router-link>
         <router-link :to="{ name: RouterNames.SETTINGS_ADVANCED }" class="item">
-          <font-awesome-icon icon="cogs" />
+          <FontAwesomeIcon :icon="faCogs" />
           <span>Advanced</span>
         </router-link>
       </nav>
@@ -37,7 +56,7 @@
         <div class="heading">Info</div>
 
         <router-link :to="{ name: RouterNames.SETTINGS_CHANGELOGS }" class="item app-info-item">
-          <font-awesome-icon icon="info" />
+          <FontAwesomeIcon :icon="faInfo" />
           <span>Changelogs</span>
         </router-link>
       </nav>
@@ -45,13 +64,13 @@
 
     <div class="meta">
       <span>App version</span>
-      <popover position="bottom">
+      <Popover position="bottom">
         <div class="value copyable pr-3">{{ configData.version }}</div>
         <template #inner>
           <div class="version">
             <div class="field">
               <div class="head">Released</div>
-              <div class="value copyable" :title="configData.dateCompiled | dayjsFull">{{ configData.dateCompiled | dayjsFromNow }}</div>
+              <div class="value copyable" :title="standardDateTime(configData.dateCompiled)">{{ timeFromNow(configData.dateCompiled) }}</div>
             </div>
             <div class="field">
               <div class="head">Branch</div>
@@ -63,30 +82,14 @@
             </div>
           </div>
         </template>
-      </popover>
+      </Popover>
     </div>
   </div>
 </template>
 
-<script lang="ts">
-import {Component, Vue} from 'vue-property-decorator';
-import platform from '@/utils/interface/electron-overwolf';
-import {RouterNames} from '@/router';
-
-@Component
-export default class SettingsSidebar extends Vue {
-  platform = platform;
-  RouterNames = RouterNames;
-  
-  changesHistoryOpen: boolean = false;
-  
-  get configData() {
-    return platform.get.config;
-  }
-}
-</script>
-
 <style scoped lang="scss">
+@import 'tailwindcss/theme' theme(reference);
+
 .settings-sidebar {
   background-color: var(--color-background);
   width: 220px;
@@ -134,7 +137,7 @@ export default class SettingsSidebar extends Vue {
 
       &.router-link-exact-active,
       &.app-info-item.router-link-active {
-        background: var(--color-primary-button);
+        background: var(--color-green-600);
       }
 
       svg,

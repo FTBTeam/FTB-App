@@ -77,7 +77,7 @@ for (const version of reversedVersions) {
 
   const date = dayjs(version.releaseTime);
   const isFirst = javaClass === "";
-  javaClass += `${!isFirst ? '\n' : ''}    MC${major}_${minor}_${patch}(MinecraftVersion.create(${major}, ${minor}, ${patch}, "${version.id}", ${currentJavaVersion.version}, ${date.format("YY")}, ${date.week()}, ${date.unix()}L)),`;
+  javaClass += `${!isFirst ? '\n' : ''}    MC${major}_${minor}_${patch}(make(${major}, ${minor}, ${patch}, "${version.id}", ${currentJavaVersion.version}, ${date.format("YY")}, ${date.week()}, ${date.unix()}L)),`;
 
   currentJavaVersion = jumpJavaVersion(version.id, currentJavaVersion);
 }

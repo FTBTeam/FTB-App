@@ -1,7 +1,215 @@
+<script lang="ts" setup>
+import {Mod} from '@/types';
+import {debounce} from '@/utils';
+import ModCard from '@/components/groups/modpack/ModCard.vue';
+import {modpackApi} from '@/core/pack-api/modpackApi';
+import {InstanceJson} from '@/core/types/javaApi';
+import InstallModModal from '@/components/modals/InstallModModal.vue';
+import {compatibleCrossLoaderPlatforms, resolveModloader} from '@/utils/helpers/packHelpers';
+import { computed, onMounted, ref, watch } from 'vue';
+import { UiButton, Input } from '@/components/ui';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { faSearch, faSpinner } from '@fortawesome/free-solid-svg-icons';
+
+const {
+  instance,
+  installedMods
+} = defineProps<{
+  instance?: InstanceJson;
+  installedMods: [number, number][];
+}>();
+
+
+const selectedMod = ref<Mod | null>(null);
+
+const offset = ref(0);
+const search = ref('');
+
+const loading = ref(false);
+const loadingExtra = ref(false);
+const awaitingDebounce = ref(false);
+
+const target = ref('');
+const modLoader = ref('');
+
+const timeTaken = ref(0);
+const initialTimeTaken = ref(0);
+
+const results = ref<Mod[]>([]);
+const resultingIds = ref<number[]>([]);
+const resultsBuffer = ref<Mod[]>([]);
+
+const searchDebounce = ref<any>(null);
+
+const searching = computed(() => search.value.length && (awaitingDebounce.value || loading.value))
+
+/**
+ * If no instance is set, everything is wrong. The instance in this case is being
+ * pulled from the instance page vue.
+ *
+ * Then load the packs version data to pull from the targets list to get the mc
+ * version of the pack
+ */
+onMounted(() => {
+  if (!instance) {
+    return;
+  }
+
+  searchDebounce.value = debounce(() => searchForMod(), 500);
+  loadInstanceVersion();
+})
+
+watch(search, (value) => {
+  if (value === '') {
+    searchDebounce.value.stop();
+    resetSearch();
+    return;
+  }
+  awaitingDebounce.value = true;
+  searchDebounce.value.run();
+})
+
+watch(resultingIds, (value) => {
+  if (value.length && !search.value.length) {
+    resultingIds.value = [];
+  }
+})
+
+async function searchForMod() {
+  // Clean up all data, we have a new request
+  resetSearch();
+  awaitingDebounce.value = false;
+  loading.value = true;
+  
+  const start = new Date().getTime();
+
+  let searchResults: number[] = [];
+  const targetLoaders = compatibleCrossLoaderPlatforms(target.value, modLoader.value);
+  if (targetLoaders.length > 1) {
+    for (const loader of targetLoaders) {
+      const mods = (await modpackApi.search.modSearch(search.value, target.value, loader as any))?.mods ?? [];
+      mods.forEach(e => searchResults.push(e))
+    }
+  } else {
+      searchResults = (await modpackApi.search.modSearch(search.value, target.value, modLoader.value as any))?.mods ?? []; 
+  }
+  
+  if (!searchResults.length) {
+    loading.value = false;
+    return;
+  }
+
+  resultingIds.value = searchResults || [];
+  loading.value = false;
+  await loadResultsProgressively();
+
+  timeTaken.value = new Date().getTime() - start;
+  initialTimeTaken.value = timeTaken.value;
+}
+
+/**
+ * Maintaines an offset and hard limit of the results, at the same time, after
+ * each fetch, we make another request to buffer the next 5 results. This makes
+ * the 'load more' button seem near instant for anyone not going to fast.
+ *
+ * NOTE: the buffer could logically get really big but as we're only able
+ * to handle 100 results at the max right now, this is a non-issue
+ */
+async function loadResultsProgressively() {
+  if (!hasResults.value || loadingExtra.value) {
+    return;
+  }
+
+  loadingExtra.value = true;
+  const start = new Date().getTime();
+  for (let i = offset.value; i < offset.value + 5; i++) {
+    if (!resultingIds.value[i]) {
+      break;
+    }
+
+    // Pull from the buffer unless it's the first go or something isn't in the buffer
+    if (resultsBuffer.value[i]) {
+      results.value.push(resultsBuffer.value[i]);
+    } else {
+      const res = await getModFromId(resultingIds.value[i]);
+      if (res) {
+        results.value.push(res);
+      }
+    }
+  }
+
+  offset.value += 5;
+  loadingExtra.value = false;
+  timeTaken.value += new Date().getTime() - start;
+
+  await bufferNextFive();
+}
+
+/**
+ * After one request, we buffer the next 5 to speed up TTL on more results button
+ */
+async function bufferNextFive() {
+  if (!hasResults.value) {
+    return;
+  }
+
+  // ensure the button can't be pressed until the buffer is finished otherwise weird things will happen
+  loadingExtra.value = true;
+  const start = new Date().getTime();
+  for (let i = offset.value; i < offset.value + 5; i++) {
+    if (!resultingIds.value[i]) {
+      break;
+    }
+
+    const res = await getModFromId(resultingIds.value[i]);
+    if (res) {
+      resultsBuffer.value.push(res);
+    }
+  }
+  
+  timeTaken.value += new Date().getTime() - start;
+  loadingExtra.value = false;
+}
+
+async function loadMore() {
+  if (!resultingIds.value.length || !hasResults.value) {
+    return;
+  }
+
+  await loadResultsProgressively();
+}
+
+function resetSearch() {
+  resultingIds.value = [];
+  results.value = [];
+  offset.value = 0;
+  timeTaken.value = 0;
+  initialTimeTaken.value = 0;
+  loadingExtra.value = false;
+  resultsBuffer.value = [];
+}
+
+/**
+ * We can get rid of this once the vuex store is fixed to hold this info...
+ */
+function loadInstanceVersion() {
+  target.value = instance!.mcVersion;
+  modLoader.value = resolveModloader(instance!)
+}
+
+async function getModFromId(modId: number): Promise<Mod | null> {
+  return modpackApi.search.modFetch(modId)
+}
+
+const hasResults = computed(() => {
+  return resultingIds.value.length - results.value.length > 0;
+})
+</script>
+
 <template>
   <div class="find-mods">
     <div class="header flex items-center mt-2">
-      <ftb-search :alpha="true" class="w-full flex-1" placeholder="Search for a mod" min="3" v-model="search" />
+      <Input fill :icon="faSearch" class="w-full flex-1" placeholder="Search for a mod" v-model="search" />
     </div>
     <div class="body pt-6">
       <div class="stats-bar" v-if="resultingIds.length">
@@ -28,20 +236,18 @@
             v-for="(mod, index) in results"
             :key="index"
             :mod="mod"
-            :instance="instance"
             :installed-mods="installedMods"
-            :target="target"
             @install="selectedMod = mod"
           />
         </template>
         <!-- This is so over the top -->
-        <div class="loading" v-else-if="search !== '' && (loadingTerm || visualLoadingFull)">
-          <font-awesome-icon spin icon="spinner" />
+        <div class="loading" v-else-if="search !== '' && loading">
+          <FontAwesomeIcon spin :icon="faSpinner" />
           <p>Loading results</p>
         </div>
         <div
           class="no-results"
-          v-else-if="search !== '' && !loadingTerm && !visualLoadingFull && !results.length"
+          v-else-if="search.length && !searching && !results.length"
         >
           <div
             class="fancy"
@@ -73,25 +279,24 @@
         <div class="make-a-search" v-else>
           <div class="search-prompt">
             <div class="icon-container">
-              <font-awesome-icon icon="search" class="primary" />
-              <font-awesome-icon icon="search" class="secondary" />
+              <FontAwesomeIcon :icon="faSearch" class="primary" />
+              <FontAwesomeIcon :icon="faSearch" class="secondary" />
             </div>
-            <p v-if="!loadingExtra && !loading">Use the search box above to find new mods</p>
+            <p v-if="!search">Use the search box above to find new mods</p>
             <p v-else>Searching...</p>
           </div>
         </div>
       </div>
       <div class="more-btn flex justify-center">
-        <ftb-button
+        <UiButton
           v-if="results.length > 0"
-          color="info"
+          type="info"
+          :working="loadingExtra"
           :disabled="!hasResults || loadingExtra"
           @click="loadMore"
-          class="px-10 py-2 inline-block"
         >
-          <font-awesome-icon spin icon="spinner" class="mr-2" v-if="hasResults && loadingExtra" />
           {{ !hasResults ? 'No more results' : `${loadingExtra ? 'Loading' : 'Load'} more results` }}
-        </ftb-button>
+        </UiButton>
       </div>
     </div>
     
@@ -106,216 +311,6 @@
     />
   </div>
 </template>
-
-<script lang="ts">
-import {Mod} from '@/types';
-import {debounce} from '@/utils';
-import {Component, Prop, Vue, Watch} from 'vue-property-decorator';
-import FTBSearchBar from '@/components/ui/input/FTBSearchBar.vue';
-import ModCard from '@/components/groups/modpack/ModCard.vue';
-import {modpackApi} from '@/core/pack-api/modpackApi';
-import {InstanceJson} from '@/core/@types/javaApi';
-import InstallModModal from '@/components/modals/InstallModModal.vue';
-import {compatibleCrossLoaderPlatforms, resolveModloader} from '@/utils/helpers/packHelpers';
-
-@Component({
-  components: {
-    InstallModModal,
-    'ftb-search': FTBSearchBar,
-    ModCard,
-  },
-})
-export default class FindMods extends Vue {
-  // Normal
-  @Prop() instance!: InstanceJson;
-  @Prop() installedMods!: [number, number][];
-
-  selectedMod: Mod | null = null;
-  
-  private offset = 0;
-
-  search = '';
-
-  // Handles loading the packs version data
-  loading = true;
-
-  // Handles loading results
-  loadingExtra = false;
-
-  // Handles loading the inital search term
-  loadingTerm = false;
-  visualLoadingFull = false;
-
-  target: string = '';
-  modLoader: string = '';
-
-  timeTaken = 0;
-  initialTimeTaken = 0;
-
-  results: Mod[] = [];
-  resultingIds: number[] = [];
-  resultsBuffer: Mod[] = [];
-
-  searchDebounce: any;
-
-  /**
-   * If no instance is set, everything is wrong. The instance in this case is being
-   * pulled from the instance page vue.
-   *
-   * Then load the packs version data to pull from the targets list to get the mc
-   * version of the pack
-   */
-  async mounted() {
-    if (!this.instance) {
-      return;
-    }
-
-    this.searchDebounce = debounce(() => this.searchForMod(), 500);
-    await this.loadInstanceVersion();
-  }
-
-  @Watch('search')
-  onSearch() {
-    this.searchDebounce();
-  }
-
-  private async searchForMod() {
-    // Clean up all data, we have a new request
-    this.resetSearch();
-
-    this.loadingTerm = true;
-    this.visualLoadingFull = true;
-    const start = new Date().getTime();
-
-    let searchResults: number[] = [];
-    const targetLoaders = compatibleCrossLoaderPlatforms(this.target, this.modLoader);
-    if (targetLoaders.length > 1) {
-      for (const loader of targetLoaders) {
-        const mods = (await modpackApi.search.modSearch(this.search, this.target, loader as any))?.mods ?? [];
-        mods.forEach(e => searchResults.push(e))
-      }
-    } else {
-        searchResults = (await modpackApi.search.modSearch(this.search, this.target, this.modLoader as any))?.mods ?? []; 
-    }
-    
-    this.loadingTerm = false;
-    if (!searchResults.length) {
-      this.visualLoadingFull = false;
-      return;
-    }
-
-    this.resultingIds = searchResults || [];
-    await this.loadResultsProgressively();
-    
-    this.timeTaken = new Date().getTime() - start;
-    this.initialTimeTaken = this.timeTaken;
-  }
-
-  /**
-   * Maintaines an offset and hard limit of the results, at the same time, after
-   * each fetch, we make another request to buffer the next 5 results. This makes
-   * the 'load more' button seem near instant for anyone not going to fast.
-   *
-   * NOTE: the buffer could logically get really big but as we're only able
-   * to handle 100 results at the max right now, this is a non-issue
-   */
-  private async loadResultsProgressively() {
-    if (!this.hasResults || this.loadingExtra) {
-      return;
-    }
-
-    this.loadingExtra = true;
-    const start = new Date().getTime();
-    for (let i = this.offset; i < this.offset + 5; i++) {
-      if (!this.resultingIds[i]) {
-        break;
-      }
-
-      // Pull from the buffer unless it's the first go or something isn't in the buffer
-      if (this.resultsBuffer[i]) {
-        this.results.push(this.resultsBuffer[i]);
-      } else {
-        const res = await this.getModFromId(this.resultingIds[i]);
-        if (res) {
-          this.results.push(res);
-        }
-      }
-    }
-
-    if (this.offset === 0) {
-      this.visualLoadingFull = false;
-    }
-
-    this.offset += 5;
-    this.loadingExtra = false;
-    this.timeTaken += new Date().getTime() - start;
-
-    await this.bufferNextFive();
-  }
-
-  /**
-   * After one request, we buffer the next 5 to speed up TTL on more results button
-   */
-  async bufferNextFive() {
-    if (!this.hasResults) {
-      return;
-    }
-
-    // ensure the button can't be pressed until the buffer is finished otherwise weird things will happen
-    this.loadingExtra = true;
-    const start = new Date().getTime();
-    for (let i = this.offset; i < this.offset + 5; i++) {
-      if (!this.resultingIds[i]) {
-        break;
-      }
-
-      const res = await this.getModFromId(this.resultingIds[i]);
-      if (res) {
-        this.resultsBuffer.push(res);
-      }
-    }
-    this.timeTaken += new Date().getTime() - start;
-    this.loadingExtra = false;
-  }
-
-  async loadMore() {
-    if (!this.resultingIds.length || !this.hasResults) {
-      return;
-    }
-
-    await this.loadResultsProgressively();
-  }
-
-  private resetSearch() {
-    this.resultingIds = [];
-    this.results = [];
-    this.offset = 0;
-    this.timeTaken = 0;
-    this.initialTimeTaken = 0;
-    this.loadingExtra = false;
-    this.resultsBuffer = [];
-    this.loadingTerm = false;
-  }
-
-  /**
-   * We can get rid of this once the vuex store is fixed to hold this info...
-   */
-  private async loadInstanceVersion() {
-    this.loading = true;
-        
-    this.target = this.instance.mcVersion;
-    this.modLoader = resolveModloader(this.instance)
-  }
-
-  private async getModFromId(modId: number): Promise<Mod | null> {
-    return modpackApi.search.modFetch(modId)
-  }
-
-  get hasResults() {
-    return this.resultingIds.length - this.results.length > 0;
-  }
-}
-</script>
 
 <style lang="scss" scoped>
 .find-mods {

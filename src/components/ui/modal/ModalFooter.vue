@@ -4,13 +4,6 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
-
-@Component
-export default class ModalFooter extends Vue {}
-</script>
-
 <style lang="scss" scoped>
 .modal-footer {
   background: #1f1f1f;

@@ -1,7 +1,7 @@
-const fs = require('fs');
-const archiver = require('archiver')
-const path = require('path')
-const {installJre, javaVersion} = require("./shared");
+import fs from 'fs';
+import path from 'path';
+import archiver from 'archiver';
+import { javaVersion, installJre } from './shared.js';
 
 // Relative to the project root
 const projectRoot = path.join(process.cwd(), "overwolf")

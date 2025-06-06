@@ -1,6 +1,7 @@
 package dev.ftb.app.data;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.JsonAdapter;
 import dev.ftb.app.data.modpack.ModpackManifest;
@@ -17,7 +18,7 @@ import java.util.UUID;
 
 public class InstanceJson {
 
-    private static final Gson GSON = new Gson();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     public UUID uuid;
     public long id;

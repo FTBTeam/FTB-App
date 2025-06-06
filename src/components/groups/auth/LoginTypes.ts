@@ -74,3 +74,20 @@ export interface MinecraftProfileCapes {
 	url: string;
 	alias: string;
 }
+
+export type DeviceCodeHolder = {
+  device_code: string;
+  user_code: string;
+  verification_uri: string;
+  expires_in: number;
+  verification_uri_complete?: string;
+  interval?: number;
+}
+
+export type LoadCodeReturn = DeviceCodeHolder | { error: string };
+
+export type CheckForCodeReturn = { pass: true } | { error: string } | { data: any };
+
+export type OnResultReturn = true | {
+  error: string;
+}

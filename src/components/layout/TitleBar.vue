@@ -1,3 +1,62 @@
+<script lang="ts" setup>
+import appPlatform from '@platform';
+import {safeNavigate} from '@/utils';
+import {RouterNames} from '@/router';
+import { useAttachDomEvent } from '@/composables';
+import { onMounted, ref, computed } from 'vue';
+import { toTitleCase } from '@/utils/helpers/stringHelpers.ts';
+
+const blurred = ref(false);
+const isMac = ref(false);
+const windowId = ref<string | null>(null);
+
+useAttachDomEvent<FocusEvent>('focus', windowFocusChanged)
+useAttachDomEvent<FocusEvent>('blur', windowFocusChanged)
+
+onMounted(async () => {
+  const [windowIdRes, osType] = await Promise.all([
+    appPlatform.frame.getWindowId(),
+    appPlatform.utils.getOsType()
+  ])
+  
+  windowId.value = windowIdRes
+  isMac.value = osType === "mac"
+})
+
+function windowFocusChanged(event: FocusEvent) {
+  blurred.value = event.type === 'blur';
+}
+
+function startDragging(event: any) {
+  appPlatform.frame.handleDrag(event, windowId.value);
+}
+
+function close(): void {
+  // Callback only on overwolf
+  appPlatform.frame.close(windowId.value, () => {
+  });
+}
+
+function minMax() {
+  appPlatform.frame.max(windowId.value);
+}
+
+function minimise() {
+  appPlatform.frame.min(windowId.value);
+}
+
+function max() {
+  appPlatform.frame.max(windowId.value);
+}
+
+function goToSettings() {
+  safeNavigate(RouterNames.SETTINGS_APP);
+}
+
+const branch = computed(() => appPlatform.config.branch);
+const isUnix = computed(async () => await appPlatform.utils.getOsType() !== "windows");
+</script>
+
 <template>
   <div class="titlebar" :class="{ isMac, isUnix }" @mousedown="startDragging" @dblclick="minMax">
     <div class="spacer" v-if="isMac"></div>
@@ -5,7 +64,7 @@
       <span>FTB App</span>
     </div>
     <div class="branch-container">
-      <div @click="goToSettings" class="branch" v-if="branch && branch.toLowerCase() !== 'release'" aria-label="App channel" :data-balloon-pos="isMac ? 'down-right' : 'down-left'">{{ branch | title }}</div>
+      <div @click="goToSettings" class="branch" v-if="branch && branch.toLowerCase() !== 'release'" aria-label="App channel" :data-balloon-pos="isMac ? 'down-right' : 'down-left'">{{ toTitleCase(branch) }}</div>
     </div>
     <div class="action-buttons" v-if="!isMac">
       <div class="icons">
@@ -41,87 +100,6 @@
     </div>
   </div>
 </template>
-
-<script lang="ts">
-import {Component, Vue} from 'vue-property-decorator';
-import {Action, State} from 'vuex-class';
-import platform from '@/utils/interface/electron-overwolf';
-import {SettingsState} from '@/modules/settings/types';
-import os from 'os';
-import {safeNavigate} from '@/utils';
-import {RouterNames} from '@/router';
-import {createLogger} from '@/core/logger';
-
-@Component
-export default class TitleBar extends Vue {
-  @Action('disconnect') public disconnect: any;
-  @State('settings') private settings!: SettingsState;
-  @Action('saveSettings', { namespace: 'settings' }) private saveSettings!: any;
-  @Action('toggleDebugDisableAdAside', { namespace: 'core' }) toggleDebugDisableAdAside!: () => void;
-  
-  private logger = createLogger('TitleBar.vue'); 
-  private windowId: string | null = null;
-  
-  isMac: boolean = false;
-
-  blurred = false;
-  
-  async mounted() {
-    this.isMac = os.type() === 'Darwin';
-    
-    this.windowId = await platform.get.frame.getWindowId();
-    this.logger.debug('Window ID', this.windowId)
-    
-    window.addEventListener('blur', this.windowFocusChanged);
-    window.addEventListener('focus', this.windowFocusChanged);
-  }
-  
-  destroyed() {
-    window.removeEventListener('blur', this.windowFocusChanged);
-    window.removeEventListener('focus', this.windowFocusChanged);
-  }
-  
-  windowFocusChanged(event: any) {
-    this.blurred = event.type === 'blur';
-  }
-
-  public startDragging(event: any) {
-    platform.get.frame.handleDrag(event, this.windowId);
-  }
-
-  public close(): void {
-    // Callback only on overwolf
-    platform.get.frame.close(this.windowId, () => {
-      this.saveSettings(this.settings?.settings);
-      this.disconnect();
-    });
-  }
-
-  minMax() {
-    platform.get.frame.max(this.windowId);
-  }
-
-  public minimise(): void {
-    platform.get.frame.min(this.windowId);
-  }
-
-  public max(): void {
-    platform.get.frame.max(this.windowId);
-  }
-  
-  get branch() {
-    return platform.get?.config?.branch
-  }
-
-  goToSettings() {
-    safeNavigate(RouterNames.SETTINGS_APP)
-  }
-  
-  get isUnix() {
-    return !platform.isOverwolf()
-  }
-}
-</script>
 
 <style scoped lang="scss">
 .titlebar {

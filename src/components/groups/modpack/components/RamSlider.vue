@@ -1,3 +1,53 @@
+<script lang="ts" setup>
+import {megabyteSize, prettyByteFormat} from '@/utils';
+import { computed, onMounted, ref } from 'vue';
+import { InputNumber, UiToggle } from '@/components/ui';
+import { useAppSettings } from '@/store/appSettingsStore.ts';
+
+const appSettingsStore = useAppSettings();
+
+const {
+  min = 0,
+} = defineProps<{
+  min?: number;
+}>()
+
+const value = defineModel<number>()
+
+const step = 16;
+const allowDangerous = ref(false)
+const hidden = ref(true)
+
+onMounted(() => {
+  const maxRam = Math.min(1024 * 10, (appSettingsStore.systemHardware?.totalMemory ?? 0));
+  if ((value?.value ?? 0) > maxRam) {
+    allowDangerous.value = true;
+  }
+})
+
+function resetMax() {
+  if ((value?.value ?? 0) > maxRam.value) {
+    value.value = maxRam.value;
+  }
+}
+
+const maxRam = computed(() => {
+  return allowDangerous.value ? (appSettingsStore.systemHardware?.totalMemory ?? 0) : Math.min(1024 * 10, appSettingsStore.systemHardware?.totalMemory ?? 0);
+})
+
+const valueAsByteReadable = computed(() => {
+  return prettyByteFormat(Math.floor(parseInt((value.value ?? 0).toString()) * megabyteSize));
+});
+
+const valueAsPercentage = computed(() => {
+  const v = parseInt(value.value?.toString() ?? "0");
+  if (isNaN(v)) return 0;
+  if (v == 0) return 6;
+
+  return Math.min(Math.max(10, v / (maxRam.value ?? 0) * 100), 86);
+});
+</script>
+
 <template>
  <div class="ram-slider">
    <div class="label">
@@ -10,15 +60,10 @@
        <input
          type="range"
          class="w-full"
-         :value="value"
-         @input="v => input(v.target.value)"
-         @change="v => input(v.target.value)"
+         v-model="value"
          @focus="hidden = false"
          @blur="hidden = true"
-         @mouseup="() => {
-           hidden = true;
-           change(parseInt(value.toString()));
-         }"
+         @mouseup="hidden = true"
          @mousedown="hidden = false"
          :min="min"
          :max="maxRam"
@@ -33,86 +78,13 @@
      </div>
      
      <div class="value-input gap-2 flex items-center">
-       <ftb-input @blur="change(parseInt(value.toString()))" type="number" style="width: 120px" :value="value.toString()" @input="v => updateValue(parseInt(v))" @change="change(parseInt(value.toString()));" />
+       <InputNumber v-model="value" :min="0" :max="appSettingsStore.systemHardware?.totalMemory ?? 0" />
      </div>
    </div>
    
-   <ui-toggle v-if="maxRam <= settingsState.hardware.totalMemory" :align-right="true" label="Allow full ram allocation" v-model="allowDangerous" @input="resetMax" desc="It is recommended that in most cases that you stay below 10GB of RAM for a Minecraft instance. " />
+   <UiToggle v-if="maxRam <= (appSettingsStore.systemHardware?.totalMemory ?? 0)" :align-right="true" label="Allow full ram allocation" v-model="allowDangerous" @input="resetMax" desc="It is recommended that in most cases that you stay below 10GB of RAM for a Minecraft instance. " />
  </div>
 </template>
-
-<script lang="ts">
-import {Component, Emit, Prop, Vue} from 'vue-property-decorator';
-import {SettingsState} from '@/modules/settings/types';
-import {State} from 'vuex-class';
-import UiButton from '@/components/ui/UiButton.vue';
-import {megabyteSize, prettyByteFormat} from '@/utils';
-import UiToggle from '@/components/ui/UiToggle.vue';
-
-@Component({
-  components: {UiToggle, UiButton}
-})
-export default class RamSlider extends Vue {
-  @State('settings') public settingsState!: SettingsState;
-  
-  @Prop({default: 0}) min!: number;
-  @Prop({default: 0}) value!: number | string; // stored in megabytes.
-  @Emit() input(value: number) {}
-  @Emit() change(value: number) {}
-  
-  mounted() {
-    const maxRam = Math.min(1024 * 10, this.settingsState.hardware.totalMemory);
-    if (this.value > maxRam) {
-      this.allowDangerous = true;
-    }
-  }
-  
-  step = 16;
-  allowDangerous = false;
-  hidden = true;
-  
-  updateValue(value: number) {
-    if (isNaN(value)) {
-      this.input(this.min);
-      return;
-    }
-    
-    if (value < this.min) {
-      this.input(this.min);
-      return;
-    }
-    
-    if (value > this.settingsState.hardware.totalMemory) {
-      this.input(this.settingsState.hardware.totalMemory);
-      return;
-    }
-    
-    this.input(value);
-  }
-  
-  resetMax() {
-    if (this.value > this.maxRam) {
-      this.input(this.maxRam);
-    }
-  }
-  
-  get maxRam() {
-    return this.allowDangerous ? this.settingsState.hardware.totalMemory : Math.min(1024 * 10, this.settingsState.hardware.totalMemory);
-  }
-  
-  get valueAsByteReadable() {
-    return prettyByteFormat(Math.floor(parseInt(this.value.toString()) * megabyteSize));
-  }
-  
-  get valueAsPercentage() {
-    const v = parseInt(this.value?.toString() ?? "0");
-    if (isNaN(v)) return 0;
-    if (v == 0) return 6;
-    
-    return Math.min(Math.max(10, v / this.maxRam * 100), 86);
-  }
-}
-</script>
 
 <style lang="scss" scoped>
 .tooltip {

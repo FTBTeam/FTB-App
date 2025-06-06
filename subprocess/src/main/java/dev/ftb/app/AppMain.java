@@ -13,7 +13,6 @@ import dev.ftb.app.api.data.other.PingLauncherData;
 import dev.ftb.app.install.tasks.LocalCache;
 import dev.ftb.app.migration.MigrationsManager;
 import dev.ftb.app.os.OS;
-import dev.ftb.app.storage.CredentialStorage;
 import dev.ftb.app.storage.settings.Settings;
 import dev.ftb.app.task.LongRunningTaskManager;
 import dev.ftb.app.util.*;
@@ -168,12 +167,8 @@ public class AppMain {
         } else {
             LOGGER.info(isDevMode ? "Development mode" : "No PID args specified");
         }
-
-        // Set the API key if we have it
-        String apiKey = CredentialStorage.getInstance().get("modpacksChApiKey");
-        if (apiKey != null && !apiKey.isEmpty()) {
-            ModpacksChUtils.API_TOKEN = apiKey;
-        }
+        
+        ModpackApiUtils.loadPrivateToken();
 
         try {
             WebsocketServer.PortMode portMode;

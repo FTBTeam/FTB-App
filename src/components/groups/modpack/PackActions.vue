@@ -1,22 +1,115 @@
+<script lang="ts" setup>
+import DuplicateInstanceModal from '@/components/modals/actions/DuplicateInstanceModal.vue';
+import {sendMessage} from '@/core/websockets/websocketsApi';
+import {button, dialog, dialogsController} from '@/core/controllers/dialogsController';
+import {InstanceController} from '@/core/controllers/InstanceController';
+import {gobbleError} from '@/utils/helpers/asyncHelpers';
+import {RouterNames} from '@/router';
+import {SugaredInstanceJson} from '@/core/types/javaApi';
+import {createLogger} from '@/core/logger';
+import appPlatform from '@platform';
+import { computed, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { Modal } from '@/components/ui';
+import { useRunningInstancesStore } from '@/store/runningInstancesStore.ts';
+import {
+  faChevronRight,
+  faCog,
+  faCopy,
+  faEllipsisVertical,
+  faFolderOpen,
+  faPlay, faTrash,
+} from '@fortawesome/free-solid-svg-icons';
+
+const {
+  instance,
+  allowOffline = false,
+} = defineProps<{
+  instance: SugaredInstanceJson;
+  allowOffline: boolean;
+}>()
+
+const router = useRouter();
+const runningInstancesStore = useRunningInstancesStore();
+
+const emit = defineEmits<{
+  (event: 'playOffline'): void;
+  (event: 'openSettings'): void;
+}>()
+
+const logger = createLogger("PackActions.vue")
+const instanceFolders = ref<string[]>([]);
+const duplicateConfirm = ref(false);
+
+onMounted(() => {
+  sendMessage('getInstanceFolders', { uuid: instance.uuid })
+    .then((e) => (instanceFolders.value = e.folders))
+    .catch(e => logger.error("Failed to get instance folders", e));
+})
+
+async function openInstanceFolder(folder: string) {
+  logger.debug("Opening instance folder", folder)
+  try {
+    await appPlatform.io.openFinder(`${instance.path}/${folder}`)
+  } catch (e) {
+    logger.error("Failed to open instance folder", e);
+  }
+}
+
+function folderExists(path: string) {
+  if (path === '' || !instanceFolders.value.length) {
+    return false;
+  }
+
+  return instanceFolders.value.findIndex((e) => e === path) !== -1;
+}
+
+const isRunning = computed(() => runningInstancesStore.instances.some(e => e.uuid === instance.uuid))
+
+function deleteInstance() {
+  logger.debug("Asking user to confirm instance deletion", instance)
+  const dialogRef = dialogsController.createDialog(
+    dialog("Are you sure?")
+      .withContent(`Are you absolutely sure you want to delete \`${instance.name}\`! Doing this **WILL permanently** delete all mods, world saves, configurations, and all the rest... There is no way to recover this pack after deletion...`)
+      .withType("warning")
+      .withButton(button("Delete")
+        .withAction(async () => {
+          dialogRef.setWorking(true)
+          const controller = InstanceController.from(instance);
+          await controller.deleteInstance();
+          await gobbleError(() => router.push({
+            name: RouterNames.ROOT_LIBRARY
+          }));
+          dialogRef.close();
+        })
+        .withIcon(faTrash)
+        .withType("error")
+        .build())
+      .build()
+  )
+}
+</script>
+
 <template>
   <div class="pack-actions-holder">
     <div class="pack-actions" tabindex="0">
       <div class="icon">
-        <font-awesome-icon icon="ellipsis-vertical" />
+        <FontAwesomeIcon :icon="faEllipsisVertical" />
       </div>
 
       <ul class="actions">
         <li class="title">Tools</li>
-        <li v-if="allowOffline && !isRunning" @click="$emit('playOffline')">
-          <span><font-awesome-icon icon="play" /></span> Play Offline
+        <li v-if="allowOffline && !isRunning" @click="emit('playOffline')">
+          <span><FontAwesomeIcon :icon="faPlay" /></span> Play Offline
         </li>
-        <li @click="$emit('openSettings')">
-          <span><font-awesome-icon icon="cog" /></span>Settings
+        <li @click="emit('openSettings')">
+          <span><FontAwesomeIcon :icon="faCog" /></span>Settings
         </li>
         <li tabindex="1">
-          <span><font-awesome-icon icon="folder-open" /></span>Open...
+          <span><FontAwesomeIcon :icon="faFolderOpen" /></span>Open...
           <span class="submenu">
-            <font-awesome-icon icon="chevron-right" />
+            <FontAwesomeIcon :icon="faChevronRight" />
           </span>
           <ul>
             <li @click="openInstanceFolder('')">Instance folder</li>
@@ -33,16 +126,16 @@
           </ul>
         </li>
         <li @click="duplicateConfirm = true">
-          <span><font-awesome-icon icon="copy" /></span>Duplicate instance
+          <span><FontAwesomeIcon :icon="faCopy" /></span>Duplicate instance
         </li>
         <li class="title" v-if="!isRunning">Danger</li>
         <li @click="deleteInstance" v-if="!isRunning">
-          <span><font-awesome-icon icon="trash" /></span>Delete instance
+          <span><FontAwesomeIcon :icon="faTrash" /></span>Delete instance
         </li>
       </ul>
     </div>
     
-    <modal
+    <Modal
       :open="duplicateConfirm"
       :externalContents="true"
       @closed="duplicateConfirm = false"
@@ -55,98 +148,9 @@
         :instanceName="instance.name"
         :category="instance.category"
       />
-    </modal>
+    </Modal>
   </div>
 </template>
-
-<script lang="ts">
-import Component from 'vue-class-component';
-import Vue from 'vue';
-import {Prop} from 'vue-property-decorator';
-import DuplicateInstanceModal from '@/components/modals/actions/DuplicateInstanceModal.vue';
-import {sendMessage} from '@/core/websockets/websocketsApi';
-import {button, dialog, dialogsController} from '@/core/controllers/dialogsController';
-import {InstanceController} from '@/core/controllers/InstanceController';
-import {gobbleError} from '@/utils/helpers/asyncHelpers';
-import {RouterNames} from '@/router';
-import {SugaredInstanceJson} from '@/core/@types/javaApi';
-import {createLogger} from '@/core/logger';
-import {Getter, State} from 'vuex-class';
-import {AuthProfile} from '@/modules/core/core.types';
-import platform from '@/utils/interface/electron-overwolf';
-import {ns} from '@/core/state/appState';
-import {InstanceRunningData} from '@/core/state/misc/runningState';
-
-@Component({
-  components: {
-    DuplicateInstanceModal,
-  },
-})
-export default class PackActions extends Vue {
-  @Prop() instance!: SugaredInstanceJson;
-  @Prop({ default: false }) allowOffline!: boolean;
-  @Getter('getProfiles', { namespace: 'core' }) getProfiles!: AuthProfile[];
-
-  @State("instances", ns("v2/running")) public runningInstances!: InstanceRunningData[]
-  
-  private logger = createLogger("PackActions.vue")
-
-  instanceFolders: string[] = [];
-  duplicateConfirm = false;
-  
-  platform = platform;
-
-  mounted() {
-    sendMessage('getInstanceFolders', { uuid: this.instance.uuid })
-      .then((e) => (this.instanceFolders = e.folders))
-      .catch(e => this.logger.error("Failed to get instance folders", e));
-  }
-
-  async openInstanceFolder(folder: string) {
-    this.logger.debug("Opening instance folder", folder)
-    try {
-      await platform.get.io.openFinder(`${this.instance.path}/${folder}`)
-    } catch (e) {
-      this.logger.error("Failed to open instance folder", e);
-    }
-  }
-
-  folderExists(path: string) {
-    if (path === '' || !this.instanceFolders.length) {
-      return false;
-    }
-
-    return this.instanceFolders.findIndex((e) => e === path) !== -1;
-  }
-  
-  get isRunning() {
-    return this.runningInstances.some(e => e.uuid === this.instance.uuid);
-  }
-
-  public deleteInstance() {
-    this.logger.debug("Asking user to confirm instance deletion", this.instance)
-    const dialogRef = dialogsController.createDialog(
-      dialog("Are you sure?")
-        .withContent(`Are you absolutely sure you want to delete \`${this.instance.name}\`! Doing this **WILL permanently** delete all mods, world saves, configurations, and all the rest... There is no way to recover this pack after deletion...`)
-        .withType("warning")
-        .withButton(button("Delete")
-          .withAction(async () => {
-            dialogRef.setWorking(true)
-            const controller = InstanceController.from(this.instance);
-            await controller.deleteInstance();
-            await gobbleError(() => this.$router.push({
-              name: RouterNames.ROOT_LIBRARY
-            }));
-            dialogRef.close();
-          })
-          .withIcon("trash")
-          .withType("error")
-          .build())
-        .build()
-    )
-  }
-}
-</script>
 
 <style scoped lang="scss">
 .pack-actions-holder {

@@ -1,74 +1,5 @@
-<template>
-  <div class="mod-packs h-full">
-    <div class="page-spacing" v-if="!loading && instances.length > 0">
-      <header class="flex gap-4 mb-6 items-center">
-        <FTBSearchBar v-model="searchTerm" placeholder="Search" class="flex-1" />
-        
-        <selection2 v-if="Object.keys(groupedPacks).length > 1" icon="folder" direction="right" min-width="300" :options="groupByOptions" v-model="groupBy" aria-label="Sort categories" data-balloon-pos="down-right" />
-        <selection2 icon="sort" direction="right" min-width="300" :options="sortByOptions" v-model="sortBy" aria-label="Sort packs" data-balloon-pos="down-right" />
-        
-        <install-queue />
-      </header>
-      
-      <div class="categories">
-        <div class="category" v-for="(category, index) in groupedPacks" :key="`category-${index}`" :class="{'collapsed': collapsedGroups.includes(index)}">
-          <template v-if="category.length">
-            <header v-if="Object.keys(groupedPacks).length > 1">
-              <h2>{{ index }}</h2>
-              <span />
-              <div class="collapse" @click="collapseGroup(index)">
-                <font-awesome-icon icon="chevron-down" />
-              </div>
-            </header>
-            <div class="pack-card-grid" v-if="!collapsedGroups.includes(index)">
-              <template v-for="instance in category">
-                <pack-card2
-                  v-show="filteredInstance === null || filteredInstance.includes(instance.uuid)"
-                  :key="instance.uuid"
-                  :instance="instance"
-                />
-              </template>
-            </div>
-          </template>
-        </div>
-      </div>
-    </div>
-    
-    <loader v-else-if="loading" />
-    
-    <div class="no-packs" v-else>
-      <div class="message px-8 pt-20">
-        <h1 class="text-5xl font-bold mb-1">Library Empty</h1>
-        <p class="mb-8">
-          It looks like your library is empty, you can search for new modpacks to install or pick from our recommendations below.
-        </p>
-        <div class="flex gap-6 mb-8">
-          <router-link to="/browseModpacks">
-            <ui-button :wider="true" type="info" icon="search">Browse FTB Modpacks</ui-button>
-          </router-link>
-          <router-link :to="{ name: RouterNames.ROOT_BROWSE_PACKS, query: { provider: 'curseforge' } }">
-            <ui-button icon="search">Browse CurseForge Modpacks</ui-button>
-          </router-link>
-        </div>
-        
-        <div class="featured-packs pb-6">
-          <template v-if="!loadingFeatured && featuredPacksIds.length">
-            <h2 class="text-xl font-bold mb-3">Recommended Modpacks</h2>
-            <pack-preview v-for="packId in featuredPacksIds" :key="packId" :packId="packId" provider="modpacksch" />
-          </template>
-          <loader v-else-if="loadingFeatured" />
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
-<script lang="ts">
-import {Component, Vue, Watch} from 'vue-property-decorator';
-import FTBSearchBar from '@/components/ui/input/FTBSearchBar.vue';
-import {Action, Getter} from 'vuex-class';
-import {ns} from '@/core/state/appState';
-import {SugaredInstanceJson} from '@/core/@types/javaApi';
+<script lang="ts" setup>
+import {SugaredInstanceJson} from '@/core/types/javaApi';
 import PackCard2 from '@/components/groups/modpack/PackCard2.vue';
 import {containsIgnoreCase} from '@/utils/helpers/stringHelpers';
 import Loader from '@/components/ui/Loader.vue';
@@ -78,6 +9,21 @@ import UiButton from '@/components/ui/UiButton.vue';
 import InstallQueue from '@/components/groups/modpack/InstallQueue/InstallQueue.vue';
 import PackPreview from '@/components/groups/modpack/PackPreview.vue';
 import {RouterNames} from '@/router';
+import { useInstanceStore } from '@/store/instancesStore.ts';
+import { computed, onMounted, ref, watch } from 'vue';
+import { useModpackStore } from '@/store/modpackStore.ts';
+import { toggleBeforeAndAfter } from '@/utils/helpers/asyncHelpers.ts';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import {
+  faArrowDownAZ,
+  faArrowDownZA,
+  faChevronDown,
+  faFolder, faPlus,
+  faSearch,
+  faSort,
+} from '@fortawesome/free-solid-svg-icons';
+import { Input } from '@/components/ui';
+import {useGlobalStore} from "@/store/globalStore.ts";
 
 const groupOptions = [
   ['Category', 'category'],
@@ -96,190 +42,232 @@ function createOrderedOptions(options: string[][]): SelectionOptions {
     [`${label}`, value, 'Asc'],
     [`${label}`, `-${value}`, 'Des']
   ])
-  .map(([label, value, dir]) => ({label, value, badge: {color: '#008BF8', text: dir, icon: dir === "Asc" ? "arrow-down-a-z" : "arrow-down-z-a"}}))
+    .map(([label, value, dir]) => ({label, value, badge: {color: '#008BF8', text: dir, icon: dir === "Asc" ? faArrowDownAZ : faArrowDownZA}}))
 }
 
 const sortByOptions = createOrderedOptions(sortOptions)
 const groupByOptions = createOrderedOptions(groupOptions)
 
-@Component({
-  components: {
-    PackPreview,
-    InstallQueue,
-    UiButton,
-    Selection2,
-    Loader,
-    PackCard2,
-    FTBSearchBar,
-  },
+const instanceStore = useInstanceStore();
+const modpackStore = useModpackStore();
+const globalStore = useGlobalStore();
+
+const loadingFeatured = ref(false);
+const searchTerm = ref('');
+const groupBy = ref('category');
+const sortBy = ref('name');
+const collapsedGroups = ref<string[]>([]);
+
+onMounted(() => {
+  const libraryData = localStorage.getItem("library-data");
+  if (libraryData) {
+    const parsed = JSON.parse(libraryData);
+    if (parsed?.collapsedGroups) {
+      collapsedGroups.value = parsed.collapsedGroups;
+    }
+
+    if (parsed?.sortBy) {
+      sortBy.value = parsed.sortBy;
+    }
+
+    if (parsed?.groupBy) {
+      groupBy.value = parsed.groupBy;
+    }
+  }
 })
-export default class Library extends Vue {
-  @Getter('instances', ns("v2/instances")) instances!: SugaredInstanceJson[];
-  @Getter('isLoadingInstances', ns("v2/instances")) loading!: boolean;
 
-  @Getter("featuredPacks", ns("v2/modpacks")) featuredPacksIds!: number[];
-  @Action("getFeaturedPacks", ns("v2/modpacks")) getFeaturedPacks!: () => Promise<number[]>;
+watch(() => instanceStore.loading, async (newValue) => {
+  if (newValue) return;
+  if (instanceStore.instances.length !== 0) return;
+  
+  await toggleBeforeAndAfter(async () => await modpackStore.getFeaturedPacks(), v => loadingFeatured.value = v);
+})
 
-  RouterNames = RouterNames;
-  loadingFeatured = false;
-  
-  searchTerm: string = '';
-  
-  sortByOptions = sortByOptions;
-  groupByOptions = groupByOptions;
-  
-  groupBy = 'category';
-  sortBy = 'name';
-  
-  collapsedGroups: string[] = [];
-  
-  mounted() {
-    const libraryData = localStorage.getItem("library-data");
-    if (libraryData) {
-      const parsed = JSON.parse(libraryData);
-      if (parsed?.collapsedGroups) {
-        this.collapsedGroups = parsed.collapsedGroups;
-      }
-      
-      if (parsed?.sortBy) {
-        this.sortBy = parsed.sortBy;
-      }
-      
-      if (parsed?.groupBy) {
-        this.groupBy = parsed.groupBy;
-      }
-    }
-  }
-  
-  @Watch("loading")
-  async onLoadingChange() {
-    if (this.loading) return;
-    if (this.instances.length !== 0) return;
-    
-    this.loadingFeatured = true;
-    await this.getFeaturedPacks();
-    this.loadingFeatured = false;
+function collapseGroup(group: string) {
+  if (collapsedGroups.value.includes(group)) {
+    collapsedGroups.value = collapsedGroups.value.filter(e => e !== group);
+  } else {
+    collapsedGroups.value.push(group);
   }
 
-  collapseGroup(group: string) {
-    if (this.collapsedGroups.includes(group)) {
-      this.collapsedGroups = this.collapsedGroups.filter(e => e !== group);
-    } else {
-      this.collapsedGroups.push(group);
-    }
-    
-    localStorage.setItem("library-data", JSON.stringify({collapsedGroups: this.collapsedGroups, sortBy: this.sortBy, groupBy: this.groupBy}));
-  }
-  
-  get filteredInstance(): string[] | null {
-    if (this.searchTerm === '') {
-      return null;
-    }
-    
-    return this.instances
-      .filter(e => containsIgnoreCase(e.name, this.searchTerm))
-      .map(e => e.uuid);
+  localStorage.setItem("library-data", JSON.stringify({collapsedGroups: collapsedGroups.value, sortBy: sortBy.value, groupBy: groupBy.value}));
+}
+
+const filteredInstance = computed(() => {
+  if (searchTerm.value === '') {
+    return null;
   }
 
-  get groupedPacks(): Record<string, SugaredInstanceJson[]> {
-    const grouped: Record<string, SugaredInstanceJson[]> = {
-      "Pinned": [],
-    };
+  return instanceStore.instances
+    .filter(e => containsIgnoreCase(e.name, searchTerm.value))
+    .map(e => e.uuid);
+})
 
-    for (const instance of this.sortedInstances) {
-      let groupKey = '';
-      switch (this.groupBy.replace("-", "")) {
-        case 'category':
-          groupKey = instance.category;
-          break;
-        case 'modloader':
-          groupKey = resolveModloader(instance)
-          break;
-        case 'mcversion':
-          groupKey = instance.mcVersion;
-          break;
-        default:
-          groupKey = instance.category;
-          break;
-      }
-      
-      if (!grouped[groupKey]) {
-        grouped[groupKey] = [];
-      }
-      
-      if (instance.pinned) {
-        groupKey = "Pinned";
-      }
-      
-      grouped[groupKey].push(instance);
-    }
-    
-    const sortDirection = this.groupBy.includes("-") ? 'dec' : 'asc';
-        
-    // Modify the order of the group keys based on the sort direction
-    const groupKeys = Object.keys(grouped).sort((a, b) => {
-      // Pinned at the top
-      if (a === "Pinned") {
-        return -1;
-      }
-      
-      if (b === "Pinned") {
-        return 1;
-      }
-      
-      if (a === b) {
-        return 0;
-      }
-      
-      if (a > b) {
-        return sortDirection === 'asc' ? 1 : -1;
-      }
-      
-      return sortDirection === 'asc' ? -1 : 1;
-    });
-    
-    const sorted: Record<string, SugaredInstanceJson[]> = {};
-    for (const key of groupKeys) {
-      sorted[key] = grouped[key];
+const sortedInstances = computed(() => {
+  const sortDirection = sortBy.value.includes("-") ? 'dec' : 'asc';
+  const sortByKey = sortBy.value.includes("-") ? sortBy.value.split('-')[1] : sortBy.value;
+
+  const sortKey = instanceJsonKey(sortByKey);
+
+  return instanceStore.instances.sort((a, b) => {
+    if (a[sortKey] === b[sortKey]) {
+      return 0;
     }
 
-    return sorted;
-  }
-  
-  get sortedInstances() {
-    const sortDirection = this.sortBy.includes("-") ? 'dec' : 'asc';
-    const sortByKey = this.sortBy.includes("-") ? this.sortBy.split('-')[1] : this.sortBy;
-    
-    const sortKey = this.instanceJsonKey(sortByKey);
-    
-    return this.instances.sort((a, b) => {
-      if (a[sortKey] === b[sortKey]) {
-        return 0;
-      }
-      
-      if (a[sortKey] > b[sortKey]) {
-        return sortDirection === 'asc' ? 1 : -1;
-      }
-      return sortDirection === 'asc' ? -1 : 1;
-    });
-  }
-  
-  instanceJsonKey(sortKey: String): Partial<keyof SugaredInstanceJson> {
-    switch (sortKey) {
-      case "name": return "name";
-      case "lastPlayed": return "lastPlayed";
-      case "totalPlaytime": return "totalPlayTime";
-      default: return "name";
+    if (a[sortKey] > b[sortKey]) {
+      return sortDirection === 'asc' ? 1 : -1;
     }
+    
+    return sortDirection === 'asc' ? -1 : 1;
+  });
+});
+
+const groupedPacks = computed(() => {
+  const grouped: Record<string, SugaredInstanceJson[]> = {
+    "Pinned": [],
+  };
+
+  for (const instance of sortedInstances.value) {
+    let groupKey = '';
+    switch (groupBy.value.replace("-", "")) {
+      case 'category':
+        groupKey = instance.category;
+        break;
+      case 'modloader':
+        groupKey = resolveModloader(instance)
+        break;
+      case 'mcversion':
+        groupKey = instance.mcVersion;
+        break;
+      default:
+        groupKey = instance.category;
+        break;
+    }
+
+    if (!grouped[groupKey]) {
+      grouped[groupKey] = [];
+    }
+
+    if (instance.pinned) {
+      groupKey = "Pinned";
+    }
+
+    grouped[groupKey].push(instance);
   }
-  
-  @Watch("sortBy")
-  @Watch("groupBy")
-  onSortChange() {
-    localStorage.setItem("library-data", JSON.stringify({collapsedGroups: this.collapsedGroups, sortBy: this.sortBy, groupBy: this.groupBy}));
+
+  const sortDirection = groupBy.value.includes("-") ? 'dec' : 'asc';
+
+  // Modify the order of the group keys based on the sort direction
+  const groupKeys = Object.keys(grouped).sort((a, b) => {
+    // Pinned at the top
+    if (a === "Pinned") {
+      return -1;
+    }
+
+    if (b === "Pinned") {
+      return 1;
+    }
+
+    if (a === b) {
+      return 0;
+    }
+
+    if (a > b) {
+      return sortDirection === 'asc' ? 1 : -1;
+    }
+
+    return sortDirection === 'asc' ? -1 : 1;
+  });
+
+  const sorted: Record<string, SugaredInstanceJson[]> = {};
+  for (const key of groupKeys) {
+    sorted[key] = grouped[key];
+  }
+
+  return sorted;
+})
+
+function instanceJsonKey(sortKey: String): Partial<keyof SugaredInstanceJson> {
+  switch (sortKey) {
+    case "name": return "name";
+    case "lastPlayed": return "lastPlayed";
+    case "totalPlaytime": return "totalPlayTime";
+    default: return "name";
   }
 }
+
+function onSortChange() {
+  localStorage.setItem("library-data", JSON.stringify({collapsedGroups: collapsedGroups.value, sortBy: sortBy.value, groupBy: groupBy.value}));
+}
+
+watch(sortBy, onSortChange)
+watch(groupBy, onSortChange)
 </script>
+
+<template>
+  <div class="mod-packs h-full">
+    <div class="page-spacing" v-if="!instanceStore.loading && instanceStore.instances.length > 0">
+      <header class="flex gap-4 mb-6 items-center">
+        <Input :icon="faSearch" fill v-model="searchTerm" placeholder="Search" class="flex-1" />
+        
+        <selection2 v-if="Object.keys(groupedPacks).length > 1" :icon="faFolder" direction="right" :min-width="300" :options="groupByOptions" v-model="groupBy" aria-label="Sort categories" data-balloon-pos="down-right" />
+        <selection2 :icon="faSort" direction="right" :min-width="300" :options="sortByOptions" v-model="sortBy" aria-label="Sort packs" data-balloon-pos="down-right" />
+        
+        <InstallQueue />
+      </header>
+      
+      <div class="categories">
+        <div class="category" v-for="(category, index) in groupedPacks" :key="`category-${index}`" :class="{'collapsed': collapsedGroups.includes(index)}">
+          <template v-if="category.length">
+            <header v-if="Object.keys(groupedPacks).length > 1">
+              <h2>{{ index }}</h2>
+              <span />
+              <div class="collapse-icon" @click="collapseGroup(index)">
+                <FontAwesomeIcon :icon="faChevronDown" />
+              </div>
+            </header>
+            <div class="pack-card-grid" v-if="!collapsedGroups.includes(index)">
+              <template v-for="instance in category" :key="instance.uuid">
+                <pack-card2
+                  v-show="filteredInstance === null || filteredInstance.includes(instance.uuid)"
+                  :instance="instance"
+                />
+              </template>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+    
+    <loader v-else-if="instanceStore.loading" />
+    
+    <div class="no-packs" v-else>
+      <div class="message px-8 pt-20">
+        <h1 class="text-5xl font-bold mb-1">Library Empty</h1>
+        <p class="mb-8">
+          It looks like your library is empty, you can search for new modpacks to install or pick from our recommendations below.
+        </p>
+        <div class="flex gap-6 mb-8">
+          <UiButton type="success" :icon="faPlus" @click="globalStore.updateCreateInstanceVisibility(true)">Create your own</UiButton>
+          <router-link to="/browseModpacks">
+            <UiButton :wider="true" type="info" :icon="faSearch">Browse FTB Modpacks</UiButton>
+          </router-link>
+          <router-link :to="{ name: RouterNames.ROOT_BROWSE_PACKS, query: { provider: 'curseforge' } }">
+            <UiButton type="info" :icon="faSearch">Browse CurseForge Modpacks</UiButton>
+          </router-link>
+        </div>
+        
+        <div class="featured-packs pb-6">
+          <template v-if="!loadingFeatured && modpackStore.featuredPackIds.length">
+            <h2 class="text-xl font-bold mb-3">Recommended Modpacks</h2>
+            <pack-preview v-for="packId in modpackStore.featuredPackIds" :key="packId" :packId="packId" provider="modpacksch" />
+          </template>
+          <loader v-else-if="loadingFeatured" />
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
 
 <style lang="scss" scoped>
 .categories {
@@ -290,7 +278,7 @@ export default class Library extends Vue {
     
     &.collapsed {
       header {
-        .collapse {
+        .collapse-icon {
           svg {
             transform: rotateZ(180deg);
           }
@@ -317,9 +305,8 @@ export default class Library extends Vue {
         background-color: rgba(white, .2);
       }
       
-      .collapse {
+      .collapse-icon {
         cursor: pointer;
-        background-color: pink;
         padding: .18rem 1rem;
         border-radius: 3px;
         background-color: rgba(white, .1);
