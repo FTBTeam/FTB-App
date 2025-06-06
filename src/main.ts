@@ -21,18 +21,31 @@ import { createGtag } from 'vue-gtag';
 import {constants} from "@/core/constants.ts";
 
 /**
+ * Helper function for Google Analytics to transform the app URL (file:///.....) to a "real" url.
+ */
+function transformAppUrl(fullPath: string): string {
+  if (fullPath.startsWith('file:///')) {
+    const path = fullPath.split('index.html')[1] || '';
+    return `https://app.feed-the-beast.com/${path}`;
+  }
+  return fullPath;
+}
+
+/**
  * Setup Google Analytics, with page tracking.
  * @Docs: https://matteo-gabriele.gitbook.io/vue-gtag
  * */
 const gtag = constants.isDevelopment ? null : createGtag({
   tagId: 'G-EP6FWM6LG9',
   pageTracker: {
-    router, 
+    router,
+    template: (route) => ({
+      page_location: transformAppUrl(route.fullPath)
+    })
   },
   config: {
-    debug: true,
-    cookie_domain: 'none'
-  }
+    'cookie_domain': 'none'
+  },
 })
 
 
@@ -40,8 +53,6 @@ const gtag = constants.isDevelopment ? null : createGtag({
 dayjs.extend(relativeTime);
 
 const logger = createLogger("main.ts");
-logger.info(gtag ? "Google Analytics enabled" : "Google Analytics disabled");
-logger.info(JSON.stringify(gtag));
 
 logger.info("Starting app");
 logger.info("Constants", constants);
