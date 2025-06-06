@@ -49,7 +49,6 @@ linux:
   target:
     - dir
     - tar.gz
-    - AppImage
     - deb
     - rpm
   category: Game
