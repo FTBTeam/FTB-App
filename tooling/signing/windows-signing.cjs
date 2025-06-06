@@ -32,8 +32,25 @@ module.exports = async (config) => {
     `"${config.path}"`
   ]
 
-  const output = execSync(args.join(' ')).toString().trim();
-  if (!output.includes("Failed operations: 0")) {
-    throw new Error(`Failed to sign ${config.path}`);
+  let attempts = 0;
+  let lastError = null;
+  while (attempts < 3) {
+    try {
+      const output = execSync(args.join(' ')).toString().trim();
+      if (!output.includes("Failed operations: 0")) {
+        lastError = new Error(`Signing failed: ${output}`);
+      } else {
+        console.log(`Successfully signed: ${config.path}`);
+        break;
+      }
+    } catch (error) {
+      lastError = error;
+    }
+    
+    attempts ++;
+  }
+  
+  if (attempts === 3) {
+    throw new Error(`Failed to sign after 3 attempts: ${lastError.message}`);
   }
 }
