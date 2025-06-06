@@ -140,7 +140,7 @@ jobs:
           AZURE_KEY_VAULT_CERTIFICATE_NAME: ${{ secrets.AZURE_KEY_VAULT_CERTIFICATE_NAME }}
           AZURE_KEY_VAULT_TENANT_ID: ${{ secrets.AZURE_KEY_VAULT_TENANT_ID }}
         run: |
-          npm run build --publish always -w --x64
+          npm run build -- --publish always -w --x64
 
       # Mac build
       - name: Build frontend (Macos)
@@ -154,7 +154,7 @@ jobs:
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
         run: |
           node ./tooling/release/patchBuilderYaml.js
-          npm run build --publish always -m --x64 --arm64
+          npm run build -- --publish always -m --x64 --arm64
 
       # Linux build
       - name: Build frontend (Linux)
@@ -162,7 +162,7 @@ jobs:
         env:
           VITE_RUNTIME_PLATFORM: "electron"
         run: |
-          npm run build --publish always -l --x64 --arm64
+          npm run build -- --publish always -l --x64 --arm64
 
       # Upload time
       - name: Upload Mac artifacts
