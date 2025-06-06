@@ -23,12 +23,12 @@ import { constants } from "@/core/constants.ts";
 /**
  * Helper function for Google Analytics to transform the app URL (file:///.....) to a "real" url.
  */
-function transformAppUrl(path: string): string {
-  if (path.startsWith('file:///')) {
-    const path = path.split('index.html')[1] || '';
+function transformAppUrl(pathFull: string): string {
+  if (pathFull.startsWith('file:///')) {
+    const path = pathFull.split('index.html')[1] || '';
     return `https://app.feed-the-beast.com/${path}`;
   }
-  return path;
+  return pathFull;
 }
 
 /**
