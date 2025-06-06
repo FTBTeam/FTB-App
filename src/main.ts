@@ -30,6 +30,7 @@ const gtag = constants.isDevelopment ? null : createGtag({
     router, 
   },
   config: {
+    debug: true,
     cookie_domain: 'none'
   }
 })
