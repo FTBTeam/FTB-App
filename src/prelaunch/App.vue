@@ -23,11 +23,18 @@ const updateName = ref('Next');
 const checkingForJava = ref(false);
 const javaCheckStatus = ref('Checking for Java');
 
+const showBypassButton = ref(false); // Show the bypass button after 60 seconds
 const totalFailure = ref(false);
 
 onMounted(() => {
   log.log('Prelauncher mounted');
 
+  if (window.nodeUtils.os.isFlatPak()) {
+    log.info("Flatpak detected, skipping update check");
+    progressToJavaCheck({});
+    return;
+  }
+  
   window.ipcRenderer.on("updater:checking-for-update", onCheckingForUpdate)
   window.ipcRenderer.on('updater:download-progress', onDownloadProgress);
   window.ipcRenderer.on("updater:update-downloaded", onUpdateComplete);
@@ -41,6 +48,11 @@ onMounted(() => {
   nextTick(() => {
     window.ipcRenderer.send("prelaunch/im-ready")
   })
+
+  setTimeout(() => {
+    log.info("Giving up, showing bypass button");
+    showBypassButton.value = true;
+  }, 60_000); // Wait 60 seconds, then give up and show the bypass button
 })
 
 onUnmounted(() => {
@@ -89,12 +101,14 @@ function onJavaVerifyMessage(_: any, message: string) {
 }
 
 function onCheckingForUpdate(_: any) {
+  log.info("Checking for updates");
   checkingForUpdates.value = true;
   updating.value = false;
   updateProgress.value = 0;
 }
 
 function onUpdateComplete(_: any) {
+  log.info("Update complete");
   updating.value = false;
   checkingForUpdates.value = false;
   updateProgress.value = 0;
@@ -113,6 +127,7 @@ function onUpdateComplete(_: any) {
 }
 
 function onDownloadProgress(info: any) {
+  log.info("Download progress", info);
   const typedInfo = info as ProgressInfo;
   if (!updating.value) {
     updating.value = true;
@@ -123,6 +138,7 @@ function onDownloadProgress(info: any) {
 }
 
 function onUpdateAvailable(info: any) {
+  log.info("Update available", info);
   const typedInfo = info as BasicUpdateInfo;
   updating.value = true;
   checkingForUpdates.value = false;
@@ -130,6 +146,7 @@ function onUpdateAvailable(info: any) {
 }
 
 function progressToJavaCheck(_: any) {
+  log.info("No updates available, proceeding to Java check");
   updating.value = false;
   checkingForUpdates.value = false;
   updateProgress.value = 0;
@@ -175,7 +192,7 @@ async function attemptCheckJava() {
     <p v-else-if="updating">Updating to {{updateName}} ({{updateProgress}}%)</p>
     <p v-else>{{ javaCheckStatus }}</p>
 
-    <div id="bypass-button" class="hidden">
+    <div id="bypass-button" :class="{'hidden': !showBypassButton}" @click="checkForJava">
       Skip
     </div>
   </div>
