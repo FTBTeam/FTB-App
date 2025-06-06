@@ -35,15 +35,19 @@ const gtag = constants.isDevelopment ? null : createGtag({
   }
 })
 
+
 // Use the relative time module from dayjs
 dayjs.extend(relativeTime);
 
 const logger = createLogger("main.ts");
+logger.info(gtag ? "Google Analytics enabled" : "Google Analytics disabled");
+logger.info(JSON.stringify(gtag));
 
 logger.info("Starting app");
 logger.info("Constants", constants);
 
-const pinia = createPinia(); 
+const pinia = createPinia();
+logger.info("Creating pinia store");
 
 logger.info("Creating vue instance");
 
