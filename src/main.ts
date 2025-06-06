@@ -35,7 +35,9 @@ const gtag = constants.isDevelopment ? null : createGtag({
 dayjs.extend(relativeTime);
 
 const logger = createLogger("main.ts");
+
 logger.info("Starting app");
+logger.info("Constants", constants);
 
 const pinia = createPinia(); 
 

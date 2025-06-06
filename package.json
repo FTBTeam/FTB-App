@@ -14,12 +14,12 @@
   "description": "FTB Desktop App for downloading and managing Modpacks",
   "scripts": {
     "dev": "cross-env TARGET_PLATFORM=electron NODE_ENV=development vite",
-    "dev:ads": "cross-env SHOW_ADS=true pnpm run dev",
+    "dev:ads": "cross-env SHOW_ADS=true npm run dev",
     "build": "cross-env NODE_ENV=production vue-tsc && cross-env NODE_ENV=production vite build && ow-electron-builder --config ./electron-builder.yml",
-    "build:bin:all:64": "pnpm run build -wl --x64",
-    "build:bin:all:arm": "pnpm run build -l --arm64",
-    "build:bin:mac:64": "pnpm run build -m --x64",
-    "build:bin:mac:arm": "pnpm run build -m --arm64",
+    "build:bin:all:64": "npm run build -wl --x64",
+    "build:bin:all:arm": "npm run build -l --arm64",
+    "build:bin:mac:64": "npm run build -m --x64",
+    "build:bin:mac:arm": "npm run build -m --arm64",
     "gen:license": "license-checker --excludePrivatePackages --json --production > licenses.json",
     "overwolf:dev": "node tooling/overwolf/preinit.js && cross-env TARGET_PLATFORM=overwolf cross-env NODE_ENV=development vue-cli-service ow:electron:serve",
     "overwolf:build": "cross-env TARGET_PLATFORM=overwolf NODE_ENV=production vue-tsc && cross-env NODE_ENV=production vite build --mode overwolf",
@@ -94,25 +94,5 @@
     "vitest": "^3.1.1",
     "vue-tsc": "^2.0.26",
     "yaml": "^2.7.1"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@fortawesome/fontawesome-common-types",
-      "@fortawesome/fontawesome-svg-core",
-      "@fortawesome/free-brands-svg-icons",
-      "@fortawesome/free-regular-svg-icons",
-      "@fortawesome/free-solid-svg-icons",
-      "@overwolf/ow-cli",
-      "@overwolf/ow-electron",
-      "@parcel/watcher",
-      "@tailwindcss/oxide",
-      "core-js",
-      "deasync",
-      "electron",
-      "esbuild",
-      "fsevents",
-      "utf-8-validate",
-      "yorkie"
-    ]
   }
 }

@@ -124,13 +124,10 @@ jobs:
           name: packageJson
           path: .
 
-      # Setup the PNPM env for all the next steps
-      - name: Setup PNPM Env
+      - name: Setup Env
         run: |
-          npm install --global pnpm@9.15.0 || true
-          pnpm config set store-dir .pnpm-store
-          pnpm install --no-frozen-lockfile
-          pnpm gen:license
+          npm install --no-frozen-lockfile
+          npm run gen:license
 
       # Windows build
       - name: Build frontend (Windows)
@@ -143,7 +140,7 @@ jobs:
           AZURE_KEY_VAULT_CERTIFICATE_NAME: ${{ secrets.AZURE_KEY_VAULT_CERTIFICATE_NAME }}
           AZURE_KEY_VAULT_TENANT_ID: ${{ secrets.AZURE_KEY_VAULT_TENANT_ID }}
         run: |
-          pnpm build --publish always -w --x64
+          npm run build --publish always -w --x64
 
       # Mac build
       - name: Build frontend (Macos)
@@ -157,7 +154,7 @@ jobs:
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
         run: |
           node ./tooling/release/patchBuilderYaml.js
-          pnpm build --publish always -m --x64 --arm64
+          npm run build --publish always -m --x64 --arm64
 
       # Linux build
       - name: Build frontend (Linux)
@@ -165,7 +162,7 @@ jobs:
         env:
           VITE_RUNTIME_PLATFORM: "electron"
         run: |
-          pnpm build --publish always -l --x64 --arm64
+          npm run build --publish always -l --x64 --arm64
 
       # Upload time
       - name: Upload Mac artifacts
@@ -228,15 +225,13 @@ jobs:
         run: |
           cp subprocess/build/libs/meta.json overwolf/
           cp subprocess/build/libs/java-licenses.json overwolf/
-          npm install --global pnpm@9.12.3 || true
-          pnpm config set store-dir .pnpm-store
-          pnpm install --no-frozen-lockfile
-          pnpm gen:license
+          npm run install --no-frozen-lockfile
+          npm run gen:license
           node tooling/overwolf/patchManifest.js
-          pnpm overwolf:build
+          npm run overwolf:build
           node tooling/overwolf/packageOpk.js
           echo "Signing OPK.."
-          pnpm ow opk sign -o overwolf/signed.opk overwolf/*.opk
+          npm run ow opk sign -o overwolf/signed.opk overwolf/*.opk
       - name: Upload Overwolf artifact
         uses: actions/upload-artifact@v4
         with:
@@ -298,7 +293,5 @@ jobs:
           OW_CLI_API_KEY: ${{ secrets.OW_CLI_API_KEY }}
           OW_CLI_EMAIL: ${{ secrets.OW_CLI_EMAIL }}
         run: |
-          npm install --global pnpm@9.12.3 || true
-          pnpm config set store-dir .pnpm-store
-          pnpm install --no-frozen-lockfile
-          pnpm ow opk upload -w true overwolf/signed.opk
+          npm install --no-frozen-lockfile
+          npm ow opk upload -w true overwolf/signed.opk
