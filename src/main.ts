@@ -18,7 +18,7 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 import { createLogger } from '@/core/logger';
 import { initStateProcessor } from '@/core/controllers/runningStateProcessor.ts';
 import { createGtag } from 'vue-gtag';
-import {constants} from "@/core/constants.ts";
+import { constants } from "@/core/constants.ts";
 
 /**
  * Helper function for Google Analytics to transform the app URL (file:///.....) to a "real" url.
@@ -39,8 +39,8 @@ const gtag = constants.isDevelopment ? null : createGtag({
   tagId: 'G-EP6FWM6LG9',
   pageTracker: {
     router,
-    template: (route) => ({
-      page_location: transformAppUrl(route.fullPath)
+    template: () => ({
+      page_location: transformAppUrl(window.location.href)
     })
   },
   config: {
