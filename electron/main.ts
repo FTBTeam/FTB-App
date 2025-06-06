@@ -84,8 +84,9 @@ autoUpdater.on('download-progress', (progress) => LogAndEmit.create('updater:dow
   .execute());
 
 autoUpdater.on('update-downloaded', (event) => {
-  log.debug("Update downloaded", event)
-  ipcMain.emit('updater:update-downloaded');
+  LogAndEmit.create('updater:download-progress')
+    .meta(event)
+    .execute()
 });
 
 ipcMain.on("updater:download-update", () => {

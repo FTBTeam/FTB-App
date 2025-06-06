@@ -127,7 +127,7 @@ function onUpdateComplete(_: any) {
   }, 1000);
 }
 
-function onDownloadProgress(info: any) {
+function onDownloadProgress(_: any, info: any) {
   log.info("Download progress", info);
   const typedInfo = info as ProgressInfo;
   if (!updating.value) {
@@ -138,7 +138,7 @@ function onDownloadProgress(info: any) {
   updateProgress.value = typedInfo.percent
 }
 
-function onUpdateAvailable(version: any) {
+function onUpdateAvailable(_: any, version: any) {
   log.info("Update available", version);
   updating.value = true;
   checkingForUpdates.value = false;
