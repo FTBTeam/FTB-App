@@ -507,7 +507,6 @@ class LogAndEmit {
   private readonly eventName: string;
   private _args: any[] = [];
   private _meta: any | null = {};
-  private _sendMetaAsArgs: boolean = false;
   
   private constructor(name: string) {
     this.eventName = name;
