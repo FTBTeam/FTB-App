@@ -29,6 +29,10 @@ const gtag = constants.isDevelopment ? null : createGtag({
   pageTracker: {
     router, 
   },
+  config: {
+    debug: true,
+    cookie_domain: 'none'
+  }
 })
 
 // Use the relative time module from dayjs

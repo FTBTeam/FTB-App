@@ -263,7 +263,14 @@ jobs:
       - name: Upload
         shell: bash
         run: |
+          curl -L https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -o /usr/local/bin/yq
+          chmod +x /usr/local/bin/yq
+          
           ls -la release
+          
+          # Create .json file variants for each .yml file
+          find release/*.yml -exec sh -c 'yq eval -o=json {} > ${1%.yml}.json' _ {} \;
+          
           b2 authorize-account ${{ secrets.AWS_ACCESS_KEY_ID }} ${{ secrets.AWS_SECRET_ACCESS_KEY }} > /dev/null 2>&1
           b2 sync --replace-newer --no-progress release b2://${{ secrets.PUBLISH_BUCKET }}/app
 
