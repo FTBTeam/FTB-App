@@ -23,12 +23,12 @@ import { constants } from "@/core/constants.ts";
 /**
  * Helper function for Google Analytics to transform the app URL (file:///.....) to a "real" url.
  */
-function transformAppUrl(fullPath: string): string {
-  if (fullPath.startsWith('file:///')) {
-    const path = fullPath.split('index.html')[1] || '';
+function transformAppUrl(path: string): string {
+  if (path.startsWith('file:///')) {
+    const path = path.split('index.html')[1] || '';
     return `https://app.feed-the-beast.com/${path}`;
   }
-  return fullPath;
+  return path;
 }
 
 /**
@@ -40,7 +40,9 @@ const gtag = constants.isDevelopment ? null : createGtag({
   pageTracker: {
     router,
     template: () => ({
-      page_location: transformAppUrl(window.location.href)
+      page_title: router.currentRoute.value.name?.toString(),
+      page_path: router.currentRoute.value.path,
+      page_location: transformAppUrl(window.location.href)      
     })
   },
   config: {
