@@ -63,6 +63,9 @@ export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
 
+autoUpdater.allowDowngrade = true;
+autoUpdater.channel = loadChannel();
+
 autoUpdater.on('checking-for-update', () => logAndEmit('updater:checking-for-update'));
 autoUpdater.on("update-cancelled", (info) => logAndEmit('updater:update-cancelled', info));
 autoUpdater.on('update-available', (info) => logAndEmit('updater:update-available', info));
@@ -73,11 +76,11 @@ autoUpdater.on('update-downloaded', (event) => {
   log.debug("Update downloaded", event)
   ipcMain.emit('updater:update-downloaded');
 });
+ipcMain.on("updater:download-update", () => {
+  autoUpdater.downloadUpdate().catch((e) => log.error("Failed to download update", e));
+})
 
 log.debug('App home is', appHome)
-
-autoUpdater.allowDowngrade = true;
-autoUpdater.channel = loadChannel();
 
 let subprocess: ChildProcess | null = null;
 export let win: BrowserWindow | null;
@@ -161,7 +164,9 @@ ipcMain.on("prelaunch/im-ready", async () => {
     return;
   }
   
+  log.info("Prelaunch window is ready, checking for updates");
   autoUpdater.checkForUpdates()
+    .catch(e => log.error("Failed to check for updates", e));
 });
 
 async function createWindow() {

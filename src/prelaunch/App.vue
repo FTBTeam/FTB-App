@@ -69,6 +69,7 @@ onUnmounted(() => {
 })
 
 async function checkForJava() {
+  log.info("Checking for Java");
   if (checkingForJava.value) {
     return;
   }
@@ -143,6 +144,9 @@ function onUpdateAvailable(info: any) {
   updating.value = true;
   checkingForUpdates.value = false;
   updateName.value = typedInfo.version;
+  
+  // Start the download
+  window.ipcRenderer.send("updater:download-update", typedInfo);
 }
 
 function progressToJavaCheck(_: any) {
@@ -192,7 +196,7 @@ async function attemptCheckJava() {
     <p v-else-if="updating">Updating to {{updateName}} ({{updateProgress}}%)</p>
     <p v-else>{{ javaCheckStatus }}</p>
 
-    <div id="bypass-button" :class="{'hidden': !showBypassButton}" @click="checkForJava">
+    <div id="bypass-button" :class="{'hidden': !showBypassButton}" @click="() => checkForJava()">
       Skip
     </div>
   </div>
