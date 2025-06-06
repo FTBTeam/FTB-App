@@ -506,7 +506,7 @@ export function updateApp(source: string) {
 class LogAndEmit {
   private readonly eventName: string;
   private _args: any[] = [];
-  private _meta: any | null = null;
+  private _meta: any | null = {};
   private _sendMetaAsArgs: boolean = false;
   
   private constructor(name: string) {
@@ -527,11 +527,6 @@ class LogAndEmit {
     return this;
   }
   
-  public sendMetaAsArgs() {
-    this._sendMetaAsArgs = true;
-    return this;
-  }
-  
   public execute() {
     log.debug("Emitting event", this.eventName, this._args, this._meta);
     if (!prelaunchWindow && !win) {
@@ -545,6 +540,6 @@ class LogAndEmit {
       return;
     }
     
-    target.webContents.send(this.eventName, ...({...this._args, ...(this._sendMetaAsArgs ? this._meta : {})}));
+    target.webContents.send(this.eventName, this._args);
   }
 }
