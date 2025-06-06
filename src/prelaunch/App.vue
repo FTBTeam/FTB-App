@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { nextTick, onMounted, onUnmounted, ref } from 'vue';
-import { ProgressInfo, BasicUpdateInfo } from '@/prelaunch/app';
+import { ProgressInfo } from '@/prelaunch/app';
 import log from 'electron-log/renderer'
 
 /**
@@ -138,15 +138,14 @@ function onDownloadProgress(info: any) {
   updateProgress.value = typedInfo.percent
 }
 
-function onUpdateAvailable(info: any) {
-  log.info("Update available", info);
-  const typedInfo = info as BasicUpdateInfo;
+function onUpdateAvailable(version: any) {
+  log.info("Update available", version);
   updating.value = true;
   checkingForUpdates.value = false;
-  updateName.value = typedInfo.version;
+  updateName.value = version;
   
-  // Start the download
-  window.ipcRenderer.send("updater:download-update", typedInfo);
+  // Start the download (Just jump start it if needed)
+  window.ipcRenderer.send("updater:download-update");
 }
 
 function progressToJavaCheck(_: any) {

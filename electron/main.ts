@@ -63,22 +63,35 @@ export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
 
+//#region AutoUpdater Setup
 autoUpdater.allowDowngrade = true;
 autoUpdater.channel = loadChannel();
 
-autoUpdater.on('checking-for-update', () => logAndEmit('updater:checking-for-update'));
-autoUpdater.on("update-cancelled", (info) => logAndEmit('updater:update-cancelled', info));
-autoUpdater.on('update-available', (info) => logAndEmit('updater:update-available', info));
-autoUpdater.on('update-not-available', (info) => logAndEmit('updater:update-not-available', info));
-autoUpdater.on('error', (error, message) => logAndEmit('updater:error', JSON.stringify(error), message));
-autoUpdater.on('download-progress', (progress) => logAndEmit('updater:download-progress', progress));
+autoUpdater.on('checking-for-update', () => LogAndEmit.create('updater:checking-for-update').execute());
+autoUpdater.on("update-cancelled", (info) => LogAndEmit.create('updater:update-cancelled').meta(info).execute());
+autoUpdater.on('update-available', (info) => LogAndEmit.create('updater:update-available').meta(info).args(info.version).execute());
+autoUpdater.on('update-not-available', (info) => LogAndEmit.create('updater:update-not-available').meta(info).execute());
+autoUpdater.on('error', (error, message) => LogAndEmit.create('updater:error').meta({error: error, message: message}).execute());
+autoUpdater.on('download-progress', (progress) => LogAndEmit.create('updater:download-progress')
+  .meta(process)
+  .args({
+    total: progress.total,
+    delta: progress.delta,
+    transferred: progress.transferred,
+    percent: progress.percent,
+    bytesPerSecond: progress.bytesPerSecond
+  })
+  .execute());
+
 autoUpdater.on('update-downloaded', (event) => {
   log.debug("Update downloaded", event)
   ipcMain.emit('updater:update-downloaded');
 });
+
 ipcMain.on("updater:download-update", () => {
   autoUpdater.downloadUpdate().catch((e) => log.error("Failed to download update", e));
 })
+//#endregion
 
 log.debug('App home is', appHome)
 
@@ -160,7 +173,7 @@ async function createPreLaunchWindow() {
 
 ipcMain.on("prelaunch/im-ready", async () => {
   if (VITE_DEV_SERVER_URL) {
-    logAndEmit("updater:update-not-available", "No updates available as we are in dev mode")
+    LogAndEmit.create("updater:update-not-available").meta("No updates available as we are in dev mode").execute()
     return;
   }
   
@@ -449,17 +462,6 @@ ipcMain.handle("startSubprocess", async (_, args) => {
   })
 });
 
-function logAndEmit(event: string, ...args: any[]) {
-  log.debug("Emitting downloader event", event, args)
-  if (prelaunchWindow) {
-    prelaunchWindow.webContents.send(event, ...args);
-  }
-  
-  if (win) {
-    win.webContents.send(event, ...args);
-  }
-}
-
 function loadChannel() {
   try {
     const channelFile = path.join(appHome, 'storage', 'electron-settings.json');
@@ -499,4 +501,50 @@ export function updateApp(source: string) {
 
   log.debug("Quitting app")
   autoUpdater.quitAndInstall();
+}
+
+class LogAndEmit {
+  private readonly eventName: string;
+  private _args: any[] = [];
+  private _meta: any | null = null;
+  private _sendMetaAsArgs: boolean = false;
+  
+  private constructor(name: string) {
+    this.eventName = name;
+  }
+  
+  public static create(name: string) {
+    return new LogAndEmit(name);
+  }
+  
+  public args(...args: any[]) {
+    this._args = args;
+    return this;
+  }
+  
+  public meta(meta: any) {
+    this._meta = meta;
+    return this;
+  }
+  
+  public sendMetaAsArgs() {
+    this._sendMetaAsArgs = true;
+    return this;
+  }
+  
+  public execute() {
+    log.debug("Emitting event", this.eventName, this._args, this._meta);
+    if (!prelaunchWindow && !win) {
+      log.warn("No window to send event to, skipping", this.eventName);
+      return;
+    }
+    
+    const target = prelaunchWindow ? prelaunchWindow : win;
+    if (!target) {
+      log.warn("No target window to send event to, skipping", this.eventName);
+      return;
+    }
+    
+    target.webContents.send(this.eventName, ...({...this._args, ...(this._sendMetaAsArgs ? this._meta : {})}));
+  }
 }
