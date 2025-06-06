@@ -59,7 +59,7 @@ function selectAndLoad(id?: number | string | null) {
   
   loading.value = true;
   modpackApi.modpacks.getChangelog(modpack.id, resolvedVersion.id, modpack.provider === "modpacks.ch" ? "modpacksch" : "curseforge")
-    .then(async data => changelogData.value = data?.content ?? await marked.parse(data?.content ?? ""))
+    .then(async data => changelogData.value = await marked.parse(data?.content ?? ""))
     .catch(e => alertController.error("Failed to load changelog", e))
     .finally(() => loading.value = false)
 }

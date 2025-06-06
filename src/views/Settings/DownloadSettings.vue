@@ -21,7 +21,6 @@ onMounted(() => {
 })
 
 function saveMutated() {
-  console.log(localSettings.value)
   appSettingsStore.saveSettings(localSettings.value);
 }
 </script>

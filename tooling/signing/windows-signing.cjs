@@ -1,4 +1,4 @@
-const {spawn} = require("child_process");
+const {execSync} = require("child_process");
 
 const requiredEnv = [
   "AZURE_KEY_VAULT_URL",
@@ -21,7 +21,7 @@ module.exports = async (config) => {
   }
 
   const args = [
-    'sign',
+    'azuresigntool', 'sign',
     '-kvu', process.env.AZURE_KEY_VAULT_URL,
     '-kvi', process.env.AZURE_KEY_VAULT_CLIENT_ID,
     '-kvs', process.env.AZURE_KEY_VAULT_CLIENT_SECRET,
@@ -32,58 +32,8 @@ module.exports = async (config) => {
     `"${config.path}"`
   ]
 
-  let attempts = 0;
-  let lastError = null;
-  while (attempts < 3) {
-    try {
-      const { stdout, stderr } = await runCommand('azuresigntool', args, { shell: true });
-      
-      if (!stdout.includes("Failed operations: 0")) {
-        lastError = new Error(`Signing failed: ${stdout} ${stderr}`);
-      } else {
-        console.log(`Successfully signed: ${config.path}`);
-        break;
-      }
-    } catch (error) {
-      lastError = error;
-    }
-    
-    attempts ++;
+  const output = execSync(args.join(' ')).toString().trim();
+  if (!output.includes("Failed operations: 0")) {
+    throw new Error(`Failed to sign ${config.path}`);
   }
-  
-  if (attempts === 3) {
-    throw new Error(`Failed to sign after 3 attempts: ${lastError.message}`);
-  }
-}
-
-function runCommand(command, args, options = {}) {
-  return new Promise((resolve, reject) => {
-    const proc = spawn(command, args, {
-      shell: true, // optional: lets you pass the full command as a string, but be cautious
-      ...options
-    });
-
-    let stdout = '';
-    let stderr = '';
-
-    proc.stdout.on('data', (data) => {
-      stdout += data.toString();
-    });
-
-    proc.stderr.on('data', (data) => {
-      stderr += data.toString();
-    });
-
-    proc.on('close', (code) => {
-      if (code === 0) {
-        resolve({ stdout, stderr });
-      } else {
-        reject(new Error(`Command failed with code ${code}\nSTDOUT: ${stdout}\nSTDERR: ${stderr}`));
-      }
-    });
-
-    proc.on('error', (err) => {
-      reject(err);
-    });
-  });
 }

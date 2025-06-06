@@ -44,6 +44,8 @@
     if (newValue === null) {
       loading.value = true;
       modpack.value = null;
+      tab.value = "overview";
+      showInstallModal.value = false;
       return;
     }
     

@@ -44,7 +44,6 @@ const request = computed(() => {
 })
 
 const status = computed(() => {
-  console.log(entry);
   if (isInstall) {
     return entry as InstallStatus
   }

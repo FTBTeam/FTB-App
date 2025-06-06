@@ -87,7 +87,6 @@ onMounted(async () => {
 
     const provider = apiPack.provider === "modpacks.ch" ? "modpack" : "curseforge";
     if (!packBlacklist.includes(apiPack.id)) {
-      console.log(packBlacklist, apiPack.id)
       const mods = await toggleBeforeAndAfter(
         () => JavaFetch.modpacksCh(`${provider}/${apiPack.id}/${latestVersion.id}/mods`).execute(),
         s => modsLoading.value = s
@@ -145,7 +144,6 @@ function onModUpdateEvent(data: BaseData & any) {
 
   if (data.type === "instanceAllModRichData") {
     const typedData = data as AllRichModData;
-    console.log(data)
     for (const richDataContainer of typedData.richModData) {
       const { file, richData } = richDataContainer;
       if (!richData) {

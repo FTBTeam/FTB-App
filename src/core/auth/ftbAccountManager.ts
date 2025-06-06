@@ -46,7 +46,7 @@ export class FtbAccountManager {
     }
     
     this.refreshInterval = setInterval(() => {
-      logger.info("Checking if token needs refreshing token in background");
+      logger.info("Checking if token needs refreshing in background");
       this.refreshToken().catch((e) => {
         logger.error("Failed to refresh token", e);
       });
