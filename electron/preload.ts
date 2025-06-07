@@ -44,7 +44,16 @@ const nodeUtils = {
   os: {
     platform: os.platform,
     homedir: os.homedir,
-    arch: os.arch
+    arch: os.arch,
+    isFlatPak: () => {
+      if (os.platform() !== "linux") {
+        return false;
+      }
+      
+      return (
+        !!process.env.FLATPAK_SANDBOX_DIR || fs.existsSync("/.flatpak-info")
+      );
+    }
   },
   buffer: {
     from: Buffer.from,

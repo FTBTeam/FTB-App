@@ -33,14 +33,13 @@ The FTB App is built using Electron and Vue(2) and is written in TypeScript, sty
 ### Prerequisites
 
 - Node.js
-- PNPM (We require PNPM to be used for package management)
 
 ### Getting Started
 
 1. Clone the repository
-2. Run `pnpm install` to install the dependencies
-3. Run `pnpm run dev` to start the development server
-4. Run `pnpm run build` to build the app (Please note this is not required for development)
+2. Run `npm install` to install the dependencies
+3. Run `npm run dev` to start the development server
+4. Run `npm run build` to build the app (Please note this is not required for development)
 
 ### Java
 

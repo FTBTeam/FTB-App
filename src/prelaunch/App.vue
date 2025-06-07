@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { nextTick, onMounted, onUnmounted, ref } from 'vue';
-import { ProgressInfo, BasicUpdateInfo } from '@/prelaunch/app';
+import { ProgressInfo } from '@/prelaunch/app';
 import log from 'electron-log/renderer'
 
 /**
@@ -23,11 +23,18 @@ const updateName = ref('Next');
 const checkingForJava = ref(false);
 const javaCheckStatus = ref('Checking for Java');
 
+const showBypassButton = ref(false); // Show the bypass button after 60 seconds
 const totalFailure = ref(false);
 
 onMounted(() => {
   log.log('Prelauncher mounted');
 
+  if (window.nodeUtils.os.isFlatPak()) {
+    log.info("Flatpak detected, skipping update check");
+    progressToJavaCheck({});
+    return;
+  }
+  
   window.ipcRenderer.on("updater:checking-for-update", onCheckingForUpdate)
   window.ipcRenderer.on('updater:download-progress', onDownloadProgress);
   window.ipcRenderer.on("updater:update-downloaded", onUpdateComplete);
@@ -41,6 +48,15 @@ onMounted(() => {
   nextTick(() => {
     window.ipcRenderer.send("prelaunch/im-ready")
   })
+
+  setTimeout(() => {
+    if (!checkingForUpdates.value) {
+      return; // No bypass if we're done checking for updates
+    }
+    
+    log.info("Giving up, showing bypass button");
+    showBypassButton.value = true;
+  }, 60_000); // Wait 60 seconds, then give up and show the bypass button
 })
 
 onUnmounted(() => {
@@ -57,6 +73,7 @@ onUnmounted(() => {
 })
 
 async function checkForJava() {
+  log.info("Checking for Java");
   if (checkingForJava.value) {
     return;
   }
@@ -89,16 +106,17 @@ function onJavaVerifyMessage(_: any, message: string) {
 }
 
 function onCheckingForUpdate(_: any) {
+  log.info("Checking for updates");
   checkingForUpdates.value = true;
   updating.value = false;
   updateProgress.value = 0;
 }
 
 function onUpdateComplete(_: any) {
+  log.info("Update complete");
   updating.value = false;
   checkingForUpdates.value = false;
   updateProgress.value = 0;
-  log.log('Update complete');
   
   let secondsPassed = 0;
   const interval = setInterval(() => {
@@ -106,13 +124,14 @@ function onUpdateComplete(_: any) {
     restartCountdown.value = 5 - secondsPassed;
     
     if (secondsPassed >= 5) {
-      clearInterval(interval);
       window.ipcRenderer.send('action/app/update');
+      clearInterval(interval);
     }
   }, 1000);
 }
 
-function onDownloadProgress(info: any) {
+function onDownloadProgress(_: any, info: any) {
+  log.info("Download progress", info);
   const typedInfo = info as ProgressInfo;
   if (!updating.value) {
     updating.value = true;
@@ -122,14 +141,18 @@ function onDownloadProgress(info: any) {
   updateProgress.value = typedInfo.percent
 }
 
-function onUpdateAvailable(info: any) {
-  const typedInfo = info as BasicUpdateInfo;
+function onUpdateAvailable(_: any, version: any) {
+  log.info("Update available", version);
   updating.value = true;
   checkingForUpdates.value = false;
-  updateName.value = typedInfo.version;
+  updateName.value = version;
+  
+  // Start the download (Just jump start it if needed)
+  window.ipcRenderer.send("updater:download-update");
 }
 
 function progressToJavaCheck(_: any) {
+  log.info("No updates available, proceeding to Java check");
   updating.value = false;
   checkingForUpdates.value = false;
   updateProgress.value = 0;
@@ -175,7 +198,7 @@ async function attemptCheckJava() {
     <p v-else-if="updating">Updating to {{updateName}} ({{updateProgress}}%)</p>
     <p v-else>{{ javaCheckStatus }}</p>
 
-    <div id="bypass-button" class="hidden">
+    <div id="bypass-button" :class="{'hidden': !showBypassButton}" @click="() => checkForJava()">
       Skip
     </div>
   </div>

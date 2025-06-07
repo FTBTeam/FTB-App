@@ -89,17 +89,19 @@ public class MicrosoftOAuthProcess {
     
     public static Result<MinecraftProfileData, ErrorWithCode> checkEntitlementsAndGetProfile(String minecraftAccessToken) {
         var entitlements = MicrosoftRequests.queryEntitlements(minecraftAccessToken);
-        if (entitlements.isErr()) {
-            return Result.err(entitlements.unwrapErr().extendMessageIfRequestError("Failed to query entitlements"));
-        }
+        var failedToQueryEntitlements = entitlements.isErr();
 
         // Validate the entitlements
-        var hasGame = validateEntitlements(entitlements.unwrap());
+        var hasGame = entitlements.isOk() && validateEntitlements(entitlements.unwrap());
         var profile = MicrosoftRequests.queryProfile(minecraftAccessToken);
         
         if (profile.isErr()) {
             // Default to an entitlement error if we don't have the game and the profile request failed
             if (!hasGame) {
+                if (failedToQueryEntitlements) {
+                    return Result.err(entitlements.unwrapErr().extendMessageIfRequestError("Failed to query entitlements"));
+                }
+                
                 return Result.err(CodedError.MISSING_ENTITLEMENTS.toError());
             }
             

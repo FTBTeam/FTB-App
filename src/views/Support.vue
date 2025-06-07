@@ -5,6 +5,7 @@ import {DiscordWidget} from '@/types.ts';
 import BhLogo from '@/assets/images/branding/bh-logo.svg';
 import {logger} from '@/core/logger.ts';
 import {
+  faBluesky,
   faDiscord, faFacebook, faGithub,
   faInstagram,
   faTwitch,
@@ -24,13 +25,14 @@ const mkSocial = (name: string, icon: IconDefinition, goEndpoint: string) => ({
 });
 
 const socials = [
-  mkSocial('FTB Discord', faDiscord, 'discord'),
-  mkSocial('FTB Twitter', faXTwitter, 'twitter'),
-  mkSocial('FTB Instagram', faInstagram, 'instagram'),
-  mkSocial('FTB Twitch', faTwitch, 'twitch'),
-  mkSocial('FTB Youtube', faYoutube, 'youtube'),
-  mkSocial('FTB Facebook', faFacebook, 'facebook'),
-  mkSocial('FTB Github', faGithub, 'github'),
+  mkSocial('Discord', faDiscord, 'discord'),
+  mkSocial('BlueSky (bsky)', faBluesky, 'bsky'),
+  mkSocial('Twitter', faXTwitter, 'twitter'),
+  mkSocial('Instagram', faInstagram, 'instagram'),
+  mkSocial('Twitch', faTwitch, 'twitch'),
+  mkSocial('Youtube', faYoutube, 'youtube'),
+  mkSocial('Facebook', faFacebook, 'facebook'),
+  mkSocial('Github', faGithub, 'github'),
 ];
 
 const topicList = [

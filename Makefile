@@ -24,8 +24,8 @@ create_build_dest:
 ensure_licenses:
 	# Check if the ./licences.json exists
 	if [ ! -f ./licenses.json ]; then \
-		pnpm install --frozen-lockfile; \
-		pnpm run gen:licenses; \
+		npm run install --frozen-lockfile; \
+		npm run run gen:licenses; \
 	fi
 
 # Build the shim and copy it to the build directory
@@ -51,9 +51,9 @@ build_overwolf: build_shim build_subprocess ensure_licenses
 	cp $(SUBPROCESS_DIR)/build/libs/meta.json $(BUILD_DIR)/ && \
 	cp $(SUBPROCESS_DIR)/build/libs/java-licenses.json $(OVERWOLF_DIR)/ && \
 	cp $(SUBPROCESS_DIR)/build/libs/java-licenses.json $(BUILD_DIR)/ && \
-	pnpm install --frozen-lockfile && \
+	npm run install --frozen-lockfile && \
 	node $(PWD)/tooling/overwolf/patchManifest.js && \
-	pnpm run vue:build:overwolf && \
+	npm run run vue:build:overwolf && \
 	node $(PWD)/tooling/overwolf/packageOpk.js --output $(BUILD_DIR) --zip
 
 # Clean up after ourselves	

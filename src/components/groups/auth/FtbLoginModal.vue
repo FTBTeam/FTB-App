@@ -12,6 +12,7 @@ import {
 import {createLogger} from "@/core/logger.ts";
 import {useAccountsStore} from "@/store/accountsStore.ts";
 import {getOrCreateOauthClient} from "@/utils";
+import {ref} from "vue";
 
 const {
   open
@@ -25,6 +26,7 @@ const emit = defineEmits<{
 
 const logger = createLogger("FTBLoginModal.vue")
 const accountStore = useAccountsStore();
+const abortController = ref<AbortController | null>(null);
 
 async function loadInitialCode(): Promise<LoadCodeReturn> {
   const response = await client.initiateDeviceAuthorization(await getOrCreateOauthClient(), { scope: "openid email profile offline_access" })
@@ -40,7 +42,11 @@ async function loadInitialCode(): Promise<LoadCodeReturn> {
 
 async function checkForToken(deviceData: DeviceCodeHolder): Promise<CheckForCodeReturn> {
   try {
-    const tokens = await client.pollDeviceAuthorizationGrant(await getOrCreateOauthClient(), deviceData)
+    abortController.value = new AbortController();
+    const tokens = await client.pollDeviceAuthorizationGrant(await getOrCreateOauthClient(), deviceData, undefined, {
+      signal: abortController.value.signal
+    })
+    
     if (tokens.id_token) {
       return { data: tokens }
     }
@@ -92,6 +98,7 @@ async function continueTokenFlow(data: any): Promise<OnResultReturn> {
     :loadCode="loadInitialCode"
     :checkForSuccess="checkForToken"
     :onResult="continueTokenFlow"
+    @stopPolling="() => abortController?.abort()"
     @closed="emit('closed')"
   />
 </template>

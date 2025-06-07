@@ -11,6 +11,7 @@ import {
   LoadCodeReturn,
   OnResultReturn
 } from "@/components/groups/auth/LoginTypes.ts";
+import {logger} from "@/core/logger.ts";
 
 const accountStore = useAccountsStore();
 const open = ref(false)
@@ -50,6 +51,17 @@ async function loadInitialCode(): Promise<LoadCodeReturn> {
   }
 }
 
+function createError(message: string, resMessage: string, codes: number[] = [], code = 400) {
+  return {
+    error: message,
+    pollingResult: {
+      codes,
+      code,
+      message: resMessage
+    }
+  } satisfies CheckForCodeReturn;
+}
+
 async function checkForToken(deviceCode: DeviceCodeHolder): Promise<CheckForCodeReturn> {
   try {
     const req: any = await JavaFetch.create("https://login.microsoftonline.com/consumers/oauth2/v2.0/token")
@@ -65,29 +77,36 @@ async function checkForToken(deviceCode: DeviceCodeHolder): Promise<CheckForCode
     // We're expecting this error
     if (req?.statusCode === 400) {
       const data = await req.json();
+      
+      logger.info("Polling for token, no token found yet, response:", data);
+      
       if (!("error" in data)) {
-        return {error: "Failed to get the token, a retry maybe resolve the issue."}
+        return createError("Failed to get the token, a retry maybe resolve the issue.", data.error_description, data.error_codes);
       }
 
       // We're just waiting for the user to login
       if (data.error === "authorization_pending") {
-        return {pass: true}
+        return {pass: true, pollingResult: {
+          code: 400,
+          codes: data.error_codes,
+          message: data.error_description
+        }}
       }
 
       if (data.error === "expired_token") {
-        return {error: "The token has expired, please try again."}
+        return createError("The token has expired, please try again.", data.error_description, data.error_codes);
       }
 
       if (data.error === "authorization_declined") {
-        return {error: "You denied the login request, please try again or close the window."}
+        return createError("You denied the login request, please try again or close the window.", data.error_description, data.error_codes);
       }
 
       if (data.error === "bad_verification_code") {
-        return {error: "Something has gone wrong, please try again."}
+        return createError("Something has gone wrong, please try again.", data.error_description, data.error_codes);
       }
 
       if (data.error === "invalid_scope") {
-        return {error: "It looks like the FTB Apps client hasn't been setup correctly, please create an issue on our Github (https://github.com/FTBTeam/FTB-App/issues)"}
+        return createError("It looks like the FTB Apps client hasn't been setup correctly, please create an issue on our Github (https://github.com/FTBTeam/FTB-App/issues)", data.error_description, data.error_codes);
       }
     } else {
       const data = await req.json();
@@ -96,11 +115,13 @@ async function checkForToken(deviceCode: DeviceCodeHolder): Promise<CheckForCode
         // We can now use this data to jump through the hops required to get the user logged in
         return { data };
       } else {
+        logger.info("Non 400 response code but no data found", data);
+        
         return {error: "Failed to get the token, a retry maybe resolve the issue."};
       }
     }
   } catch (e) {
-    console.error(e);
+    logger.error("Failed to check for token", e);
   }
   
   return {error: "Failed to get the token, a retry maybe resolve the issue."};

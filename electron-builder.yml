@@ -48,7 +48,7 @@ mac:
 linux:
   target:
     - dir
-    - AppImage
+    - tar.gz
     - deb
     - rpm
   category: Game
