@@ -428,6 +428,9 @@ ipcMain.handle("startSubprocess", async (_, args) => {
 
   const electronPid = process.pid;
   argsList.push(...["--pid", "" + electronPid])
+  if (process.argv.includes("ignore-pid-checks")) {
+    argsList.push("--ignore-pid-checks")
+  }
 
   // Spawn the process so it can run in the background and capture the output
   return new Promise((resolve, reject) => {
