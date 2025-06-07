@@ -84,7 +84,7 @@ autoUpdater.on('download-progress', (progress) => LogAndEmit.create('updater:dow
   .execute());
 
 autoUpdater.on('update-downloaded', (event) => {
-  LogAndEmit.create('updater:download-progress')
+  LogAndEmit.create('updater:update-downloaded')
     .meta(event)
     .execute()
 });
@@ -540,6 +540,6 @@ class LogAndEmit {
       return;
     }
     
-    target.webContents.send(this.eventName, this._args);
+    target.webContents.send(this.eventName, ...this._args);
   }
 }

@@ -50,6 +50,10 @@ onMounted(() => {
   })
 
   setTimeout(() => {
+    if (!checkingForUpdates.value) {
+      return; // No bypass if we're done checking for updates
+    }
+    
     log.info("Giving up, showing bypass button");
     showBypassButton.value = true;
   }, 60_000); // Wait 60 seconds, then give up and show the bypass button
