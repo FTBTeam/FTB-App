@@ -73,11 +73,11 @@ onUnmounted(() => {
 })
 
 async function checkForJava() {
-  log.info("Checking for Java");
   if (checkingForJava.value) {
     return;
   }
   
+  log.info("Checking for Java");
   checkingForJava.value = true;
   updating.value = false;
   updateProgress.value = 0;
