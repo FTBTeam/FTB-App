@@ -66,7 +66,7 @@ export type ModalSizes = 'small' | 'medium' | 'large';
 <template>
   <Transition name="fade-and-grow">
     <div v-if="open" class="modal-container" :class="{ads: ads.adsEnabled.value}" @mousedown.self="() => close(true)">      
-      <div class="modal-contents" :class="`${size}`">
+      <div class="modal-contents relative" :class="`${size}`">
         <div class="modal-header" :class="{'no-subtitle': !subTitle}">
           <div class="modal-heading">
             <div class="title">{{ title }}</div>

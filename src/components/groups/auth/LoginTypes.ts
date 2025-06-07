@@ -86,8 +86,15 @@ export type DeviceCodeHolder = {
 
 export type LoadCodeReturn = DeviceCodeHolder | { error: string };
 
-export type CheckForCodeReturn = { pass: true } | { error: string } | { data: any };
+export type CheckForCodeReturn = { pass: true, pollingResult?: LastPollingResult } | { error: string, pollingResult?: LastPollingResult } | { data: any };
 
 export type OnResultReturn = true | {
   error: string;
+}
+
+export type LastPollingResult = {
+  code: number;
+  codes?: number[];
+  message: string;
+  data?: any;
 }

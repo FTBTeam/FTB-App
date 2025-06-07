@@ -4,13 +4,14 @@ import appPlatform from '@platform';
 import { UiButton, Loader, Message, ProgressBar, Modal } from '@/components/ui';
 import {
   CheckForCodeReturn,
-  DeviceAuthResponse, DeviceCodeHolder,
+  DeviceAuthResponse, DeviceCodeHolder, LastPollingResult,
   LoadCodeReturn, OnResultReturn,
 } from '@/components/groups/auth/LoginTypes';
 import {alertController} from '@/core/controllers/alertController';
 import { onUnmounted, watch, ref } from 'vue';
 import { safeLinkOpen } from '@/utils';
-import { faExternalLink } from '@fortawesome/free-solid-svg-icons';
+import {faExternalLink, faQuestionCircle} from '@fortawesome/free-solid-svg-icons';
+import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 
 const {
   open,
@@ -34,6 +35,7 @@ const {
 
 const emit = defineEmits<{
   (event: 'closed'): void;
+  (event: 'stopPolling'): void;
 }>()
 
 const deviceCodeDone = ref(false);  
@@ -52,6 +54,7 @@ const pollLock = ref(false);
 const timerRef = ref<number | null>(null);
 
 const remainingTime = ref(0);
+const lastPollStatus = ref<LastPollingResult | null>(null);
 
 watch(() => open, (newValue) => {
   if (newValue) {
@@ -126,6 +129,10 @@ async function checkForToken() {
   pollLock.value = true;
   try {
     const data = await checkForSuccess(deviceCodeData.value);
+    if ("pollingResult" in data && data.pollingResult) {
+      lastPollStatus.value = data.pollingResult;
+    }
+    
     if ("pass" in data) {
       // We're just waiting for the user to login
       return;
@@ -171,6 +178,8 @@ function pollForToken() {
 }
 
 function stopPolling() {
+  emit('stopPolling')
+  
   if (pollRef.value) {
     clearInterval(pollRef.value);
   }
@@ -297,6 +306,16 @@ function expiresInAsPercentage() {
         You have successfully logged in, you can now close this window.
       </p>
     </template>
+    
+    <div class="absolute text-sm w-full left-0 top-full -mt-1 bg-[#222222] rounded-b py-3 px-4" v-if="lastPollStatus && !deviceCodeDone">
+      <div class="font-bold mb-2 flex items-center gap-2">
+        <div aria-label="This information is only helpful for our support team" data-balloon-pos="down">
+          <FontAwesomeIcon :icon="faQuestionCircle" ></FontAwesomeIcon>
+        </div>
+        Debugging feedback: {{ lastPollStatus.code }}{{ lastPollStatus.codes ? ' // ' : '' }}{{ lastPollStatus.codes?.join(", ") }}
+      </div>
+      <p class="text-white/75">{{ lastPollStatus.message.split("Trace ID")[0] }}</p>
+    </div>
   </Modal>
 </template>
 
