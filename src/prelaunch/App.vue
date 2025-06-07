@@ -117,7 +117,6 @@ function onUpdateComplete(_: any) {
   updating.value = false;
   checkingForUpdates.value = false;
   updateProgress.value = 0;
-  log.log('Update complete');
   
   let secondsPassed = 0;
   const interval = setInterval(() => {
@@ -125,8 +124,8 @@ function onUpdateComplete(_: any) {
     restartCountdown.value = 5 - secondsPassed;
     
     if (secondsPassed >= 5) {
-      clearInterval(interval);
       window.ipcRenderer.send('action/app/update');
+      clearInterval(interval);
     }
   }, 1000);
 }

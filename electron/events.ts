@@ -172,7 +172,8 @@ ipcMain.handle("action/java/verify", async () => {
   }
 })
 
-ipcMain.handle("action/app/update", async () => {
+ipcMain.on("action/app/update", async () => {
+  log.info("Received request to update app")
   updateApp("Auto updater")
 })
 
