@@ -25,13 +25,13 @@ export default defineConfig({
         // Shortcut of `build.lib.entry`.
         entry: 'electron/main.ts',
         
-        onstart: (args) => {
+        onstart: async (args) => {
           const runArgs = ['.', '--no-sandbox']
           if (process.env.SHOW_ADS !== 'true') {
             runArgs.push('--test-ad')
           }
           
-          args.startup(runArgs, {}, '@overwolf/ow-electron')
+          await args.startup(runArgs, {}, '@overwolf/ow-electron')
         }
       },
       preload: {

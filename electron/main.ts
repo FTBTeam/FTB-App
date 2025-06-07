@@ -8,14 +8,23 @@ import fs from 'fs';
 import { ChildProcess, spawn } from 'child_process';
 import log from 'electron-log/main';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
-
-export const appHome = getAppHome(os.platform(), os.homedir(), path.join);
-
-// const console = createLogger('main.ts');
 autoUpdater.logger = log;
+
+export const appHome = logAndReturn(getAppHome(os.platform(), os.homedir(), path.join), "App home directory is: ");
+
 log.transports.file.resolvePathFn = () => path.join(appHome, 'logs', 'electron-main.log');
 log.initialize();
+
+const __dirname = logAndReturn(path.dirname(fileURLToPath(import.meta.url)), "Resolved __dirname to: ");
+
+let openDebugTools = !!process.env.VITE_DEV_SERVER_URL;
+for (let i = 0; i < process.argv.length; i++) {
+  if (process.argv[i] === '--open-dev-tools') {
+    log.info("Debug tools flag found in args, opening dev tools");
+    openDebugTools = true;
+    break;
+  }
+}
 
 log.log("FTB App starting...")
 import './events.ts'
@@ -54,7 +63,7 @@ if (process.platform == "linux") {
 //   }
 // }
 
-process.env.APP_ROOT = path.join(__dirname, '..')
+process.env.APP_ROOT = logAndReturn(path.join(__dirname, '..'), "App root directory is: ");
 
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
 export const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
@@ -65,7 +74,7 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 
 
 //#region AutoUpdater Setup
 autoUpdater.allowDowngrade = true;
-autoUpdater.channel = loadChannel();
+autoUpdater.channel = logAndReturn(loadChannel(), "Loaded auto updater channel: ");
 
 autoUpdater.on('checking-for-update', () => LogAndEmit.create('updater:checking-for-update').execute());
 autoUpdater.on("update-cancelled", (info) => LogAndEmit.create('updater:update-cancelled').meta(info).execute());
@@ -94,7 +103,25 @@ ipcMain.on("updater:download-update", () => {
 })
 //#endregion
 
-log.debug('App home is', appHome)
+log.info("Auto updater config: ")
+for (const [key, value] of Object.entries(autoUpdater)) {
+  // If it's a function or a property that starts with an underscore, skip it
+  if (typeof value === 'function' || key.startsWith('_') || key === 'logger' || key === 'signals' || key.toLowerCase().includes("promise")) {
+    continue;
+  }
+  
+  if (typeof value === 'object' && value !== null) {
+    try {
+      log.info(`  ${key}: ${JSON.stringify(value)}`);
+    } catch (e) {
+      log.info("  failed to stringify value for key", key, "value type:", typeof value);
+    }
+    
+    continue;
+  }
+  
+  log.info(`  ${key}: ${value} (type: ${typeof value})`);
+}
 
 let subprocess: ChildProcess | null = null;
 export let win: BrowserWindow | null;
@@ -161,7 +188,7 @@ async function createPreLaunchWindow() {
       prelaunchWindow?.focus();
     }
     
-    if (VITE_DEV_SERVER_URL) {
+    if (openDebugTools) {
       log.log("Opening dev tools")
       prelaunchWindow?.webContents.openDevTools();
     }
@@ -201,6 +228,13 @@ async function createWindow() {
     height: 900,
     frame: false,
     backgroundColor: '#2a2a2a'
+  })
+  
+  win.on("ready-to-show", () => {
+    if (openDebugTools) {
+      log.log("Opening dev tools on main window")
+      win?.webContents.openDevTools();
+    }
   })
 
   if (VITE_DEV_SERVER_URL) {
@@ -284,6 +318,21 @@ app.whenReady().then(() => {
   // })
 })
 
+app.on('render-process-gone', (_, webContents, details) => {
+  log.log('render-process-gone', details);
+  
+  if (details.reason === 'clean-exit') {
+    log.info("Render process exited cleanly, not reloading")
+    return;
+  }
+  
+  // yolo, try and open devtools to debug
+  if (webContents && openDebugTools) {
+    log.info("Render process gone, opening devtools")
+    webContents.openDevTools();
+  }
+});
+
 app.on("open-url", async (_, customSchemeData) => {
   if (win) {
     win.webContents.send('parseProtocolURL', customSchemeData);
@@ -301,6 +350,7 @@ const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
   log.debug("Preventing extra windows of the app from loading", import.meta.env.MODE)
   if (!import.meta.env.PROD) {
+    // Find the other instance and yeet it
     app.quit();
   }
 } else {
@@ -378,6 +428,9 @@ ipcMain.handle("startSubprocess", async (_, args) => {
 
   const electronPid = process.pid;
   argsList.push(...["--pid", "" + electronPid])
+  if (process.argv.includes("ignore-pid-checks")) {
+    argsList.push("--ignore-pid-checks")
+  }
 
   // Spawn the process so it can run in the background and capture the output
   return new Promise((resolve, reject) => {
@@ -543,3 +596,13 @@ class LogAndEmit {
     target.webContents.send(this.eventName, ...this._args);
   }
 }
+
+function logAndReturn<T>(value: T, message: string): T {
+  log.debug(message, value);
+  return value;
+}
+
+// async function logAndReturnAsync<T>(value: T, message: string): Promise<T> {
+//   log.debug(message, value);
+//   return value;
+// }

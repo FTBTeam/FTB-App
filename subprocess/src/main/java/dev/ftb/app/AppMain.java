@@ -81,15 +81,22 @@ public class AppMain {
 
     public static void main(String[] args) {
         logAppDetails(args);
+
+        ImmutableMap<String, String> parsedArgs = ImmutableMap.of();
+        try {
+             parsedArgs = StartArgParser.parse(args).getArgs();
+        } catch (Throwable ex) {
+            LOGGER.error("Failed to parse args, continuing with empty args", ex);
+        }
         
         try {
-            prelaunchChecks();
+            prelaunchChecks(parsedArgs);
         } catch (Throwable ex) {
             LOGGER.error("Prelaunch checks failed but are not fatal", ex);
         }
         
         try {
-            mainImpl(args);
+            mainImpl(parsedArgs);
         } catch (Throwable ex) {
             LOGGER.error("Main method threw exception:", ex);
         }
@@ -98,7 +105,12 @@ public class AppMain {
     /**
      * Only allow the app to run one instance at a time. Otherwise things get messy!
      */
-    private static void prelaunchChecks() {
+    private static void prelaunchChecks(ImmutableMap<String, String> args) {
+        if (args.containsKey("ignore-pid-checks")) {
+            LOGGER.info("Ignoring PID checks as requested");
+            return;
+        }
+        
         var appPath = Constants.getDataDir();
         var appPidFile = appPath.resolve("app.pid");
         
@@ -126,25 +138,23 @@ public class AppMain {
         }
     }
 
-    private static void mainImpl(String[] args) {
+    private static void mainImpl(ImmutableMap<String, String> args) {
         // Cleanup before shutdown
         Runtime.getRuntime().addShutdownHook(new Thread(AppMain::cleanUpBeforeExit));
 
         Settings.loadSettings();
         Instances.refreshInstances();
 
-        ImmutableMap<String, String> Args = StartArgParser.parse(args).getArgs();
-
-        isDevMode = Args.containsKey("dev");
+        isDevMode = args.containsKey("dev");
         Constants.IS_DEV_MODE = isDevMode;
 
-        boolean isOverwolf = Args.containsKey("overwolf");
+        boolean isOverwolf = args.containsKey("overwolf");
         LOGGER.info((isOverwolf ? "Overwolf" : "Electron") + " integration mode");
 
         // Hook the pid so we can shutdown the frontend when it's closed
-        if (Args.containsKey("pid") && !isDevMode) {
+        if (args.containsKey("pid") && !isDevMode) {
             try {
-                long pid = Long.parseLong(Args.get("pid"));
+                long pid = Long.parseLong(args.get("pid"));
                 Optional<ProcessHandle> frontendProcess = ProcessHandle.of(pid);
                 if (frontendProcess.isPresent()) {
                     ProcessHandle handle = frontendProcess.get();
@@ -201,7 +211,7 @@ public class AppMain {
                 }
             });
 
-        registerSettingsListeners(args);
+        registerSettingsListeners();
 
         CompletableFuture.runAsync(localCache::clean);
 
@@ -264,7 +274,7 @@ public class AppMain {
         }
     }
 
-    private static void registerSettingsListeners(String[] args) {
+    private static void registerSettingsListeners() {
         SettingsChangeUtil.addChangeListener(oldSettings -> ProxyUtils.loadProxy());
     }
 
