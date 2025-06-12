@@ -202,7 +202,7 @@ jobs:
             release/ftb-app-*.deb
             release/ftb-app-*.rpm
             release/ftb-app-*.tar.gz
-            release/ftb-app-*.appimage
+            release/ftb-app-*.AppImage
             release/*-linux.yml
             release/*-linux-*.yml
 
