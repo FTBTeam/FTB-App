@@ -19,11 +19,7 @@
       "debug-1.log.gz",
       "debug-2.log.gz",
       "debug-3.log.gz",
-      "ftb-app-electron.log",
-      "ftb-app-electron.old.log",
-      "ftb-app-frontend.log",
-      "ftb-app-frontend.old.log",
-      "ftb-app-installer.log"
+      "electron-main.log"
     ],
     "importantFiles": [
       "storage/settings.json",

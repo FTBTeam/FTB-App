@@ -11,6 +11,7 @@ on:
 jobs:
   patch-version:
     runs-on: ubuntu-latest
+    if: !contains(github.event.head_commit.message, '[-ci-skip]')
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,8 +27,9 @@ jobs:
         with:
           name: packageJson
           path: package.json
-
+          
   build-jar:
+    if: !contains(github.event.head_commit.message, '[-ci-skip]')
     name: Build Jar
     needs: patch-version
     runs-on: ubuntu-latest
@@ -66,8 +68,10 @@ jobs:
           path: |
             subprocess/build/libs/
 
+
   # Publish
   build-releases:
+    if: !contains(github.event.head_commit.message, '[-ci-skip]')
     name: Prepare releases
     strategy: 
       matrix:
@@ -162,6 +166,11 @@ jobs:
         run: |
           npm run build -- --publish always -l --x64 --arm64
 
+      - name: Patch output yaml files
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: |
+          node ./tooling/release/patchOutputYamls.js
+
       # Upload time
       - name: Upload Mac artifacts
         if: ${{ matrix.os == 'macos-latest' }}
@@ -193,12 +202,13 @@ jobs:
             release/ftb-app-*.deb
             release/ftb-app-*.rpm
             release/ftb-app-*.tar.gz
+            release/ftb-app-*.appimage
             release/*-linux.yml
             release/*-linux-*.yml
 
   build-overwolf:
     name: Prepare Overwolf
-    if: "!contains(github.event.head_commit.message, '[-skip overwolf]') && startsWith(github.ref, 'refs/tags/v')"
+    if: "!contains(github.event.head_commit.message, '[-ci-skip]') && !contains(github.event.head_commit.message, '[-skip overwolf]') && startsWith(github.ref, 'refs/tags/v')"
     needs:
       - build-jar
       - build-releases
@@ -240,7 +250,7 @@ jobs:
   release-electron:
     name: Publish Electron
     if: |
-      !cancelled() && !contains(github.event.head_commit.message, '[-skip release]') && needs.build-jar.result == 'success'
+      !cancelled() && !contains(github.event.head_commit.message, '[-ci-skip]') && !contains(github.event.head_commit.message, '[-skip release]') && needs.build-jar.result == 'success'
     runs-on: ubuntu-latest
     needs: build-releases
     strategy:
@@ -268,13 +278,37 @@ jobs:
           
           b2 authorize-account ${{ secrets.AWS_ACCESS_KEY_ID }} ${{ secrets.AWS_SECRET_ACCESS_KEY }} > /dev/null 2>&1
           b2 sync --replace-newer --no-progress release b2://${{ secrets.PUBLISH_BUCKET }}/app
-
+    
+  update-flathub-xml:
+    name: Update Flathub XML
+    if: |
+      !cancelled() && !contains(github.event.head_commit.message, '[-ci-skip]') && needs.build-releases.result == 'success'
+    runs-on: ubuntu-latest
+    needs: build-releases
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - name: Install dependencies
+        working-directory: tooling/misc/tools
+        run: bun install --frozen-lockfile
+      - name: Update Flathub XML
+        working-directory: tooling/misc/tools
+        run: bun run tools/updateFlathubXml.ts ${{ github.workspace }}
+      - name: Commit changes
+        run: |
+          git config --local user.name "GitHub Action"
+          git config --local user.email "mikey@feed-the-beast.com"
+          git add flathub/dev.ftb.ftb-app.metainfo.xml
+          git commit -m "[-ci-skip] Update Flathub XML for version ${{ github.event.release.tag_name }}"
+          git push origin ${{ github.ref }}
+    
   # Publish to Overwolf
   release-overwolf:
     name: Publish Overwolf
     # Don't run if cancelled or if the commit message contains [-skip release], also, don't run if the build-overwolf job was skipped
     if: |
-      !cancelled() && !contains(github.event.head_commit.message, '[-skip release]') && needs.build-overwolf.result == 'success'
+      !cancelled() && !contains(github.event.head_commit.message, '[-ci-skip]') && !contains(github.event.head_commit.message, '[-skip release]') && needs.build-overwolf.result == 'success'
     runs-on: ubuntu-latest
     needs: 
       - build-overwolf

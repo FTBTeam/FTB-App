@@ -132,6 +132,9 @@ public class LogZipper {
             var writer = new ZipOutputStream(fileOutput)) {
 
             addFileToZip(writer, "manifest.json", jsonData, true);
+            
+            // Add a blank file with the name of the platform for easy identification
+            addFileToZip(writer, Constants.PLATFORM, Constants.PLATFORM, true);
 
             // Put all the logs into the zip as well
             includeAppData(writer);
@@ -319,8 +322,7 @@ public class LogZipper {
 
         if (!OperatingSystem.current().isWindows()) {
             // Electron logs
-            appLogs.add(Constants.getDataDir().resolve("logs/ftb-app-electron.log"));
-            appLogs.add(Constants.getDataDir().resolve("logs/ftb-app-frontend.log"));
+            appLogs.add(Constants.getDataDir().resolve("logs/electron-main.log"));
         } else {
             // Get AppData/Local
             var appData = System.getenv("LOCALAPPDATA");

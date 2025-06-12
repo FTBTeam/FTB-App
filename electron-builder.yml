@@ -49,6 +49,7 @@ linux:
   target:
     - dir
     - tar.gz
+    - flatpak
     - deb
     - rpm
   category: Game
