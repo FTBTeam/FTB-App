@@ -31,8 +31,7 @@ function updateAvailablePacks() {
   latestVersion.value = packUpdateAvailable(localInstance, instance) ?? null;
 }
 
-watch(() => instance?.id, () => updateAvailablePacks)
-watch(() => localInstance?.uuid, () => updateAvailablePacks)
+watch([() => instance?.id, () => localInstance?.uuid], () => updateAvailablePacks)
 </script>
 
 <template>
