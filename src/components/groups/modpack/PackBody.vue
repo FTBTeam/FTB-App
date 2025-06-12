@@ -181,7 +181,7 @@ function cursePackBody() {
 
           <div class="options">
             <PackUpdateButton
-              v-if="isInstalled && instance"
+              v-if="isInstalled && instance && packInstance"
               :instance="packInstance"
               :localInstance="instance"
               @update="emit('update')"
