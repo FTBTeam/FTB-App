@@ -542,6 +542,7 @@ export interface StoragePutHandlerReply extends StoragePutHandlerData {
 export interface SettingsData {
     spec: string;
     instanceLocation: string;
+    enableFeralGameMode: boolean;
     general: GeneralSettings;
     instanceDefaults: InstanceSettings;
     appearance: AppearanceSettings;
