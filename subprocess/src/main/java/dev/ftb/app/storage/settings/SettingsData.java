@@ -25,6 +25,7 @@ public class SettingsData {
     private String spec;
     @JsonAdapter(PathTypeAdapter.class)
     private Path instanceLocation;
+    private Boolean enableFeralGameMode;
     private GeneralSettings general;
     private InstanceSettings instanceDefaults;
     private AppearanceSettings appearance;
@@ -32,9 +33,10 @@ public class SettingsData {
     private DownloadSettings download;
     private WorkaroundSettings workaround;
 
-    public SettingsData(String spec, Path instanceLocation, GeneralSettings general, InstanceSettings instanceDefaults, AppearanceSettings appearance, ProxySettings proxy, DownloadSettings download, WorkaroundSettings workaround) {
+    public SettingsData(String spec, Path instanceLocation, Boolean enableFeralGameMode, GeneralSettings general, InstanceSettings instanceDefaults, AppearanceSettings appearance, ProxySettings proxy, DownloadSettings download, WorkaroundSettings workaround) {
         this.spec = spec;
         this.instanceLocation = instanceLocation;
+        this.enableFeralGameMode = enableFeralGameMode;
         this.general = general;
         this.instanceDefaults = instanceDefaults;
         this.appearance = appearance;
@@ -87,6 +89,7 @@ public class SettingsData {
         return new SettingsData(
             Settings.DEFAULT_SPEC,
             Constants.INSTANCES_FOLDER_LOC,
+            false, // Feral Game Mode is disabled by default
             new GeneralSettings(
                 "release",
                 5184000, // 60 days
@@ -152,6 +155,8 @@ public class SettingsData {
     public Path instanceLocation() {
         return instanceLocation;
     }
+    
+    public Boolean enableFeralGameMode() {return enableFeralGameMode;}
 
     public GeneralSettings general() {
         return general;
@@ -184,6 +189,8 @@ public class SettingsData {
     public void setInstanceLocation(Path instanceLocation) {
         this.instanceLocation = instanceLocation;
     }
+    
+    public void setEnableFeralGameMode(Boolean enableFeralGameMode) {this.enableFeralGameMode = enableFeralGameMode;}
 
     public void setGeneral(GeneralSettings general) {
         this.general = general;
