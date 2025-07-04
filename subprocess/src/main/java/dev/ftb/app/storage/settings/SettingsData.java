@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.annotations.JsonAdapter;
 import net.covers1624.quack.gson.PathTypeAdapter;
 import dev.ftb.app.Constants;
+import org.jetbrains.annotations.Nullable;
 import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
 
@@ -156,7 +157,10 @@ public class SettingsData {
         return instanceLocation;
     }
     
-    public Boolean enableFeralGameMode() {return enableFeralGameMode;}
+    @Nullable
+    public Boolean enableFeralGameMode() {
+        return enableFeralGameMode;
+    }
 
     public GeneralSettings general() {
         return general;
