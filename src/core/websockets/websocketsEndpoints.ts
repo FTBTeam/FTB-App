@@ -132,7 +132,6 @@ const endpoints = {
   instanceGetBackups:             io<InstanceGetBackupsHandlerRequest, InstanceGetBackupsHandlerReply>(),
   instanceRestoreBackup:          io<InstanceRestoreBackupHandlerRequest, InstanceRestoreBackupHandlerReply>(),
   instanceDeleteBackup:           io<InstanceDeleteBackupHandlerRequest, InstanceDeleteBackupHandlerReply>(),
-  checkCurseZip:                  io<CheckCurseZipData, CheckCurseZipDataReply>(),
   "profiles.get":                 io<BaseData, GetProfilesHandlerReply>(),
   "profiles.remove":              io<RemoveProfileHandlerData, RemoveProfileHandlerReply>(),
   "profiles.setActiveProfile":    io<SetActiveProfileHandlerData, SetActiveProfileHandlerReply>(),

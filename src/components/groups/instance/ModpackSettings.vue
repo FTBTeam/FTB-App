@@ -101,7 +101,7 @@ function selectResolution(id: string | null) {
 }
 
 function browseForJava() {
-  appPlatform.io.selectFileDialog((path) => {
+  appPlatform.io.selectFileDialog(null, (path) => {
     if (typeof path !== 'undefined' && path == null) {
       alertController.error('Unable to set Java location as the path was not found')
       return;
