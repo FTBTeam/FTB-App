@@ -206,6 +206,8 @@ export class InstanceInstallController {
       return;
     }
 
+    return;
+    
     this.logger.debug('Checking queue');
     this.logger.debug('Queue items', this.queue.length);
     const request = installStore.popInstallQueue()

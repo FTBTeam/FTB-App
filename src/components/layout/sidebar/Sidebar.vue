@@ -1,15 +1,16 @@
 <script lang="ts" setup>
 import appPlatform from '@platform';
 import SidebarProfile from '@/components/layout/sidebar/SidebarProfile.vue';
-import { RouterNames } from '@/router';
+import {RouterNames} from '@/router';
 import SidebarCreate from '@/components/layout/sidebar/SidebarCreate.vue';
-import { AppContextController } from '@/core/context/contextController';
-import { ContextMenus } from '@/core/context/contextMenus';
+import {AppContextController} from '@/core/context/contextController';
+import {ContextMenus} from '@/core/context/contextMenus';
 import SidebarRunningInstances from '@/components/layout/sidebar/SidebarRunningInstances.vue';
 import Popover from '@/components/ui/Popover.vue';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { faBookOpen, faCode, faCog, faHome, faInfoCircle, faRss, faSearch } from '@fortawesome/free-solid-svg-icons';
-import { constants } from '@/core/constants.ts';
+import {FontAwesomeIcon} from '@fortawesome/vue-fontawesome';
+import {faBookOpen, faCode, faCog, faHome, faInfoCircle, faRss, faSearch} from '@fortawesome/free-solid-svg-icons';
+import {constants} from '@/core/constants.ts';
+import InstallQueue from "@/components/groups/modpack/InstallQueue/InstallQueue.vue";
 
 const navigation = [
   {
@@ -58,31 +59,38 @@ function openPromo(): void {
 
 function navItemRightClick(event: MouseEvent, item: typeof navigation[0]): void {
   if (item.to === RouterNames.SETTINGS_APP) {
-    AppContextController.openMenu(ContextMenus.NAV_SETTINGS_MENU, event, () => {});
+    AppContextController.openMenu(ContextMenus.NAV_SETTINGS_MENU, event, () => {
+    });
   }
 }
 </script>
 
 <template>
   <div class="sidebar small">
-    <sidebar-create />
-    
-    <div class="nav-items nav-main mt-2">      
+    <sidebar-create/>
+
+    <div>
+      <InstallQueue/>
+    </div>
+
+    <div class="nav-items nav-main mt-2">
       <Popover :text="item.name" v-for="(item, index) in navigation" :key="index">
-        <RouterLink :to="{ name: item.to }">
+        <RouterLink :to="{ name: item.to }" :draggable="false">
           <div class="nav-item" @click.right="(e) => navItemRightClick(e, item)">
-            <div class="icon"><FontAwesomeIcon :icon="item.icon" class="mr-3" /></div>
+            <div class="icon">
+              <FontAwesomeIcon :fixed-width="true" :icon="item.icon" class="mr-3"/>
+            </div>
           </div>
         </RouterLink>
       </Popover>
 
-      <SidebarRunningInstances />
+      <SidebarRunningInstances/>
     </div>
 
     <div class="nav-items">
-      <SidebarProfile class="block" />
+      <SidebarProfile class="block"/>
     </div>
-    
+
     <Popover text="Setup a server with BisectHosting" class="w-full">
       <img
         @click="openPromo"
@@ -99,7 +107,7 @@ function navItemRightClick(event: MouseEvent, item: typeof navigation[0]): void 
 <style scoped lang="scss">
 .sidebar {
   position: relative;
-  width: 190px;
+  width: 70px;
   height: 100%;
   background-color: var(--color-navbar);
   display: flex;
@@ -107,6 +115,11 @@ function navItemRightClick(event: MouseEvent, item: typeof navigation[0]): void 
   justify-content: space-between;
   flex-direction: column;
   transition: background-color 0.3s ease-in-out;
+
+  .logo {
+    padding: 0 0.5rem;
+    margin-bottom: 0.5rem;
+  }
 
   .item-disabled {
     opacity: 0.1;
@@ -126,36 +139,6 @@ function navItemRightClick(event: MouseEvent, item: typeof navigation[0]): void 
     margin-top: 16px;
     padding-left: 0.2rem;
   }
-
-  &.small {
-    width: 70px;
-
-    .logo {
-      padding: 0 0.5rem;
-      margin-bottom: 0.5rem;
-    }
-
-    .nav-items .nav-item {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 1rem 0;
-
-      .icon {
-        width: auto !important;
-        font-size: 18px;
-
-        svg {
-          max-width: unset !important;
-          margin: 0;
-        }
-      }
-
-      span {
-        display: none;
-      }
-    }
-  }
 }
 
 .nav-main {
@@ -163,25 +146,33 @@ function navItemRightClick(event: MouseEvent, item: typeof navigation[0]): void 
 }
 
 .nav-items {
-  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: .4rem;
+  
+  .router-link-exact-active, .router-link-active {
+    .nav-item {
+      background: var(--color-green-600) !important;
+    }
+  }
 
   .nav-item {
-    display: block;
     cursor: pointer;
-    padding: 0.5rem 1rem;
     transition: background-color 0.25s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: .6rem .8rem;
+    border-radius: 6px;
 
     .icon {
-      display: inline-block;
-      width: 35px;
+      width: auto !important;
+      font-size: 18px;
 
       svg {
-        max-width: 16px;
+        max-width: unset !important;
+        margin: 0;
       }
-    }
-
-    &.router-link-exact-active {
-      background: #2a2a2a;
     }
 
     &:hover {

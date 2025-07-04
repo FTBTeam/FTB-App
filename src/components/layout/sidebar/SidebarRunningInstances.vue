@@ -21,7 +21,7 @@ useAttachDomEvent<MouseEvent>('click', (event) => {
 })
 
 async function showRunningInstance(uuid: string) {
-  if (router.currentRoute.value.fullPath === `/running/${uuid}`) return;
+  if (router.currentRoute.value.fullPath === `/modpacks/running/${uuid}`) return;
 
   await router.push({ name: RouterNames.ROOT_RUNNING_INSTANCE, params: { uuid } });
 }

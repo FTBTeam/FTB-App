@@ -6,7 +6,6 @@ import Loader from '@/components/ui/Loader.vue';
 import Selection2, {SelectionOptions} from '@/components/ui/Selection2.vue';
 import {resolveModloader} from '@/utils/helpers/packHelpers';
 import UiButton from '@/components/ui/UiButton.vue';
-import InstallQueue from '@/components/groups/modpack/InstallQueue/InstallQueue.vue';
 import PackPreview from '@/components/groups/modpack/PackPreview.vue';
 import {RouterNames} from '@/router';
 import { useInstanceStore } from '@/store/instancesStore.ts';
@@ -212,8 +211,6 @@ watch(groupBy, onSortChange)
         
         <selection2 v-if="Object.keys(groupedPacks).length > 1" :icon="faFolder" direction="right" :min-width="300" :options="groupByOptions" v-model="groupBy" aria-label="Sort categories" data-balloon-pos="down-right" />
         <selection2 :icon="faSort" direction="right" :min-width="300" :options="sortByOptions" v-model="sortBy" aria-label="Sort packs" data-balloon-pos="down-right" />
-        
-        <InstallQueue />
       </header>
       
       <div class="categories">
