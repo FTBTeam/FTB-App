@@ -66,6 +66,7 @@ export const useAppSettings = defineStore("appSettings", {
     },
     
     async saveSettings(settings: SettingsData) {
+      console.log("Saving settings", JSON.parse(JSON.stringify(settings)));
       const saveResult = await sendMessage("saveSettings", { settings })
       if (saveResult.settings) {
         this.rootSettings = saveResult.settings;

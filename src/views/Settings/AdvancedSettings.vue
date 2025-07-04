@@ -13,49 +13,73 @@ import { faWarning } from '@fortawesome/free-solid-svg-icons';
 
 type ReleaseChannel = 'release' | 'beta' | 'alpha';
 
-const localSettings = ref<SettingsData>({} as SettingsData);
+const appSettingsStore = useAppSettings();
+const loading = ref(false);
+
 const appChannel = ref<ReleaseChannel>("release");
-const fixMeKey = ref(Math.random());
+const verboseMode = ref(false);
+const ignoreForgeProcessorOutputHashes = ref(false);
+
 const checkingForUpdates = ref(false);
 
-const appSettingsStore = useAppSettings();
-
 onMounted(async () => {
-  await Promise.all([
-    new Promise(async (res) => {
-      const channel = await getChannel();
-      if (channel === "latest") {
-        appChannel.value = "release";
-      } else {
-        appChannel.value = (channel as ReleaseChannel) ?? "release";
-      }
+  loading.value = true;
+  try {
+    await Promise.all([
+      new Promise(async (res) => {
+        const channel = await getChannel();
+        if (channel === "latest") {
+          appChannel.value = "release";
+        } else {
+          appChannel.value = (channel as ReleaseChannel) ?? "release";
+        }
 
-      res(null);
-    }),
+        res(null);
+      }),
+
+      await appSettingsStore.loadSettings()
+    ])
     
-    await appSettingsStore.loadSettings()
-  ])
-
-  // Make a copy of the settings so we don't mutate the vuex state
-  localSettings.value = { ...appSettingsStore.rootSettings } as SettingsData;
-
-  // Fix for when the setting does not exist in the initial state
-  if (!localSettings.value.workaround) {
-    localSettings.value.workaround = {
-      ignoreForgeProcessorOutputHashes: false,
-    }
+    console.log(JSON.parse(JSON.stringify(appSettingsStore.rootSettings)))
+  } catch (e) {
+    console.error('Failed to load settings', e);
+  } finally {
+    loading.value = false;
   }
+
+  console.log(typeof appSettingsStore.rootSettings?.general.verbose, appSettingsStore.rootSettings?.general.verbose);
+  console.log(typeof appSettingsStore.rootSettings?.workaround.ignoreForgeProcessorOutputHashes, appSettingsStore.rootSettings?.workaround.ignoreForgeProcessorOutputHashes);
+  
+  verboseMode.value = appSettingsStore.rootSettings?.general.verbose ?? false;
+  ignoreForgeProcessorOutputHashes.value = appSettingsStore.rootSettings?.workaround.ignoreForgeProcessorOutputHashes ?? false;
 })
 
-function enableVerbose(value: boolean): void {
-  localSettings.value.general.verbose = value;
-  appSettingsStore.saveSettings(localSettings.value);
+function enableVerbose(): void {
+  const newSettings = {
+    ...appSettingsStore.rootSettings,
+    general: {
+      ...appSettingsStore.rootSettings?.general,
+      verbose: verboseMode.value
+    }
+  } as SettingsData
+  
+  console.log(JSON.parse(JSON.stringify(newSettings)))
+  
+  appSettingsStore.saveSettings(newSettings);
 }
 
-function enableForgeProcessorHashes(value: boolean): void {
-  localSettings.value.workaround.ignoreForgeProcessorOutputHashes = value;
-  appSettingsStore.saveSettings(localSettings.value);
-  fixMeKey.value = Math.random();
+function enableForgeProcessorHashes(): void {
+  const newSettings = {
+    ...appSettingsStore.rootSettings,
+    workaround: {
+      ...appSettingsStore.rootSettings?.workaround,
+      ignoreForgeProcessorOutputHashes: ignoreForgeProcessorOutputHashes.value
+    }
+  } as SettingsData
+
+  console.log(JSON.parse(JSON.stringify(newSettings)))
+  
+  appSettingsStore.saveSettings(newSettings);
 }
 
 const channelOptions = computed(() => ReleaseChannelOptions(false))
@@ -92,7 +116,7 @@ function transformToElectronChannel(channel: ReleaseChannel) {
 </script>
 
 <template>
-  <div class="app-settings" v-if="localSettings.spec">
+  <div class="app-settings" v-if="!loading">
     <div class="mb-6">
       <h1 class="font-bold text-xl mb-4">Advanced</h1>
       
@@ -130,7 +154,7 @@ function transformToElectronChannel(channel: ReleaseChannel) {
       <ui-toggle
         label="Verbose"
         desc="Enabled very detailed logging for the FTB App... You likely don't need this but it could be helpful?"
-        :value="localSettings.general.verbose"
+        v-model="verboseMode"
         @input="enableVerbose"
       />
     </div>
@@ -139,10 +163,9 @@ function transformToElectronChannel(channel: ReleaseChannel) {
     <p class="text-muted text-sm mb-4">Every now and then, very specific issues can be resolved by enabling a workaround. These are not recommended for general use.</p>
 
     <ui-toggle
-      :key="fixMeKey"
       label="Ignore (Neo)Forge processor hashes checks"
       desc="This workaround will ignore the processor hashes checks for Forge and NeoForge. This is currently only a known issue with Fedora Linux using a specific fork of zlib (zlib-ng)."
-      :value="localSettings.workaround.ignoreForgeProcessorOutputHashes"
+      v-model="ignoreForgeProcessorOutputHashes"
       @input="enableForgeProcessorHashes"
     />
   </div>

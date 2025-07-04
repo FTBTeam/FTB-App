@@ -23,7 +23,7 @@ import {
 import {RecycleScroller} from 'vue-virtual-scroller'
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 import {artworkFileOrElse} from '@/utils/helpers/packHelpers.ts';
-import {AppContextController} from "@/core/context/contextController.ts";
+import { AppContextController } from '@/core/context/contextController';
 import {ContextMenus} from "@/core/context/contextMenus.ts";
 
 export interface Bar {
@@ -255,6 +255,13 @@ function toggleEnabledLog(type: string) {
   logsKey.value = enabledLogTypes.value.join("|");
   localStorage.setItem("enabledLogTypes", enabledLogTypes.value.join(","));
 }
+
+function showContextMenu(event: MouseEvent) {
+  event.preventDefault()
+  event.stopPropagation();
+  
+  AppContextController.openMenu(ContextMenus.RUNNING_INSTANCE_OPTIONS_MENU, event, () => ({ instance: instance.value }));
+}
 </script>
 
 <template>
@@ -269,7 +276,7 @@ function toggleEnabledLog(type: string) {
         <p v-if="runningInstance && finishedLoading && !hasCrashed">
           <i class="italic">{{ instanceName }}</i> running
         </p>
-        <template v-if="!hasCrashed">
+        <template v-if="!hasCrashed && !finishedLoading">
           <template v-if="!finishedLoading && runningInstance">
             <div class="loading-area" v-if="instance !== null">
               <div
@@ -320,7 +327,7 @@ function toggleEnabledLog(type: string) {
             </UiButton>
           </div>
         </template>
-        <template v-else>
+        <template v-else-if="hasCrashed">
           <p>Looks like the instance has crashed during startup or whilst running...</p>
           <div class="flex mt-4">
             <UiButton
@@ -366,7 +373,7 @@ function toggleEnabledLog(type: string) {
           type="info"
           size="small"
           class="!px-4"
-          @click="(e) => AppContextController.openMenu(ContextMenus.RUNNING_INSTANCE_OPTIONS_MENU, e,() => ({ instance }))"
+          @click="showContextMenu"
         >
           <FontAwesomeIcon :icon="faEllipsisVertical" />
         </UiButton>
