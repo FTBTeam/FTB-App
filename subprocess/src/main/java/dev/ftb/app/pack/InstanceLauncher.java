@@ -15,6 +15,7 @@ import dev.ftb.app.minecraft.jsons.AssetIndexManifest;
 import dev.ftb.app.minecraft.jsons.VersionListManifest;
 import dev.ftb.app.minecraft.jsons.VersionManifest;
 import dev.ftb.app.minecraft.jsons.VersionManifest.AssetIndex;
+import dev.ftb.app.storage.settings.Settings;
 import dev.ftb.app.util.StreamGobblerLog;
 import dev.ftb.app.util.mc.MinecraftVersion;
 import dev.ftb.app.util.mc.MinecraftVersions;
@@ -492,6 +493,9 @@ public class InstanceLauncher {
                     .collect(Collectors.toList());
 
             List<String> command = new ArrayList<>(jvmArgs.size() + progArgs.size() + 2);
+            if (Settings.getSettings().enableFeralGameMode()){
+                command.add("gamemoderun");
+            }
             command.addAll(context.shellArgs);
             command.add(javaExecutable.toAbsolutePath().toString());
             command.add(sub.replace("-Xmx${memory}M"));

@@ -30,16 +30,24 @@ const instanceMoveModalStage = ref("Preparing");
 const instanceMoveModalComplete = ref(false);
 const instanceMoveLocations = ref({old: "", new: ""});
 
+const osType = ref<string | null>(null);
+
 onMounted(async () => {
   await appSettingsStore.loadSettings()
   // Make a copy of the settings so we don't mutate the vuex state
   localSettings.value = { ...appSettingsStore.rootSettings } as any; // TODO: Fix typings
+  osType.value = await appPlatform.utils.getOsType();
 })
 
 function exitOverwolf(value: boolean): void {
   localSettings.value.general.exitOverwolf = value;
   appSettingsStore.saveSettings(localSettings.value);
   appPlatform.actions.changeExitOverwolfSetting(value);
+}
+
+function enableFeralGameMode(value: boolean): void {
+  localSettings.value.enableFeralGameMode = !value;
+  appSettingsStore.saveSettings(localSettings.value);
 }
 
 function openFolder(location: string) {
@@ -244,6 +252,15 @@ async function moveInstances() {
         Relocate
       </UiButton>
     </div>
+    
+    <ui-toggle
+      v-if="osType === 'linux'"
+      label="Enable Feral GameMode"
+      desc="Enables Feral Interactive's GameMode, which can improve performance"
+      v-model="localSettings.enableFeralGameMode"
+      @input="enableFeralGameMode"
+      class="mt-4"
+    />
 
     <Modal :open="instanceMoveModalShow" title="Moving instances" :close-on-background-click="false" :has-closer="false">
       <template v-if="!instanceMoveModalComplete">
