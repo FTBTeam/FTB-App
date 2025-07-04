@@ -10,8 +10,6 @@ import {
   BrowseInstanceDataReply,
   CancelInstallInstanceData,
   CancelInstallInstanceDataReply,
-  CheckCurseZipData,
-  CheckCurseZipDataReply,
   DuplicateInstanceHandlerReply,
   DuplicateInstanceHandlerRequest,
   FileHashData,

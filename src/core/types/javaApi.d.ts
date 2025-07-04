@@ -29,15 +29,6 @@ export interface CancelInstallInstanceDataReply extends BaseData {
     uuid: string;
 }
 
-export interface CheckCurseZipData extends BaseData {
-    path: string;
-}
-
-export interface CheckCurseZipDataReply extends CheckCurseZipData {
-    success: boolean;
-    message: string;
-}
-
 export interface InstallInstanceData extends BaseData {
     uuid: string;
     id: number;

@@ -4,7 +4,7 @@ import { useAttachDomEvent } from '@/composables';
 import InstallQueueRow from '@/components/groups/modpack/InstallQueue/InstallQueueRow.vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { useInstallStore } from '@/store/installStore.ts';
-import {faCircleNotch, faDownload} from '@fortawesome/free-solid-svg-icons';
+import {faDownload} from '@fortawesome/free-solid-svg-icons';
 
 const installStore = useInstallStore();
 
