@@ -188,6 +188,7 @@ public class Settings {
                     
                     return path;
                 }, DEFAULT_SETTINGS.instanceLocation()),
+                getOrDefault("enableFeralGameMode", Boolean::parseBoolean, DEFAULT_SETTINGS.enableFeralGameMode()),
                 new SettingsData.GeneralSettings(
                     getOrDefault("updateChannel", DEFAULT_SETTINGS.general().releaseChannel()),
                     getOrDefault("cacheLife", Integer::parseInt, DEFAULT_SETTINGS.general().cacheLife()),

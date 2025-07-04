@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import {megabyteSize, prettyByteFormat} from '@/utils';
-import { computed, onMounted, ref } from 'vue';
+import {computed, onMounted, ref, watch} from 'vue';
 import { InputNumber, UiToggle } from '@/components/ui';
 import { useAppSettings } from '@/store/appSettingsStore.ts';
 
@@ -24,6 +24,18 @@ onMounted(() => {
     allowDangerous.value = true;
   }
 })
+
+const emit = defineEmits<{
+  (e: 'update', value: number): void
+}>();
+
+watch(value, (newValue) => {
+  if (!newValue) {
+    return;
+  }
+  
+  emit('update', newValue);
+});
 
 function resetMax() {
   if ((value?.value ?? 0) > maxRam.value) {

@@ -153,9 +153,9 @@ const Electron: ElectronOverwolfInterface = {
         });
     },
 
-    selectFileDialog(cb) {
+    selectFileDialog(filter, cb) {
       window.ipcRenderer
-        .invoke('action/select-file')
+        .invoke('action/select-file', filter)
         .then((dir) => {
           cb(dir);
         })

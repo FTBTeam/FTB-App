@@ -101,7 +101,7 @@ function selectResolution(id: string | null) {
 }
 
 function browseForJava() {
-  appPlatform.io.selectFileDialog((path) => {
+  appPlatform.io.selectFileDialog(null, (path) => {
     if (typeof path !== 'undefined' && path == null) {
       alertController.error('Unable to set Java location as the path was not found')
       return;
@@ -267,12 +267,21 @@ const resolutionList = computed(() => {
     label: "Custom",
     meta: "Custom"
   });
-
-  if (!appSettingsStore.systemHardware) {
-    return resList;
-  }
   
-  for (const res of appSettingsStore.systemHardware?.supportedResolutions) {
+  const resolutions = appSettingsStore.systemHardware?.supportedResolutions ?? [];
+
+  resolutions.sort((a, b) => {
+    const { width: aWidth, height: aHeight } = a;
+    const { width: bWidth, height: bHeight } = b;
+    
+    if (aWidth !== bWidth) {
+      return bWidth - aWidth;
+    }
+    
+    return bHeight - aHeight;
+  });
+  
+  for (const res of resolutions) {
     resList.push({
       value: `${res.width}|${res.height}`,
       label: `${res.width} x ${res.height}`,
@@ -296,21 +305,22 @@ watch(imageFile, (value) => {
   <div class="pack-settings">
     <ArtworkSelector :pack="instance" class="mb-4" v-model="imageFile" :allow-remove="false" />
     
-    <Input
-      label="Instance Name"
-      v-model="instanceSettings.name"
-      @blur="saveSettings"
-      class="mb-4"
-      fill
-    />
+    <div class="flex gap-6 items-center mb-6">
+      <Input
+        label="Instance Name"
+        v-model="instanceSettings.name"
+        @blur="saveSettings"
+        fill
+      />
 
-    <UiButton :icon="instanceSettings.locked ? faUnlock : faLock" @click="toggleLock" class="mb-6">
-      {{instanceSettings.locked ? 'Unlock' : 'Lock'}} instance
-    </UiButton>
-    
-    <CategorySelector :open-down="true" class="mb-6" v-model="instanceSettings.category" @input="() => saveSettings()" />
+      <CategorySelector :open-down="true" class="w-2/3" v-model="instanceSettings.category" @input="() => saveSettings()" />
+    </div>
 
     <div class="buttons flex gap-4 mb-8">
+      <UiButton size="small" :icon="instanceSettings.locked ? faUnlock : faLock" @click="toggleLock">
+        {{instanceSettings.locked ? 'Unlock' : 'Lock'}} instance
+      </UiButton>
+      
       <UiButton size="small" type="info" :icon="faFolder" @click="browseInstance()">
         Open Folder
       </UiButton>
@@ -328,7 +338,7 @@ watch(imageFile, (value) => {
       </UiButton>
     </div>
 
-    <ram-slider class="mb-6" v-model="instanceSettings.memory" @change="saveSettings" />
+    <ram-slider class="mb-6" v-model="instanceSettings.memory" @update="saveSettings" />
     
     <ui-toggle
       label="Fullscreen"
@@ -361,14 +371,14 @@ watch(imageFile, (value) => {
           <b>Width</b>
           <small class="text-muted block mt-2">The Minecraft windows screen width</small>
         </div>
-        <InputNumber class="mb-0" v-model="instanceSettings.width" @blur="saveSettings" />
+        <InputNumber class="mb-0" v-model="instanceSettings.width" @blur="saveSettings" @update:model-value="saveSettings()" />
       </div>
       <div class="flex items-center">
         <div class="block flex-1 mr-2">
           <b>Height</b>
           <small class="text-muted block mt-2">The Minecraft windows screen height</small>
         </div>
-        <InputNumber class="mb-0" v-model="instanceSettings.height" @blur="saveSettings" />
+        <InputNumber class="mb-0" v-model="instanceSettings.height" @blur="saveSettings" @update:model-value="saveSettings()" />
       </div>
     </div>
     
@@ -378,7 +388,7 @@ watch(imageFile, (value) => {
     </h2>
     
     <div class="mb-8">
-      <div class="flex items-center mb-6">
+      <div class="flex items-center mb-6" v-if="!instance.isImport">
         <div class="block flex-1 mr-2">
           <b>Release Channel</b>
           <small class="block text-muted mr-6 mt-2">
@@ -389,7 +399,7 @@ watch(imageFile, (value) => {
           :options="channelOptions"
           v-model="instanceSettings.releaseChannel"
           :style="{width: '192px'}"
-          @change="() => saveSettings()"
+          @updated="() => saveSettings()"
         />
       </div>
 

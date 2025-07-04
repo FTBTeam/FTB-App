@@ -80,15 +80,18 @@ public class AppMain {
     }
 
     public static void main(String[] args) {
-        logAppDetails(args);
-
         ImmutableMap<String, String> parsedArgs = ImmutableMap.of();
         try {
              parsedArgs = StartArgParser.parse(args).getArgs();
         } catch (Throwable ex) {
             LOGGER.error("Failed to parse args, continuing with empty args", ex);
         }
-        
+
+        isDevMode = parsedArgs.containsKey("dev");
+        Constants.IS_DEV_MODE = isDevMode;
+
+        logAppDetails(args);
+
         try {
             prelaunchChecks(parsedArgs);
         } catch (Throwable ex) {
@@ -138,15 +141,12 @@ public class AppMain {
         }
     }
 
-    private static void mainImpl(ImmutableMap<String, String> args) {
+    private static void mainImpl(ImmutableMap<String, String> args) {        
         // Cleanup before shutdown
         Runtime.getRuntime().addShutdownHook(new Thread(AppMain::cleanUpBeforeExit));
 
         Settings.loadSettings();
         Instances.refreshInstances();
-
-        isDevMode = args.containsKey("dev");
-        Constants.IS_DEV_MODE = isDevMode;
 
         boolean isOverwolf = args.containsKey("overwolf");
         LOGGER.info((isOverwolf ? "Overwolf" : "Electron") + " integration mode");

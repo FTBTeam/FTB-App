@@ -1,7 +1,5 @@
 <script lang="ts" setup>
 
-import {computed} from "vue";
-
 const { disabled = false, label = undefined, desc = undefined, alignRight = false, value, useModel = true } = defineProps<{
   disabled?: boolean;
   label?: string;
@@ -25,19 +23,11 @@ function toggle() {
     emit('input', modelValue.value);
   }
 }
-
-const actualValue = computed(() => {
-  if (useModel) {
-    return modelValue.value;
-  } else {
-    return value;
-  }
-})
 </script>
 
 <template>
   <div class="ui-toggle" @click="toggle" :class="{disabled, 'text-based': hasText, 'right': alignRight, 'no-desc': !desc}">
-    <div class="toggle" :class="{active: actualValue}">
+    <div class="toggle" :class="{active: (useModel ? modelValue : value)}">
       <div class="inner" />
     </div>
     

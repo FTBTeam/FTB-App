@@ -29,15 +29,6 @@ export interface CancelInstallInstanceDataReply extends BaseData {
     uuid: string;
 }
 
-export interface CheckCurseZipData extends BaseData {
-    path: string;
-}
-
-export interface CheckCurseZipDataReply extends CheckCurseZipData {
-    success: boolean;
-    message: string;
-}
-
 export interface InstallInstanceData extends BaseData {
     uuid: string;
     id: number;
@@ -542,6 +533,7 @@ export interface StoragePutHandlerReply extends StoragePutHandlerData {
 export interface SettingsData {
     spec: string;
     instanceLocation: string;
+    enableFeralGameMode: boolean;
     general: GeneralSettings;
     instanceDefaults: InstanceSettings;
     appearance: AppearanceSettings;

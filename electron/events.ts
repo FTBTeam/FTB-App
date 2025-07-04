@@ -86,21 +86,24 @@ ipcMain.on('action/control-window', (event, data) => {
   }
 });
 
-ipcMain.handle('action/select-file', async (event) => {
+ipcMain.handle('action/select-file', async (event, data) => {
   const window = BrowserWindow.fromWebContents(event.sender);
   if (!window) {
     return null;
   }
-
+  
+  const filter = data;
+  
   log.debug("Selecting file using the frontend")
   const result = await dialog.showOpenDialog(window, {
     properties: ['openFile', 'showHiddenFiles', 'dontAddToRecent'],
-    filters: [
+    filters: filter ? [
       {
-        name: 'Java',
-        extensions: ['*'],
-      },
-    ],
+        name: filter,
+        // TODO: This is potentially problematic, but for now, it's working
+        extensions: filter.replace("*.", "").split(",") || ['*']
+      }
+    ] : undefined,
   });
 
   if (result.filePaths.length > 0) {

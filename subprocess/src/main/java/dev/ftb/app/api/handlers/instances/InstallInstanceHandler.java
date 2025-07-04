@@ -116,6 +116,9 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
         }
         Instance instance = new Instance(data.name, data.artPath, data.category, modpackManifest, versionManifest, mcVersion, isPrivate, packType);
         instance.props.isImport = isImport;
+        if (isImport) {
+            instance.props.locked = false;
+        }
         
         // If the instance is our own, we shouldn't lock it by default.
         if (data.ourOwn) {
