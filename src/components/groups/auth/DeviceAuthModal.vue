@@ -275,7 +275,7 @@ function expiresInAsPercentage() {
       
       <UiButton :icon="faExternalLink" size="large" :full-width="true" v-if="deviceCodeData?.user_code && !error" @click="copyAndOpen" class="mt-2 w-full" type="primary">Copy and Open</UiButton>
 
-      <hr class="mt-6 border-white border-opacity-25" v-if="deviceCodeData?.verification_uri" />
+      <hr class="mt-6 border-white/10" v-if="deviceCodeData?.verification_uri" />
       
       <div class="flex items-center gap-6 mt-8" v-if="deviceCodeData?.verification_uri">
         <div class="bg-white rounded p-2" v-if="showQrCode">

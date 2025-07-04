@@ -81,7 +81,7 @@ const domain = constants.ftbDomain;
             </div>
           </div>
         </div>
-        <hr class="my-8 border-white border-opacity-25"/>
+        <hr class="my-8 border-white/10"/>
       </div>
     </template>
     <div v-else>

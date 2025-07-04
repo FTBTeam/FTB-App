@@ -112,7 +112,7 @@ const channelOptions = computed(() => ReleaseChannelOptions());
     </div>
     
     <p class="block text-white-700 text-lg font-bold mb-4">Updates</p>
-    <div class="flex items-center mb-4 border-b border-white border-opacity-25 pb-6">
+    <div class="flex items-center mb-4 border-b border-white/10 pb-6">
       <div class="block flex-1 mr-2">
         <b>Release Channel</b>
         <small class="block text-muted mr-6 mt-2">
@@ -128,7 +128,7 @@ const channelOptions = computed(() => ReleaseChannelOptions());
       />
     </div>
     <p class="block text-white-700 text-lg font-bold mb-4">Window Size</p>
-    <div class="mb-4 border-b border-white border-opacity-25 pb-6">
+    <div class="mb-4 border-b border-white/10 pb-6">
       <ui-toggle label="Fullscreen" desc="Always open Minecraft in Fullscreen mode" v-model="localSettings.instanceDefaults.fullscreen" class="mb-4" @input="() => {
         saveMutated()
       }" />

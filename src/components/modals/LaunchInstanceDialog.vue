@@ -62,7 +62,7 @@ function numberToFixed(num: number) {
     <template v-if="runningInstancesStore.launchingStatus">
       <div v-if="!runningInstancesStore.launchingStatus.error">
         <loader :title="runningInstancesStore.launchingStatus?.starting ? 'Starting...' : 'Logging in...'" />
-        <div v-if="latestPreInitProgress" class="mt-6 pt-6 border-t border-white border-opacity-25">
+        <div v-if="latestPreInitProgress" class="mt-6 pt-6 border-t border-white/10">
           <p class="text-muted font-bold mb-4">Running pre-startup tasks...</p>
           
           <div class="flex gap-8 items-center">

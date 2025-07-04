@@ -125,7 +125,7 @@ function transformToElectronChannel(channel: ReleaseChannel) {
       </message>
     </div>
 
-    <div class="mb-4 border-b border-white border-opacity-25 pb-6" v-if="appPlatform.isElectron">
+    <div class="mb-4 border-b border-white/10 pb-6" v-if="appPlatform.isElectron">
       <p class="block text-white-700 text-lg font-bold mb-4">Updates</p>
       <div class="flex items-center">
         <div class="block flex-1 mr-2">
@@ -147,7 +147,7 @@ function transformToElectronChannel(channel: ReleaseChannel) {
       <p v-if="checkingForUpdates">Checking for updates...</p>
     </div>
     
-    <div class="mb-4 border-b border-white border-opacity-25 pb-6">
+    <div class="mb-4 border-b border-white/10 pb-6">
       <p class="block text-white-700 text-lg font-bold mt-6 mb-2">Troubleshooting</p>
       <p class="text-muted text-sm mb-4">These settings are for troubleshooting purposes only</p>
       
