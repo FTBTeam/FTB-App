@@ -210,8 +210,8 @@ const Overwolf: ElectronOverwolfInterface = {
       });
     },
 
-    selectFileDialog(cb) {
-      overwolf.utils.openFilePicker('', (resp: any) => {
+    selectFileDialog(filter, cb) {
+      overwolf.utils.openFilePicker(filter === null ? '' : filter, (resp: any) => {
         if (resp && resp.status === 'success') {
           cb(resp.file);
         }

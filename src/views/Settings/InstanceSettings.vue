@@ -40,6 +40,8 @@ onMounted(async () => {
 
 function saveMutated() {
   // Compare the last settings to the current settings, if they are the same, don't save
+  console.log("Saving mutated settings", localSettings.value);
+  
   if (lastSettings.value === JSON.stringify(localSettings.value)) {
     return;
   }
@@ -49,7 +51,11 @@ function saveMutated() {
   lastSettings.value = JSON.stringify(localSettings.value)
 }
 
-function selectResolution(id: string) {
+function selectResolution(id: string | null) {
+  if (!id) {
+    return;
+  }
+  
   const selected = appSettingsStore.systemHardware?.supportedResolutions.find(e => `${e.width}|${e.height}` === id);
   if (!selected) {
     return;
@@ -68,7 +74,22 @@ const resolutionList = computed(() => {
     meta: "Custom"
   });
 
-  for (const res of (appSettingsStore.systemHardware?.supportedResolutions ?? [])) {
+  const resolutionOptions = appSettingsStore.systemHardware?.supportedResolutions ?? [];
+
+  // Sort the resList by the width, then by height
+  resolutionOptions.sort((a, b) => {
+    const aWidth = a.width ?? 0;
+    const aHeight = a.height ?? 0;
+    const bWidth = b.width ?? 0;
+    const bHeight = b.height ?? 0;
+    
+    if (aWidth !== bWidth) {
+      return bWidth - aWidth;
+    }
+    return bHeight - aHeight;
+  });
+  
+  for (const res of resolutionOptions) {
     resList.push({
       value: `${res.width}|${res.height}`,
       label: `${res.width} x ${res.height}`,
@@ -91,23 +112,23 @@ const channelOptions = computed(() => ReleaseChannelOptions());
     </div>
     
     <p class="block text-white-700 text-lg font-bold mb-4">Updates</p>
-    <div class="flex items-center mb-4 border-b border-white border-opacity-25 pb-6">
+    <div class="flex items-center mb-4 border-b border-white/10 pb-6">
       <div class="block flex-1 mr-2">
         <b>Release Channel</b>
         <small class="block text-muted mr-6 mt-2">
           The selected release channel will determine when we show that a supported modpack has an update.<span class="mb-2 block" /> Release is the most stable, then Beta should be playable and Alpha could introduce game breaking bugs.</small>
       </div>
-
+      
       <selection2
         v-if="loadedSettings"
         :options="channelOptions"
         v-model="localSettings.instanceDefaults.updateChannel"
         :style="{width: '192px'}"
-        @change="() => saveMutated()"
+        @updated="() => saveMutated()"
       />
     </div>
     <p class="block text-white-700 text-lg font-bold mb-4">Window Size</p>
-    <div class="mb-4 border-b border-white border-opacity-25 pb-6">
+    <div class="mb-4 border-b border-white/10 pb-6">
       <ui-toggle label="Fullscreen" desc="Always open Minecraft in Fullscreen mode" v-model="localSettings.instanceDefaults.fullscreen" class="mb-4" @input="() => {
         saveMutated()
       }" />
@@ -125,7 +146,7 @@ const channelOptions = computed(() => ReleaseChannelOptions());
             <selection2
               v-if="resolutionList.length"
               v-model="resolutionId"
-              @change="selectResolution"
+              @updated="v => selectResolution(v)"
               :style="{width: '220px'}"
               :options="resolutionList"
             />
@@ -160,7 +181,7 @@ const channelOptions = computed(() => ReleaseChannelOptions());
         saveMutated()
       }" />
     
-    <ram-slider class="mb-6" v-model="localSettings.instanceDefaults.memory" @change="saveMutated" />
+    <ram-slider class="mb-6" v-model="localSettings.instanceDefaults.memory" @update="saveMutated" />
 
     <div class="flex gap-4 flex-col mb-6">
       <TextArea

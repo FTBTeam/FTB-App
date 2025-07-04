@@ -18,7 +18,6 @@ export type ApiEndpoints = 	"installedInstances" |
 	"ping" |
 	"instanceBrowse" |
 	"moveInstances" |
-	"checkCurseZip" |
 	"instanceRestoreBackup" |
 	"instanceInstallMod" |
 	"profiles.setActiveProfile" |

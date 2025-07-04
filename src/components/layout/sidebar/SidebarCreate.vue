@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import CreateInstance from '@/components/groups/modpack/create/CreateInstance.vue';
-import CurseImportInstance from '@/components/groups/modpack/create/CurseImportInstance.vue';
 import {safeNavigate} from '@/utils';
 import {RouterNames} from '@/router';
 import { onMounted, onUnmounted, ref } from 'vue';
@@ -8,15 +7,18 @@ import Popover from '@/components/ui/Popover.vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faCirclePlus, faPlus, faSearch } from '@fortawesome/free-solid-svg-icons';
 import {useGlobalStore} from "@/store/globalStore.ts";
+import appPlatform from '@platform';
+import {useAppStore} from "@/store/appStore.ts";
+import {alertController} from "@/core/controllers/alertController.ts";
 
 const { disabled } = defineProps<{
   disabled?: boolean;
 }>()
 
 const globalStore = useGlobalStore();
+const appStore = useAppStore();
 
 const open = ref(false)
-const curseOpen = ref(false)
 
 onMounted(() => {
   document.addEventListener('click', close)
@@ -25,6 +27,17 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('click', close)
 })
+
+function selectCurseFileToImport() {
+  appPlatform.io.selectFileDialog('*.zip', async file => {
+    if (!file || !file.endsWith('.zip')) {
+      alertController.warning('Please select a valid .zip file.')
+      return;
+    }
+    
+    await appStore.controllers.install.requestImport(file, "Default")
+  })
+}
 
 function close(event: any) {
   if (event.target.closest('.create-instance-container')) return
@@ -70,10 +83,7 @@ function close(event: any) {
 <!--          <p>Import</p>-->
 <!--          <small>Import instances from other launchers</small>-->
 <!--        </div>-->
-        <div class="option curse" @click="() => {
-          open = false;
-          curseOpen = true;
-        }">
+        <div class="option curse" @click="selectCurseFileToImport">
           <div class="icon">
             <img src="@/assets/curse-logo.svg" width="20" alt="" />
           </div>
@@ -84,7 +94,6 @@ function close(event: any) {
     </div>
     
     <create-instance :open="globalStore.createInstanceVisible" @close="globalStore.updateCreateInstanceVisibility(false)" />
-    <curse-import-instance :open="curseOpen" @close="curseOpen = false" />
   </div>
 </template>
 

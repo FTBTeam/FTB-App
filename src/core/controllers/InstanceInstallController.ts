@@ -205,7 +205,7 @@ export class InstanceInstallController {
     if (this.queue.length === 0 || this.installLock) {
       return;
     }
-
+    
     this.logger.debug('Checking queue');
     this.logger.debug('Queue items', this.queue.length);
     const request = installStore.popInstallQueue()

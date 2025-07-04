@@ -31,8 +31,23 @@ const router = createRouter({
     },
     {
       path: '/modpacks',
-      name: RouterNames.ROOT_LIBRARY,
-      component: () => import(/* webpackChunkName: "library" */ './views/Library.vue'),
+      children: [
+        {
+          name: RouterNames.ROOT_LIBRARY,
+          path: '',
+          component: () => import(/* webpackChunkName: "library" */ './views/Library.vue'),
+        },
+        {
+          path: 'instance/:uuid',
+          name: RouterNames.ROOT_LOCAL_PACK,
+          component: () => import(/* webpackChunkName: "instancepage" */ './views/InstancePage.vue'),
+        },
+        {
+          path: 'running/:uuid',
+          name: RouterNames.ROOT_RUNNING_INSTANCE,
+          component: () => import(/* webpackChunkName: "launchingpage" */ './views/RunningInstance.vue'),
+        },
+      ]
     },
     {
       path: '/browseModpacks/:search?',
@@ -89,16 +104,6 @@ const router = createRouter({
           component: () => import(/* webpackChunkName: "settings" */ './views/Settings/AdvancedSettings.vue'),
         }
       ],
-    },
-    {
-      path: '/instance/:uuid',
-      name: RouterNames.ROOT_LOCAL_PACK,
-      component: () => import(/* webpackChunkName: "instancepage" */ './views/InstancePage.vue'),
-    },
-    {
-      path: '/running/:uuid',
-      name: RouterNames.ROOT_RUNNING_INSTANCE,
-      component: () => import(/* webpackChunkName: "launchingpage" */ './views/RunningInstance.vue'),
     },
     {
       path: '/support',

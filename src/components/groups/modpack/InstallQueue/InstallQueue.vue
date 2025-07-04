@@ -4,7 +4,7 @@ import { useAttachDomEvent } from '@/composables';
 import InstallQueueRow from '@/components/groups/modpack/InstallQueue/InstallQueueRow.vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { useInstallStore } from '@/store/installStore.ts';
-import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import {faDownload} from '@fortawesome/free-solid-svg-icons';
 
 const installStore = useInstallStore();
 
@@ -32,10 +32,14 @@ const onlyQueue = computed(() => {
 
 <template>
   <transition name="transition-fade">
-    <div class="app-install" v-if="installStore.currentInstall || installStore.installQueue.length > 0" ref="root">
-      <div class="btn flex gap-2 items-center bg-green-500" @click="open = !open">
-        <FontAwesomeIcon :icon="faCircleNotch" spin />
-        Downloading
+    <div class="app-install my-2" v-if="installStore.currentInstall || installStore.installQueue.length > 0" ref="root">
+      <div class="btn flex items-center" @click="open = !open">
+        <div class="relative">
+          <FontAwesomeIcon :icon="faDownload" />
+          <div class="absolute -bottom-4 -right-4 inline-block bg-black/40 px-1 text-sm rounded">
+            {{ onlyQueue.length  + (installStore.currentInstall ? 1 : 0) }}
+          </div>
+        </div>
       </div>
       
       <transition name="transition-fade-and-up">
@@ -76,17 +80,28 @@ const onlyQueue = computed(() => {
 
   .btn {
     cursor: pointer;
-    padding: .5rem .75rem;
-    border: 1px solid rgba(white, .2);
-    border-radius: 3px;
+    background: #1a1a1a;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: .6rem .9rem;
+    border-radius: 6px;
+    width: auto !important;
+    font-size: 18px;
+    
+    svg {
+      max-width: unset !important;
+      margin: 0;
+    }
   }
 
   .dropdown {
     position: absolute;
-    top: 120%;
-    right: 0;
+    top: 0;
+    left: 120%;
     z-index: 100;
-    width: 510px;
+    width: 380px;
     background-color: var(--color-background);
     padding: 1rem;
     border-radius: 5px;

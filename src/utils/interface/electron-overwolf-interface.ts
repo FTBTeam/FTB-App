@@ -51,7 +51,7 @@ export interface Config {
 
 export interface InputOutput {
   selectFolderDialog: (startPath: string, cb: (selectedFile: string | null) => void) => void;
-  selectFileDialog: (cb: (selectedFile: string | null) => void) => void;
+  selectFileDialog: (filter: string | null, cb: (selectedFile: string | null) => void) => void;
   
   openFinder(path: string): Promise<boolean>;
   pathJoin(...paths: string[]) : string;
