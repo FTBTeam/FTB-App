@@ -245,7 +245,7 @@ jobs:
         run: |
           cp subprocess/build/libs/meta.json overwolf/
           cp subprocess/build/libs/java-licenses.json overwolf/
-          npm run install --no-frozen-lockfile
+          npm install --no-frozen-lockfile
           npm run gen:license
           node tooling/overwolf/patchManifest.js
           npm run overwolf:build
