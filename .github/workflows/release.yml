@@ -251,7 +251,7 @@ jobs:
           npm run overwolf:build
           node tooling/overwolf/packageOpk.js
           echo "Signing OPK.."
-          npm run ow opk sign -o overwolf/signed.opk overwolf/*.opk
+          npx ow opk sign -o overwolf/signed.opk overwolf/*.opk
       - name: Upload Overwolf artifact
         uses: actions/upload-artifact@v4
         with:
