@@ -72,7 +72,7 @@ jobs:
   # Publish
   build-releases:
     if: | 
-      !contains(github.event.head_commit.message, '[-ci-skip]') && !contains(github.event.head_commit.message, '[-skip electron]')
+      !contains(github.event.head_commit.message, '[-ci-skip]')
     name: Prepare releases
     strategy: 
       matrix:
@@ -86,6 +86,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     needs: build-jar
     steps:
+      - name: Exit early if we're skipping
+        if: | 
+          contains(github.event.head_commit.message, '[-skip electron]')
+        run: exit 0
       # Common setup
       - name: Checkout
         uses: actions/checkout@v4
