@@ -344,4 +344,4 @@ jobs:
           OW_CLI_EMAIL: ${{ secrets.OW_CLI_EMAIL }}
         run: |
           npm install --no-frozen-lockfile
-          npm ow opk upload -w true overwolf/signed.opk
+          npx ow opk upload -w true overwolf/signed.opk
