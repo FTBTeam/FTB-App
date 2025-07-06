@@ -71,7 +71,8 @@ jobs:
 
   # Publish
   build-releases:
-    if: "!contains(github.event.head_commit.message, '[-ci-skip]') || !contains(github.event.head_commit.message, '[-skip electron]')"
+    if: | 
+      !contains(github.event.head_commit.message, '[-ci-skip]') && !contains(github.event.head_commit.message, '[-skip electron]')
     name: Prepare releases
     strategy: 
       matrix:
