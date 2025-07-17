@@ -12,12 +12,19 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 public class MicrosoftRequests {
     private static final Logger LOGGER = LoggerFactory.getLogger(MicrosoftRequests.class);
     private static final Gson GSON = new Gson();
+    
+    private static final Pattern JWT_TOKEN = Pattern.compile("(^[A-Za-z0-9-_]*\\.[A-Za-z0-9-_]*\\.[A-Za-z0-9-_]*$)", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+    private static final Set<String> IGNORED_HEADERS = Set.of(
+      "content-length", "cache-control", "user-agent"
+    );
     
     private static final Request.Builder STANDARD_REQ = new Request.Builder()
             .header("Content-Type", "application/json")
@@ -191,12 +198,44 @@ public class MicrosoftRequests {
     private static Result<Response, String> request(Request.Builder builder) {
         var client = Constants.httpClient();
         var request = builder.build();
-        
-        logRequestData(request);
+
+        LOGGER.info("Request({})::{}", request.method(), request.url());
+        logHeaders("Request", request.headers());
         
         try {
             var responseRaw = client.newCall(request).execute();
-            logResponse(responseRaw);
+
+            var responseLog = new StringBuilder();
+            responseLog.append("Response(").append(responseRaw.code()).append(")::").append(responseRaw.request().url());
+            String message = responseRaw.message();
+            if (!message.isEmpty()) {
+                responseLog.append(" - ").append(message);
+            } else {
+                responseLog.append(" - No message");
+            }
+
+            logHeaders("Response", responseRaw.headers());
+
+            if (responseRaw.code() != 200) {
+                // Clone the response body to avoid closing it before readers
+                try {
+                    ResponseBody body = responseRaw.peekBody(Long.MAX_VALUE);
+                    String bodyString = body.string();
+                    if (!bodyString.isEmpty()) {
+                        var filteredBody = JWT_TOKEN.matcher(bodyString).replaceAll("REDACTED");
+                        
+                        responseLog.append("\nResponse Body: ").append(filteredBody);
+                    } else {
+                        responseLog.append(" - No body");
+                    }
+                } catch (IOException e) {
+                    responseLog.append(" - Failed to read body: ").append(e.getMessage());
+                }
+            } else {
+                responseLog.append(" - Success");
+            }
+            
+            LOGGER.info(responseLog.toString());
             
             return Result.ok(responseRaw);
         } catch (IOException e) {
@@ -218,33 +257,34 @@ public class MicrosoftRequests {
         }
     }
     
-    private static void logRequestData(Request request) {
-        LOGGER.info("Requesting: {}", request.url());
-        LOGGER.info("Method: {}", request.method());
-        logHeaders("Request", request.headers());
-    }
-    
-    private static void logResponse(Response response) {
-        LOGGER.info("Response Code: {}", response.code());
-        String message = response.message();
-        if (!message.isEmpty()) {
-            LOGGER.info("Response Message: {}", message);
-        }
-        
-        logHeaders("Response", response.headers());
-    }
     
     private static void logHeaders(String direction, Headers headers) {
         StringBuilder headerString = new StringBuilder();
+        
+        int longestHeaderName = headers.names().stream()
+                .map(String::length)
+                .max(Integer::compareTo)
+                .orElse(0);
+        
         headerString.append(direction).append(" ").append("Headers: ").append("\n");
         for (int i = 0; i < headers.size(); i++) {
-            String name = headers.name(i);
+            String name = headers.name(i).toLowerCase();
+            
+            if (IGNORED_HEADERS.contains(name)) {
+                continue; // Skip ignored headers
+            }
+            
             String value = headers.value(i);
             if (name.toLowerCase().contains("authorization")) {
                 value = "REDACTED";
             }
+            
+            // Filter the value for JWT tokens
+            value = JWT_TOKEN.matcher(value).replaceAll("REDACTED");
 
-            headerString.append("\t").append(name).append(" = ").append(value).append("\n");
+            // Pad the header name for alignment
+            String padding = " ".repeat(Math.max(0, longestHeaderName - name.length()));
+            headerString.append("  ").append(name).append(padding).append(": ").append(value).append("\n");
         }
         
         LOGGER.info(headerString.toString());

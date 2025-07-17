@@ -124,23 +124,6 @@ async function confirm() {
 
       <div class="profile-switch" :class="{open}" v-show="!disabled">
         <section class="mb-8">
-          <p class="font-bold mb-4">FTB Account</p>
-          
-          <div class="accounts" v-if="accountsStore.ftbAccount">
-            <SidebarProfileItem :profile="{
-              name: accountsStore.ftbAccount?.accountData.preferred_username ?? accountsStore.ftbAccount?.accountData.given_name ?? 'Unknown?',
-              avatarUrl: accountsStore.ftbAccount?.accountData.picture
-            }" 
-              :subtext="accountsStore.isPatreon ? 'Patreon Member' : undefined"
-              :active="true"
-              :on-delete="ftbSignOut"
-              :on-select="() => {}" />
-          </div>
-
-          <UiButton v-if="!accountsStore.ftbAccount" size="small" type="primary" :icon="faPlus" @click="() => openSignInFtb()">Add FTB Account</UiButton>
-        </section>
-        
-        <section>
           <p class="font-bold mb-4">Minecraft Accounts</p>
           
           <div class="accounts" v-if="accountsStore.mcProfiles && accountsStore.mcProfiles.length">
@@ -158,6 +141,24 @@ async function confirm() {
           </div>
           
           <UiButton size="small" type="primary" :icon="faPlus" @click="() => openSignIn()">Add Minecraft Account</UiButton>
+        </section>
+
+        <section>
+          <p class="font-bold mb-4">FTB Account</p>
+
+          <div class="accounts" v-if="accountsStore.ftbAccount">
+            <SidebarProfileItem :profile="{
+              name: accountsStore.ftbAccount?.accountData.preferred_username ?? accountsStore.ftbAccount?.accountData.given_name ?? 'Unknown?',
+              avatarUrl: accountsStore.ftbAccount?.accountData.picture
+            }"
+                                :subtext="accountsStore.isPatreon ? 'Patreon Member' : undefined"
+                                :active="true"
+                                :on-delete="ftbSignOut"
+                                :on-select="() => {}" />
+          </div>
+
+          <p class="text-sm mb-4">Not yet available, check back soon 😁</p>
+          <UiButton v-if="!accountsStore.ftbAccount" :disabled="true" size="small" type="primary" :icon="faPlus" @click="() => openSignInFtb()">Add FTB Account</UiButton>
         </section>
       </div>
     </div>
