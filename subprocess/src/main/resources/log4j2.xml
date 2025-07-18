@@ -1,19 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="warn">
     <Scripts>
-        <!-- TODO Move to Groovy if we migrate FTBApp to use J15 -->
         <Script name="OsSelect" language="javascript"><![CDATA[
-                var osName = Java.type("java.lang.System").getProperty("os.name").toLowerCase();
-                var selected;
-                if (osName.contains("win")) {
-                    selected = "Windows";
-                } else if (osName.contains("mac")) {
-                    selected = "Mac";
-                } else {
-                    selected = "Linux";
-                }
-                selected;
-            ]]></Script>
+            var osName = Java.type("java.lang.System").getProperty("os.name").toLowerCase();
+            var selected;
+            if (osName.contains("win")) {
+                selected = "Windows";
+            } else if (osName.contains("mac")) {
+                selected = "Mac";
+            } else {
+                selected = "Linux";
+            }
+            selected;
+        ]]></Script>
     </Scripts>
     <Filters>
         <!-- Drop Minecraft logging -->
