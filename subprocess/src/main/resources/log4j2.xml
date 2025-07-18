@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="warn" packages="io.sentry.log4j2">
+<Configuration status="warn">
     <Scripts>
         <!-- TODO Move to Groovy if we migrate FTBApp to use J15 -->
         <Script name="OsSelect" language="javascript"><![CDATA[
@@ -23,8 +23,6 @@
         <Console name="SysOut" target="SYSTEM_OUT">
             <PatternLayout pattern="[%d{HH:mm:ss}] [%t/%level] [%logger]: %msg%n"/>
         </Console>
-        <!-- Breadcrumbs: WARN, INFO, DEBUG, TRACE, ALL Events: FATAL, ERROR -->
-        <Sentry name="Sentry" minimumBreadcrumbLevel="TRACE" minimumEventLevel="ERROR"/>
         <BetterScriptAppenderSelector name="Latest">
             <ScriptRef ref="OsSelect"/>
             <AppenderSet>
@@ -34,6 +32,7 @@
                         <TimeBasedTriggeringPolicy/>
                         <OnStartupTriggeringPolicy/>
                     </Policies>
+                    <DefaultRolloverStrategy max="3" fileIndex="min"/>
                 </RollingRandomAccessFile>
                 <RollingRandomAccessFile name="Mac" fileName="${sys:user.home}/Library/Application Support/.ftba/logs/latest.log" filePattern="${sys:user.home}/Library/Application Support/.ftba/logs/%d{yyyy-MM-dd}-%i.log.gz">
                     <PatternLayout pattern="[%d{HH:mm:ss}] [%t/%level] [%logger]: %msg%n"/>
@@ -41,6 +40,7 @@
                         <TimeBasedTriggeringPolicy/>
                         <OnStartupTriggeringPolicy/>
                     </Policies>
+                    <DefaultRolloverStrategy max="3" fileIndex="min"/>
                 </RollingRandomAccessFile>
                 <RollingRandomAccessFile name="Linux" fileName="${sys:user.home}/.ftba/logs/latest.log" filePattern="${sys:user.home}/.ftba/logs/%d{yyyy-MM-dd}-%i.log.gz">
                     <PatternLayout pattern="[%d{HH:mm:ss}] [%t/%level] [%logger]: %msg%n"/>
@@ -48,6 +48,7 @@
                         <TimeBasedTriggeringPolicy/>
                         <OnStartupTriggeringPolicy/>
                     </Policies>
+                    <DefaultRolloverStrategy max="3" fileIndex="min"/>
                 </RollingRandomAccessFile>
             </AppenderSet>
         </BetterScriptAppenderSelector>
@@ -60,7 +61,7 @@
                         <OnStartupTriggeringPolicy/>
                         <SizeBasedTriggeringPolicy size="200MB"/>
                     </Policies>
-                    <DefaultRolloverStrategy max="5" fileIndex="min"/>
+                    <DefaultRolloverStrategy max="3" fileIndex="min"/>
                 </RollingRandomAccessFile>
                 <RollingRandomAccessFile name="Mac" fileName="${sys:user.home}/Library/Application Support/.ftba/logs/debug.log" filePattern="${sys:user.home}/Library/Application Support/.ftba/logs/debug-%i.log.gz">
                     <PatternLayout pattern="[%d{HH:mm:ss.SSS}] [%t/%level] [%logger]: %msg%n"/>
@@ -68,7 +69,7 @@
                         <OnStartupTriggeringPolicy/>
                         <SizeBasedTriggeringPolicy size="200MB"/>
                     </Policies>
-                    <DefaultRolloverStrategy max="5" fileIndex="min"/>
+                    <DefaultRolloverStrategy max="3" fileIndex="min"/>
                 </RollingRandomAccessFile>
                 <RollingRandomAccessFile name="Linux" fileName="${sys:user.home}/.ftba/logs/debug.log" filePattern="${sys:user.home}/.ftba/logs/debug-%i.log.gz">
                     <PatternLayout pattern="[%d{HH:mm:ss.SSS}] [%t/%level] [%logger]: %msg%n"/>
@@ -76,7 +77,7 @@
                         <OnStartupTriggeringPolicy/>
                         <SizeBasedTriggeringPolicy size="200MB"/>
                     </Policies>
-                    <DefaultRolloverStrategy max="5" fileIndex="min"/>
+                    <DefaultRolloverStrategy max="3" fileIndex="min"/>
                 </RollingRandomAccessFile>
             </AppenderSet>
         </BetterScriptAppenderSelector>
@@ -91,9 +92,6 @@
             </AppenderRef>
             <AppenderRef ref="Debug" level="trace">
                 <MarkerFilter marker="SENTRY_ONLY" onMatch="DENY" onMismatch="NEUTRAL"/>
-            </AppenderRef>
-            <AppenderRef ref="Sentry">
-                <MarkerFilter marker="NO_SENTRY" onMatch="DENY" onMismatch="NEUTRAL"/>
             </AppenderRef>
         </Root>
     </Loggers>
