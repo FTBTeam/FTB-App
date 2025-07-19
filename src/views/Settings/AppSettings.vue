@@ -31,6 +31,7 @@ const instanceMoveModalComplete = ref(false);
 const instanceMoveLocations = ref({old: "", new: ""});
 
 const osType = ref<string | null>(null);
+const includeInstanceLogs = ref(false);
 
 onMounted(async () => {
   await appSettingsStore.loadSettings()
@@ -71,7 +72,10 @@ async function uploadLogData() {
   uploadingLogs.value = true;
 
   try {
-    const result = await sendMessage("uploadLogs", {})
+    const result = await sendMessage("uploadLogs", {
+      includeInstanceLogs: includeInstanceLogs.value
+    })
+    
     if (result.path) {
       await appPlatform.io.openFinder(result.path)
       alertController.success('Logs saved to ' + result.path)
@@ -206,9 +210,9 @@ async function moveInstances() {
 
     <p class="block text-white-700 font-bold mb-4">Common Folders</p>
     <div class="flex items-center gap-4 mb-6">
-      <UiButton size="small" :icon="faFolderOpen" @click="openFolder('home')" :working="working">Home</UiButton>
-      <UiButton size="small" :icon="faFolderOpen" @click="openFolder('instances')" :working="working">Instances</UiButton>
-      <UiButton size="small" :icon="faFolderOpen" @click="openFolder('logs')" :working="working">Logs</UiButton>
+      <UiButton :icon="faFolderOpen" @click="openFolder('home')" :working="working">Home</UiButton>
+      <UiButton :icon="faFolderOpen" @click="openFolder('instances')" :working="working">Instances</UiButton>
+      <UiButton :icon="faFolderOpen" @click="openFolder('logs')" :working="working">Logs</UiButton>
     </div>
 
     <div class="section logs mb-6">
@@ -219,7 +223,9 @@ async function moveInstances() {
           provide these logs to our App team to investigate.
         </p>
       </div>
-      <ui-button :working="uploadingLogs" class="mt-4" @click="uploadLogData" :icon="faFileZipper">Create App Logs ZIP</ui-button>
+      
+      <ui-toggle v-model="includeInstanceLogs" label="Include instance logs" desc="When enabled, any logs from your Modpacks / instances will also be included in the export." class="mt-4" /> 
+      <ui-button type="info" :working="uploadingLogs" class="mt-6" @click="uploadLogData" :icon="faFileZipper">Export logs</ui-button>
     </div>
 
     <div class="section cache mb-6">
@@ -230,7 +236,7 @@ async function moveInstances() {
           the cache, it'll make sure you're running the latest version of all available data.
         </p>
       </div>
-      <ui-button class="mt-4" @click="refreshCachePlz" :icon="faSync">Refresh Cache</ui-button>
+      <ui-button type="warning" class="mt-4" @click="refreshCachePlz" :icon="faSync">Refresh Cache</ui-button>
     </div>
 
     <p class="block text-white-700 text-lg font-bold mb-4 mt-6">Misc</p>

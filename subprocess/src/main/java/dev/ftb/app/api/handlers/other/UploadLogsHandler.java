@@ -17,7 +17,10 @@ public class UploadLogsHandler implements IMessageHandler<UploadLogsData> {
         var requestId = data.requestId;
 
         try {
-            Path path = LogZipper.create().generate();
+            Path path = LogZipper.create()
+                .includeInstances(data.includeInstanceLogs)
+                .generate();
+            
             WebSocketHandler.sendMessage(new UploadLogsData.Reply(requestId, path));
         } catch (Exception e) {
             WebSocketHandler.sendMessage(new UploadLogsData.Reply(requestId)); // error

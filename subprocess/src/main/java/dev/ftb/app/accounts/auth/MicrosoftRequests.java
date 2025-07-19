@@ -1,5 +1,6 @@
 package dev.ftb.app.accounts.auth;
 
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import dev.ftb.app.Constants;
@@ -11,21 +12,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 
 public class MicrosoftRequests {
     private static final Logger LOGGER = LoggerFactory.getLogger(MicrosoftRequests.class);
     private static final Gson GSON = new Gson();
-    
-    private static final Pattern JWT_TOKEN = Pattern.compile("(^[A-Za-z0-9-_]*\\.[A-Za-z0-9-_]*\\.[A-Za-z0-9-_]*$)", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
-    private static final Set<String> IGNORED_HEADERS = Set.of(
-      "content-length", "cache-control", "user-agent"
-    );
-    
+
     private static final Request.Builder STANDARD_REQ = new Request.Builder()
             .header("Content-Type", "application/json")
             .header("Accept", "application/json");
@@ -95,7 +88,7 @@ public class MicrosoftRequests {
     }
 
     public static Result<JsonObject, ErrorWithCode> authenticateWithMinecraft(String token, String userHash) {
-        return standardJsonReq(
+        var firstLoginAttempt = standardJsonReq(
             STANDARD_REQ
                 .url("https://api.minecraftservices.com/launcher/login")
                 .post(mapToJsonBody(Map.of(
@@ -104,15 +97,40 @@ public class MicrosoftRequests {
                 ))),
             json -> json.has("access_token")
         );
+        
+        if (firstLoginAttempt.isOk()) {
+            return firstLoginAttempt;
+        }
+        
+        // Try the other known good login endpoint
+        return standardJsonReq(
+            STANDARD_REQ
+                .url("https://api.minecraftservices.com/authentication/login_with_xbox")
+                .post(mapToJsonBody(Map.of(
+                    "identityToken", "XBL3.0 x=" + userHash + ";" + token
+                ))),
+            json -> json.has("access_token")
+        );
     }
 
     public static Result<JsonObject, ErrorWithCode> queryEntitlements(String accessToken) {
-        return standardJsonReq(
+        var firstEndpoint = standardJsonReq(
             STANDARD_REQ
                 .url("https://api.minecraftservices.com/entitlements/license?requestId=" + UUID.randomUUID())
                 .header("Authorization", "Bearer " + accessToken).get(),
             json -> json.has("items")
         );
+        
+        if (firstEndpoint.isOk()) {
+            return firstEndpoint;
+        }
+        
+        // Try the other known good endpoint
+        return standardJsonReq(
+            STANDARD_REQ
+                .url("https://api.minecraftservices.com/entitlements/mcstore?requestId=" + UUID.randomUUID())
+                .header("Authorization", "Bearer " + accessToken).get(),
+            json -> json.has("items"));
     }
     
     public static Result<JsonObject, ErrorWithCode> queryProfile(String accessToken) {
@@ -198,45 +216,9 @@ public class MicrosoftRequests {
     private static Result<Response, String> request(Request.Builder builder) {
         var client = Constants.httpClient();
         var request = builder.build();
-
-        LOGGER.info("Request({})::{}", request.method(), request.url());
-        logHeaders("Request", request.headers());
         
         try {
             var responseRaw = client.newCall(request).execute();
-
-            var responseLog = new StringBuilder();
-            responseLog.append("Response(").append(responseRaw.code()).append(")::").append(responseRaw.request().url());
-            String message = responseRaw.message();
-            if (!message.isEmpty()) {
-                responseLog.append(" - ").append(message);
-            } else {
-                responseLog.append(" - No message");
-            }
-
-            logHeaders("Response", responseRaw.headers());
-
-            if (responseRaw.code() != 200) {
-                // Clone the response body to avoid closing it before readers
-                try {
-                    ResponseBody body = responseRaw.peekBody(Long.MAX_VALUE);
-                    String bodyString = body.string();
-                    if (!bodyString.isEmpty()) {
-                        var filteredBody = JWT_TOKEN.matcher(bodyString).replaceAll("REDACTED");
-                        
-                        responseLog.append("\nResponse Body: ").append(filteredBody);
-                    } else {
-                        responseLog.append(" - No body");
-                    }
-                } catch (IOException e) {
-                    responseLog.append(" - Failed to read body: ").append(e.getMessage());
-                }
-            } else {
-                responseLog.append(" - Success");
-            }
-            
-            LOGGER.info(responseLog.toString());
-            
             return Result.ok(responseRaw);
         } catch (IOException e) {
             LOGGER.error("Failed to execute request to {}", request.url(), e);
@@ -255,39 +237,6 @@ public class MicrosoftRequests {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-    }
-    
-    
-    private static void logHeaders(String direction, Headers headers) {
-        StringBuilder headerString = new StringBuilder();
-        
-        int longestHeaderName = headers.names().stream()
-                .map(String::length)
-                .max(Integer::compareTo)
-                .orElse(0);
-        
-        headerString.append(direction).append(" ").append("Headers: ").append("\n");
-        for (int i = 0; i < headers.size(); i++) {
-            String name = headers.name(i).toLowerCase();
-            
-            if (IGNORED_HEADERS.contains(name)) {
-                continue; // Skip ignored headers
-            }
-            
-            String value = headers.value(i);
-            if (name.toLowerCase().contains("authorization")) {
-                value = "REDACTED";
-            }
-            
-            // Filter the value for JWT tokens
-            value = JWT_TOKEN.matcher(value).replaceAll("REDACTED");
-
-            // Pad the header name for alignment
-            String padding = " ".repeat(Math.max(0, longestHeaderName - name.length()));
-            headerString.append("  ").append(name).append(padding).append(": ").append(value).append("\n");
-        }
-        
-        LOGGER.info(headerString.toString());
     }
     
     private static ErrorWithCode logAndCreateError(CodedError error) {

@@ -318,6 +318,7 @@ export interface SettingsInfoDataReply extends SettingsInfoData {
 }
 
 export interface UploadLogsData extends BaseData {
+    includeInstanceLogs: boolean;
 }
 
 export interface UploadLogsDataReply extends BaseData {

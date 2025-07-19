@@ -22,6 +22,35 @@
         <Console name="SysOut" target="SYSTEM_OUT">
             <PatternLayout pattern="[%d{HH:mm:ss}] [%t/%level] [%logger]: %msg%n"/>
         </Console>
+        <BetterScriptAppenderSelector name="HttpLog">
+            <ScriptRef ref="OsSelect"/>
+            <AppenderSet>
+                <RollingRandomAccessFile name="Windows" fileName="${env:LOCALAPPDATA}/.ftba/logs/http-requests.log" filePattern="${env:LOCALAPPDATA}/.ftba/logs/http-requests-%i.log.gz">
+                    <PatternLayout pattern="[%d{HH:mm:ss}]: %msg%n"/>
+                    <Policies>
+                        <OnStartupTriggeringPolicy/>
+                        <SizeBasedTriggeringPolicy size="200MB"/>
+                    </Policies>
+                    <DefaultRolloverStrategy max="3" fileIndex="min"/>
+                </RollingRandomAccessFile>
+                <RollingRandomAccessFile name="Mac" fileName="${sys:user.home}/Library/Application Support/.ftba/logs/http-requests.log" filePattern="${sys:user.home}/Library/Application Support/.ftba/logs/http-requests-%i.log.gz">
+                    <PatternLayout pattern="[%d{HH:mm:ss}]: %msg%n"/>
+                    <Policies>
+                        <OnStartupTriggeringPolicy/>
+                        <SizeBasedTriggeringPolicy size="200MB"/>
+                    </Policies>
+                    <DefaultRolloverStrategy max="3" fileIndex="min"/>
+                </RollingRandomAccessFile>
+                <RollingRandomAccessFile name="Linux" fileName="${sys:user.home}/.ftba/logs/http-requests.log" filePattern="${sys:user.home}/.ftba/logs/http-requests-%i.log.gz">
+                    <PatternLayout pattern="[%d{HH:mm:ss}]: %msg%n"/>
+                    <Policies>
+                        <OnStartupTriggeringPolicy/>
+                        <SizeBasedTriggeringPolicy size="200MB"/>
+                    </Policies>
+                    <DefaultRolloverStrategy max="3" fileIndex="min"/>
+                </RollingRandomAccessFile>
+            </AppenderSet>
+        </BetterScriptAppenderSelector>
         <BetterScriptAppenderSelector name="Latest">
             <ScriptRef ref="OsSelect"/>
             <AppenderSet>
@@ -93,5 +122,8 @@
                 <MarkerFilter marker="SENTRY_ONLY" onMatch="DENY" onMismatch="NEUTRAL"/>
             </AppenderRef>
         </Root>
+        <Logger name="httplogger" level="info" additivity="false">
+            <AppenderRef ref="HttpLog"/>
+        </Logger>
     </Loggers>
 </Configuration>

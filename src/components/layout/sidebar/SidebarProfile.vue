@@ -230,7 +230,7 @@ async function confirm() {
     border-left: 1px solid rgba(white, .1);
     border-right: 1px solid rgba(white, .1);
     padding: 1rem;
-
+    
     transition: transform 0.2s ease-in-out, opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
     transform: translateX(1rem);
     visibility: hidden;
@@ -249,7 +249,6 @@ async function confirm() {
       margin-bottom: 1rem;
       position: relative;
       z-index: 1;
-      max-height: 280px;
       display: flex;
       flex-direction: column;
       gap: 1rem;

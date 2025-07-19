@@ -104,6 +104,7 @@ public class Constants {
                 .readTimeout(5, TimeUnit.MINUTES)
                 .connectionPool(new ConnectionPool())
                 .cookieJar(new SimpleCookieJar())
+                .addInterceptor(new FetchLoggerInterceptor())
                 .addInterceptor(new MultiHasherInterceptor())
                 .addInterceptor(chain -> chain.proceed(chain.request().newBuilder().tag(Throttler.class, getGlobalThrottler()).build()))
                 .addInterceptor(new ThrottlerInterceptor())
