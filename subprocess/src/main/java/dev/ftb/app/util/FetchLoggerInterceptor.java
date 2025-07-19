@@ -43,11 +43,16 @@ public class FetchLoggerInterceptor implements Interceptor {
         logHeader(response.headers());
         
         // Never log the body of a successful response, only log errors
-        if (response.code() != 200) {
+        if (response.code() != 200 && response.body() != null) {
             // Peek the body and log it.
-            String bodyString = response.peekBody(Long.MAX_VALUE).string();
-            String filteredBody = LogZipper.JWT_REMOVAL.matcher(bodyString).replaceAll("REDACTED");
-            LOGGER.error("Response body: {}", filteredBody);
+            try {
+                // Check if the body has already been closed
+                String bodyString = response.peekBody(Long.MAX_VALUE).string();
+                String filteredBody = LogZipper.JWT_REMOVAL.matcher(bodyString).replaceAll("REDACTED");
+                LOGGER.error("Response body: {}", filteredBody);
+            } catch (IOException e) {
+                LOGGER.error("Failed to read response body", e);
+            }
         }
 
         return response;
