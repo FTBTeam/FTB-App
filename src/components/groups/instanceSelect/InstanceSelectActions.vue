@@ -8,6 +8,8 @@ import {faArrowRight, faCopy, faTimes, faTrash} from "@fortawesome/free-solid-sv
   import MultiMoveModal from "@/components/groups/instanceSelect/MultiMoveModal.vue";
 import {computed, ref} from "vue";
   import {dialogsController} from "@/core/controllers/dialogsController.ts";
+import {InstanceController} from "@/core/controllers/InstanceController.ts";
+import {alertController} from "@/core/controllers/alertController.ts";
   
   const ads = useAds();
   
@@ -33,7 +35,19 @@ import {computed, ref} from "vue";
       return;
     }
     
-    // TODO: Implement delete logic
+    for (const instance of instances) {
+      try {
+        const res = await InstanceController.from(instance).deleteInstance()
+        if (res) {
+          alertController.success(`Instance ${instance.name} deleted successfully.`);
+        } else {
+          alertController.error(`Failed to delete instance ${instance.name}`);
+        }
+      } catch (e) {
+        console.error(e)
+        alertController.error(`Failed to delete instance ${instance.name}`);
+      }
+    }
     
     emit('deselect-all');
   }
@@ -77,8 +91,8 @@ import {computed, ref} from "vue";
     </div>
   </transition>
   
-  <MultiDuplicateModal @close="multiDuplicateModal = false" :open="multiDuplicateModal" :instances="instances" />
-  <MultiMoveModal @close="multiMoveModal = false" :open="multiMoveModal" :instances="instances" />
+  <MultiDuplicateModal @deselect="emit('deselect-all')" @close="multiDuplicateModal = false" :open="multiDuplicateModal" :instances="instances" />
+  <MultiMoveModal @deselect="emit('deselect-all')" @close="multiMoveModal = false" :open="multiMoveModal" :instances="instances" />
 </template>
 
 <style lang="scss" scoped>

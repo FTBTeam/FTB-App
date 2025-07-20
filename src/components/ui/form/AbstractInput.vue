@@ -27,8 +27,8 @@ const elmId = `input-${Math.random().toString(36).substring(2, 9)}`;
     <label :for="elmId" v-if="label" class="inline-block text-xs font-bold uppercase text-white/80 mb-2 transition-color duration-300" :class="{ 'opacity-50 cursor-not-allowed': disabled, 'text-white/100': focused }">
       {{ label }}
     </label>
-    <div>
-      <div class="relative">
+    <div class="flex gap-2 items-center">
+      <div class="relative flex-1">
         <FontAwesomeIcon v-if="icon" :icon="icon" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/70 transition-color duration-300" :class="{'text-white/90': focused}" />
         <slot
           :focus="() => focused = true"
@@ -43,9 +43,10 @@ const elmId = `input-${Math.random().toString(36).substring(2, 9)}`;
            }"
         />
       </div>
-      <small v-if="hint" class="text-xs text-white/60 mt-2 block">
-        {{ hint }}
-      </small>
+      <slot name="suffix" />
     </div>
+    <small v-if="hint" class="text-xs text-white/60 mt-2 block">
+      {{ hint }}
+    </small>
   </div>
 </template>

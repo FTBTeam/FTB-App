@@ -24,6 +24,7 @@ import { useInstallStore } from '@/store/installStore.ts';
 import { useAppSettings } from '@/store/appSettingsStore.ts';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import {
+  faChevronDown,
   faCopy,
   faDownload,
   faFolder, faLock,
@@ -35,6 +36,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { useAppStore } from '@/store/appStore.ts';
 import TextArea from '@/components/ui/form/TextArea/TextArea.vue';
+import AbstractInput from "@/components/ui/form/AbstractInput.vue";
 
 const router = useRouter();
 const appStore = useAppStore();
@@ -427,27 +429,32 @@ watch(() => instanceSettings.value.category, () => saveSettings())
         class="mb-6" />
 
       <section class="flex-1 mb-4">
-        <label class="block tracking-wide text-white-700 font-bold mb-2">Java Version</label>
-        <div class="flex items-center gap-4">
-          <select
-            class="appearance-none block flex-1 bg-input text-gray-400 border border-input py-3 px-4 leading-tight focus:outline-none rounded w-full"
-            v-model="jreSelection"
-            @change="updateJrePath"
-          >
-            <option value="-1" v-if="jreSelection === '-1'" disabled>
-              Custom selection ({{ instanceSettings.jrePath }})
-            </option>
-            <option
-              v-for="index in Object.keys(javaVersions)"
-              :value="(javaVersions as any)[index].path"
-              :key="(javaVersions as any)[index].name"
-            >
-              {{ (javaVersions as any)[index].name }}
-            </option>
-          </select>
+        <AbstractInput label="Java version">
+          <template v-slot="{ class: clazz }">
+            <div class="relative">
+              <select :class="clazz" class="appearance-none w-full" v-model="jreSelection" @change="updateJrePath">
+                <option value="-1" v-if="jreSelection === '-1'" disabled>
+                  Custom selection ({{ instanceSettings.jrePath }})
+                </option>
+                <option
+                  v-for="index in Object.keys(javaVersions)"
+                  :value="(javaVersions as any)[index].path"
+                  :key="(javaVersions as any)[index].name"
+                >
+                  {{ (javaVersions as any)[index].name }}
+                </option>
+              </select>
 
-          <UiButton type="success" :icon="faFolder" @click="browseForJava">Browse</UiButton>
-        </div>
+              <div class="absolute z-[1] top-1/2 -translate-1/2 right-1">
+                <FontAwesomeIcon :icon="faChevronDown" />
+              </div>
+            </div>
+          </template>
+          
+          <template #suffix>
+            <UiButton type="success" :icon="faFolder" @click="browseForJava">Browse</UiButton>
+          </template>
+        </AbstractInput>
       </section>
       
       <div class="flex gap-4 flex-col mb-6">

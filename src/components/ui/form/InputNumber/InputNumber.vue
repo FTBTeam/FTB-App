@@ -48,14 +48,14 @@ function increment(e: MouseEvent, decrement: boolean) {
 
 <template>
   <AbstractInput v-slot="{ blur, focus, class: clazz }" :label="label" :disabled="disabled" :fill="fill" :icon="icon">
-    <button class="border border-white/30 transition-colors duration-300 border-r-transparent rounded-l p-2 bg-black/20" :class="{ 'opacity-50': disabled, 'hover:border-white/60 cursor-pointer': !disabled }" @click="(e) => !disabled && increment(e, true)">
+    <button class="border border-white/30 transition-colors duration-300 border-r-transparent rounded-l-lg p-2 hover:bg-white/10" :class="{ 'opacity-50': disabled, 'hover:border-white/60 cursor-pointer': !disabled }" @click="(e) => !disabled && increment(e, true)">
       <FontAwesomeIcon :icon="faMinus" />
     </button>
     <input type="number" @blur="() => {
       emit('blur');
       blur();
     }" @focus="focus" v-model="value" :min :max :disabled :placeholder :class="clazz + ' appearance-none !rounded-none'" />
-    <button class="border border-white/30 transition-colors duration-300 border-l-transparent rounded-r p-2 bg-black/20" :class="{ 'opacity-50': disabled, 'hover:border-white/60 cursor-pointer': !disabled }" @click="(e) => !disabled && increment(e, false)">
+    <button class="border border-white/30 transition-colors duration-300 border-l-transparent rounded-r-lg p-2 hover:bg-white/10" :class="{ 'opacity-50': disabled, 'hover:border-white/60 cursor-pointer': !disabled }" @click="(e) => !disabled && increment(e, false)">
       <FontAwesomeIcon :icon="faPlus" />
     </button>
   </AbstractInput>
