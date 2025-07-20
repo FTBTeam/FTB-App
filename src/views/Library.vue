@@ -23,6 +23,8 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { Input } from '@/components/ui';
 import {useGlobalStore} from "@/store/globalStore.ts";
+import {useAds} from "@/composables/useAds.ts";
+import InstanceSelectActions from "@/components/groups/instanceSelect/InstanceSelectActions.vue";
 
 const groupOptions = [
   ['Category', 'category'],
@@ -50,12 +52,15 @@ const groupByOptions = createOrderedOptions(groupOptions)
 const instanceStore = useInstanceStore();
 const modpackStore = useModpackStore();
 const globalStore = useGlobalStore();
+const ads = useAds()
 
 const loadingFeatured = ref(false);
 const searchTerm = ref('');
 const groupBy = ref('category');
 const sortBy = ref('name');
 const collapsedGroups = ref<string[]>([]);
+
+const selectedInstances = ref<SugaredInstanceJson[]>([]);
 
 onMounted(() => {
   const libraryData = localStorage.getItem("library-data");
@@ -228,6 +233,14 @@ watch(groupBy, onSortChange)
                 <pack-card2
                   v-show="filteredInstance === null || filteredInstance.includes(instance.uuid)"
                   :instance="instance"
+                  :checked="selectedInstances.find(e => e.uuid === instance.uuid) !== undefined"
+                  :on-checked-change="(selected) => {
+                    if (selected) {
+                      selectedInstances.push(instance);
+                    } else {
+                      selectedInstances = selectedInstances.filter(e => e.uuid !== instance.uuid);
+                    }
+                  }"
                 />
               </template>
             </div>
@@ -264,6 +277,8 @@ watch(groupBy, onSortChange)
       </div>
     </div>
   </div>
+  
+  <InstanceSelectActions :instances="selectedInstances" @deselect-all="selectedInstances = []" />
 </template>
 
 <style lang="scss" scoped>

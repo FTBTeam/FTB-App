@@ -538,7 +538,7 @@ public class InstanceInstaller extends InstanceOperation {
         FILES,
     }
 
-    public static record InvalidFile(
+    public record InvalidFile(
             Path path,
             @Nullable HashCode expectedHash,
             @Nullable HashCode actualHash,

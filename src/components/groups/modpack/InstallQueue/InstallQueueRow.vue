@@ -53,8 +53,8 @@ const status = computed(() => {
 </script>
 
 <template>
-  <div class="install-query-row flex gap-4 items-center">
-    <div class="name flex-1">
+  <div class="install-query-row flex flex-col gap-4">
+    <div class="name">
       {{request.name}}
     </div>
     <div class="status">

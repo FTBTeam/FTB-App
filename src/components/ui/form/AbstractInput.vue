@@ -33,7 +33,7 @@ const elmId = `input-${Math.random().toString(36).substring(2, 9)}`;
         <slot
           :focus="() => focused = true"
           :blur="() => focused = false"
-          class="outline-none pr-3 py-2 rounded bg-black/20 border border-white/30 focus:border-white/80 transition-color duration-300"
+          class="outline-none pr-3 py-2 rounded-lg border border-white/30 focus:border-white/80 transition-color duration-300"
           :class="{
               'pl-9': icon,
               'pl-3': !icon,
