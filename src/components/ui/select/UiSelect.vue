@@ -1,5 +1,5 @@
 <script setup lang="ts" generic="T extends {key: string, value: string}">
-import {ref, useTemplateRef, watch} from "vue";
+import {computed, ref, useTemplateRef, watch} from "vue";
   import {useAttachDomEvent} from "@/composables";
   import {autoUpdate, offset, flip, hide, shift, size, useFloating} from "@floating-ui/vue";
   import AbstractInput from "@/components/ui/form/AbstractInput.vue";
@@ -19,13 +19,19 @@ import {ref, useTemplateRef, watch} from "vue";
     disabled?: boolean;
     fill?: boolean;
     icon?: IconDefinition;
-    options?: T[];
+    options: T[];
     placeholder?: string;
   }>();
   
-  const value = defineModel<T>({
+  const value = defineModel<string>({
     default: null
   });
+  
+  
+  const detailedValue = computed(() => {
+    if (!value.value) return null;
+    return options.find(option => option.key === value.value) || null;
+  })
   
   const domRef = useTemplateRef('domRef');
   const dropRef = useTemplateRef('dropRef');
@@ -61,19 +67,25 @@ import {ref, useTemplateRef, watch} from "vue";
 
 <template>
   <div class="ui-select-3" ref="domRef">
-    <AbstractInput v-slot="{ class: clazz }" :label="label" :disabled="disabled" :fill="fill" :icon="icon">
-      <div :class="clazz" class="flex items-center justify-between" @click="open = !open">
-        <div v-if="!$slots.selected">
-          <span class="text-white/70">
-            {{ value ? value.value : placeholder || 'Select an option' }}
+    <AbstractInput :label="label" :disabled="disabled" :fill="fill" :icon="icon">
+      <template v-slot:default="{ class: clazz }">
+        <div :class="clazz" class="flex items-center justify-between" @click="open = !open">
+          <div v-if="!$slots.selected">
+          <span class="">
+            {{ detailedValue ? detailedValue.key : placeholder || 'Select an option' }}
           </span>
-        </div>
-        <slot v-else name="selected" :value="value"></slot>
-        
-        <FontAwesomeIcon :icon="faChevronDown" class="transition-transform" :class="{
+          </div>
+          <slot v-else name="selected" :value="detailedValue"></slot>
+
+          <FontAwesomeIcon :icon="faChevronDown" class="transition-transform" :class="{
           '-rotate-180': open
         }" />
-      </div>
+        </div>
+      </template>
+
+      <template #suffix>
+        <slot name="suffix" />
+      </template>
     </AbstractInput>
     
     <Teleport to="body">
@@ -83,7 +95,10 @@ import {ref, useTemplateRef, watch} from "vue";
              ref="dropRef"
              :style="floatingStyles"
         >
-          <div v-for="option in options" :key="option.key" @click="value = option" class="cursor-pointer">
+          <div v-for="option in options" :key="option.key" @click="() => {
+            value = option.key
+            open = false;
+          }" class="cursor-pointer">
             <slot v-if="$slots.option" name="option" :option="option"></slot>
             <div v-else class="p-2 hover:bg-white/10 rounded-lg cursor-pointer">
               {{ option.value }}

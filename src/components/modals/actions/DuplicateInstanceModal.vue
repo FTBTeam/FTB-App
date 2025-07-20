@@ -44,6 +44,7 @@ onMounted(() => {
   newCategory.value = category;
 })
 
+// TODO: Move to instance controller duplicate method
 async function duplicate() {
   if (working.value) {
     return;

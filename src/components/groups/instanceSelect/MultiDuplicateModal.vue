@@ -1,10 +1,12 @@
 <script setup lang="ts">
   import {SugaredInstanceJson} from "@/core/types/javaApi";
   import Modal from "@/components/ui/modal/Modal.vue";
-  import {ref, watch} from "vue";
+  import {onMounted, ref, watch} from "vue";
   import {Input} from "@/components/ui";
   import CategorySelector from "@/components/groups/modpack/create/CategorySelector.vue";
   import {UiButton} from "@/components/ui";
+  import {InstanceController} from "@/core/controllers/InstanceController.ts";
+  import {alertController} from "@/core/controllers/alertController.ts";
   
   const {
     instances,
@@ -16,18 +18,54 @@
   
   const emit = defineEmits<{
     (e: 'close'): void;
+    (e: 'deselect'): void;
   }>();
   
   const instanceNameMap = ref<Record<string, string>>({});
   const instanceCategoryMap = ref<Record<string, string>>({});
   
+  onMounted(() => {
+    updateNameMapping(instances);
+  })
+  
+  async function duplicate() {
+    for (const instance of instances) {
+      // Resolve the new name and category for each instance
+      const newName = instanceNameMap.value[instance.uuid] || (instance.name + " (copy)");
+      const newCategory = instanceCategoryMap.value[instance.uuid] || instance.category || "";
+      
+      const controller = InstanceController.from(instance);
+      try {
+        const res = await controller.duplicateInstance(newName, newCategory);
+        if (res) {
+          alertController.success("Instance " + instance.name + " duplicated successfully as " + newName);
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        emit('deselect');
+        emit('close');
+      }
+    }
+  }
+  
   watch(() => instances, (newInstances) => {
+    updateNameMapping(newInstances);
+  }, { immediate: true });
+  
+  watch(() => open, (newOpen) => {
+    if (newOpen) {
+      updateNameMapping(instances);
+    }
+  });
+  
+  function updateNameMapping(newInstances: SugaredInstanceJson[]) {
     instanceNameMap.value = {};
     newInstances.forEach(instance => {
       instanceNameMap.value[instance.uuid] = instance.name + " (copy)";
       instanceCategoryMap.value[instance.uuid] = instance.category || "";
     });
-  }, { immediate: true });
+  }
 </script>
 
 <template>
@@ -47,7 +85,7 @@
     <template #footer>
       <div class="flex gap-4 justify-end">
         <UiButton @click="emit('close')">Cancel</UiButton>
-        <UiButton type="success" @click="emit('close')">Duplicate</UiButton>
+        <UiButton type="success" @click="duplicate">Duplicate</UiButton>
       </div>
     </template>
   </Modal>

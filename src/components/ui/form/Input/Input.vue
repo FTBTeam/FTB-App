@@ -33,14 +33,19 @@ const value = defineModel<string>({
     :icon="icon"
     :label="label"
     :disabled="disabled"
-    v-slot="{ blur, focus, class: clazz }"
   >
-    <input :placeholder="placeholder" @blur="(e) => {
-      blur()
-      emit('blur', e)
-    }" @focus="(e) => {
-      focus()
-      emit('focus', e)
-    }" :disabled="disabled" :class="clazz" v-model="value"  />
+    <template v-slot="{ blur, focus, class: clazz }">
+      <input :placeholder="placeholder" @blur="(e) => {
+        blur()
+        emit('blur', e)
+      }" @focus="(e) => {
+        focus()
+        emit('focus', e)
+      }" :disabled="disabled" :class="clazz" v-model="value"  />
+    </template>
+    
+    <template #suffix>
+      <slot name="suffix" />
+    </template>
   </AbstractInput>
 </template>

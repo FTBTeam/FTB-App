@@ -4,6 +4,8 @@
   import {UiButton, UiToggle} from "@/components/ui";
   import CategorySelector from "@/components/groups/modpack/create/CategorySelector.vue";
   import {ref, watch} from "vue";
+  import {InstanceController} from "@/core/controllers/InstanceController.ts";
+  import {alertController} from "@/core/controllers/alertController.ts";
 
   const {
     instances,
@@ -15,18 +17,51 @@
 
   const emit = defineEmits<{
     (e: 'close'): void;
+    (e: 'deselect'): void;
   }>();
   
   const instanceCategoryMap = ref<Record<string, string>>({});
   const useSingleCategory = ref(true);
   const selectedCategory = ref("Default");
   
-  watch(() => instances, (newInstances) => {
+  watch([() => instances, () => open], (values) => {
+    if (values[0]) {
+      updateNameMapping(values[0]);
+    }
+  }, { immediate: true });
+  
+  function updateNameMapping(instances: SugaredInstanceJson[]) {
     instanceCategoryMap.value = {};
-    newInstances.forEach(instance => {
+    instances.forEach(instance => {
       instanceCategoryMap.value[instance.uuid] = instance.category || "";
     });
-  }, { immediate: true });
+  }
+  
+  async function moveInstances() {
+    for (const instance of instances) {
+      const newCategory = useSingleCategory.value ? selectedCategory.value : instanceCategoryMap.value[instance.uuid];
+      if (!newCategory) {
+        continue; // Skip if no category is selected
+      }
+      
+      const controller = InstanceController.from(instance);
+      try {
+        const res = await controller.updateInstance({
+          category: newCategory
+        });
+        
+        if (res) {
+          alertController.success(`Instance ${instance.name} moved successfully to category ${newCategory}`);
+        }
+      } catch (e) {
+        console.error(e);
+        alertController.error(`Failed to move instance ${instance.name}`);
+      } finally {
+        emit('deselect')
+        emit('close');
+      }
+    }
+  }
 </script>
 
 <template>
@@ -38,16 +73,16 @@
     </div>
     
     <div class="mt-4" v-else>
-      <div v-for="instance in instances" :key="instance.uuid" class="flex gap-4 items-center mb-4 pt-4 border-t border-white/20">
+      <div v-for="instance in instances" :key="instance.uuid" class="flex gap-2 flex-col mb-4 pt-4 border-t border-white/20">
         <p class="font-bold mb-2 flex-1">{{ instance.name }}</p>
-        <CategorySelector class="w-1/3" v-model="instanceCategoryMap[instance.uuid]" />
+        <CategorySelector v-model="instanceCategoryMap[instance.uuid]" />
       </div>
     </div>
 
     <template #footer>
       <div class="flex gap-4 justify-end">
         <UiButton @click="emit('close')">Cancel</UiButton>
-        <UiButton type="success" @click="emit('close')">Move</UiButton>
+        <UiButton type="success" @click="moveInstances">Move</UiButton>
       </div>
     </template>
   </Modal>
