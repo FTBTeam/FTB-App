@@ -299,6 +299,8 @@ watch(imageFile, (value) => {
     saveSettings();
   }
 })
+
+watch(() => instanceSettings.value.category, () => saveSettings())
 </script>
 
 <template>
@@ -312,21 +314,21 @@ watch(imageFile, (value) => {
         @blur="saveSettings"
         fill
       />
-
-      <CategorySelector :open-down="true" class="w-2/3" v-model="instanceSettings.category" @input="() => saveSettings()" />
+      
+      <CategorySelector :open-down="true" class="w-2/3" v-model="instanceSettings.category" />
     </div>
 
-    <div class="buttons flex gap-4 mb-8">
-      <UiButton size="small" :icon="instanceSettings.locked ? faUnlock : faLock" @click="toggleLock">
-        {{instanceSettings.locked ? 'Unlock' : 'Lock'}} instance
-      </UiButton>
-      
+    <div class="buttons flex flex-wrap gap-3 mb-8">      
       <UiButton size="small" type="info" :icon="faFolder" @click="browseInstance()">
         Open Folder
       </UiButton>
 
       <UiButton size="small" :icon="faCopy" @click="showDuplicate = true" type="info" aria-label="Copy this instance to a new instance, mods, worlds and all">
         Duplicate
+      </UiButton>
+
+      <UiButton size="small" type="warning" :icon="instanceSettings.locked ? faUnlock : faLock" @click="toggleLock">
+        {{instanceSettings.locked ? 'Unlock' : 'Lock'}} instance
       </UiButton>
       
       <UiButton v-if="instance.id != -1" size="small" :icon="faWrench" type="warning" aria-label="Something not looking right? This might help!" @click="repairInstance">

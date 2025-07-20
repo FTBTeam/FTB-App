@@ -16,7 +16,7 @@ const {
   ariaLabelPos = 'down',
   hoverEffect = false
 } = defineProps<{
-  type: ElementColorType;
+  type?: ElementColorType;
   icon?: IconDefinition;
   ariaLabel?: string;
   ariaLabelPos?: ElementAriaDirection;

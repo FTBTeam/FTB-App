@@ -1,0 +1,96 @@
+<script setup lang="ts" generic="T extends {key: string, value: string}">
+import {ref, useTemplateRef, watch} from "vue";
+  import {useAttachDomEvent} from "@/composables";
+  import {autoUpdate, offset, flip, hide, shift, size, useFloating} from "@floating-ui/vue";
+  import AbstractInput from "@/components/ui/form/AbstractInput.vue";
+  import {IconDefinition} from "@fortawesome/free-brands-svg-icons";
+  import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
+  import {faChevronDown} from "@fortawesome/free-solid-svg-icons";
+  
+  const {
+    label,
+    disabled = false,
+    fill = false,
+    icon,
+    placeholder = '',
+    options
+  } = defineProps<{
+    label?: string;
+    disabled?: boolean;
+    fill?: boolean;
+    icon?: IconDefinition;
+    options?: T[];
+    placeholder?: string;
+  }>();
+  
+  const value = defineModel<T>({
+    default: null
+  });
+  
+  const domRef = useTemplateRef('domRef');
+  const dropRef = useTemplateRef('dropRef');
+  
+  const {floatingStyles, middlewareData} = useFloating(domRef, dropRef, {
+    placement: "bottom-start", // TODO: Allow changing this dynamically via props
+    middleware: [offset(10), flip(), shift(), hide(), size()],
+    whileElementsMounted: (reference, floating, update) => autoUpdate(reference, floating, update, {
+      animationFrame: true
+    })
+  });
+  
+  const open = ref(false);
+
+  useAttachDomEvent('click', (event: MouseEvent) => {
+    if (!open.value) return
+    
+    // Did we click on something outside the domRef?
+    if (domRef.value) {
+      const clickedInside = domRef.value.contains(event.target as Node) || (dropRef.value && dropRef.value.contains(event.target as Node));
+      if (!clickedInside && open.value) {
+        open.value = false;
+      }
+    }
+  })
+  
+  watch(() => middlewareData.value.hide?.referenceHidden, (hidden) => {
+    if (hidden && open.value) {
+      open.value = false;
+    }
+  });
+</script>
+
+<template>
+  <div class="ui-select-3" ref="domRef">
+    <AbstractInput v-slot="{ class: clazz }" :label="label" :disabled="disabled" :fill="fill" :icon="icon">
+      <div :class="clazz" class="flex items-center justify-between" @click="open = !open">
+        <div v-if="!$slots.selected">
+          <span class="text-white/70">
+            {{ value ? value.value : placeholder || 'Select an option' }}
+          </span>
+        </div>
+        <slot v-else name="selected" :value="value"></slot>
+        
+        <FontAwesomeIcon :icon="faChevronDown" class="transition-transform" :class="{
+          '-rotate-180': open
+        }" />
+      </div>
+    </AbstractInput>
+    
+    <Teleport to="body">
+      <transition name="transition-fade">
+        <div v-if="open" 
+             class="z-10 select-options-drop bg-[#2a2a2a] p-2 w-fit min-w-[300px] border border-white/30 rounded-lg"
+             ref="dropRef"
+             :style="floatingStyles"
+        >
+          <div v-for="option in options" :key="option.key" @click="value = option" class="cursor-pointer">
+            <slot v-if="$slots.option" name="option" :option="option"></slot>
+            <div v-else class="p-2 hover:bg-white/10 rounded-lg cursor-pointer">
+              {{ option.value }}
+            </div>
+          </div>
+        </div>
+      </transition>
+    </Teleport>
+  </div>
+</template>
