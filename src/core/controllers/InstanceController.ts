@@ -81,19 +81,17 @@ export class InstanceController {
       if (checkResult !== "VALID") {
         InstanceController.logger.warn("Failed to check profile");
 
-        if (checkResult === "TOTAL_FAILURE") {
+        if (checkResult === "TOTAL_FAILURE" || checkResult === "NOT_LOGGED_IN") {
+          if (checkResult === "NOT_LOGGED_IN") {
+            InstanceController.logger.debug("Profile is not logged in, asking the user to sign in");
+          }
+          
+          const accountsStore = useAccountsStore();
           loadingStatus.loggingIn = false;
           loadingStatus.error = "Failed to check profile";
-          runningInstancesStore.updateLaunchingStatus(loadingStatus)
-          return;
-        }
-
-        if (checkResult === "NOT_LOGGED_IN") {
-          const accountsStore = useAccountsStore();
-          InstanceController.logger.debug("Profile is not logged in, asking the user to sign in");
-          // Get the user to log back in again
           runningInstancesStore.clearLaunchingStatus()
           accountsStore.openSignIn()
+          return;
         }
 
         return;
