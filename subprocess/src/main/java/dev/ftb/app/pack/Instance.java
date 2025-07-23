@@ -733,7 +733,7 @@ public class Instance {
     private static long tryGetSize(Path file) {
         try {
             return Files.size(file);
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             return -1;
         }
     }
