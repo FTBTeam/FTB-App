@@ -2,9 +2,10 @@
 import { useInstanceStore } from '@/store/instancesStore.ts';
 import {ref, computed} from 'vue';
 import UiSelect from "@/components/ui/select/UiSelect.vue";
-import {faPlus, faTimes} from "@fortawesome/free-solid-svg-icons";
+import {faCheck, faPlus, faTimes} from "@fortawesome/free-solid-svg-icons";
 import UiButton from "@/components/ui/UiButton.vue";
 import {Input} from "@/components/ui";
+import {alertController} from "@/core/controllers/alertController.ts";
 
 const instanceStore = useInstanceStore();
 
@@ -38,6 +39,22 @@ const _options = computed(() => {
 
   return categories;
 });
+
+function confirm() {
+  if (extraCategory.value === "") {
+    showCreate.value = false;
+  }
+  
+  const existingNames = _options.value.map(e => e.value.toLowerCase());
+  if (existingNames.includes(extraCategory.value.toLowerCase())) {
+    alertController.warning("Category already exists");
+    return;
+  }
+  
+  value.value = extraCategory.value;
+  extraCategory.value = "";
+  showCreate.value = false;
+}
 </script>
 
 <template>
@@ -53,9 +70,9 @@ const _options = computed(() => {
     </UiSelect>
   </div>
   <div class="" v-else>
-    <Input placeholder="Category name" label="New Category Name" fill>
+    <Input placeholder="Category name" label="New Category Name" fill v-model="extraCategory">
       <template #suffix>
-        <UiButton size="small" :icon="faTimes" @click="showCreate = false" />
+        <UiButton size="small" type="primary" :icon="faCheck" @click="confirm" />
       </template>
     </Input>
   </div>

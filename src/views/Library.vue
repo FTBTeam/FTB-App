@@ -23,8 +23,8 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { Input } from '@/components/ui';
 import {useGlobalStore} from "@/store/globalStore.ts";
-import {useAds} from "@/composables/useAds.ts";
 import InstanceSelectActions from "@/components/groups/instanceSelect/InstanceSelectActions.vue";
+import {faCheckSquare} from "@fortawesome/free-regular-svg-icons";
 
 const groupOptions = [
   ['Category', 'category'],
@@ -52,7 +52,6 @@ const groupByOptions = createOrderedOptions(groupOptions)
 const instanceStore = useInstanceStore();
 const modpackStore = useModpackStore();
 const globalStore = useGlobalStore();
-const ads = useAds()
 
 const loadingFeatured = ref(false);
 const searchTerm = ref('');
@@ -114,13 +113,8 @@ const sortedInstances = computed(() => {
   const sortKey = instanceJsonKey(sortByKey);
 
   return instanceStore.instances.sort((a, b) => {
-    if (a[sortKey] === b[sortKey]) {
-      return 0;
-    }
-
-    if (a[sortKey] > b[sortKey]) {
-      return sortDirection === 'asc' ? 1 : -1;
-    }
+    if (a[sortKey] === b[sortKey]) return 0;
+    if (a[sortKey] > b[sortKey]) return sortDirection === 'asc' ? 1 : -1;
     
     return sortDirection === 'asc' ? -1 : 1;
   });
@@ -164,21 +158,10 @@ const groupedPacks = computed(() => {
   // Modify the order of the group keys based on the sort direction
   const groupKeys = Object.keys(grouped).sort((a, b) => {
     // Pinned at the top
-    if (a === "Pinned") {
-      return -1;
-    }
-
-    if (b === "Pinned") {
-      return 1;
-    }
-
-    if (a === b) {
-      return 0;
-    }
-
-    if (a > b) {
-      return sortDirection === 'asc' ? 1 : -1;
-    }
+    if (a === "Pinned") return -1;
+    if (b === "Pinned") return 1;
+    if (a === b) return 0;
+    if (a > b) return sortDirection === 'asc' ? 1 : -1;
 
     return sortDirection === 'asc' ? -1 : 1;
   });
@@ -204,6 +187,15 @@ function onSortChange() {
   localStorage.setItem("library-data", JSON.stringify({collapsedGroups: collapsedGroups.value, sortBy: sortBy.value, groupBy: groupBy.value}));
 }
 
+function toggleCategorySelect(instances: SugaredInstanceJson[]) {
+  const missingInstances = instances.filter(instance => !selectedInstances.value.some(e => e.uuid === instance.uuid));
+  if (missingInstances.length > 0) {
+    selectedInstances.value.push(...missingInstances);
+  } else {
+    selectedInstances.value = selectedInstances.value.filter(instance => !instances.some(e => e.uuid === instance.uuid));
+  }
+}
+
 watch(sortBy, onSortChange)
 watch(groupBy, onSortChange)
 </script>
@@ -224,8 +216,13 @@ watch(groupBy, onSortChange)
             <header v-if="Object.keys(groupedPacks).length > 1">
               <h2>{{ index }}</h2>
               <span />
-              <div class="collapse-icon" @click="collapseGroup(index)">
-                <FontAwesomeIcon :icon="faChevronDown" />
+              <div class="flex items-center gap-2">
+                <div class="py-1 px-2 rounded bg-white/10 hover:bg-white/20 cursor-pointer transition-colors" @click="toggleCategorySelect(category)">
+                  <FontAwesomeIcon fixed-width :icon="faCheckSquare" />
+                </div>
+                <div class="collapse-icon py-1 px-2 rounded bg-white/10 hover:bg-white/20 cursor-pointer transition-colors" @click="collapseGroup(index)">
+                  <FontAwesomeIcon fixed-width :icon="faChevronDown" />
+                </div>
               </div>
             </header>
             <div class="pack-card-grid" v-if="!collapsedGroups.includes(index)">
@@ -278,7 +275,7 @@ watch(groupBy, onSortChange)
     </div>
   </div>
   
-  <InstanceSelectActions :instances="selectedInstances" @deselect-all="selectedInstances = []" />
+  <InstanceSelectActions :instances="selectedInstances" @deselect-all="selectedInstances = []" @select-all="selectedInstances = instanceStore.instances" />
 </template>
 
 <style lang="scss" scoped>
@@ -319,14 +316,6 @@ watch(groupBy, onSortChange)
       
       .collapse-icon {
         cursor: pointer;
-        padding: .18rem 1rem;
-        border-radius: 3px;
-        background-color: rgba(white, .1);
-        transition: background-color .25s ease-in-out;
-        
-        &:hover {
-          background-color: rgba(white, .2);
-        }
         
         svg {
           transition: transform .25s ease-in-out;
