@@ -238,6 +238,11 @@ public class Instance {
             return null;
         }
         
+        if (this.props.id == -1 || this.props.versionId == -1) {
+            // This is a custom instance, we don't have a modpack ID or version ID.
+            return null;
+        }
+        
         ModpackVersionModsManifest manifest = null;
         Path file = this.metaPath.resolve(VERSION_MODS_FILE_NAME);
         try {

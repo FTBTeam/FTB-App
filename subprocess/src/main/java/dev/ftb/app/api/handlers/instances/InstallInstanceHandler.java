@@ -11,6 +11,7 @@ import dev.ftb.app.data.modpack.ModpackVersionManifest;
 import dev.ftb.app.pack.Instance;
 import dev.ftb.app.task.InstallationOperation;
 import net.covers1624.quack.io.IOUtils;
+import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
@@ -18,6 +19,7 @@ import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -150,14 +152,36 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
     @Nullable
     public static Pair<ModpackManifest, ModpackVersionManifest> prepareCurseImport(Path curseZip) throws IOException {
         ModpackVersionManifest versionManifest;
-        try (FileSystem fs = IOUtils.getJarFileSystem(curseZip, true)) {
-            Path manifestJson = fs.getPath("/manifest.json");
-            versionManifest = ModpackVersionManifest.convert(manifestJson);
-            if (versionManifest == null) {
-                return null;
+
+        String inputData = null;
+        try (ZipFile zipFile = new ZipFile.Builder().setFile(curseZip.toFile()).get()) {
+            var entries = zipFile.getEntries();
+            while (entries.hasMoreElements()) {
+                var entry = entries.nextElement();
+                if (entry.getName().equals("manifest.json")) {
+                    try (InputStream inputStream = zipFile.getInputStream(entry)) {
+                        inputData = new String(inputStream.readAllBytes());
+                    } catch (IOException e) {
+                        LOGGER.error("Failed to read manifest.json from CurseForge zip.", e);
+                    }
+                    
+                    break;
+                }
             }
-            versionManifest.cfExtractOverride = curseZip;
-            return Pair.of(ModpackManifest.fakeManifest(versionManifest.getName()), versionManifest);
         }
+        
+        if (inputData == null) {
+            LOGGER.error("No manifest.json found in CurseForge zip: {}", curseZip);
+            return null;
+        }
+
+        versionManifest = ModpackVersionManifest.convert(inputData);
+        if (versionManifest == null) {
+            LOGGER.error("Failed to parse manifest.json from CurseForge zip: {}", curseZip);
+            return null;
+        }
+
+        versionManifest.cfExtractOverride = curseZip;
+        return Pair.of(ModpackManifest.fakeManifest(versionManifest.getName()), versionManifest);
     }
 }
