@@ -6,20 +6,14 @@ import dev.ftb.app.data.modpack.ModpackVersionManifest;
 import dev.ftb.app.install.FileValidation;
 import dev.ftb.app.install.tasks.DownloadTask;
 import dev.ftb.app.pack.Instance;
-import net.covers1624.quack.collection.ColUtils;
-import net.covers1624.quack.collection.FastStream;
-import net.covers1624.quack.io.IOUtils;
-import net.covers1624.quack.util.HashUtils;
+import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.stream.Stream;
 
 public abstract class InstanceOperation {
 
@@ -56,17 +50,21 @@ public abstract class InstanceOperation {
         }
         Path cfOverrides = getCFOverridesZip(manifest);
         if (cfOverrides != null) {
-            try (FileSystem fs = IOUtils.getJarFileSystem(cfOverrides, true)) {
-                Path root = fs.getPath("/overrides/");
-                try (Stream<Path> paths = Files.walk(root)) {
-                    for (Path path : ColUtils.iterable(paths)) {
-                        if (Files.isDirectory(path)) continue;
-                        String relPath = root.relativize(path).toString().replace('\\', '/');
-                        knownFiles.put(relPath, new IndexedFile(relPath, path.getFileName().toString(), HashUtils.hash(Hashing.sha1(), path), Files.size(path)));
-                    }
+            try (ZipFile zipFile = new ZipFile.Builder().setFile(cfOverrides.toFile()).get()) {
+                var entries = zipFile.getEntries();
+                while (entries.hasMoreElements()) {
+                    var entry = entries.nextElement();
+                    if (entry.isDirectory()) continue;
+
+                    String relPath = entry.getName().replace('\\', '/');
+                    String fileName = entry.getName().substring(entry.getName().lastIndexOf('/') + 1);
+                    HashCode sha1 = Hashing.sha1().hashBytes(zipFile.getInputStream(entry).readAllBytes());
+                    long length = entry.getSize();
+
+                    knownFiles.put(relPath, new IndexedFile(relPath, fileName, sha1, length));
                 }
-            } catch (IOException ex) {
-                throw new IllegalStateException("Failed to read CurseForge Overrides zip.", ex);
+            } catch (IOException e) {
+                throw new IllegalStateException("Failed to read CurseForge Overrides zip.", e);
             }
         }
         return knownFiles;
@@ -78,9 +76,9 @@ public abstract class InstanceOperation {
             return manifest.cfExtractOverride;
         }
 
-        LinkedList<ModpackVersionManifest.ModpackFile> cfExtractEntries = FastStream.of(manifest.getFiles())
+        LinkedList<ModpackVersionManifest.ModpackFile> cfExtractEntries = manifest.getFiles().stream()
                 .filter(e -> e.getType().equals("cf-extract"))
-                .toLinkedList();
+                .collect(LinkedList::new, LinkedList::add, LinkedList::addAll);
 
         if (cfExtractEntries.isEmpty()) return null;
         if (cfExtractEntries.size() > 1) throw new IllegalStateException("More than one cf-extract entry found.");

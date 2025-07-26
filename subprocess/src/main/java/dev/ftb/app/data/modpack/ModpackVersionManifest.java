@@ -9,15 +9,12 @@ import dev.ftb.app.Constants;
 import dev.ftb.app.install.FileValidation;
 import dev.ftb.app.util.FileUtils;
 import dev.ftb.app.util.ModpackApiUtils;
-import dev.ftb.app.util.PathRequestBody;
 import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.HashCodeAdapter;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.net.DownloadAction;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
+import okhttp3.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
@@ -154,12 +151,10 @@ public class ModpackVersionManifest {
     }
 
     @Nullable
-    public static ModpackVersionManifest convert(Path manifest) throws IOException {
-        LOGGER.info("Converting pack '{}'.", manifest);
-
+    public static ModpackVersionManifest convert(String inputData) throws IOException {
         Request.Builder builder = new Request.Builder()
                 .url(ModpackApiUtils.getModpacksApi() + "/curseforge/import")
-                .put(new PathRequestBody(manifest));
+                .put(RequestBody.create(inputData, MediaType.parse("application/json; charset=utf-8")));
         
         ModpackApiUtils.injectBearerHeader(builder);
         
