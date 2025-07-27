@@ -6,6 +6,7 @@
   import {ref, watch} from "vue";
   import {InstanceController} from "@/core/controllers/InstanceController.ts";
   import {alertController} from "@/core/controllers/alertController.ts";
+  import {useInstanceStore} from "@/store/instancesStore.ts";
 
   const {
     instances,
@@ -19,6 +20,8 @@
     (e: 'close'): void;
     (e: 'deselect'): void;
   }>();
+  
+  const instanceStore = useInstanceStore();
   
   const instanceCategoryMap = ref<Record<string, string>>({});
   const useSingleCategory = ref(true);
@@ -47,7 +50,7 @@
       const controller = InstanceController.from(instance);
       try {
         const res = await controller.updateInstance({
-          category: newCategory
+          categoryId: newCategory
         });
         
         if (res) {
@@ -61,6 +64,8 @@
         emit('close');
       }
     }
+    
+    instanceStore.loadInstances();
   }
 </script>
 

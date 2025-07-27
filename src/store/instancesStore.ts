@@ -1,10 +1,10 @@
 import { defineStore } from 'pinia';
-import { InstanceJson, SugaredInstanceJson } from '@/core/types/javaApi';
+import {InstanceCategory, InstanceJson, SugaredInstanceJson} from '@/core/types/javaApi';
 import { toggleBeforeAndAfter } from '@/utils/helpers/asyncHelpers.ts';
 import { sendMessage } from '@/core/websockets/websocketsApi.ts';
 
 type InstanceState = {
-  instanceCategories: string[],
+  instanceCategories: InstanceCategory[],
   instances: SugaredInstanceJson[],
   loading: boolean
 }
@@ -34,9 +34,22 @@ export const useInstanceStore = defineStore("instance", {
       }
     },
     
+    async reloadCategories() {
+      try {
+        const result = await sendMessage('instanceCategories', {
+          action: "GET",
+        })
+        
+        if (result.categories) {
+          this.instanceCategories = result.categories;
+        }
+      } catch (error) {
+        console.error("Failed to load instance categories", error);
+      }
+    },
+    
     addInstance(instance: SugaredInstanceJson | InstanceJson) {
       this.instances.push(instance as SugaredInstanceJson);
-      this.instanceCategories = Array.from(new Set(this.instances.map(i => i.category)));
     },
     
     updateInstance(instance: SugaredInstanceJson) {
@@ -46,7 +59,6 @@ export const useInstanceStore = defineStore("instance", {
       }
       
       this.instances[index] = instance;
-      this.instanceCategories = Array.from(new Set(this.instances.map(i => i.category)));
     },
     
     removeInstance(uuid: string) {
@@ -56,7 +68,6 @@ export const useInstanceStore = defineStore("instance", {
       }
       
       this.instances.splice(index, 1);
-      this.instanceCategories = Array.from(new Set(this.instances.map(i => i.category)));
     }
   }
 })

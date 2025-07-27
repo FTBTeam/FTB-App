@@ -22,7 +22,7 @@ export type SaveJson = {
   releaseChannel: string;
   instanceImage?: string;
   preventMetaModInjection?: boolean;
-  category: string;
+  categoryId: string;
   locked: boolean;
   shellArgs: string;
 }

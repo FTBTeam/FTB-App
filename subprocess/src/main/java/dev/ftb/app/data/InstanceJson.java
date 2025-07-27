@@ -53,7 +53,13 @@ public class InstanceJson {
     public boolean isImport;
     public boolean hasInstMods;
     public boolean installComplete;
+    
+    @Deprecated
     public String category = "Default";
+    
+    @Nullable
+    public UUID categoryId = null;
+    
     public String releaseChannel = "unset";
     
     public boolean locked = true;
@@ -113,6 +119,7 @@ public class InstanceJson {
         lastPlayed = other.lastPlayed;
         art = other.art;
         category = other.category;
+        categoryId = other.categoryId;
         releaseChannel = other.releaseChannel;
         locked = other.locked;
         shellArgs = other.shellArgs;

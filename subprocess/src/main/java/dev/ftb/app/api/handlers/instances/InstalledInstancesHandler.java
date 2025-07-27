@@ -6,20 +6,15 @@ import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.data.instances.InstalledInstancesData;
 import dev.ftb.app.api.handlers.IMessageHandler;
 import dev.ftb.app.data.InstanceJson;
+import dev.ftb.app.instance.InstanceCategory;
 import dev.ftb.app.pack.Instance;
-import dev.ftb.app.storage.settings.Settings;
-import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.PathTypeAdapter;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.*;
 
 public class InstalledInstancesHandler implements IMessageHandler<InstalledInstancesData> {
     @Override
@@ -28,15 +23,18 @@ public class InstalledInstancesHandler implements IMessageHandler<InstalledInsta
             Instances.refreshInstances();
         }
 
-        List<SugaredInstanceJson> instanceJsons = FastStream.of(Instances.allInstances())
+        List<SugaredInstanceJson> instanceJsons = Instances.allInstances()
+                .stream()
                 .map(SugaredInstanceJson::new)
                 .toList();
-
-        Set<String> availableCategories = new HashSet<>();
-        availableCategories.add("Default");
-        availableCategories.addAll(instanceJsons.stream().map(e -> e.category).toList());
         
-        InstalledInstancesData.Reply reply = new InstalledInstancesData.Reply(data.requestId, instanceJsons, availableCategories);
+        var categories = Instances.categories();
+        if (categories.isEmpty()) {
+            categories = new LinkedList<>();
+            categories.add(InstanceCategory.DEFAULT);
+        }
+        
+        InstalledInstancesData.Reply reply = new InstalledInstancesData.Reply(data.requestId, instanceJsons, categories);
         WebSocketHandler.sendMessage(reply);
     }
 

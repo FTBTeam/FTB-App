@@ -18,6 +18,7 @@ import { useInstanceStore } from '@/store/instancesStore.ts';
 import { EmitEvents } from '@/store/appStore.ts';
 import { Emitter } from 'mitt';
 import { artworkFileOrElse } from '@/utils/helpers/packHelpers.ts';
+import {defaultInstanceCategory} from "@/core/constants.ts";
 
 export type InstallRequest = {
   uuid: string;
@@ -27,7 +28,7 @@ export type InstallRequest = {
   logo: string | null;
   updatingInstanceUuid?: string;
   importFrom?: string;
-  category?: string;
+  categoryId?: string;
   provider?: PackProviders;
   private: boolean;
   ourOwn?: boolean;
@@ -122,7 +123,7 @@ export class InstanceInstallController {
       name: instance.name,
       logo: artworkFileOrElse(instance as SugaredInstanceJson),
       updatingInstanceUuid: instance.uuid,
-      category: instance.category,
+      categoryId: instance.categoryId,
       provider,
       private: instance._private,
     });
@@ -132,8 +133,8 @@ export class InstanceInstallController {
     alertController.info(`Update requested for ${instance.name}`);
   }
 
-  public async requestImport(path: string, category: string) {
-    this.logger.debug('Import requested', path, category);
+  public async requestImport(path: string, categoryId: string) {
+    this.logger.debug('Import requested', path, categoryId);
 
     this.queue.push({
       uuid: appPlatform.utils.crypto.randomUUID(),
@@ -141,7 +142,7 @@ export class InstanceInstallController {
       version: -1,
       name: 'Import',
       logo: null,
-      category: category,
+      categoryId: categoryId,
       private: false,
       provider: 'modpacksch',
       importFrom: path,
@@ -252,7 +253,7 @@ export class InstanceInstallController {
         importFrom: null,
         name: request.name,
         artPath: request.logo,
-        category: request.category ?? 'Default',
+        categoryId: request.categoryId ?? defaultInstanceCategory,
         mcVersion: request.mcVersion ?? undefined,
         ourOwn: request.ourOwn ?? false,
         screenWidth: request.width ?? -1,
@@ -263,7 +264,7 @@ export class InstanceInstallController {
     } else if (request.importFrom) {
       payload = {
         importFrom: request.importFrom,
-        category: request.category ?? 'Default',
+        categoryId: request.categoryId ?? defaultInstanceCategory,
       };
     }
 

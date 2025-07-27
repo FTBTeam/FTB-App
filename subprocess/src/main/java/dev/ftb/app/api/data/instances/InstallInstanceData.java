@@ -6,6 +6,8 @@ import dev.ftb.app.data.InstanceJson;
 import dev.ftb.app.pack.Instance;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.UUID;
+
 public class InstallInstanceData extends BaseData {
 
     public String uuid;
@@ -21,7 +23,7 @@ public class InstallInstanceData extends BaseData {
     @Nullable
     public String artPath;
     @Nullable
-    public String category;
+    public String categoryId;
 
     // QOL stuff for own instances
     public boolean ourOwn = false; // Marker for when it's a custom instance creation

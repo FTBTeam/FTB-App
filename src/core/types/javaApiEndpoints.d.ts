@@ -36,6 +36,7 @@ export type ApiEndpoints = 	"installedInstances" |
 	"openDebugTools" |
 	"getInstanceFolders" |
 	"instanceVersionInfo" |
+	"instanceCategories" |
 	"instance.kill" |
 	"launchInstance" |
 	"instanceModToggle" |

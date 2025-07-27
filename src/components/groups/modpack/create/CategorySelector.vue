@@ -6,6 +6,9 @@ import {faCheck, faPlus, faTimes} from "@fortawesome/free-solid-svg-icons";
 import UiButton from "@/components/ui/UiButton.vue";
 import {Input} from "@/components/ui";
 import {alertController} from "@/core/controllers/alertController.ts";
+import {defaultInstanceCategory} from "@/core/constants.ts";
+import {toggleBeforeAndAfter} from "@/utils/helpers/asyncHelpers.ts";
+import {sendMessage} from "@/core/websockets/websocketsApi.ts";
 
 const instanceStore = useInstanceStore();
 
@@ -20,41 +23,55 @@ const value = defineModel<string>()
 
 const extraCategory = ref("");
 const showCreate = ref(false);
+const adding = ref(false);
 
 const _options = computed(() => {
-  const categories: any[] = (instanceStore.instanceCategories ?? []).map(e => ({ value: e, key: e }));
-  
-  if (categories.find(e => e.value === "Default") === undefined) {
-    categories.push({ value: "Default", key: "Default" });
-  }
+  const categories: any[] = (instanceStore.instanceCategories ?? []).map(e => ({ value: e.name, key: e.uuid }));
 
   // Always sort the Default option to the top and the add new at the bottom, then the rest alphabetically
   categories.sort((a, b) => {
-    if (a.value === "Default") return -1;
-    if (b.value === "Default") return 1;
-    if (a.value === "") return 1;
-    if (b.value === "") return -1;
+    if (a.key === defaultInstanceCategory) return -1;
+    if (b.key === defaultInstanceCategory) return 1;
     return a.value.localeCompare(b.value);
   });
 
   return categories;
 });
 
-function confirm() {
+async function confirm() {
   if (extraCategory.value === "") {
     showCreate.value = false;
   }
   
-  const existingNames = _options.value.map(e => e.value.toLowerCase());
-  if (existingNames.includes(extraCategory.value.toLowerCase())) {
-    alertController.warning("Category already exists");
+  const result = await toggleBeforeAndAfter(async () => {
+    return sendMessage('instanceCategories', {
+      action: 'CREATE',
+      categoryName: extraCategory.value
+    })
+  }, (state) => adding.value = state);
+  
+  const categoryUuid = result.category?.uuid;
+  if (!categoryUuid) {
+    alertController.error("Failed to create category");
     return;
   }
   
-  value.value = extraCategory.value;
+  await instanceStore.reloadCategories();
+  
+  value.value = categoryUuid;
   extraCategory.value = "";
   showCreate.value = false;
 }
+
+const isValid = computed(() => {
+  // Ensure the input isn't empty
+  if (extraCategory.value === '') {
+    return false;
+  }
+  
+  // Check if the category already exists
+  return instanceStore.instanceCategories.findIndex(e => e.name.toLocaleLowerCase() === extraCategory.value.toLocaleLowerCase()) === -1;
+});
 </script>
 
 <template>
@@ -70,9 +87,13 @@ function confirm() {
     </UiSelect>
   </div>
   <div class="" v-else>
-    <Input placeholder="Category name" label="New Category Name" fill v-model="extraCategory">
+    <Input :disabled="adding" placeholder="Category name" label="New Category Name" fill v-model="extraCategory">
       <template #suffix>
-        <UiButton size="small" type="primary" :icon="faCheck" @click="confirm" />
+        <UiButton :disabled="adding" size="small" type="danger" :icon="faTimes" @click="() => {
+          extraCategory = '';
+          showCreate = false;
+        }" />
+        <UiButton :disabled="!isValid || adding" size="small" type="primary" :icon="faCheck" @click="confirm" />
       </template>
     </Input>
   </div>

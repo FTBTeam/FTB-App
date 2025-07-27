@@ -6,7 +6,9 @@ import dev.ftb.app.Instances;
 import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.data.instances.InstanceConfigureData;
 import dev.ftb.app.api.handlers.IMessageHandler;
+import dev.ftb.app.instance.InstanceCategory;
 import dev.ftb.app.pack.Instance;
+import dev.ftb.app.util.MiscUtils;
 import net.covers1624.jdkutils.JavaInstall;
 import net.covers1624.quack.gson.JsonUtils;
 import org.apache.logging.log4j.LogManager;
@@ -18,6 +20,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Base64;
+import java.util.UUID;
 import java.util.function.Function;
 
 public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigureData> {
@@ -55,7 +58,13 @@ public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigu
             instance.props.height = getOrDefault(updateJson, "height", JsonElement::getAsInt, instance.props.height);
             instance.props.fullscreen = getOrDefault(updateJson, "fullScreen", JsonElement::getAsBoolean, instance.props.fullscreen);
             instance.props.releaseChannel = getOrDefault(updateJson, "releaseChannel", JsonElement::getAsString, instance.props.releaseChannel);
-            instance.props.category = getOrDefault(updateJson, "category", JsonElement::getAsString, instance.props.category);
+            instance.props.categoryId = getOrDefault(updateJson, "categoryId", (elm) -> {
+                if (elm.isJsonNull()) {
+                    return null;
+                }
+
+                return MiscUtils.tryParseUuid(elm.getAsString());
+            }, InstanceCategory.DEFAULT.uuid());
             instance.props.embeddedJre = jreRealPath == null;
             
             // Support for unlocking a modpack
