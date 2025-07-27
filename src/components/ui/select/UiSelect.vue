@@ -71,9 +71,9 @@ import {computed, ref, useTemplateRef, watch} from "vue";
       <template v-slot:default="{ class: clazz }">
         <div :class="clazz" class="flex items-center justify-between" @click="open = !open">
           <div v-if="!$slots.selected">
-          <span class="">
-            {{ detailedValue ? detailedValue.key : placeholder || 'Select an option' }}
-          </span>
+            <span class="">
+              {{ detailedValue ? detailedValue.value : placeholder || 'Select an option' }}
+            </span>
           </div>
           <slot v-else name="selected" :value="detailedValue"></slot>
 

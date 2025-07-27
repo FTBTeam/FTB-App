@@ -39,7 +39,7 @@ export interface InstallInstanceData extends BaseData {
     importFrom: string;
     name: string;
     artPath: string;
-    category: string;
+    categoryId: string;
     ourOwn: boolean;
     ram: number;
     fullscreen: boolean;
@@ -59,7 +59,7 @@ export interface InstalledInstancesData extends BaseData {
 
 export interface InstalledInstancesDataReply extends BaseData {
     instances: SugaredInstanceJson[];
-    availableCategories: string[];
+    availableCategories: InstanceCategory[];
 }
 
 export interface InstanceConfigureData extends BaseData {
@@ -374,6 +374,19 @@ export interface SugaredInstanceJson extends InstanceJson {
     artworkFile: string;
 }
 
+export interface InstanceCategoryHandlerData extends BaseData {
+    action: Action;
+    categoryId: string;
+    categoryName: string;
+}
+
+export interface InstanceCategoryHandlerReply extends BaseData {
+    success: boolean;
+    message: string;
+    category: InstanceCategory;
+    categories: InstanceCategory[];
+}
+
 export interface MoveInstancesHandlerData extends BaseData {
     newLocation: string;
 }
@@ -572,7 +585,11 @@ export interface InstanceJson {
     isImport: boolean;
     hasInstMods: boolean;
     installComplete: boolean;
+    /**
+     * @deprecated
+     */
     category: string;
+    categoryId: string;
     releaseChannel: string;
     locked: boolean;
     pinned: boolean;
@@ -631,6 +648,11 @@ export interface Stage {
 export interface Dimension {
     width: number;
     height: number;
+}
+
+export interface InstanceCategory {
+    uuid: string;
+    name: string;
 }
 
 export interface CompleteTokenData {
@@ -741,6 +763,8 @@ export interface FileHashes {
     murmur: number;
     cfMurmur: number;
 }
+
+export type Action = "GET" | "CREATE" | "DELETE" | "RENAME";
 
 export type ValidCheckResult = "VALID" | "EXPIRED" | "NOT_LOGGED_IN" | "TOTAL_FAILURE";
 

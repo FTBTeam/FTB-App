@@ -16,6 +16,7 @@ import dev.ftb.app.data.modpack.ModpackManifest;
 import dev.ftb.app.data.modpack.ModpackVersionManifest;
 import dev.ftb.app.data.modpack.ModpackVersionModsManifest;
 import dev.ftb.app.install.tasks.DownloadTask;
+import dev.ftb.app.instance.InstanceCategory;
 import dev.ftb.app.minecraft.modloader.forge.ForgeJarModLoader;
 import dev.ftb.app.storage.settings.Settings;
 import dev.ftb.app.util.CurseMetadataCache.FileMetadata;
@@ -75,13 +76,13 @@ public class Instance {
     private long startTime;
 
     // Brand-new instance.
-    public Instance(@Nullable String name, @Nullable String artPath, @Nullable String category, ModpackManifest modpack, ModpackVersionManifest versionManifest, String mcVersion, boolean isPrivate, byte packType) {
+    public Instance(@Nullable String name, @Nullable String artPath, @Nullable UUID categoryId, ModpackManifest modpack, ModpackVersionManifest versionManifest, String mcVersion, boolean isPrivate, byte packType) {
         props = new InstanceJson(modpack, versionManifest, mcVersion, isPrivate, packType);
         if (name != null) {
             props.name = name;
         }
 
-        props.category = Objects.requireNonNullElse(category, "Default");
+        props.categoryId = categoryId == null ? InstanceCategory.DEFAULT.uuid() : categoryId;
 
         path = Settings.getInstancesDir().resolve(folderNameFor(props));
         metaPath = path.resolve(META_FOLDER_NAME);
@@ -490,12 +491,12 @@ public class Instance {
     }
 
     @Nullable
-    public Instance duplicate(String instanceName, @Nullable String category) throws IOException {
+    public Instance duplicate(String instanceName, @Nullable UUID category) throws IOException {
         InstanceJson json = new InstanceJson(props, UUID.randomUUID(), !instanceName.isEmpty() ? instanceName : props.name);
         json.totalPlayTime = 0;
         json.lastPlayed = 0;
         json.potentiallyBrokenDismissed = false;
-        json.category = category != null ? category : props.category;
+        json.categoryId = category != null ? category : props.categoryId;
 
         Path newDir = Settings.getInstancesDir().resolve(folderNameFor(json));
         Path newJson = newDir.resolve("instance.json");

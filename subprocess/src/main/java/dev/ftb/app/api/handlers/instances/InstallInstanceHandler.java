@@ -10,6 +10,7 @@ import dev.ftb.app.data.modpack.ModpackManifest;
 import dev.ftb.app.data.modpack.ModpackVersionManifest;
 import dev.ftb.app.pack.Instance;
 import dev.ftb.app.task.InstallationOperation;
+import dev.ftb.app.util.MiscUtils;
 import net.covers1624.quack.io.IOUtils;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.lang3.StringUtils;
@@ -116,7 +117,8 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
             }
             mcVersion = data.mcVersion;
         }
-        Instance instance = new Instance(data.name, data.artPath, data.category, modpackManifest, versionManifest, mcVersion, isPrivate, packType);
+        
+        Instance instance = new Instance(data.name, data.artPath, MiscUtils.tryParseUuid(data.categoryId), modpackManifest, versionManifest, mcVersion, isPrivate, packType);
         instance.props.isImport = isImport;
         if (isImport) {
             instance.props.locked = false;

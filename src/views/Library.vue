@@ -25,6 +25,7 @@ import { Input } from '@/components/ui';
 import {useGlobalStore} from "@/store/globalStore.ts";
 import InstanceSelectActions from "@/components/groups/instanceSelect/InstanceSelectActions.vue";
 import {faCheckSquare} from "@fortawesome/free-regular-svg-icons";
+import {defaultInstanceCategory} from "@/core/constants.ts";
 
 const groupOptions = [
   ['Category', 'category'],
@@ -124,13 +125,15 @@ const groupedPacks = computed(() => {
   const grouped: Record<string, SugaredInstanceJson[]> = {
     "Pinned": [],
   };
+  
+  const categories = instanceStore.instanceCategories.reduce((acc, category) => {
+    acc[category.uuid] = category.name;
+    return acc;
+  }, {} as Record<string, string>);
 
   for (const instance of sortedInstances.value) {
     let groupKey = '';
     switch (groupBy.value.replace("-", "")) {
-      case 'category':
-        groupKey = instance.category;
-        break;
       case 'modloader':
         groupKey = resolveModloader(instance)
         break;
@@ -138,7 +141,7 @@ const groupedPacks = computed(() => {
         groupKey = instance.mcVersion;
         break;
       default:
-        groupKey = instance.category;
+        groupKey = categories[instance.categoryId] || categories[defaultInstanceCategory] || "Uncategorized";
         break;
     }
 

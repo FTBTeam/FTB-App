@@ -231,7 +231,7 @@ function createInstanceSettingsFromInstance(instance: InstanceJson): SaveJson {
     height: instance.height,
     fullScreen: instance.fullscreen,
     releaseChannel: instance.releaseChannel,
-    category: instance.category,
+    categoryId: instance.categoryId,
     locked: instance.locked,
     shellArgs: instance.shellArgs,
     programArgs: instance.programArgs,
@@ -302,7 +302,7 @@ watch(imageFile, (value) => {
   }
 })
 
-watch(() => instanceSettings.value.category, () => saveSettings())
+watch(() => instanceSettings.value.categoryId, () => saveSettings())
 </script>
 
 <template>
@@ -317,7 +317,7 @@ watch(() => instanceSettings.value.category, () => saveSettings())
         fill
       />
       
-      <CategorySelector :open-down="true" class="w-2/3" v-model="instanceSettings.category" />
+      <CategorySelector :open-down="true" class="w-2/3" v-model="instanceSettings.categoryId" />
     </div>
 
     <div class="buttons flex flex-wrap gap-3 mb-8">      

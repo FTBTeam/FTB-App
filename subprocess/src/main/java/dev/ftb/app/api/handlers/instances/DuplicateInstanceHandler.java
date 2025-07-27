@@ -5,6 +5,7 @@ import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.api.handlers.IMessageHandler;
 import dev.ftb.app.pack.Instance;
+import dev.ftb.app.util.MiscUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +26,7 @@ public class DuplicateInstanceHandler implements IMessageHandler<DuplicateInstan
         }
 
         try {
-            Instance newInstance = instance.duplicate(data.newName, data.category);
+            Instance newInstance = instance.duplicate(data.newName, MiscUtils.tryParseUuid(data.category));
             if (newInstance == null) {
                 WebSocketHandler.sendMessage(new Reply(data, false, "Failed to duplicate instance...", null));
                 return;
