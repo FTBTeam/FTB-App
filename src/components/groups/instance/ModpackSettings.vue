@@ -299,6 +299,12 @@ watch(imageFile, (value) => {
     saveSettings();
   }
 })
+
+watch(() => instanceSettings.value.category, (newValue, oldValue) => {
+  if (newValue === oldValue) return;
+  
+  saveSettings()
+})
 </script>
 
 <template>
@@ -313,7 +319,7 @@ watch(imageFile, (value) => {
         fill
       />
 
-      <CategorySelector :open-down="true" class="w-2/3" v-model="instanceSettings.category" @input="() => saveSettings()" />
+      <CategorySelector :open-down="true" class="w-2/3" v-model="instanceSettings.category" />
     </div>
 
     <div class="buttons flex gap-4 mb-8">

@@ -3,7 +3,7 @@ import {SelectionOption} from '@/components/ui/Selection2.vue';
 import {ModLoadersResponse, ModLoaderWithPackId} from '@/core/types/modpacks/modloaders';
 import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import {JavaFetch} from '@/core/javaFetch';
-import { UiToggle, Message, Loader, Selection2 } from '@/components/ui';
+import {UiToggle, Message, Loader, Selection2, UiBadge} from '@/components/ui';
 import { computed, onMounted, ref, watch } from 'vue';
 import { toTitleCase } from '@/utils/helpers/stringHelpers.ts';
 import { faExclamation, faInfo } from '@fortawesome/free-solid-svg-icons';
@@ -64,11 +64,16 @@ function select(loader: string | null, version: string | null) {
 }
 
 async function loadLoaders() {
+  // We don't know the mc version yet so don't load anything
+  if (mcVersion === "unknown") {
+    return;
+  }
+  
   await toggleBeforeAndAfter(() => loadAvailableLoaders(mcVersion), state => loadingModloaders.value = state);
 }
 
 async function loadAvailableLoaders(mcVersion: string) {
-  const knownLoaders = ["forge", "neoforge", "fabric"];
+  const knownLoaders = ["neoforge", "forge", "fabric"];
   const foundLoadersForVersion = {} as Record<string, ModLoaderWithPackId[]>;
 
   for (const loader of knownLoaders) {
@@ -123,9 +128,10 @@ const hasAvailableLoaders = computed(() => Object.keys(availableLoaders.value).l
 
 <template>
  <div class="modloaderSelect">
-   <Message header="Optional" :icon="faInfo" type="info" class="mb-4" v-if="showOptional && hasAvailableLoaders">
-     A Mod Loader will allow you to load mods into Minecraft. Each Mod Loader will have different mods available so we recommend looking at <a>CurseForge</a> to see what's available.
-   </Message>
+   <UiBadge class="mb-3" :icon="faInfo" type="info">Info</UiBadge>
+   <p class="mb-4 text-sm">
+     ModLoaders allow you to play Minecraft with mods. Your mod options will depend on Minecraft version + the mod loader you select.
+   </p>
    
    <Loader v-if="loadingModloaders" />
    
@@ -140,7 +146,7 @@ const hasAvailableLoaders = computed(() => Object.keys(availableLoaders.value).l
      </div>
 
      <UiToggle v-if="provideLatestOption && userLoaderProvider !== ''" class="mb-4" label="Use latest Mod Loader version (recommended)" desc="The latest version of each modloader is typically the most stable version" v-model="userUseLatestLoader" />
-
+     
      <Selection2
        v-if="userLoaderProvider !== ''"
        :open-up="true"
@@ -149,7 +155,7 @@ const hasAvailableLoaders = computed(() => Object.keys(availableLoaders.value).l
        :disabled="loaderVersions.length === 0 || (provideLatestOption && userUseLatestLoader)"
        :options="loaderVersions"
        v-model="userLoaderVersion"
-       @change="select(userLoaderProvider, userLoaderVersion)"
+       @updated="select(userLoaderProvider, userLoaderVersion)"
      />
    </template>
 

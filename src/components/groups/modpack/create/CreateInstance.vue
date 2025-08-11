@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-// import ArtworkSelector from '@/components/groups/modpack/components/ArtworkSelector.vue';
 import Selection2, {SelectionOption} from '@/components/ui/Selection2.vue';
 import UiButton from '@/components/ui/UiButton.vue';
 import {stringIsEmpty} from '@/utils/helpers/stringHelpers';
@@ -78,12 +77,6 @@ function close() {
 
 onMounted(async () => {
   await loadInitialState();
-  
-  settingFullscreen.value = appSettingsStore.rootSettings?.instanceDefaults.fullscreen ?? false;
-  settingScreenResolution.value = (appSettingsStore.rootSettings?.instanceDefaults.width ?? 0) + "x" + (appSettingsStore.rootSettings?.instanceDefaults.height ?? 0);
-  settingRam.value = appSettingsStore.rootSettings?.instanceDefaults.memory ?? 0;
-  userWidth.value = appSettingsStore.rootSettings?.instanceDefaults.width ?? 0;
-  userHeight.value = appSettingsStore.rootSettings?.instanceDefaults.height ?? 0;
 })
 
 function onScreenResolutionChange(newVal: string) {
@@ -101,6 +94,13 @@ watch(() => open, async (newValue) => {
 })
 
 async function loadInitialState() {
+  // Load back in the user defaults
+  settingFullscreen.value = appSettingsStore.rootSettings?.instanceDefaults.fullscreen ?? false;
+  settingScreenResolution.value = (appSettingsStore.rootSettings?.instanceDefaults.width ?? 0) + "x" + (appSettingsStore.rootSettings?.instanceDefaults.height ?? 0);
+  settingRam.value = appSettingsStore.rootSettings?.instanceDefaults.memory ?? 0;
+  userWidth.value = appSettingsStore.rootSettings?.instanceDefaults.width ?? 0;
+  userHeight.value = appSettingsStore.rootSettings?.instanceDefaults.height ?? 0;
+  
   vanillaPack.value = await toggleBeforeAndAfter(() => modpackStore.getModpack(81, "modpacksch") ?? null, state => loadingVanilla.value = state);
 
   if (!vanillaPack) {

@@ -7,12 +7,13 @@ import { useAppSettings } from '@/store/appSettingsStore.ts';
 const appSettingsStore = useAppSettings();
 
 const {
-  min = 0,
+  min = 1024, // Default minimum to 1GB
 } = defineProps<{
   min?: number;
 }>()
 
 const value = defineModel<number>()
+const sliderValue = ref(value.value ?? 1024); // Default to 1GB if not set
 
 const step = 16;
 const allowDangerous = ref(false)
@@ -34,6 +35,10 @@ watch(value, (newValue) => {
     return;
   }
   
+  if (sliderValue.value !== newValue) {
+    sliderValue.value = newValue;
+  }
+  
   emit('update', newValue);
 });
 
@@ -48,11 +53,11 @@ const maxRam = computed(() => {
 })
 
 const valueAsByteReadable = computed(() => {
-  return prettyByteFormat(Math.floor(parseInt((value.value ?? 0).toString()) * megabyteSize));
+  return prettyByteFormat(Math.floor(parseInt((sliderValue.value ?? 0).toString()) * megabyteSize));
 });
 
 const valueAsPercentage = computed(() => {
-  const v = parseInt(value.value?.toString() ?? "0");
+  const v = parseInt(sliderValue.value?.toString() ?? "0");
   if (isNaN(v)) return 0;
   if (v == 0) return 6;
 
@@ -72,10 +77,16 @@ const valueAsPercentage = computed(() => {
        <input
          type="range"
          class="w-full"
-         v-model="value"
+         v-model="sliderValue"
          @focus="hidden = false"
-         @blur="hidden = true"
-         @mouseup="hidden = true"
+         @blur="() => {
+           hidden = true;
+           value = sliderValue;
+         }"
+         @mouseup="() => {
+           hidden = true;
+           value = sliderValue;
+         }"
          @mousedown="hidden = false"
          :min="min"
          :max="maxRam"
@@ -90,7 +101,7 @@ const valueAsPercentage = computed(() => {
      </div>
      
      <div class="value-input gap-2 flex items-center">
-       <InputNumber v-model="value" :min="0" :max="appSettingsStore.systemHardware?.totalMemory ?? 0" />
+       <InputNumber v-model="value" :min="min" :max="appSettingsStore.systemHardware?.totalMemory ?? 0" />
      </div>
    </div>
    
