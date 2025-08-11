@@ -14,12 +14,10 @@ const logger = createLogger("ModloaderSelect.vue")
 const {
   mcVersion,
   showNone = true,
-  showOptional = false,
   provideLatestOption = true
 } = defineProps<{
   mcVersion: string;
   showNone?: boolean;
-  showOptional?: boolean;
   provideLatestOption?: boolean;
 }>()
 
