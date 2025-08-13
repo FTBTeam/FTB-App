@@ -302,7 +302,11 @@ watch(imageFile, (value) => {
   }
 })
 
-watch(() => instanceSettings.value.categoryId, () => saveSettings())
+watch(() => instanceSettings.value.categoryId, (newValue, oldValue) => {
+  if (newValue === oldValue) return;
+  
+  saveSettings()
+})
 </script>
 
 <template>
