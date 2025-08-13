@@ -54,21 +54,35 @@ const status = computed(() => {
 
 <template>
   <div class="install-query-row flex flex-col gap-4">
-    <div class="name">
-      {{request.name}}
-    </div>
-    <div class="status">
-      <div class="install-status" v-if="status">
-        {{status.stage}} - <span>{{ status.progress }}%</span> {{status.speed ? `(${(status.speed / 12500000).toFixed(2)} MB/s)` : ''}}
+    <div class="flex items-center justify-between gap-4">
+      <div class="name flex items-center gap-4">
+        <div v-if="request.logo" class="relative">
+          <img class="rounded-lg border border-white/20" width="60" height="60" :src="request.logo" />
+
+          <div class="absolute inset-0 rounded bg-black/20 backdrop-blur-xs flex items-center justify-center" v-if="status">
+            <span class="font-bold text-xl mr-0.5">{{ status.progress }}</span><span class="pt-1">%</span>
+          </div>
+        </div>
+        
+        <div class="flex-1">
+          <b class="line-clamp-1">{{request.name}}</b>
+          
+          <div class="status">
+            <div class="install-status text-white/80" v-if="status">
+              {{status.stage}} {{status.speed ? `(${(status.speed / 12500000).toFixed(2)} MB/s)` : ''}}
+            </div>
+            <div class="install-status text-white/80" v-else>
+              Queued <span class="inline-block" aria-label="Up next for download" data-balloon-pos="down-left" v-if="isNext">(Next)</span>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="install-status" v-else>
-        Queued <span class="inline-block" aria-label="Up next for download" data-balloon-pos="down-right" v-if="isNext">(Next)</span>
-      </div>
-    </div>
-    <div class="actions">
-      <div class="btn">
-        <FontAwesomeIcon :icon="faTimes" @click="cancelInstall(entry)" v-if="!cancelling" />
-        <FontAwesomeIcon :icon="faCircleNotch" spin v-else />
+      
+      <div class="actions mr-1">
+        <div class="btn">
+          <FontAwesomeIcon :icon="faTimes" @click="cancelInstall(entry)" v-if="!cancelling" />
+          <FontAwesomeIcon :icon="faCircleNotch" spin v-else />
+        </div>
       </div>
     </div>
   </div>
@@ -76,12 +90,8 @@ const status = computed(() => {
 
 <style lang="scss" scoped>
 .install-query-row {
-  padding: 0.45rem;
-  border-bottom: 1px solid rgba(white, .1);
   font-size: 14px;
   font-weight: 500;
-  background-color: rgba(white, .05);
-  border-radius: 0.25rem;
   
   .name {
   }

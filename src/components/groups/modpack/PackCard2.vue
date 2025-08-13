@@ -14,7 +14,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { useRunningInstancesStore } from '@/store/runningInstancesStore.ts';
 import { useInstallStore } from '@/store/installStore.ts';
 import { Versions } from '@/core/types/appTypes.ts';
-import {faBolt, faCheck, faCircleNotch, faDownload, faPlay, faSquare} from '@fortawesome/free-solid-svg-icons';
+import {faBolt, faCheck, faCircleNotch, faDownload, faPlay} from '@fortawesome/free-solid-svg-icons';
 
 const router = useRouter()
 const runningInstancesStore = useRunningInstancesStore();
@@ -149,16 +149,16 @@ function _versionName() {
           <img class="object-contain rounded-lg" :src="packLogo" alt="Modpack Artwork">
         </div>
         <div class="notifiers">
-          <div class="notifier modloader" aria-label="Minecraft Forge" data-balloon-pos="down-right" v-if="modloader === 'forge'">
+          <div class="notifier modloader" aria-label="Minecraft Forge" data-balloon-pos="down-left" v-if="modloader.toLowerCase() === 'forge'">
             <img :width="30" src="../../../assets/images/forge.svg" alt="" />
           </div>
-          <div class="notifier modloader" aria-label="Fabric" data-balloon-pos="down-right" v-if="modloader === 'fabric'">
+          <div class="notifier modloader" aria-label="Fabric" data-balloon-pos="down-left" v-if="modloader.toLowerCase() === 'fabric'">
             <img :width="30" src="../../../assets/images/fabric.webp" alt="" />
           </div>
-          <div class="notifier modloader" aria-label="NeoForge" data-balloon-pos="down-right" v-if="modloader === 'neoforge'">
+          <div class="notifier modloader" aria-label="NeoForge" data-balloon-pos="down-left" v-if="modloader.toLowerCase() === 'neoforge'">
             <img :width="30" src="../../../assets/images/neoforge.png" alt="" />
           </div>
-          <div class="notifier modloader" aria-label="QuiltMc" data-balloon-pos="down-right" v-if="modloader === 'quilt'">
+          <div class="notifier modloader" aria-label="QuiltMc" data-balloon-pos="down-left" v-if="modloader.toLowerCase() === 'quilt'">
             <img :width="30" src="../../../assets/images/quiltmc.svg" alt="" />
           </div>
         </div>
@@ -248,22 +248,16 @@ function _versionName() {
     .notifiers {
       --balloon-font-size: 10px;
       position: absolute;
-      top: .25rem;
-      right: .25rem;
+      top: .75rem;
+      left: .75rem;
       display: flex;
       align-items: center;
       flex-direction: row-reverse;
       gap: .25rem;
       
       .notifier {
-        background-color: rgba(black, .8);
-        display: flex;
-        padding: .5rem;
-        align-items: center;
-        justify-content: center;
-        border-radius: 5px;
-        width: 30px;
-        height: 30px;
+        width: 25px;
+        height: 25px;
         
         svg {
           font-size: 10px;
@@ -345,7 +339,7 @@ function _versionName() {
     
     .progress {
       position: absolute;
-      bottom: 0;
+      bottom: -1px;
       height: 12px !important;
       border-radius: 0 0 8px 8px;
     }
