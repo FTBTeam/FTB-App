@@ -107,7 +107,7 @@ function navItemRightClick(event: MouseEvent, item: typeof navigation[0]): void 
 <style scoped lang="scss">
 .sidebar {
   position: relative;
-  width: 70px;
+  width: 60px;
   height: 100%;
   background-color: var(--color-navbar);
   display: flex;
@@ -148,7 +148,7 @@ function navItemRightClick(event: MouseEvent, item: typeof navigation[0]): void 
 .nav-items {
   display: flex;
   flex-direction: column;
-  gap: .4rem;
+  gap: .8rem;
   
   .router-link-exact-active, .router-link-active {
     .nav-item {
@@ -162,12 +162,12 @@ function navItemRightClick(event: MouseEvent, item: typeof navigation[0]): void 
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: .6rem .8rem;
+    padding: .4rem .6rem;
     border-radius: 6px;
 
     .icon {
       width: auto !important;
-      font-size: 18px;
+      font-size: 1.4rem;
 
       svg {
         max-width: unset !important;

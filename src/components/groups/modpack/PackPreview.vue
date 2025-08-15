@@ -221,6 +221,7 @@ const isInstalling = computed(() => {
       display: flex;
       gap: 0.35rem;
       flex-wrap: wrap;
+      font-size: 0.875rem;
 
       .tag {
         background-color: rgba(black, 0.4);

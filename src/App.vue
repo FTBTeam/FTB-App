@@ -208,13 +208,8 @@ const showSidebar = computed(() => !router.currentRoute.value.path.startsWith('/
 
 <style lang="scss" scoped>
 .app-container {
-  height: calc(100% - 2rem);
+  height: calc(100% - 2.5rem);
   position: relative;
-
-  .macos & {
-    // Title bar on macos is 1.8rem not 2rem
-    height: calc(100% - 1.8rem);
-  }
 
   .system-frame & {
     height: 100%;

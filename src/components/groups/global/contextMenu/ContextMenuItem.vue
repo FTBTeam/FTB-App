@@ -79,7 +79,7 @@ async function onItemClicked(givenDepth: number, option: MenuItem<any>) {
   
         <FontAwesomeIcon class="chevron" v-if="option.children" :icon="faChevronRight"/>
   
-        <div class="child" :class="{'overflow-fix': overflowFix, 'open-to-left': openToLeft}" v-if="option.children" @click.stop.prevent>
+        <div class="child rounded-lg backdrop-blur-lg" :class="{'overflow-fix': overflowFix, 'open-to-left': openToLeft}" v-if="option.children" @click.stop.prevent>
           <nested-context-menu-item :depth="depth + 1" :context="context" :options="option.children" :overflow-fix="overflowFix" @click.stop.prevent
                                     :open-to-left="openToLeft" @clicked="(innerDepth, o) => onItemClicked(innerDepth, o)"/>
         </div>
@@ -100,6 +100,7 @@ async function onItemClicked(givenDepth: number, option: MenuItem<any>) {
   padding: .4rem 1.2rem .4rem .6rem;
   border-radius: 3px;
   transition: background-color .25s ease-in-out, color .25s ease-in-out;
+  font-weight: 500;
 
   &:not(:last-child) {
     margin-bottom: .1rem;
@@ -162,7 +163,7 @@ async function onItemClicked(givenDepth: number, option: MenuItem<any>) {
   &.separator {
     background: none;
     cursor: default;
-    border-bottom: 1px solid rgba(white, .15);
+    border-bottom: 1px solid rgba(white, .1);
     border-radius: 0;
     margin-bottom: .5rem;
     padding-top: 0;
@@ -177,8 +178,7 @@ async function onItemClicked(givenDepth: number, option: MenuItem<any>) {
     color: rgba(white, .8);
     border-radius: 3px;
     box-shadow: 0 3px 20px rgb(0 0 0 / 30%);
-    min-width: 180px;
-    border: 1px solid rgba(white, .1);
+    min-width: 140px;
     opacity: 0;
     visibility: hidden;
 

@@ -151,7 +151,7 @@ const orderOptions: SelectionOptions = [
       </div>
     </div>
 
-    <div class="grid grid-cols-3 gap-6" v-if="viewMode === 'grid'">
+    <div class="grid grid-cols-4 gap-6" v-if="viewMode === 'grid'">
       <div v-for="(mod, index) in finalMods" :key="index">
         <div class="bg-black/20 cursor-pointer aspect-square flex items-center justify-center rounded-lg relative">
           <img @click="iconClicked(mod)" class="rounded-lg cursor-pointer" v-if="mod.icon" :src="mod.icon" />
@@ -199,12 +199,12 @@ const orderOptions: SelectionOptions = [
     <div class="flex flex-col gap-6" v-if="viewMode === 'list'">
       <div v-for="(mod, index) in finalMods" :key="index" class="flex items-center gap-6">
         <template v-if="mod.curseProject">
-          <img @click="iconClicked(mod)" :src="mod.icon" alt="Mod Icon" class="cursor-pointer w-12 h-12 rounded-lg" />
+          <img @click="iconClicked(mod)" :src="mod.icon" alt="Mod Icon" class="cursor-pointer w-16 h-16 rounded-lg" />
           <div>
             <a class="hover:underline" :href="`https://www.curseforge.com/minecraft/mc-mods/${mod.curseSlug}`" target="_blank">
               <h2 class="text-lg font-semibold">{{ mod.name }}</h2>
             </a>
-            <p class="text-sm text-white/80 line-clamp-1">{{ mod.synopsis }}</p>
+            <p class="text-white/80 line-clamp-1">{{ mod.synopsis }}</p>
           </div>
         </template>
         <template v-else>

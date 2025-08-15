@@ -14,7 +14,7 @@ const isNumber = computed(() => typeof value === 'number');
 
 <template>
   <div>
-    <div class="text-xs text-white/80">{{ title }}</div>
+    <div class="text-white/80">{{ title }}</div>
     <div class="font-bold text-lg">{{ isNumber ? value.toLocaleString() : value }}</div>
   </div>
 </template>

@@ -1,7 +1,7 @@
 <template>
   <div class="home page-spacing">
     <template v-if="recentInstances.length">
-      <h2 class="text-lg font-bold text-white mb-4">Jump back in where you left off</h2>
+      <h2 class="text-2xl font-bold text-white mb-4">Jump back in where you left off</h2>
       
       <div class="recently-played pack-card-grid mb-5">
         <PackCard2 class="pack-card" v-for="instance in recentInstances" :key="instance.uuid" :instance="instance" />
@@ -9,7 +9,7 @@
     </template>
     
     <div class="featured-packs">
-      <h2 class="text-lg font-bold text-white mb-4">Featured packs</h2>
+      <h2 class="text-2xl font-bold text-white mb-4">Featured packs</h2>
       <PackPreview v-if="modpackStore.featuredPackIds.length" v-for="packId in modpackStore.featuredPackIds" :key="packId" :packId="packId" provider="modpacksch" />
       <Message type="warning" v-if="!modpackStore.featuredPackIds.length && !loadingFeatured">
         <p>No featured packs available at the moment</p>

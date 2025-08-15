@@ -110,6 +110,8 @@ function close(event: any) {
     background-color: black;
     border-radius: 8px;
     cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: bolder;
     
     transition: background-color .25s ease-in-out;
     

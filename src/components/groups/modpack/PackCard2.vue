@@ -179,8 +179,8 @@ function _versionName() {
       </div>
       <div class="card-body">
         <div class="info">
-          <div class="name">{{ instance.name }}</div>
-          <div class="version text-sm opacity-75">
+          <div class="name text-lg">{{ instance.name }}</div>
+          <div class="version opacity-75">
             <template v-if="!isInstalling">{{ versionName }}</template>
             <template v-else><FontAwesomeIcon :icon="faCircleNotch" spin class="mr-2" /> Installing</template>
           </div>
@@ -284,7 +284,7 @@ function _versionName() {
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: .6rem .8rem;
+      padding: .8rem .8rem;
       border-radius: 5px;
       box-shadow: 0 2px 10px rgba(black, 0.2);
       

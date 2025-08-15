@@ -206,7 +206,7 @@ watch(groupBy, onSortChange)
 <template>
   <div class="mod-packs h-full">
     <div class="page-spacing" v-if="!instanceStore.loading && instanceStore.instances.length > 0">
-      <header class="flex gap-4 mb-6 items-center">
+      <header class="text-lg flex gap-4 mb-6 items-center">
         <Input :icon="faSearch" fill v-model="searchTerm" placeholder="Search" class="flex-1" />
         
         <selection2 v-if="Object.keys(groupedPacks).length > 1" :icon="faFolder" direction="right" :min-width="300" :options="groupByOptions" v-model="groupBy" aria-label="Sort categories" data-balloon-pos="down-right" />
@@ -325,36 +325,6 @@ watch(groupBy, onSortChange)
           font-size: 12px;
         }
       }
-    }
-  }
-}
-
-.drop-area {
-  margin-top: 1rem;
-  padding: 2.5rem 2rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  border: 2px dashed rgba(white, 0.2);
-  border-radius: 5px;
-
-  hr {
-    margin: 1rem 0;
-  }
-
-  > svg {
-    margin-bottom: 1rem;
-  }
-}
-
-.file {
-  background-color: rgba(white, 0.1);
-  border-radius: 5px;
-
-  .text {
-    .name {
-      word-wrap: break-word;
     }
   }
 }

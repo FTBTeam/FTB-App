@@ -23,7 +23,6 @@ import SettingsSidebar from '@/views/Settings/SettingsSidebar.vue';
     height: 100%;
     overflow-y: auto;
     background-color: var(--color-navbar);
-    font-size: 14px;
   }
 }
 </style>
