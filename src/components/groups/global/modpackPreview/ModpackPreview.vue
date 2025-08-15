@@ -79,8 +79,8 @@
             <div class=" flex gap-6">
               <img alt="Modpack Artwork" @click="previewImage(logoArtwork)" v-if="logoArtwork" :src="logoArtwork" class="w-32 h-32 rounded-2xl shadow-2xl outline-2 outline-white/20" />
               <div>
-                <h1 class="text-shadow font-bold text-xl pt-3">{{modpack.name}}</h1>
-                <p :title="modpack.synopsis" class="text-shadow mt-2 line-clamp-3">{{modpack.synopsis}}</p>
+                <h1 class="text-shadow font-bold text-2xl pt-3">{{modpack.name}}</h1>
+                <p :title="modpack.synopsis" class="text-shadow text-lg mt-2 line-clamp-3">{{modpack.synopsis}}</p>
 
                 <div class="flex gap-7 text-shadow mt-3">
                   <Stat title="Installs" :value="modpack.installs" />

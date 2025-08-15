@@ -53,10 +53,10 @@ const isLoader = computed(() => {
         {{ packInstance?.synopsis }}
       </div>
       <div class="inline-flex items-center gap-2">
-        <div class="select-text text-xs px-4 py-1 rounded bg-black/30 inline-block" v-if="instance && !instance.isImport && !isLoader">
+        <div class="select-text text-sm px-4 py-1 rounded bg-black/30 inline-block" v-if="instance && !instance.isImport && !isLoader">
           Version {{ instance.version }}
         </div>
-        <div class="select-text text-xs px-4 py-1 rounded bg-black/30 inline-block" v-if="modloaderVersion">{{modloaderVersion}}</div>
+        <div class="select-text text-sm px-4 py-1 rounded bg-black/30 inline-block" v-if="modloaderVersion">{{modloaderVersion}}</div>
       </div>
     </div>
   </div>

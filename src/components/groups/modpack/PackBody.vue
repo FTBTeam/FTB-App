@@ -28,6 +28,7 @@ import {
   faInfo,
   faPlay,
 } from '@fortawesome/free-solid-svg-icons';
+import Stat from "@/components/groups/global/modpackPreview/Stat.vue";
 
 const {
   packInstance,
@@ -165,7 +166,7 @@ function cursePackBody() {
       <div class="action-heading">
         <div class="action-holder flex items-center justify-between duration-200 transition-opacity" :class="{'opacity-0': (isInstalling && installStore.currentInstall) || modloaderUpdating}">
           <div class="play">
-            <div class="py-3 px-8 bg-green-600 hover:bg-green-500 cursor-pointer rounded z-10" :class="{ 'opacity-50': isInstalled && isRunning }" @click="() => !(isInstalled && isRunning) && emit('mainAction')">
+            <div class="py-3 px-8 text-lg bg-green-600 hover:bg-green-700 font-semibold cursor-pointer rounded z-10 transition-colors" :class="{ 'opacity-50': isInstalled && isRunning }" @click="() => !(isInstalled && isRunning) && emit('mainAction')">
               <FontAwesomeIcon :icon="isInstalled ? faPlay : faDownload" class="mr-4" />
               {{ isInstalled ? 'Play' : 'Install' }}
             </div>
@@ -258,6 +259,9 @@ function cursePackBody() {
         <div class="stats-and-links">
           <div class="stats">
             <template v-if="isInstalled">
+              <Stat v-if="instance?.lastPlayed && instance?.lastPlayed !== 0" title="Last played" :value="timeFromNow(instance?.lastPlayed)" />
+              <Stat v-if="instance?.totalPlayTime && instance?.totalPlayTime !== 0" title="Total playtime" :value="timeFromNow(instance?.lastPlayed)" />
+              
               <div class="stat" v-if="instance?.lastPlayed && instance?.lastPlayed !== 0">
                 <div class="name">Last played</div>
                 <div class="value">{{ timeFromNow(instance?.lastPlayed) }}</div>
@@ -431,6 +435,8 @@ function cursePackBody() {
     transition: color 0.25s ease-in-out, background-color 0.25s ease-in-out;
     margin-right: 1rem;
     border-bottom: 2px solid transparent;
+    font-size: 1.125rem;
+    font-weight: bolder;
 
     &:hover {
       color: white;
@@ -442,7 +448,7 @@ function cursePackBody() {
     display: flex;
     align-items: center;
     background-color: #1d1d1d;
-    padding: 0.45rem 1rem 0.45rem 2rem;
+    padding: .8rem 1rem .8rem 3rem;
     border-radius: 5px;
     margin-bottom: 0.5rem;
     border: 1px solid rgba(255, 255, 255, 0.2);
