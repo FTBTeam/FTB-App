@@ -11,7 +11,6 @@
   height: 100%;
   margin-right: 7px;
   margin-bottom: 5px;
-  font-size: 14px;
 
   &::-webkit-scrollbar {
     width: 6px;

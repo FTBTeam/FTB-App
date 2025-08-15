@@ -6,7 +6,7 @@ const {
   value
 } = defineProps<{
   title: string;
-  value: number | string;
+  value?: number | string;
 }>();
 
 const isNumber = computed(() => typeof value === 'number');
@@ -15,6 +15,11 @@ const isNumber = computed(() => typeof value === 'number');
 <template>
   <div>
     <div class="text-white/80">{{ title }}</div>
-    <div class="font-bold text-lg">{{ isNumber ? value.toLocaleString() : value }}</div>
+    <div class="font-bold text-lg">
+      <template v-if="!$slots.default && value !== undefined">
+        {{ isNumber ? value.toLocaleString() : value }}
+      </template>
+      <slot v-else />
+    </div>
   </div>
 </template>

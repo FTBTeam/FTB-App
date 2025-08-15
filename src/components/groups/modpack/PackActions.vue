@@ -172,7 +172,6 @@ function deleteInstance() {
 
   .actions,
   .actions li ul {
-    font-size: 12px;
     position: absolute;
     white-space: nowrap;
     top: -7rem;

@@ -69,6 +69,8 @@ const isLoader = computed(() => {
     return false;
   }
 })
+
+const curseforgeWebsite = computed(() => apiPack?.links?.find(e => e.type === 'website')?.link)
 </script>
 
 <template>
@@ -95,7 +97,10 @@ const isLoader = computed(() => {
       >
         <img src="../../../assets/images/ftb-logo.svg" alt="" />
       </div>
-      <div class="origin icon" v-else-if="packInfo.provider !== 'modpacksch'" data-balloon-pos="left" aria-label="Curseforge Modpack">
+      <a class="origin icon !cursor-pointer" v-else-if="packInfo.provider !== 'modpacksch' && curseforgeWebsite" data-balloon-pos="left" aria-label="Curseforge Modpack" target="_blank" :href="curseforgeWebsite">
+        <img src="../../../assets/curse-logo.svg" alt="" />
+      </a>
+      <div class="origin icon" v-else-if="packInfo.provider !== 'modpacksch' && !curseforgeWebsite" data-balloon-pos="left" aria-label="Curseforge Modpack">
         <img src="../../../assets/curse-logo.svg" alt="" />
       </div>
       <div class="modloader icon" v-if="packInfo.modloader === 'neoforge'" data-balloon-pos="left" aria-label="NeoForge Modloader">
