@@ -135,7 +135,6 @@ function close(event: any) {
     padding: .25rem 0;
     z-index: 200;
     top: 0;
-    font-size: 14px;
     transform: translateX(-10px);
     opacity: 0;
     visibility: hidden;

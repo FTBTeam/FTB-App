@@ -13,7 +13,6 @@ import WorldsTab from '@/components/groups/modpack/WorldsTab.vue';
 import { computed } from 'vue';
 import { useInstallStore } from '@/store/installStore.ts';
 import { useRunningInstancesStore } from '@/store/runningInstancesStore.ts';
-import { localiseNumber } from '@/utils/helpers/stringHelpers.ts';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { ModPack } from '@/core/types/appTypes.ts';
 import {standardDate, standardDateTime, timeFromNow} from '@/utils/helpers/dateHelpers.ts';
@@ -158,6 +157,8 @@ function cursePackBody() {
   
   return description;
 }
+
+const curseWebsite = computed(() => packInstance?.provider === "curseforge" && packInstance?.links?.find(e => e.type === 'website')?.link);
 </script>
 
 <template>
@@ -257,56 +258,35 @@ function cursePackBody() {
 
       <div class="pack-overview" v-if="activeTab === tabs.OVERVIEW">
         <div class="stats-and-links">
-          <div class="stats">
+          <div class="stats gap-6 flex">
             <template v-if="isInstalled">
               <Stat v-if="instance?.lastPlayed && instance?.lastPlayed !== 0" title="Last played" :value="timeFromNow(instance?.lastPlayed)" />
-              <Stat v-if="instance?.totalPlayTime && instance?.totalPlayTime !== 0" title="Total playtime" :value="timeFromNow(instance?.lastPlayed)" />
-              
-              <div class="stat" v-if="instance?.lastPlayed && instance?.lastPlayed !== 0">
-                <div class="name">Last played</div>
-                <div class="value">{{ timeFromNow(instance?.lastPlayed) }}</div>
-              </div>
-              <div class="stat" v-if="instance?.totalPlayTime && instance?.totalPlayTime !== 0">
-                <div class="name">Total Playtime</div>
-                <div class="value flex gap-2 justify-start">
+              <Stat v-if="instance?.totalPlayTime && instance?.totalPlayTime !== 0" title="Total playtime">
                 <span v-for="(unit, index) in computeTime(instance?.totalPlayTime)" :key="index" :class="{'hidden': unit === ''}">
                   <template v-if="unit !== ''">{{ unit }}</template>
                 </span>
-                </div>
-              </div>
+              </Stat>
             </template>
-            <template v-else-if="packInstance">
-              <div class="stat">
-                <div class="name">Installs</div>
-                <div class="value font-sans">{{ localiseNumber(packInstance.installs) }}</div>
-              </div>
-
-              <div class="stat" v-if="packInstance.provider !== 'curseforge'">
-                <div class="name">Plays</div>
-                <div class="value font-sans">{{ localiseNumber(packInstance.plays) }}</div>
-              </div>
-            </template>
-
-            <div
-              class="stat"
+            
+            <Stat
               v-if="(!isInstalled || (instance && !instance.lastPlayed)) && packInstance && packInstance.released !== 'unknown'"
-              :title="standardDateTime(packInstance.released || packInstance.updated)"
-            >
-              <div class="name">Released</div>
-              <div class="value font-sans">{{ standardDate(packInstance.released || packInstance.updated) }}</div>
-            </div>
-            <div
-              class="stat"
+              title="Released"
+              :value="standardDate(packInstance.released || packInstance.updated)"
+            />
+            <Stat
               v-if="(!isInstalled || (instance && !instance.lastPlayed)) && packInstance && packInstance.versions && packInstance.versions[0]"
-              :title="standardDateTime(packInstance.versions[0].updated)"
-            >
-              <div class="name">Updated</div>
-              <div class="value font-sans">{{ standardDate(packInstance.versions[0].updated) }}</div>
-            </div>
+              title="Updated"
+              :value="standardDateTime(packInstance.versions[0].updated)"
+            />
           </div>
           
-          <div class="links" v-if="packInstance && instance && isInstalled">
-            <a :href="issueTracker" @click="safeLinkOpen" class="link" v-if="issueTracker">
+          <div class="links flex gap-2 items-center flex-col">
+            <a v-if="curseWebsite" target="_blank" :href="curseWebsite" @click="safeLinkOpen" class="link">
+              <img src="../../../assets/curse-logo.svg" alt="CurseForge Logo" class="w-5 h-5 mr-2" />
+              CurseForge
+            </a>
+            
+            <a :href="issueTracker" @click="safeLinkOpen" class="link" v-if="packInstance && instance && isInstalled && !instance.isImport && !isVanilla && !isLoaderPack && issueTracker">
               <FontAwesomeIcon :icon="faGithub" />
               Report issue
             </a>
@@ -521,7 +501,6 @@ function cursePackBody() {
     .tag {
       margin-bottom: 0.5rem;
       padding: 0.2rem 0.5rem;
-      font-size: 12px;
       -webkit-user-drag: none;
       
       background-color: rgba(black, .4);

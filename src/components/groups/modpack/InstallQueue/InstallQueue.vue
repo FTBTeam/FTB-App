@@ -100,7 +100,7 @@ const onlyQueue = computed(() => {
     top: 0;
     left: 120%;
     z-index: 100;
-    width: 390px;
+    width: 360px;
     background-color: var(--color-background);
     padding: 1rem;
     border-radius: 5px;

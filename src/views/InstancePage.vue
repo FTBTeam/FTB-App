@@ -219,7 +219,7 @@ function closeOfflineModel() {
   offlineMessageOpen.value = false;
 }
 
-const packSplashArt = resolveArtwork(apiPack.value, 'splash');
+const packSplashArt = computed(() => resolveArtwork(apiPack.value, 'splash'));
 const hidePackDetails = computed(() => activeTab.value === ModpackPageTabs.SETTINGS);
 const versionType = apiPack.value?.versions?.find((e) => e.id === instance.value?.versionId)?.type.toLowerCase() ?? 'release';
 </script>
@@ -229,7 +229,6 @@ export enum ModpackPageTabs {
   OVERVIEW = "overview",
   MODS = "mods",
   SETTINGS = "settings",
-  BACKUPS = "backups",
   WORLDS = "worlds",
 }
 </script>

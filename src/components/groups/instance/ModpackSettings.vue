@@ -561,9 +561,3 @@ watch(() => instanceSettings.value.categoryId, () => saveSettings())
     </Modal>
   </div>
 </template>
-
-<style scoped lang="scss">
-.pack-settings {
-  font-size: 14px;
-}
-</style>
