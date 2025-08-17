@@ -1,10 +1,7 @@
 <script lang="ts" setup>
-import {timeFromNow} from '@/utils/helpers/dateHelpers';
-import {getColorForReleaseType} from '@/utils';
-import {toTitleCase} from '@/utils/helpers/stringHelpers';
 import {isValidVersion, resolveArtwork} from '@/utils/helpers/packHelpers';
 import appPlatform from '@platform';
-import {ModalBody, Modal, UiToggle, ModalFooter, UiButton, Input, UiBadge} from '@/components/ui';
+import {ModalBody, Modal, UiToggle, ModalFooter, UiButton, Input} from '@/components/ui';
 import { watch, ref, computed } from 'vue';
 import CategorySelector from '@/components/groups/modpack/create/CategorySelector.vue';
 import { useModpackStore } from '@/store/modpackStore.ts';
@@ -12,8 +9,6 @@ import { ModPack, PackProviders } from '@/core/types/appTypes.ts';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { useAppStore } from '@/store/appStore.ts';
 import {defaultInstanceCategory} from "@/core/constants.ts";
-import {UiSelectOption} from "@/components/ui/select/UiSelect.ts";
-import UiSelect from "@/components/ui/select/UiSelect.vue";
 import VersionSelector, {VersionSelectorOption} from "@/components/groups/modpack/components/VersionSelector.vue";
 import dayjs from "dayjs";
 

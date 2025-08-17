@@ -1,43 +1,21 @@
 <script lang="ts" setup>
 import DuplicateInstanceModal from '@/components/modals/actions/DuplicateInstanceModal.vue';
 import {sendMessage} from '@/core/websockets/websocketsApi';
-import {button, dialog, dialogsController} from '@/core/controllers/dialogsController';
-import {InstanceController} from '@/core/controllers/InstanceController';
-import {gobbleError} from '@/utils/helpers/asyncHelpers';
-import {RouterNames} from '@/router';
 import {SugaredInstanceJson} from '@/core/types/javaApi';
 import {createLogger} from '@/core/logger';
-import appPlatform from '@platform';
-import { computed, onMounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { onMounted, ref } from 'vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { Modal } from '@/components/ui';
-import { useRunningInstancesStore } from '@/store/runningInstancesStore.ts';
 import {
-  faChevronRight,
-  faCog,
-  faCopy,
   faEllipsisVertical,
-  faFolderOpen,
-  faPlay, faTrash,
 } from '@fortawesome/free-solid-svg-icons';
 import {AppContextController} from "@/core/context/contextController.ts";
 import {ContextMenus} from "@/core/context/contextMenus.ts";
 
 const {
   instance,
-  allowOffline = false,
 } = defineProps<{
   instance: SugaredInstanceJson;
-  allowOffline: boolean;
-}>()
-
-const router = useRouter();
-const runningInstancesStore = useRunningInstancesStore();
-
-const emit = defineEmits<{
-  (event: 'playOffline'): void;
-  (event: 'openSettings'): void;
 }>()
 
 const logger = createLogger("PackActions.vue")
@@ -49,48 +27,6 @@ onMounted(() => {
     .then((e) => (instanceFolders.value = e.folders))
     .catch(e => logger.error("Failed to get instance folders", e));
 })
-
-async function openInstanceFolder(folder: string) {
-  logger.debug("Opening instance folder", folder)
-  try {
-    await appPlatform.io.openFinder(`${instance.path}/${folder}`)
-  } catch (e) {
-    logger.error("Failed to open instance folder", e);
-  }
-}
-
-function folderExists(path: string) {
-  if (path === '' || !instanceFolders.value.length) {
-    return false;
-  }
-
-  return instanceFolders.value.findIndex((e) => e === path) !== -1;
-}
-
-const isRunning = computed(() => runningInstancesStore.instances.some(e => e.uuid === instance.uuid))
-
-function deleteInstance() {
-  logger.debug("Asking user to confirm instance deletion", instance)
-  const dialogRef = dialogsController.createDialog(
-    dialog("Are you sure?")
-      .withContent(`Are you absolutely sure you want to delete \`${instance.name}\`! Doing this **WILL permanently** delete all mods, world saves, configurations, and all the rest... There is no way to recover this pack after deletion...`)
-      .withType("warning")
-      .withButton(button("Delete")
-        .withAction(async () => {
-          dialogRef.setWorking(true)
-          const controller = InstanceController.from(instance);
-          await controller.deleteInstance();
-          await gobbleError(() => router.push({
-            name: RouterNames.ROOT_LIBRARY
-          }));
-          dialogRef.close();
-        })
-        .withIcon(faTrash)
-        .withType("error")
-        .build())
-      .build()
-  )
-}
 
 function openMenu(e: MouseEvent) {
   e.stopPropagation()
@@ -108,44 +44,9 @@ function openMenu(e: MouseEvent) {
       <div class="icon" @click="(e) => openMenu(e)">
         <FontAwesomeIcon :icon="faEllipsisVertical" />
       </div>
-
-<!--      <ul class="actions">-->
-<!--        <li class="title">Tools</li>-->
-<!--        <li v-if="allowOffline && !isRunning" @click="emit('playOffline')">-->
-<!--          <span><FontAwesomeIcon :icon="faPlay" /></span> Play Offline-->
-<!--        </li>-->
-<!--        <li @click="emit('openSettings')">-->
-<!--          <span><FontAwesomeIcon :icon="faCog" /></span>Settings-->
-<!--        </li>-->
-<!--        <li tabindex="1">-->
-<!--          <span><FontAwesomeIcon :icon="faFolderOpen" /></span>Open...-->
-<!--          <span class="submenu">-->
-<!--            <FontAwesomeIcon :icon="faChevronRight" />-->
-<!--          </span>-->
-<!--          <ul>-->
-<!--            <li @click="openInstanceFolder('')">Instance folder</li>-->
-<!--            <li v-if="folderExists('config')" @click="openInstanceFolder('config')">Config folder</li>-->
-<!--            <li v-if="folderExists('mods')" @click="openInstanceFolder('mods')">Mods folder</li>-->
-<!--            <li v-if="folderExists('saves')" @click="openInstanceFolder('saves')">Worlds folder</li>-->
-<!--            <li v-if="folderExists('backups')" @click="openInstanceFolder('backups')">Backups folder</li>-->
-<!--            <li v-if="folderExists('resourcepacks')" @click="openInstanceFolder('resourcepacks')">-->
-<!--              Resource packs folder-->
-<!--            </li>-->
-<!--            <li v-if="folderExists('logs')" @click="openInstanceFolder('logs')">Logs folder</li>-->
-<!--            <li v-if="folderExists('crashlogs')" @click="openInstanceFolder('crashlogs')">Crash logs folder</li>-->
-<!--            <li v-if="folderExists('kubejs')" @click="openInstanceFolder('kubejs')">KubeJS folder</li>-->
-<!--          </ul>-->
-<!--        </li>-->
-<!--        <li @click="duplicateConfirm = true">-->
-<!--          <span><FontAwesomeIcon :icon="faCopy" /></span>Duplicate instance-->
-<!--        </li>-->
-<!--        <li class="title" v-if="!isRunning">Danger</li>-->
-<!--        <li @click="deleteInstance" v-if="!isRunning">-->
-<!--          <span><FontAwesomeIcon :icon="faTrash" /></span>Delete instance-->
-<!--        </li>-->
-<!--      </ul>-->
     </div>
     
+<!-- TODO: Fix me, this doesn't really work in the new context menu version -->
     <Modal
       :open="duplicateConfirm"
       :externalContents="true"
