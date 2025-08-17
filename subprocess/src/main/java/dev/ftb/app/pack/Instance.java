@@ -112,8 +112,28 @@ public class Instance {
         if (Files.notExists(metaPath)) {
             FileUtils.createDirectories(metaPath);
         }
+        
+        this.tryPutMarkerFile();
     }
 
+    public void tryPutMarkerFile() {
+        try {
+            Path markerFilePath = this.path.resolve(VERSION_FILE_NAME);
+            if (Files.exists(markerFilePath)) {
+                // If the marker file already exists, we don't need to do anything.
+                return;
+            }
+            
+            Files.writeString(markerFilePath, """
+{
+    "__comment": "This file is not used by the app anymore as it was moved to the .ftbapp folder, but it is still used as a marker for other things. Please do not delete it.",
+}
+""");
+        } catch (Exception e) {
+            LOGGER.error("Failed to put marker file for instance.", e);
+        }
+    }
+    
     private void storeArtwork(ModpackManifest modpack, @Nullable String artPath) {
         if (artPath != null) {
             try {

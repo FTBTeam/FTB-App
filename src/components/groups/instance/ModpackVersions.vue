@@ -3,7 +3,6 @@ import appPlatform from '@platform';
 import {getColorForReleaseType, parseMarkdown} from '@/utils';
 import {typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {InstanceJson} from '@/core/types/javaApi';
-import {RouterNames} from '@/router';
 import {modpackApi} from '@/core/pack-api/modpackApi';
 import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import { Selection2, UiButton, Message } from '@/components/ui';
@@ -11,7 +10,6 @@ import dayjs from 'dayjs';
 import {alertController} from '@/core/controllers/alertController';
 import {createLogger} from '@/core/logger';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import { useRouter } from 'vue-router';
 import { ModPack, Versions } from '@/core/types/appTypes.ts';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faDownload, faServer, faSpinner, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
@@ -29,7 +27,6 @@ const {
   instance?: InstanceJson;
 }>()
 
-const router = useRouter();
 const appStore = useAppStore();
 
 const changelogs = ref<Record<string, string>>({});
@@ -37,6 +34,10 @@ const currentVersion = ref<Versions | null>(null);
 const activeLog = ref(-1);
 const loading = ref(true);
 const version = ref<number | string>(-1);
+
+const emit = defineEmits<{
+  (e: 'close'): void;
+}>();
 
 onMounted(() => {
   const sortedVersion = versions.sort((a, b) => b.id - a.id);
@@ -100,9 +101,7 @@ function update() {
   }
 
   appStore.controllers.install.requestUpdate(instance, currentVersion.value, typeIdToProvider(instance.packType));
-  router.push({
-    name: RouterNames.ROOT_LIBRARY
-  })
+  emit('close');
 }
 
 const packVersions = computed(() => {

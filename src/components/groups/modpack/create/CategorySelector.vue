@@ -75,7 +75,7 @@ const _options = computed(() => {
 <template>
   <div>
     <Selection2 :open-up="!openDown" :label="label ?? 'Category'" :options="_options"
-                :value="value" @updated="v => valueChanged(v)" class="flex-1"/>
+                v-model="value" @updated="v => valueChanged(v)" class="flex-1"/>
     
     <Modal :open="showCreate" title="New category" @closed="showCreate = false">
       <Input fill v-model="extraCategory" placeholder="FTB Packs" label="Category name" />

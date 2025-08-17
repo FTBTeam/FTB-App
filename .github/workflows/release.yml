@@ -8,6 +8,10 @@ on:
       - main
       - dev
 
+concurrency:
+  group: 'release-${{ github.ref }}' # Use the current ref as a group name to avoid the same workflow running multiple times in parallel
+  cancel-in-progress: true
+
 jobs:
   patch-version:
     runs-on: ubuntu-latest

@@ -24,14 +24,16 @@ onMounted(() => {
 })
 
 function updateAvailablePacks() {
+  console.log("Checking for updates for", instance?.name, localInstance.versionId);
   if (!instance || !localInstance) {
     return;
   }
   
   latestVersion.value = packUpdateAvailable(localInstance, instance) ?? null;
+  console.log("Latest version:", latestVersion.value, localInstance.versionId);
 }
 
-watch([() => instance?.id, () => localInstance?.uuid], () => updateAvailablePacks)
+watch(() => localInstance.versionId, () => updateAvailablePacks)
 </script>
 
 <template>

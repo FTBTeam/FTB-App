@@ -7,6 +7,8 @@ import net.covers1624.quack.gson.PathTypeAdapter;
 import java.nio.file.Path;
 
 public class UploadLogsData extends BaseData {
+    public boolean includeInstanceLogs = false;
+    
     public UploadLogsData() {
         type = "uploadLogs";
     }

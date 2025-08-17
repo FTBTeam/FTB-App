@@ -1,6 +1,5 @@
 package dev.ftb.app.api.handlers.instances;
 
-//import io.sentry.Sentry;
 import dev.ftb.app.AppMain;
 import dev.ftb.app.Instances;
 import dev.ftb.app.api.WebSocketHandler;
@@ -16,9 +15,6 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-
-import static dev.ftb.app.util.Log4jMarkers.NO_SENTRY;
-import static dev.ftb.app.util.Log4jMarkers.SENTRY_ONLY;
 
 public class LaunchInstanceHandler implements IMessageHandler<LaunchInstanceData> {
 
@@ -59,10 +55,10 @@ public class LaunchInstanceHandler implements IMessageHandler<LaunchInstanceData
                 if (ex instanceof InstanceLaunchException.Abort) {
                     WebSocketHandler.sendMessage(new LaunchInstanceData.Reply(data, uuid, "abort", ex.getMessage()));
                 } else {
-                    LOGGER.error(NO_SENTRY, "Failed to launch instance.", ex);
+                    LOGGER.error("Failed to launch instance.", ex);
                     Throwable cause = ex.getCause();
 //                    Sentry.addBreadcrumb(ex.getMessage());
-                    LOGGER.error(SENTRY_ONLY, "Failed to launch instance.", cause != null ? cause : ex);
+                    LOGGER.error("Failed to launch instance.", cause != null ? cause : ex);
 
                     String message = ex.getMessage();
                     if (cause != null) {

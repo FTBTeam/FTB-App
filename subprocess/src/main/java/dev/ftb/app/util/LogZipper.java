@@ -45,7 +45,7 @@ public class LogZipper {
     private static final String VERSION = "3.0.0";
     
     private static final Pattern UUID_REMOVAL = Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
-    private static final Pattern JWT_REMOVAL = Pattern.compile("e[yw][A-Za-z0-9-_]+\\.(?:e[yw][A-Za-z0-9-_]+)?\\.[A-Za-z0-9-_]{2,}(?:(?:\\.[A-Za-z0-9-_]{2,}){2})?");
+    public static final Pattern JWT_REMOVAL = Pattern.compile("e[yw][A-Za-z0-9-_]+\\.(?:e[yw][A-Za-z0-9-_]+)?\\.[A-Za-z0-9-_]{2,}(?:(?:\\.[A-Za-z0-9-_]{2,}){2})?");
 
     private static final List<Pattern> USER_NAME_REMOVAL = List.of(
         Pattern.compile("C:\\\\Users\\\\([^\\\\]+)\\\\"),
@@ -69,6 +69,7 @@ public class LogZipper {
     private final LazyValue<List<String>> ipAddresses = new LazyValue<>(this::getUserIpAddresses);
 
     private final long startTime;
+    private boolean includeInstances = false;
 
     private LogZipper() {
         this.startTime = System.currentTimeMillis();
@@ -78,6 +79,11 @@ public class LogZipper {
         return new LogZipper();
     }
 
+    public LogZipper includeInstances(boolean includeInstances) {
+        this.includeInstances = includeInstances;
+        return this;
+    }
+    
     public Path generate() {
         var obj = new JsonObject();
 
@@ -135,10 +141,12 @@ public class LogZipper {
             
             // Add a blank file with the name of the platform for easy identification
             addFileToZip(writer, Constants.PLATFORM, Constants.PLATFORM, true);
+            addFileToZip(writer, "version-" + Constants.APPVERSION, Constants.APPVERSION, true);
 
             // Put all the logs into the zip as well
             includeAppData(writer);
-            includeLastThreeDebugLogsFromHistory(writer);
+            includeHistoricLogs(writer, List.of("debug-1.log.gz", "debug-2.log.gz", "debug-3.log.gz"));
+            includeHistoricLogs(writer, List.of("http-requests-1.log.gz", "http-requests-2.log.gz", "http-requests-3.log.gz"));
             includeInstanceLogs(writer);
 
             for (var log : getFrontendLogs()) {
@@ -182,6 +190,7 @@ public class LogZipper {
     private void includeAppData(ZipOutputStream writer) {
         var logs = Map.of(
             "debug.log", getDebugLog(),
+            "http-requests.log", getHttpLogs(),
             "versions.log", getVersions(),
             "runtimes.json", getRuntimes(),
             "instances.log", getInstances(),
@@ -199,6 +208,10 @@ public class LogZipper {
     }
 
     private void includeInstanceLogs(ZipOutputStream writer) throws IOException {
+        if (!includeInstances) {
+            return;
+        }
+        
         var instances = Instances.allInstances();
         if (instances.isEmpty()) {
             return;
@@ -292,9 +305,22 @@ public class LogZipper {
 
         return "no-contents";
     }
+    
+    public String getHttpLogs() {
+        Path httpLogFile = Constants.getDataDir().resolve("logs/http-requests.log");
 
-    public void includeLastThreeDebugLogsFromHistory(ZipOutputStream writer) {
-        var files = List.of("debug-1.log.gz", "debug-2.log.gz", "debug-3.log.gz");
+        if (Files.exists(httpLogFile)) {
+            try {
+                return Files.readString(httpLogFile);
+            } catch (IOException e) {
+                LOGGER.warn("Failed to load HTTP logs.", e);
+            }
+        }
+
+        return "no-contents";
+    }
+
+    public void includeHistoricLogs(ZipOutputStream writer, List<String> files) {
         var existingFiles = files.stream()
             .map(Constants.getDataDir().resolve("logs")::resolve)
             .filter(Files::exists)
@@ -405,10 +431,18 @@ public class LogZipper {
         }
         
         var contents = Files.readString(path);
+        if (contents.isEmpty()) {
+            return;
+        }
+        
         addFileToZip(stream, name, contents, skipFilter);
     }
 
     private void addFileToZip(ZipOutputStream stream, String name, String contents) throws IOException {
+        if (contents == null || contents.isEmpty()) {
+            return;
+        }
+        
         addFileToZip(stream, name, contents, false);
     }
 
@@ -419,9 +453,14 @@ public class LogZipper {
 
         var finalContents = skipFilter ? contents : filterContents(contents);
 
-        stream.putNextEntry(new ZipEntry(name));
-        stream.write(finalContents.getBytes());
-        stream.closeEntry();
+        try {
+            stream.putNextEntry(new ZipEntry(name));
+            stream.write(finalContents.getBytes());
+            stream.closeEntry();
+        } catch (IOException e) {
+            LOGGER.warn("Failed to write file {} to zip", name, e);
+            // Not fatal, just annoying
+        }
     }
 
     private String filterContents(String contents) {
