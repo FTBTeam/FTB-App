@@ -5,6 +5,7 @@
   import {faSearch} from "@fortawesome/free-solid-svg-icons";
   import UiSelect from "@/components/ui/select/UiSelect.vue";
   import Modal from "@/components/ui/modal/Modal.vue";
+  import {SelectOption} from "@/components/ui/select/UiSelectType";
   
   const testInput = ref("Test input")
   const testToggle = ref(false);
@@ -12,11 +13,11 @@
   const selectModalOpen = ref(false);
   const testProgress = ref(0);
   
-  const options = [
-    {key: 'option1', value: 'Option 1'},
-    {key: 'option2', value: 'Option 2'},
-    {key: 'option3', value: 'Option 3'},
-    {key: 'option4', value: 'Option 4'},
+  const options: SelectOption[] = [
+    {key: 'option1', label: 'Option 1'},
+    {key: 'option2', label: 'Option 2'},
+    {key: 'option3', label: 'Option 3'},
+    {key: 'option4', label: 'Option 4'},
   ]
   
   onMounted(() => {
@@ -108,7 +109,7 @@
     <UiSelect :options="options">      
       <template #option="{ option }">
         <div class="p-2 hover:bg-white/10 transition-colors duration-200">
-          {{ option.value }}
+          {{ option.label }}
         </div>
       </template>
     </UiSelect>

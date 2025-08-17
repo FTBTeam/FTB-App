@@ -12,12 +12,11 @@ import { useModpackStore } from '@/store/modpackStore.ts';
 import { toggleBeforeAndAfter } from '@/utils/helpers/asyncHelpers.ts';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import {
-  faArrowDownAZ,
-  faArrowDownZA,
-  faChevronDown,
-  faFolder, faPlus,
-  faSearch,
-  faSort,
+  faArrowDown, faArrowDownAZ, faArrowDownZA,
+  faArrowUp,
+  faChevronDown, faFolder,
+  faPlus,
+  faSearch, faSort,
 } from '@fortawesome/free-solid-svg-icons';
 import { Input } from '@/components/ui';
 import {useGlobalStore} from "@/store/globalStore.ts";
@@ -32,7 +31,7 @@ import {RouterNames} from "@/router";
 const groupOptions = [
   ['Category', 'category'],
   ['Mod Loader', 'modloader'],
-  ['Minecraft Version', 'mcversion'],
+  ['Minecraft', 'mcversion'],
 ]
 
 const sortOptions = [

@@ -1,4 +1,4 @@
-<script setup lang="ts" generic="T extends {key: string, value: string}">
+<script setup lang="ts" generic="T extends SelectOption">
 import {computed, ref, useTemplateRef, watch} from "vue";
 import {useAttachDomEvent} from "@/composables";
 import {autoUpdate, offset, flip, hide, shift, size, useFloating} from "@floating-ui/vue";

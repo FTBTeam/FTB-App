@@ -9,6 +9,7 @@ import {alertController} from "@/core/controllers/alertController.ts";
 import {defaultInstanceCategory} from "@/core/constants.ts";
 import {toggleBeforeAndAfter} from "@/utils/helpers/asyncHelpers.ts";
 import {sendMessage} from "@/core/websockets/websocketsApi.ts";
+import {BasicUiSelectOption} from "@/components/ui/select/UiSelect.ts";
 
 const instanceStore = useInstanceStore();
 
@@ -26,7 +27,7 @@ const showCreate = ref(false);
 const adding = ref(false);
 
 const _options = computed(() => {
-  const categories: any[] = (instanceStore.instanceCategories ?? []).map(e => ({ value: e.name, key: e.uuid }));
+  const categories: BasicUiSelectOption[] = (instanceStore.instanceCategories ?? []).map(e => ({ value: e.name, key: e.uuid }));
 
   // Always sort the Default option to the top and the add new at the bottom, then the rest alphabetically
   categories.sort((a, b) => {
