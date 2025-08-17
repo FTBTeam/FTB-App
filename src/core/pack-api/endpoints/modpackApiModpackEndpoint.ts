@@ -46,7 +46,7 @@ export class ModpackApiModpackEndpoint extends ApiEndpoint {
     }
     
     // Use curseforge for other providers
-    return this.fetchPrivate<StatusResult<{ content: string }>>("GET", `${packId}/${versionId}/changelog`, "curseforge");
+    return this.fetchPrivate<StatusResult<{ content: string, html?: string }>>("GET", `${packId}/${versionId}/changelog`, "curseforge");
   }
   
   async getMods(packId: number, versionId: number, provider: PackProviders = "modpacksch") {

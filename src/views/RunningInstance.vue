@@ -464,7 +464,6 @@ function showContextMenu(event: MouseEvent) {
   .log-contents {
     padding: 1rem;
     font-family: 'JetBrains Mono', 'Consolas', 'Courier New', Courier, monospace;
-    font-size: 12px;
     
     overflow-x: auto;
     white-space: nowrap;

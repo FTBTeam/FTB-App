@@ -21,6 +21,8 @@ import {
   faFolderOpen,
   faPlay, faTrash,
 } from '@fortawesome/free-solid-svg-icons';
+import {AppContextController} from "@/core/context/contextController.ts";
+import {ContextMenus} from "@/core/context/contextMenus.ts";
 
 const {
   instance,
@@ -89,50 +91,59 @@ function deleteInstance() {
       .build()
   )
 }
+
+function openMenu(e: MouseEvent) {
+  e.stopPropagation()
+  e.preventDefault();
+
+  AppContextController.openMenu(ContextMenus.INSTANCE_MENU, e, () => ({
+    instance: instance
+  }))
+}
 </script>
 
 <template>
   <div class="pack-actions-holder">
-    <div class="pack-actions" tabindex="0">
-      <div class="icon">
+    <div class="pack-actions">
+      <div class="icon" @click="(e) => openMenu(e)">
         <FontAwesomeIcon :icon="faEllipsisVertical" />
       </div>
 
-      <ul class="actions">
-        <li class="title">Tools</li>
-        <li v-if="allowOffline && !isRunning" @click="emit('playOffline')">
-          <span><FontAwesomeIcon :icon="faPlay" /></span> Play Offline
-        </li>
-        <li @click="emit('openSettings')">
-          <span><FontAwesomeIcon :icon="faCog" /></span>Settings
-        </li>
-        <li tabindex="1">
-          <span><FontAwesomeIcon :icon="faFolderOpen" /></span>Open...
-          <span class="submenu">
-            <FontAwesomeIcon :icon="faChevronRight" />
-          </span>
-          <ul>
-            <li @click="openInstanceFolder('')">Instance folder</li>
-            <li v-if="folderExists('config')" @click="openInstanceFolder('config')">Config folder</li>
-            <li v-if="folderExists('mods')" @click="openInstanceFolder('mods')">Mods folder</li>
-            <li v-if="folderExists('saves')" @click="openInstanceFolder('saves')">Worlds folder</li>
-            <li v-if="folderExists('backups')" @click="openInstanceFolder('backups')">Backups folder</li>
-            <li v-if="folderExists('resourcepacks')" @click="openInstanceFolder('resourcepacks')">
-              Resource packs folder
-            </li>
-            <li v-if="folderExists('logs')" @click="openInstanceFolder('logs')">Logs folder</li>
-            <li v-if="folderExists('crashlogs')" @click="openInstanceFolder('crashlogs')">Crash logs folder</li>
-            <li v-if="folderExists('kubejs')" @click="openInstanceFolder('kubejs')">KubeJS folder</li>
-          </ul>
-        </li>
-        <li @click="duplicateConfirm = true">
-          <span><FontAwesomeIcon :icon="faCopy" /></span>Duplicate instance
-        </li>
-        <li class="title" v-if="!isRunning">Danger</li>
-        <li @click="deleteInstance" v-if="!isRunning">
-          <span><FontAwesomeIcon :icon="faTrash" /></span>Delete instance
-        </li>
-      </ul>
+<!--      <ul class="actions">-->
+<!--        <li class="title">Tools</li>-->
+<!--        <li v-if="allowOffline && !isRunning" @click="emit('playOffline')">-->
+<!--          <span><FontAwesomeIcon :icon="faPlay" /></span> Play Offline-->
+<!--        </li>-->
+<!--        <li @click="emit('openSettings')">-->
+<!--          <span><FontAwesomeIcon :icon="faCog" /></span>Settings-->
+<!--        </li>-->
+<!--        <li tabindex="1">-->
+<!--          <span><FontAwesomeIcon :icon="faFolderOpen" /></span>Open...-->
+<!--          <span class="submenu">-->
+<!--            <FontAwesomeIcon :icon="faChevronRight" />-->
+<!--          </span>-->
+<!--          <ul>-->
+<!--            <li @click="openInstanceFolder('')">Instance folder</li>-->
+<!--            <li v-if="folderExists('config')" @click="openInstanceFolder('config')">Config folder</li>-->
+<!--            <li v-if="folderExists('mods')" @click="openInstanceFolder('mods')">Mods folder</li>-->
+<!--            <li v-if="folderExists('saves')" @click="openInstanceFolder('saves')">Worlds folder</li>-->
+<!--            <li v-if="folderExists('backups')" @click="openInstanceFolder('backups')">Backups folder</li>-->
+<!--            <li v-if="folderExists('resourcepacks')" @click="openInstanceFolder('resourcepacks')">-->
+<!--              Resource packs folder-->
+<!--            </li>-->
+<!--            <li v-if="folderExists('logs')" @click="openInstanceFolder('logs')">Logs folder</li>-->
+<!--            <li v-if="folderExists('crashlogs')" @click="openInstanceFolder('crashlogs')">Crash logs folder</li>-->
+<!--            <li v-if="folderExists('kubejs')" @click="openInstanceFolder('kubejs')">KubeJS folder</li>-->
+<!--          </ul>-->
+<!--        </li>-->
+<!--        <li @click="duplicateConfirm = true">-->
+<!--          <span><FontAwesomeIcon :icon="faCopy" /></span>Duplicate instance-->
+<!--        </li>-->
+<!--        <li class="title" v-if="!isRunning">Danger</li>-->
+<!--        <li @click="deleteInstance" v-if="!isRunning">-->
+<!--          <span><FontAwesomeIcon :icon="faTrash" /></span>Delete instance-->
+<!--        </li>-->
+<!--      </ul>-->
     </div>
     
     <Modal
@@ -172,7 +183,6 @@ function deleteInstance() {
 
   .actions,
   .actions li ul {
-    font-size: 12px;
     position: absolute;
     white-space: nowrap;
     top: -7rem;

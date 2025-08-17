@@ -2,21 +2,22 @@
 import {timeFromNow} from '@/utils/helpers/dateHelpers';
 import {getColorForReleaseType} from '@/utils';
 import {toTitleCase} from '@/utils/helpers/stringHelpers';
-import {isValidVersion} from '@/utils/helpers/packHelpers';
+import {isValidVersion, resolveArtwork} from '@/utils/helpers/packHelpers';
 import appPlatform from '@platform';
-import {RouterNames} from '@/router';
-import { ModalBody, Modal, UiToggle, Selection2, ModalFooter, UiButton, Input } from '@/components/ui';
+import {ModalBody, Modal, UiToggle, ModalFooter, UiButton, Input, UiBadge} from '@/components/ui';
 import { watch, ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
-// import ArtworkSelector from '@/components/groups/modpack/components/ArtworkSelector.vue';
 import CategorySelector from '@/components/groups/modpack/create/CategorySelector.vue';
 import { useModpackStore } from '@/store/modpackStore.ts';
 import { ModPack, PackProviders } from '@/core/types/appTypes.ts';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { useAppStore } from '@/store/appStore.ts';
+import {defaultInstanceCategory} from "@/core/constants.ts";
+import {UiSelectOption} from "@/components/ui/select/UiSelect.ts";
+import UiSelect from "@/components/ui/select/UiSelect.vue";
+import VersionSelector, {VersionSelectorOption} from "@/components/groups/modpack/components/VersionSelector.vue";
+import dayjs from "dayjs";
 
 const modpackStore = useModpackStore();
-const router = useRouter();
 const appStore = useAppStore();
 
 const {
@@ -31,13 +32,12 @@ const {
 
 const apiModpack = ref<ModPack | null>(null);
 const selectedVersionId = ref("");
-const selectedCategory = ref("Default");
+const selectedCategory = ref(defaultInstanceCategory);
 
 const allowPreRelease = ref(false);
-const useAdvanced = ref(false);
+const useLatestVersion = ref(true);
 
 const userPackName = ref("");
-const userSelectedArtwork = ref<File | null>(null);
 
 const emit = defineEmits<{
   (event: 'close', installed: boolean): void;
@@ -52,7 +52,7 @@ watch(() => open, async (newValue) => {
     // No stable versions, default to pre-release
     if (!hasStableVersion.value) {
       allowPreRelease.value = true;
-      useAdvanced.value = true;
+      useLatestVersion.value = false;
     }
 
     selectedVersionId.value = restrictedVersions.value[0].id.toString() ?? "";
@@ -62,22 +62,16 @@ watch(() => open, async (newValue) => {
 function install() {
   appStore.controllers.install.requestInstall({
     id: packId,
-    category: selectedCategory.value,
+    categoryId: selectedCategory.value,
     version: parseInt(selectedVersionId.value ?? sortedApiVersions.value[0].id),
     // Name fallback but it's not really needed
     name: userPackName.value ?? apiModpack.value?.name ?? "failed-to-name-the-modpack-somehow-" + appPlatform.utils.crypto.randomUUID().split("-")[0],
-    logo: userSelectedArtwork.value?.path ?? null, // The backend will default for us.
+    logo: resolveArtwork(apiModpack.value),
     private: apiModpack.value?.private ?? false,
     provider,
   })
 
   emit('close', true)
-
-  if (router.currentRoute.value.name !== RouterNames.ROOT_LIBRARY) {
-    router.push({
-      name: RouterNames.ROOT_LIBRARY
-    })
-  }
 }
 
 const packName = computed(() => apiModpack.value?.name ?? "Loading...");
@@ -108,35 +102,32 @@ const hasUnstableVersions = computed(() => {
     .some(e => isValidVersion(e.type, "alpha") || isValidVersion(e.type, "beta") || isValidVersion(e.type, "hotfix"))
 })
 
-function versions() {
+const versions = computed(() => {
   return restrictedVersions.value
-    .sort((a, b) => b.id - a.id)
     .map(e => ({
-      value: e.id.toString(),
-      label: e.name,
-      meta: timeFromNow(e.updated),
-      badge: {
-        color: getColorForReleaseType(e.type),
-        text: toTitleCase(e.type)
-      }
-    }))
-}
+      key: e.id.toString(),
+      value: e.name,
+      date: dayjs.unix(e.updated),
+      releaseType: e.type,
+    } as VersionSelectorOption))
+})
+
 </script>
 
 <template>
   <Modal :open="open" @closed="emit('close', false)" title="Install instance" :sub-title="packName" :external-contents="true">
     <ModalBody>
       <template v-if="apiModpack">
-<!--        <ArtworkSelector :pack="apiModpack" class="mb-6" v-model="userSelectedArtwork" />-->
         <Input fill label="Name" :placeholder="packName" v-model="userPackName" class="mb-4" />
         
         <CategorySelector class="mb-4" v-model="selectedCategory" />
 
-        <UiToggle label="Show advanced options" v-model="useAdvanced" />
-        <Selection2 :open-up="true" v-if="useAdvanced" label="Version" :options="versions()" v-model="selectedVersionId" class="mb-4 mt-6" />
+        <UiToggle label="Use latest version" v-model="useLatestVersion" />
         
+        <VersionSelector :options="versions" v-model="selectedVersionId" v-if="!useLatestVersion" />
+
         <UiToggle
-          v-if="useAdvanced && hasUnstableVersions"
+          v-if="!useLatestVersion && hasUnstableVersions"
           v-model="allowPreRelease"
           label="Show pre-release builds (Stable by default)" 
           desc="Feeling risky? Enable pre-release builds to get access to Alpha and Beta versions of the Modpack"

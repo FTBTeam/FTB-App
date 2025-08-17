@@ -1,11 +1,11 @@
 <script lang="ts" setup>
 import appPlatform from '@platform';
-import {getColorForReleaseType, parseMarkdown} from '@/utils';
+import {parseMarkdown} from '@/utils';
 import {typeIdToProvider} from '@/utils/helpers/packHelpers';
 import {InstanceJson} from '@/core/types/javaApi';
 import {modpackApi} from '@/core/pack-api/modpackApi';
 import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
-import { Selection2, UiButton, Message } from '@/components/ui';
+import { UiButton, Message } from '@/components/ui';
 import dayjs from 'dayjs';
 import {alertController} from '@/core/controllers/alertController';
 import {createLogger} from '@/core/logger';
@@ -14,6 +14,7 @@ import { ModPack, Versions } from '@/core/types/appTypes.ts';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faDownload, faServer, faSpinner, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { useAppStore } from '@/store/appStore.ts';
+import VersionSelector, {VersionSelectorOption} from "@/components/groups/modpack/components/VersionSelector.vue";
 
 const logger = createLogger("ModpackVersions.vue")
 
@@ -33,7 +34,7 @@ const changelogs = ref<Record<string, string>>({});
 const currentVersion = ref<Versions | null>(null);
 const activeLog = ref(-1);
 const loading = ref(true);
-const version = ref<number | string>(-1);
+const version = ref<string>("-1");
 
 const emit = defineEmits<{
   (e: 'close'): void;
@@ -44,7 +45,7 @@ onMounted(() => {
 
   const currentId = instance?.versionId ?? packInstance?.versions[0]?.id ?? -1;
   const lcurrent = sortedVersion.find(e => e.id === currentId)?.id ?? sortedVersion[0].id;
-  version.value = lcurrent;
+  version.value = lcurrent.toString();
 
   // get the first log
   fetchLog(lcurrent)
@@ -60,14 +61,14 @@ onUnmounted(() => {
 })
 
 watch(version, async (newValue) => {
-  newValue = parseInt(newValue as string);
-  if (changelogs.value['' + newValue]) {
-    setActive(newValue);
+  const intValue = parseInt(newValue);
+  if (changelogs.value['' + intValue]) {
+    setActive(intValue);
     return;
   }
 
-  changelogs.value['' + newValue] = await fetchLog(newValue);
-  setActive(newValue);
+  changelogs.value['' + intValue] = await fetchLog(intValue);
+  setActive(intValue);
 });
 
 function setActive(versionId: number) {
@@ -82,7 +83,7 @@ async function fetchLog(versionId: number) {
       state => loading.value = state
     )
 
-    return changelog?.content ?? `No changelog available for this version`;
+    return changelog?.html ?? changelog?.content ?? `No changelog available for this version`;
   } catch (e) {
     logger.error(e)
     alertController.warning("Unable to load changelog")
@@ -105,12 +106,12 @@ function update() {
 }
 
 const packVersions = computed(() => {
-  return [...versions].sort((a, b) => b.id - a.id).map(e => ({
-    value: e.id,
-    label: e.name + (instance?.versionId === e.id ? ' (Current)' : ''),
-    meta: dayjs.unix(e.updated).format("DD MMMM YYYY, HH:mm"),
-    badge: {color: getColorForReleaseType(e.type), text: e.type}
-  })) ?? []
+  return ([...versions].sort((a, b) => b.id - a.id).map(e => ({
+    key: e.id.toString(),
+    value: e.name + (instance?.versionId === e.id ? ' (Current)' : ''),
+    date: dayjs.unix(e.updated),
+    releaseType: e.type
+  })) ?? []) as VersionSelectorOption[]
 });
 
 const isCursePack = computed(() => {
@@ -121,11 +122,7 @@ const isCursePack = computed(() => {
 <template>
   <div class="pack-versions">
     <div class="aside mb-6">
-      <selection2
-        :badge-end="true"
-        :options="packVersions"
-        v-model="version"
-      />
+      <VersionSelector :options="packVersions" v-model="version" />
     </div>
     <div class="main flex pb-8 flex-col" :key="activeLog">
       <div class="heading flex items-center mb-4" v-if="currentVersion">
@@ -164,9 +161,6 @@ const isCursePack = computed(() => {
 .pack-versions {
   height: 100%;
   position: relative;
-  font-size: 0.875rem;
-
-  line-height: 1.8em;
 
   .aside,
   .main {
@@ -177,6 +171,10 @@ const isCursePack = computed(() => {
 
   .main {
     flex: 1;
+  }
+  
+  .body-contents {
+    line-height: 1.8em;
   }
 
   .closer {

@@ -67,8 +67,8 @@
 
 <template>
   <transition name="transition-fade">
-    <div v-if="globalStore.modpackPreview" class="px-18 pt-20 absolute top-0 left-0 h-full bg-black/60 backdrop-blur z-50" :style="`width: ${ads.adsEnabled.value ? 'calc(100% - 400px)' : '100%'};`" @click="globalStore.closeModpackPreview()">
-      <div class="h-full max-w-[1000px] mx-auto bg-[#2A2A2A] rounded-t-xl" @click.stop>
+    <div v-if="globalStore.modpackPreview" class="px-18 pt-20 absolute top-0 left-0 h-full bg-black/60 backdrop-blur z-50" :style="`width: ${ads.adsEnabled.value ? 'calc(100% - 400px)' : '100%'};`" @click.self="globalStore.closeModpackPreview()">
+      <div class="h-full max-w-[1000px] mx-auto bg-[#2A2A2A] rounded-t-xl">
         <Loader v-if="loading" />
         <div class="flex flex-col h-full" v-else-if="modpack">
           <header class="p-5 relative z-[1] rounded-t-xl" :style="`background-image: url(${backgroundArtwork}); background-size: cover;`">
@@ -79,8 +79,8 @@
             <div class=" flex gap-6">
               <img alt="Modpack Artwork" @click="previewImage(logoArtwork)" v-if="logoArtwork" :src="logoArtwork" class="w-32 h-32 rounded-2xl shadow-2xl outline-2 outline-white/20" />
               <div>
-                <h1 class="text-shadow font-bold text-xl pt-3">{{modpack.name}}</h1>
-                <p :title="modpack.synopsis" class="text-shadow mt-2 line-clamp-3">{{modpack.synopsis}}</p>
+                <h1 class="text-shadow font-bold text-2xl pt-3">{{modpack.name}}</h1>
+                <p :title="modpack.synopsis" class="text-shadow text-lg mt-2 line-clamp-3">{{modpack.synopsis}}</p>
 
                 <div class="flex gap-7 text-shadow mt-3">
                   <Stat title="Installs" :value="modpack.installs" />

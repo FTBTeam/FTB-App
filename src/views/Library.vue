@@ -3,11 +3,9 @@ import {SugaredInstanceJson} from '@/core/types/javaApi';
 import PackCard2 from '@/components/groups/modpack/PackCard2.vue';
 import {containsIgnoreCase} from '@/utils/helpers/stringHelpers';
 import Loader from '@/components/ui/Loader.vue';
-import Selection2, {SelectionOptions} from '@/components/ui/Selection2.vue';
 import {resolveModloader} from '@/utils/helpers/packHelpers';
 import UiButton from '@/components/ui/UiButton.vue';
 import PackPreview from '@/components/groups/modpack/PackPreview.vue';
-import {RouterNames} from '@/router';
 import { useInstanceStore } from '@/store/instancesStore.ts';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useModpackStore } from '@/store/modpackStore.ts';
@@ -23,6 +21,13 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { Input } from '@/components/ui';
 import {useGlobalStore} from "@/store/globalStore.ts";
+import InstanceSelectActions from "@/components/groups/instanceSelect/InstanceSelectActions.vue";
+import {faCheckSquare} from "@fortawesome/free-regular-svg-icons";
+import {defaultInstanceCategory} from "@/core/constants.ts";
+import {UiSelectOption} from "@/components/ui/select/UiSelect.ts";
+import {IconDefinition} from "@fortawesome/free-brands-svg-icons";
+import UiSelect from "@/components/ui/select/UiSelect.vue";
+import {RouterNames} from "@/router";
 
 const groupOptions = [
   ['Category', 'category'],
@@ -36,12 +41,12 @@ const sortOptions = [
   ['Total Playtime', 'totalPlaytime'],
 ]
 
-function createOrderedOptions(options: string[][]): SelectionOptions {
+function createOrderedOptions(options: string[][]): UiSelectOption<{ sort: string, icon: IconDefinition }>[] {
   return options.flatMap(([label, value]) => [
     [`${label}`, value, 'Asc'],
     [`${label}`, `-${value}`, 'Des']
   ])
-    .map(([label, value, dir]) => ({label, value, badge: {color: '#008BF8', text: dir, icon: dir === "Asc" ? faArrowDownAZ : faArrowDownZA}}))
+    .map(([label, value, dir]) => ({key: value, value: label, sort: dir, icon: dir === "Asc" ? faArrowDownAZ : faArrowDownZA}))
 }
 
 const sortByOptions = createOrderedOptions(sortOptions)
@@ -56,6 +61,8 @@ const searchTerm = ref('');
 const groupBy = ref('category');
 const sortBy = ref('name');
 const collapsedGroups = ref<string[]>([]);
+
+const selectedInstances = ref<SugaredInstanceJson[]>([]);
 
 onMounted(() => {
   const libraryData = localStorage.getItem("library-data");
@@ -109,13 +116,8 @@ const sortedInstances = computed(() => {
   const sortKey = instanceJsonKey(sortByKey);
 
   return instanceStore.instances.sort((a, b) => {
-    if (a[sortKey] === b[sortKey]) {
-      return 0;
-    }
-
-    if (a[sortKey] > b[sortKey]) {
-      return sortDirection === 'asc' ? 1 : -1;
-    }
+    if (a[sortKey] === b[sortKey]) return 0;
+    if (a[sortKey] > b[sortKey]) return sortDirection === 'asc' ? 1 : -1;
     
     return sortDirection === 'asc' ? -1 : 1;
   });
@@ -125,13 +127,15 @@ const groupedPacks = computed(() => {
   const grouped: Record<string, SugaredInstanceJson[]> = {
     "Pinned": [],
   };
+  
+  const categories = instanceStore.instanceCategories.reduce((acc, category) => {
+    acc[category.uuid] = category.name;
+    return acc;
+  }, {} as Record<string, string>);
 
   for (const instance of sortedInstances.value) {
     let groupKey = '';
     switch (groupBy.value.replace("-", "")) {
-      case 'category':
-        groupKey = instance.category;
-        break;
       case 'modloader':
         groupKey = resolveModloader(instance)
         break;
@@ -139,7 +143,7 @@ const groupedPacks = computed(() => {
         groupKey = instance.mcVersion;
         break;
       default:
-        groupKey = instance.category;
+        groupKey = categories[instance.categoryId] || categories[defaultInstanceCategory] || "Uncategorized";
         break;
     }
 
@@ -159,21 +163,10 @@ const groupedPacks = computed(() => {
   // Modify the order of the group keys based on the sort direction
   const groupKeys = Object.keys(grouped).sort((a, b) => {
     // Pinned at the top
-    if (a === "Pinned") {
-      return -1;
-    }
-
-    if (b === "Pinned") {
-      return 1;
-    }
-
-    if (a === b) {
-      return 0;
-    }
-
-    if (a > b) {
-      return sortDirection === 'asc' ? 1 : -1;
-    }
+    if (a === "Pinned") return -1;
+    if (b === "Pinned") return 1;
+    if (a === b) return 0;
+    if (a > b) return sortDirection === 'asc' ? 1 : -1;
 
     return sortDirection === 'asc' ? -1 : 1;
   });
@@ -199,6 +192,15 @@ function onSortChange() {
   localStorage.setItem("library-data", JSON.stringify({collapsedGroups: collapsedGroups.value, sortBy: sortBy.value, groupBy: groupBy.value}));
 }
 
+function toggleCategorySelect(instances: SugaredInstanceJson[]) {
+  const missingInstances = instances.filter(instance => !selectedInstances.value.some(e => e.uuid === instance.uuid));
+  if (missingInstances.length > 0) {
+    selectedInstances.value.push(...missingInstances);
+  } else {
+    selectedInstances.value = selectedInstances.value.filter(instance => !instances.some(e => e.uuid === instance.uuid));
+  }
+}
+
 watch(sortBy, onSortChange)
 watch(groupBy, onSortChange)
 </script>
@@ -206,11 +208,25 @@ watch(groupBy, onSortChange)
 <template>
   <div class="mod-packs h-full">
     <div class="page-spacing" v-if="!instanceStore.loading && instanceStore.instances.length > 0">
-      <header class="flex gap-4 mb-6 items-center">
-        <Input :icon="faSearch" fill v-model="searchTerm" placeholder="Search" class="flex-1" />
+      <header class="text-lg flex gap-4 mb-6 items-center">
+        <Input label="Search" :icon="faSearch" fill v-model="searchTerm" placeholder="Search" class="flex-1" />
         
-        <selection2 v-if="Object.keys(groupedPacks).length > 1" :icon="faFolder" direction="right" :min-width="300" :options="groupByOptions" v-model="groupBy" aria-label="Sort categories" data-balloon-pos="down-right" />
-        <selection2 :icon="faSort" direction="right" :min-width="300" :options="sortByOptions" v-model="sortBy" aria-label="Sort packs" data-balloon-pos="down-right" />
+        <UiSelect label="Group by" v-if="Object.keys(groupedPacks).length > 1" v-model="groupBy" :options="groupByOptions" :icon="faFolder" placement="bottom-end" :min-width="300">
+          <template #option="{ option, clazz }">
+            <div class="flex items-center gap-2" :class="clazz">
+              <FontAwesomeIcon :icon="option.icon" />
+              <span>{{ option.value }}</span>
+            </div>
+          </template>
+        </UiSelect>
+        <UiSelect label="Sort by" v-model="sortBy" :options="sortByOptions" :icon="faSort" placement="bottom-end" :min-width="300">
+          <template #option="{ option, clazz }">
+            <div class="flex items-center gap-2" :class="clazz">
+              <FontAwesomeIcon :icon="option.icon" />
+              <span>{{ option.value }}</span>
+            </div>
+          </template>
+        </UiSelect>
       </header>
       
       <div class="categories">
@@ -219,8 +235,13 @@ watch(groupBy, onSortChange)
             <header v-if="Object.keys(groupedPacks).length > 1">
               <h2>{{ index }}</h2>
               <span />
-              <div class="collapse-icon" @click="collapseGroup(index)">
-                <FontAwesomeIcon :icon="faChevronDown" />
+              <div class="flex items-center gap-2">
+                <div class="py-1 px-2 rounded bg-white/10 hover:bg-white/20 cursor-pointer transition-colors" @click="toggleCategorySelect(category)">
+                  <FontAwesomeIcon fixed-width :icon="faCheckSquare" />
+                </div>
+                <div class="collapse-icon py-1 px-2 rounded bg-white/10 hover:bg-white/20 cursor-pointer transition-colors" @click="collapseGroup(index)">
+                  <FontAwesomeIcon fixed-width :icon="faChevronDown" />
+                </div>
               </div>
             </header>
             <div class="pack-card-grid" v-if="!collapsedGroups.includes(index)">
@@ -228,6 +249,14 @@ watch(groupBy, onSortChange)
                 <pack-card2
                   v-show="filteredInstance === null || filteredInstance.includes(instance.uuid)"
                   :instance="instance"
+                  :checked="selectedInstances.find(e => e.uuid === instance.uuid) !== undefined"
+                  :on-checked-change="(selected) => {
+                    if (selected) {
+                      selectedInstances.push(instance);
+                    } else {
+                      selectedInstances = selectedInstances.filter(e => e.uuid !== instance.uuid);
+                    }
+                  }"
                 />
               </template>
             </div>
@@ -264,6 +293,8 @@ watch(groupBy, onSortChange)
       </div>
     </div>
   </div>
+  
+  <InstanceSelectActions :instances="selectedInstances" @deselect-all="selectedInstances = []" @select-all="selectedInstances = instanceStore.instances" />
 </template>
 
 <style lang="scss" scoped>
@@ -304,50 +335,12 @@ watch(groupBy, onSortChange)
       
       .collapse-icon {
         cursor: pointer;
-        padding: .18rem 1rem;
-        border-radius: 3px;
-        background-color: rgba(white, .1);
-        transition: background-color .25s ease-in-out;
-        
-        &:hover {
-          background-color: rgba(white, .2);
-        }
         
         svg {
           transition: transform .25s ease-in-out;
           font-size: 12px;
         }
       }
-    }
-  }
-}
-
-.drop-area {
-  margin-top: 1rem;
-  padding: 2.5rem 2rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  border: 2px dashed rgba(white, 0.2);
-  border-radius: 5px;
-
-  hr {
-    margin: 1rem 0;
-  }
-
-  > svg {
-    margin-bottom: 1rem;
-  }
-}
-
-.file {
-  background-color: rgba(white, 0.1);
-  border-radius: 5px;
-
-  .text {
-    .name {
-      word-wrap: break-word;
     }
   }
 }

@@ -8,6 +8,7 @@ import {RouterNames} from '@/router';
 import { LaunchingStatus, useRunningInstancesStore } from '@/store/runningInstancesStore.ts';
 import { useInstanceStore } from '@/store/instancesStore.ts';
 import { useAccountsStore } from '@/store/accountsStore.ts';
+import {alertController} from "@/core/controllers/alertController.ts";
 
 export type SaveJson = {
   name: string;
@@ -21,7 +22,7 @@ export type SaveJson = {
   releaseChannel: string;
   instanceImage?: string;
   preventMetaModInjection?: boolean;
-  category: string;
+  categoryId: string;
   locked: boolean;
   shellArgs: string;
 }
@@ -133,7 +134,7 @@ export class InstanceController {
     await safeNavigate(RouterNames.ROOT_RUNNING_INSTANCE, {uuid: this.instance.uuid});
   }
   
-  async updateInstance(data: SaveJson) {
+  async updateInstance(data: Partial<SaveJson>) {
     const instancesStore = useInstanceStore();
     InstanceController.logger.debug("Updating instance", data);
     const result = await sendMessage("instanceConfigure", {
@@ -164,5 +165,23 @@ export class InstanceController {
     
     InstanceController.logger.warn("Failed to delete instance", result);
     return false;
+  }
+  
+  async duplicateInstance(newName: string, newCategory: string) {
+    const result = await sendMessage("duplicateInstance", {
+      uuid: this.instance.uuid,
+      newName: newName,
+      category: newCategory
+    }, 1_000 * 60 * 5); // 5 minutes (this should be more than long enough!)
+
+    if (!result.success) {
+      alertController.error(result.message)
+      return false;
+    }
+    
+    const instanceStore = useInstanceStore();
+    instanceStore.addInstance(result.instance)
+    
+    return true;
   }
 }

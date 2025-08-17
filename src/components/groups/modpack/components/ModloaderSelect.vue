@@ -1,13 +1,14 @@
 <script lang="ts" setup>
-import {SelectionOption} from '@/components/ui/Selection2.vue';
 import {ModLoadersResponse, ModLoaderWithPackId} from '@/core/types/modpacks/modloaders';
 import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import {JavaFetch} from '@/core/javaFetch';
-import {UiToggle, Message, Loader, Selection2, UiBadge} from '@/components/ui';
+import {UiToggle, Message, Loader, UiBadge} from '@/components/ui';
 import { computed, onMounted, ref, watch } from 'vue';
 import { toTitleCase } from '@/utils/helpers/stringHelpers.ts';
 import { faExclamation, faInfo } from '@fortawesome/free-solid-svg-icons';
 import { createLogger } from '@/core/logger.ts';
+import UiSelect from "@/components/ui/select/UiSelect.vue";
+import {BasicUiSelectOption} from "@/components/ui/select/UiSelect.ts";
 
 const logger = createLogger("ModloaderSelect.vue")
 
@@ -115,10 +116,9 @@ const loaderVersions = computed(() => {
   }
 
   return availableLoaders.value[userLoaderProvider.value].map((e: any) => ({
-    label: e.version,
+    key: e.version,
     value: e.version,
-    meta: e.type
-  })) as SelectionOption[]
+  })) as BasicUiSelectOption[]
 })
 
 const hasAvailableLoaders = computed(() => Object.keys(availableLoaders.value).length > 0)
@@ -127,7 +127,7 @@ const hasAvailableLoaders = computed(() => Object.keys(availableLoaders.value).l
 <template>
  <div class="modloaderSelect">
    <UiBadge class="mb-3" :icon="faInfo" type="info">Info</UiBadge>
-   <p class="mb-4 text-sm">
+   <p class="mb-6">
      ModLoaders allow you to play Minecraft with mods. Your mod options will depend on Minecraft version + the mod loader you select.
    </p>
    
@@ -145,15 +145,12 @@ const hasAvailableLoaders = computed(() => Object.keys(availableLoaders.value).l
 
      <UiToggle v-if="provideLatestOption && userLoaderProvider !== ''" class="mb-4" label="Use latest Mod Loader version (recommended)" desc="The latest version of each modloader is typically the most stable version" v-model="userUseLatestLoader" />
      
-     <Selection2
-       v-if="userLoaderProvider !== ''"
-       :open-up="true"
-       label="Version"
-       class="mb-4"
-       :disabled="loaderVersions.length === 0 || (provideLatestOption && userUseLatestLoader)"
-       :options="loaderVersions"
-       v-model="userLoaderVersion"
-       @updated="select(userLoaderProvider, userLoaderVersion)"
+     <UiSelect :options="loaderVersions" 
+               :disabled="userLoaderProvider === '' || loaderVersions.length === 0 || (provideLatestOption && userUseLatestLoader)" 
+               label="Version"
+               class="mb-4"
+               v-model="userLoaderVersion"
+               @update:modelValue="select(userLoaderProvider, userLoaderVersion)"
      />
    </template>
 

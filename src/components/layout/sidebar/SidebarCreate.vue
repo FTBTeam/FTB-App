@@ -110,6 +110,8 @@ function close(event: any) {
     background-color: black;
     border-radius: 8px;
     cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: bolder;
     
     transition: background-color .25s ease-in-out;
     
@@ -133,7 +135,6 @@ function close(event: any) {
     padding: .25rem 0;
     z-index: 200;
     top: 0;
-    font-size: 14px;
     transform: translateX(-10px);
     opacity: 0;
     visibility: hidden;

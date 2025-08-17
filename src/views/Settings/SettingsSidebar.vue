@@ -96,7 +96,6 @@ const configData = appPlatform.config;
   padding: 1rem;
   display: flex;
   flex-direction: column;
-  font-size: 14px;
 
   .back {
     opacity: 0.8;

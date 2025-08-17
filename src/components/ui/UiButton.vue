@@ -59,7 +59,7 @@ export function colorFromElementColorType(type: ElementColorType, disabled: bool
 
 <template>
   <div 
-    :class="[`ui-button ${colorFromType}`, {fullWidth, wider, 'disabled': working || disabled}, [size]]"
+    :class="[`ui-button rounded-lg ${colorFromType}`, {fullWidth, wider, 'disabled': working || disabled}, [size]]"
     :aria-label="ariaLabel ? ariaLabel : undefined" :data-balloon-pos="ariaLabel && ariaLabelPos ? ariaLabelPos : undefined"
     @click="click"
   >
@@ -77,13 +77,11 @@ export function colorFromElementColorType(type: ElementColorType, disabled: bool
 
 <style scoped lang="scss">
 .ui-button {
-  border-radius: 3px;
   position: relative;
-  padding: 0.75em .8em;
+  padding: 0.6em 1.143em;
   display: inline-block;
-  font-size: 14px;
   text-align: center;
-  font-weight: bold;
+  font-weight: 500;
   transition: background-color .25s ease-in-out, opacity .25s ease-in-out;
   cursor: pointer;
 
@@ -106,8 +104,7 @@ export function colorFromElementColorType(type: ElementColorType, disabled: bool
   }
   
   &.small {
-    padding: 0.6em .6em;
-    font-size: 0.875em;
+    padding: 0.5rem 0.857rem;
     &.wider {
       padding: 0.4em 1.8em;
     }

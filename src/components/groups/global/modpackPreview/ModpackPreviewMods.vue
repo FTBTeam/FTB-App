@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import {ModPack, ModpackMod, ModpackVersion} from "@/core/types/appTypes.ts";
 import {computed, onMounted, ref, watch} from "vue";
-import {Loader, Selection2} from "@/components/ui";
+import {Loader} from "@/components/ui";
 import {alertController} from "@/core/controllers/alertController.ts";
 import {useModpackStore} from "@/store/modpackStore.ts";
 import {modpackApi} from "@/core/pack-api/modpackApi.ts";
@@ -9,8 +9,9 @@ import {Input} from "@/components/ui";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 import {faQuestion, faSearch} from "@fortawesome/free-solid-svg-icons";
 import {prettyByteFormat} from "@/utils";
-import {SelectionOptions} from "@/components/ui/Selection2.vue";
 import {useGlobalStore} from "@/store/globalStore.ts";
+import {BasicUiSelectOption} from "@/components/ui/select/UiSelect.ts";
+import UiSelect from "@/components/ui/select/UiSelect.vue";
 
 const {
   modpack
@@ -119,21 +120,21 @@ function iconClicked(mod: ModpackMod) {
   globalStore.openImagePreview({ url: mod.icon ?? "", name: mod.name });
 }
 
-const sortOptions: SelectionOptions = [
-  { label: "Name", value: "name" },
-  { label: "Size", value: "size" },
-  { label: "Authors", value: "authors" }
+const sortOptions: BasicUiSelectOption[] = [
+  { value: "Name", key: "name" },
+  { value: "Size", key: "size" },
+  { value: "Authors", key: "authors" }
 ]
 
-const viewOptions: SelectionOptions = [
-  { label: "List", value: "list" },
-  { label: "Grid", value: "grid" },
-  { label: "Table", value: "table" }
+const viewOptions: BasicUiSelectOption[] = [
+  { value: "List", key: "list" },
+  { value: "Grid", key: "grid" },
+  { value: "Table", key: "table" }
 ]
 
-const orderOptions: SelectionOptions = [
-  { label: "Ascending", value: "asc" },
-  { label: "Descending", value: "desc" }
+const orderOptions: BasicUiSelectOption[] = [
+  { value: "Ascending", key: "asc" },
+  { value: "Descending", key: "desc" }
 ]
 </script>
 
@@ -145,13 +146,13 @@ const orderOptions: SelectionOptions = [
         <Input :icon="faSearch" fill v-model="search" placeholder="Search..." />
       </div>
       <div class="flex gap-2">
-        <Selection2 direction="right" :min-width="180" :options="viewOptions" v-model="viewMode" placeholder="List"></Selection2>
-        <Selection2 direction="right" :min-width="180" :options="sortOptions" v-model="sortBy" placeholder="Sort"></Selection2>
-        <Selection2 direction="right" :min-width="180" :options="orderOptions" v-model="orderBy" placeholder="Order"></Selection2>
+        <UiSelect placement="bottom-end" :options="viewOptions" v-model="viewMode" placeholder="List" />
+        <UiSelect placement="bottom-end" :options="sortOptions" v-model="sortBy" placeholder="Sort" />
+        <UiSelect placement="bottom-end" :options="orderOptions" v-model="orderBy" placeholder="Order" />
       </div>
     </div>
 
-    <div class="grid grid-cols-3 gap-6" v-if="viewMode === 'grid'">
+    <div class="grid grid-cols-4 gap-6" v-if="viewMode === 'grid'">
       <div v-for="(mod, index) in finalMods" :key="index">
         <div class="bg-black/20 cursor-pointer aspect-square flex items-center justify-center rounded-lg relative">
           <img @click="iconClicked(mod)" class="rounded-lg cursor-pointer" v-if="mod.icon" :src="mod.icon" />
@@ -199,12 +200,12 @@ const orderOptions: SelectionOptions = [
     <div class="flex flex-col gap-6" v-if="viewMode === 'list'">
       <div v-for="(mod, index) in finalMods" :key="index" class="flex items-center gap-6">
         <template v-if="mod.curseProject">
-          <img @click="iconClicked(mod)" :src="mod.icon" alt="Mod Icon" class="cursor-pointer w-12 h-12 rounded-lg" />
+          <img @click="iconClicked(mod)" :src="mod.icon" alt="Mod Icon" class="cursor-pointer w-16 h-16 rounded-lg" />
           <div>
             <a class="hover:underline" :href="`https://www.curseforge.com/minecraft/mc-mods/${mod.curseSlug}`" target="_blank">
               <h2 class="text-lg font-semibold">{{ mod.name }}</h2>
             </a>
-            <p class="text-sm text-white/80 line-clamp-1">{{ mod.synopsis }}</p>
+            <p class="text-white/80 line-clamp-1">{{ mod.synopsis }}</p>
           </div>
         </template>
         <template v-else>

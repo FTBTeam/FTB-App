@@ -5,6 +5,7 @@ import {SugaredInstanceJson} from '@/core/types/javaApi';
 import {InstanceActions} from '@/core/actions/instanceActions';
 import {InstanceController} from '@/core/controllers/InstanceController';
 import {dialogsController} from '@/core/controllers/dialogsController';
+import {useAccountsStore} from "@/store/accountsStore.ts";
 
 export type InstanceMenuContext = {
   instance: SugaredInstanceJson
@@ -38,6 +39,18 @@ export class InstanceMenu extends ContextMenu<InstanceMenuContext> {
           await InstanceActions.start(context.instance)
         },
         predicate: context => InstanceActions.canStart(context.instance) && !InstanceActions.isUpdating(context.instance) && !InstanceActions.isRunning(context.instance)
+      },
+      {
+        title: 'Play offline',
+        icon: faPlay,
+        async action(context) {
+          // TODO: Offline action
+          await InstanceActions.start(context.instance)
+        },
+        predicate: _ => {
+          const accountStore = useAccountsStore();
+          return !!accountStore.mcActiveProfile;
+        }
       },
       {
         title: 'Pin',

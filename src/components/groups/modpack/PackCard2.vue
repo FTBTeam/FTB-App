@@ -14,14 +14,20 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { useRunningInstancesStore } from '@/store/runningInstancesStore.ts';
 import { useInstallStore } from '@/store/installStore.ts';
 import { Versions } from '@/core/types/appTypes.ts';
-import { faBolt, faCircleNotch, faDownload, faPlay } from '@fortawesome/free-solid-svg-icons';
+import {faBolt, faCheck, faCircleNotch, faDownload, faPlay} from '@fortawesome/free-solid-svg-icons';
 
 const router = useRouter()
 const runningInstancesStore = useRunningInstancesStore();
 const installStore = useInstallStore()
 
-const {instance} = defineProps<{
+const {
+  instance,
+  checked,
+  onCheckedChange
+} = defineProps<{
   instance: SugaredInstanceJson;
+  checked?: boolean;
+  onCheckedChange?: (checked: boolean) => void;
 }>()
 
 const latestVersion = ref<Versions | null>(null);
@@ -125,23 +131,35 @@ function _versionName() {
 
 <template>
   <div>
-    <div class="pack-card-v2" :class="{'installing': isInstalling}" @click="() => openInstancePage()" @click.right="(e) => openInstanceMenu(e)">
+    <div class="pack-card-v2 relative" :class="{'installing': isInstalling}" @click="() => openInstancePage()" @click.right="(e) => openInstanceMenu(e)">
+      <div class="check-box absolute z-[1] top-2 right-2 rounded-lg border-2 border-black/40 w-7 h-7 backdrop-blur-sm flex items-center justify-center"
+           :class="{
+            'bg-green-500 checked': checked,
+            'bg-white/20': !checked,
+           }"
+           v-if="typeof checked !== 'undefined' && onCheckedChange && !isInstalling"
+           @click.stop="onCheckedChange(!checked)">
+        
+        <transition name="transition-fade" :duration="250">
+          <FontAwesomeIcon v-if="checked" :icon="faCheck" class="text-white" />
+        </transition>
+      </div>
       <div class="artwork-container aspect-square">
         <div class="flex h-full items-center justify-center rounded-lg bg-black/20">
           <img class="object-contain rounded-lg" :src="packLogo" alt="Modpack Artwork">
         </div>
         <div class="notifiers">
-          <div class="notifier modloader" aria-label="Minecraft Forge" data-balloon-pos="down-right" v-if="modloader === 'forge'">
-            <img width="30" src="../../../assets/images/forge.svg" alt="" />
+          <div class="notifier modloader" aria-label="Minecraft Forge" data-balloon-pos="down-left" v-if="modloader.toLowerCase() === 'forge'">
+            <img :width="30" src="../../../assets/images/forge.svg" alt="" />
           </div>
-          <div class="notifier modloader" aria-label="Fabric" data-balloon-pos="down-right" v-if="modloader === 'fabric'">
-            <img width="30" src="../../../assets/images/fabric.webp" alt="" />
+          <div class="notifier modloader" aria-label="Fabric" data-balloon-pos="down-left" v-if="modloader.toLowerCase() === 'fabric'">
+            <img :width="30" src="../../../assets/images/fabric.webp" alt="" />
           </div>
-          <div class="notifier modloader" aria-label="NeoForge" data-balloon-pos="down-right" v-if="modloader === 'neoforge'">
-            <img width="30" src="../../../assets/images/neoforge.png" alt="" />
+          <div class="notifier modloader" aria-label="NeoForge" data-balloon-pos="down-left" v-if="modloader.toLowerCase() === 'neoforge'">
+            <img :width="30" src="../../../assets/images/neoforge.png" alt="" />
           </div>
-          <div class="notifier modloader" aria-label="QuiltMc" data-balloon-pos="down-right" v-if="modloader === 'quilt'">
-            <img width="30" src="../../../assets/images/quiltmc.svg" alt="" />
+          <div class="notifier modloader" aria-label="QuiltMc" data-balloon-pos="down-left" v-if="modloader.toLowerCase() === 'quilt'">
+            <img :width="30" src="../../../assets/images/quiltmc.svg" alt="" />
           </div>
         </div>
         
@@ -161,8 +179,8 @@ function _versionName() {
       </div>
       <div class="card-body">
         <div class="info">
-          <div class="name">{{ instance.name }}</div>
-          <div class="version text-sm opacity-75">
+          <div class="name text-lg">{{ instance.name }}</div>
+          <div class="version opacity-75">
             <template v-if="!isInstalling">{{ versionName }}</template>
             <template v-else><FontAwesomeIcon :icon="faCircleNotch" spin class="mr-2" /> Installing</template>
           </div>
@@ -185,6 +203,24 @@ function _versionName() {
 <style lang="scss" scoped>
 .pack-card-v2 {
   cursor: pointer;
+  
+  .check-box {
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.25s ease-in-out, visibility 0.25s ease-in-out;
+  }
+  
+  &:hover {
+    .check-box {
+      visibility: visible;
+      opacity: 1;
+    }
+  }
+
+  .check-box.checked {
+    visibility: visible;
+    opacity: 1;
+  }
   
   &:not(.installing):hover {
     .action-buttons {
@@ -212,22 +248,16 @@ function _versionName() {
     .notifiers {
       --balloon-font-size: 10px;
       position: absolute;
-      top: .25rem;
-      right: .25rem;
+      top: .75rem;
+      left: .75rem;
       display: flex;
       align-items: center;
       flex-direction: row-reverse;
       gap: .25rem;
       
       .notifier {
-        background-color: rgba(black, .8);
-        display: flex;
-        padding: .5rem;
-        align-items: center;
-        justify-content: center;
-        border-radius: 5px;
-        width: 30px;
-        height: 30px;
+        width: 25px;
+        height: 25px;
         
         svg {
           font-size: 10px;
@@ -254,7 +284,7 @@ function _versionName() {
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: .6rem .8rem;
+      padding: .8rem .8rem;
       border-radius: 5px;
       box-shadow: 0 2px 10px rgba(black, 0.2);
       
@@ -309,7 +339,7 @@ function _versionName() {
     
     .progress {
       position: absolute;
-      bottom: 0;
+      bottom: -1px;
       height: 12px !important;
       border-radius: 0 0 8px 8px;
     }

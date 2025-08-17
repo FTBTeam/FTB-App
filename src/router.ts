@@ -128,6 +128,11 @@ const router = createRouter({
           path: 'scroller',
           name: 'scroller',
           component: () => import(/* webpackChunkName: "dev" */ './views/dev/DevScroller.vue'),
+        },
+        {
+          path: 'ui',
+          name: 'ui',
+          component: () => import(/* webpackChunkName: "dev" */ './views/dev/DevUi.vue'),
         }
       ]
     }

@@ -129,7 +129,6 @@ const isInstalling = computed(() => {
   border-radius: 5px;
   margin-bottom: 1.5rem;
   align-items: center;
-  font-size: 14px;
   background: var(--color-sidebar-item);
   cursor: pointer;
   box-shadow: 0 3px 15px rgba(black, 0.2);
@@ -221,6 +220,7 @@ const isInstalling = computed(() => {
       display: flex;
       gap: 0.35rem;
       flex-wrap: wrap;
+      font-size: 0.875rem;
 
       .tag {
         background-color: rgba(black, 0.4);
