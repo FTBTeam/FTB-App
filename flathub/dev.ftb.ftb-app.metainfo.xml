@@ -45,7 +45,8 @@
   </content_rating>
 
   <releases>
-    <release version="1.28.2-beta.230" date="2025-08-17" />
+    <release version="1.28.2" date="2025-08-17" />
+    <release version="1.28.2~beta.230" date="2025-08-17" />
     <release version="1.28.1" date="2025-07-17" />
     <release version="1.28.1~beta.217" date="2025-07-17" />
     <release version="1.28.0" date="2025-07-06" />
