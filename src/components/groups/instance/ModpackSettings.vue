@@ -12,13 +12,13 @@ import {ReleaseChannelOptions} from '@/utils/commonOptions';
 import ArtworkSelector from '@/components/groups/modpack/components/ArtworkSelector.vue';
 import {resolveModloader, resolveModLoaderVersion, typeIdToProvider} from '@/utils/helpers/packHelpers';
 import CategorySelector from '@/components/groups/modpack/create/CategorySelector.vue';
-import {computeAspectRatio, megabyteSize, prettyByteFormat} from '@/utils';
+import {megabyteSize, prettyByteFormat} from '@/utils';
 import ModloaderSelect from '@/components/groups/modpack/components/ModloaderSelect.vue';
 import {ModLoaderWithPackId} from '@/core/types/modpacks/modloaders';
 import RamSlider from '@/components/groups/modpack/components/RamSlider.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { Modal, UiToggle, Selection2, UiButton, InputNumber, Input } from '@/components/ui';
+import { Modal, UiToggle, UiButton, Input } from '@/components/ui';
 import { toTitleCase } from '@/utils/helpers/stringHelpers.ts';
 import { useInstallStore } from '@/store/installStore.ts';
 import { useAppSettings } from '@/store/appSettingsStore.ts';
@@ -27,7 +27,7 @@ import {
   faChevronDown,
   faCopy,
   faDownload,
-  faFolder, faLock,
+  faFolder, faInfoCircle, faLock,
   faPen, faTimes,
   faTrash,
   faUndo, faUnlock,
@@ -37,6 +37,10 @@ import {
 import { useAppStore } from '@/store/appStore.ts';
 import TextArea from '@/components/ui/form/TextArea/TextArea.vue';
 import AbstractInput from "@/components/ui/form/AbstractInput.vue";
+import UiSelect from "@/components/ui/select/UiSelect.vue";
+import ResolutionSelector, {ResolutionValue} from "@/components/groups/modpack/components/ResolutionSelector.vue";
+import ReleaseChannelSelector from "@/components/groups/modpack/components/ReleaseChannelSelector.vue";
+import {packBlacklist} from "@/store/modpackStore.ts";
 
 const router = useRouter();
 const appStore = useAppStore();
@@ -64,7 +68,6 @@ const javaVersions = ref<JavaInstall[]>([]);
 const deleting = ref(false);
 
 const imageFile = ref<string | null>(null);
-const resolutionId = ref("");
 
 const userSelectModLoader = ref(false);
 const userSelectedLoader = ref<[string, ModLoaderWithPackId] | null>(null);
@@ -88,16 +91,14 @@ onMounted(async () => {
   }
 })
 
-function selectResolution(id: string | null) {
-  if (id === null) return;
-  
-  const selected = appSettingsStore.systemHardware?.supportedResolutions.find(e => `${e.width}|${e.height}` === id);
-  if (!selected) {
+function selectResolution(value: ResolutionValue) {
+  if (!value) {
     return;
   }
 
-  instanceSettings.value.width = selected.width;
-  instanceSettings.value.height = selected.height;
+  instanceSettings.value.fullScreen = value.fullScreen;
+  instanceSettings.value.width = value.width;
+  instanceSettings.value.height = value.height;
   
   saveSettings();
 }
@@ -218,10 +219,6 @@ function confirmDelete() {
 }
 
 function createInstanceSettingsFromInstance(instance: InstanceJson): SaveJson {
-  resolutionId.value = resolutionList.value
-    .find((e) => e.value === `${instance.width ?? ''}|${instance.height ?? ''}`)
-    ?.value ?? "";
-
   return {
     name: instance.name,
     jvmArgs: instance.jvmArgs,
@@ -260,40 +257,7 @@ function preferIPv4Clicked(event: any) {
 }
 
 const prefersIPv4 = computed(() => instanceSettings.value?.jvmArgs?.includes(preferIPv4Arg))
-const channelOptions = computed(() => ReleaseChannelOptions(true));
 const hasModloader = computed(() => instance?.modLoader !== instance.mcVersion);
-const resolutionList = computed(() => {
-  const resList = [];
-  resList.push({
-    value: "",
-    label: "Custom",
-    meta: "Custom"
-  });
-  
-  const resolutions = appSettingsStore.systemHardware?.supportedResolutions ?? [];
-
-  resolutions.sort((a, b) => {
-    const { width: aWidth, height: aHeight } = a;
-    const { width: bWidth, height: bHeight } = b;
-    
-    if (aWidth !== bWidth) {
-      return bWidth - aWidth;
-    }
-    
-    return bHeight - aHeight;
-  });
-  
-  for (const res of resolutions) {
-    resList.push({
-      value: `${res.width}|${res.height}`,
-      label: `${res.width} x ${res.height}`,
-      // Calculate the aspect ratio in the form of a 16:9 for example
-      meta: computeAspectRatio(res.width, res.height)
-    })
-  }
-
-  return resList;
-});
 
 watch(imageFile, (value) => {
   if (value) {
@@ -302,7 +266,16 @@ watch(imageFile, (value) => {
   }
 })
 
-watch(() => instanceSettings.value.categoryId, () => saveSettings())
+watch(() => instanceSettings.value.categoryId, (newValue, oldValue) => {
+  if (newValue === oldValue) return;
+  
+  saveSettings()
+})
+
+const isLoader = computed(() => {
+  if (!instance) return false;
+  return packBlacklist.includes(instance.id)
+})
 </script>
 
 <template>
@@ -342,69 +315,28 @@ watch(() => instanceSettings.value.categoryId, () => saveSettings())
       </UiButton>
     </div>
 
-    <ram-slider class="mb-6" v-model="instanceSettings.memory" @update="saveSettings" />
+    <RamSlider class="mb-8" v-model="instanceSettings.memory" @update="saveSettings" />
+
+    <ResolutionSelector :model-value="{
+      fullScreen: instanceSettings.fullScreen,
+      width: instanceSettings.width,
+      height: instanceSettings.height
+    }" @update="selectResolution" />
     
-    <ui-toggle
-      label="Fullscreen"
-      desc="Always open Minecraft in Fullscreen mode"
-      v-model="instanceSettings.fullScreen"
-      @input="() => {
-          saveSettings();
-      }"
-      class="mb-4"
-      :align-right="true"
-    />
-    
-    <div class="mb-6" :class="{'cursor-not-allowed opacity-50 pointer-events-none': instanceSettings.fullScreen}">
-      <div class="flex items-center mb-4">
-        <div class="block flex-1 mr-2">
-          <b>Size presets</b>
-          <small class="text-muted block mt-2">Select a preset based on your system</small>
-        </div>
-        
-        <selection2
-          v-if="resolutionList.length"
-          v-model="resolutionId"
-          @updated="selectResolution"
-          :style="{width: '220px'}"
-          :options="resolutionList"
-        />
-      </div>
-      <div class="flex items-center mb-4">
-        <div class="block flex-1 mr-2">
-          <b>Width</b>
-          <small class="text-muted block mt-2">The Minecraft windows screen width</small>
-        </div>
-        <InputNumber class="mb-0" v-model="instanceSettings.width" @blur="saveSettings" @update:model-value="saveSettings()" />
-      </div>
-      <div class="flex items-center">
-        <div class="block flex-1 mr-2">
-          <b>Height</b>
-          <small class="text-muted block mt-2">The Minecraft windows screen height</small>
-        </div>
-        <InputNumber class="mb-0" v-model="instanceSettings.height" @blur="saveSettings" @update:model-value="saveSettings()" />
-      </div>
-    </div>
-    
-    <h2 class="text-lg mb-4 font-bold text-warning">
+    <h2 class="text-lg mb-6 font-bold text-warning">
       <FontAwesomeIcon :icon="faWarning" class="mr-2" />
       Advanced
     </h2>
     
     <div class="mb-8">
-      <div class="flex items-center mb-6" v-if="!instance.isImport">
+      <div class="flex items-center mb-6" v-if="!instance.isImport && !isLoader">
         <div class="block flex-1 mr-2">
           <b>Release Channel</b>
           <small class="block text-muted mr-6 mt-2">
             The selected release channel will determine when we show that a supported modpack has an update.<span class="mb-2 block" /> Release is the most stable, then Beta should be playable and Alpha could introduce game breaking bugs.</small>
         </div>
 
-        <selection2
-          :options="channelOptions"
-          v-model="instanceSettings.releaseChannel"
-          :style="{width: '192px'}"
-          @updated="() => saveSettings()"
-        />
+        <ReleaseChannelSelector v-model="instanceSettings.releaseChannel" @update:modelValue="() => saveSettings()" :include-unset="true" />
       </div>
 
       <div class="flex items-center mb-6">
@@ -535,19 +467,17 @@ watch(() => instanceSettings.value.categoryId, () => saveSettings())
       />
     </Modal>
     
-    <Modal :open="userSelectModLoader" title="Select Modloader" :sub-title="`This instance is currently using ${hasModloader ? instance.modLoader : 'Vanilla'}`" @closed="() => {
+    <Modal :open="userSelectModLoader" title="Select Mod Loader" :sub-title="`This instance is currently using ${hasModloader ? instance.modLoader : 'Vanilla'}`" @closed="() => {
       userSelectModLoader = false
       userSelectedLoader = null
     }">
-      <div class="current mb-6 grid grid-cols-2 gap-y-2 wysiwyg items-center">
-        <b>Current Modloader</b> <code>{{ toTitleCase(hasModloader ? resolveModloader(instance) : 'Vanilla') }}</code>
-        <b>Current version</b> <code>{{resolveModLoaderVersion(instance)}}</code>
-      </div>
-      
-      <p class="mb-2">You can select a Modloader to install or switch to using the selection below. Please be aware that if you are currently running a modpack, switching Modloader version may break the modpack.</p>
-      <p class="mb-6">Switching between Modloader provider (aka: Forge -> Fabric) will <b>not</b> remove incompatible mods.</p>
       
       <modloader-select @select="e => userSelectedLoader = e" :mc-version="instance.mcVersion" :provide-latest-option="false" :show-none="false" />
+
+      <div class="text-lg mt-8 mb-4"><FontAwesomeIcon class="mr-2" :icon="faInfoCircle" />Notes</div>
+      
+      <p class="mb-3">You can select a Mod Loader to install or switch to using the selection below. Please be aware that if you are currently running a modpack, switching Mod Loader version may break the modpack.</p>
+      <p>Switching between Mod Loader provider (aka: Forge -> Fabric) will <b>not</b> remove incompatible mods.</p>
       
       <template #footer>
         <div class="flex justify-end gap-4">

@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import {ModPack, ModpackMod, ModpackVersion} from "@/core/types/appTypes.ts";
 import {computed, onMounted, ref, watch} from "vue";
-import {Loader, Selection2} from "@/components/ui";
+import {Loader} from "@/components/ui";
 import {alertController} from "@/core/controllers/alertController.ts";
 import {useModpackStore} from "@/store/modpackStore.ts";
 import {modpackApi} from "@/core/pack-api/modpackApi.ts";
@@ -9,8 +9,9 @@ import {Input} from "@/components/ui";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 import {faQuestion, faSearch} from "@fortawesome/free-solid-svg-icons";
 import {prettyByteFormat} from "@/utils";
-import {SelectionOptions} from "@/components/ui/Selection2.vue";
 import {useGlobalStore} from "@/store/globalStore.ts";
+import {BasicUiSelectOption} from "@/components/ui/select/UiSelect.ts";
+import UiSelect from "@/components/ui/select/UiSelect.vue";
 
 const {
   modpack
@@ -119,21 +120,21 @@ function iconClicked(mod: ModpackMod) {
   globalStore.openImagePreview({ url: mod.icon ?? "", name: mod.name });
 }
 
-const sortOptions: SelectionOptions = [
-  { label: "Name", value: "name" },
-  { label: "Size", value: "size" },
-  { label: "Authors", value: "authors" }
+const sortOptions: BasicUiSelectOption[] = [
+  { value: "Name", key: "name" },
+  { value: "Size", key: "size" },
+  { value: "Authors", key: "authors" }
 ]
 
-const viewOptions: SelectionOptions = [
-  { label: "List", value: "list" },
-  { label: "Grid", value: "grid" },
-  { label: "Table", value: "table" }
+const viewOptions: BasicUiSelectOption[] = [
+  { value: "List", key: "list" },
+  { value: "Grid", key: "grid" },
+  { value: "Table", key: "table" }
 ]
 
-const orderOptions: SelectionOptions = [
-  { label: "Ascending", value: "asc" },
-  { label: "Descending", value: "desc" }
+const orderOptions: BasicUiSelectOption[] = [
+  { value: "Ascending", key: "asc" },
+  { value: "Descending", key: "desc" }
 ]
 </script>
 
@@ -145,9 +146,9 @@ const orderOptions: SelectionOptions = [
         <Input :icon="faSearch" fill v-model="search" placeholder="Search..." />
       </div>
       <div class="flex gap-2">
-        <Selection2 direction="right" :min-width="180" :options="viewOptions" v-model="viewMode" placeholder="List"></Selection2>
-        <Selection2 direction="right" :min-width="180" :options="sortOptions" v-model="sortBy" placeholder="Sort"></Selection2>
-        <Selection2 direction="right" :min-width="180" :options="orderOptions" v-model="orderBy" placeholder="Order"></Selection2>
+        <UiSelect placement="bottom-end" :options="viewOptions" v-model="viewMode" placeholder="List" />
+        <UiSelect placement="bottom-end" :options="sortOptions" v-model="sortBy" placeholder="Sort" />
+        <UiSelect placement="bottom-end" :options="orderOptions" v-model="orderBy" placeholder="Order" />
       </div>
     </div>
 

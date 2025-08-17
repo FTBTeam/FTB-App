@@ -3,13 +3,12 @@ import appPlatform from '@platform';
 import UiToggle from '@/components/ui/UiToggle.vue';
 import {SettingsData} from '@/core/types/javaApi';
 import Loader from '@/components/ui/Loader.vue';
-import Selection2 from '@/components/ui/Selection2.vue';
-import {ReleaseChannelOptions} from '@/utils/commonOptions';
-import { computed, onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useAppSettings } from '@/store/appSettingsStore.ts';
 import { toggleBeforeAndAfter } from '@/utils/helpers/asyncHelpers.ts';
 import { Message } from '@/components/ui';
 import { faWarning } from '@fortawesome/free-solid-svg-icons';
+import ReleaseChannelSelector from "@/components/groups/modpack/components/ReleaseChannelSelector.vue";
 
 type ReleaseChannel = 'release' | 'beta' | 'alpha';
 
@@ -46,9 +45,6 @@ onMounted(async () => {
   } finally {
     loading.value = false;
   }
-
-  console.log(typeof appSettingsStore.rootSettings?.general.verbose, appSettingsStore.rootSettings?.general.verbose);
-  console.log(typeof appSettingsStore.rootSettings?.workaround.ignoreForgeProcessorOutputHashes, appSettingsStore.rootSettings?.workaround.ignoreForgeProcessorOutputHashes);
   
   verboseMode.value = appSettingsStore.rootSettings?.general.verbose ?? false;
   ignoreForgeProcessorOutputHashes.value = appSettingsStore.rootSettings?.workaround.ignoreForgeProcessorOutputHashes ?? false;
@@ -63,8 +59,6 @@ function enableVerbose(): void {
     }
   } as SettingsData
   
-  console.log(JSON.parse(JSON.stringify(newSettings)))
-  
   appSettingsStore.saveSettings(newSettings);
 }
 
@@ -76,13 +70,9 @@ function enableForgeProcessorHashes(): void {
       ignoreForgeProcessorOutputHashes: ignoreForgeProcessorOutputHashes.value
     }
   } as SettingsData
-
-  console.log(JSON.parse(JSON.stringify(newSettings)))
   
   appSettingsStore.saveSettings(newSettings);
 }
-
-const channelOptions = computed(() => ReleaseChannelOptions(false))
 
 async function getChannel() {
   try {
@@ -135,13 +125,7 @@ function transformToElectronChannel(channel: ReleaseChannel) {
           </small>
         </div>
         
-        <selection2
-          :disabled="checkingForUpdates"
-          :options="channelOptions"
-          v-model="appChannel"
-          :style="{width: '192px'}"
-          @updated="setAppChannel"
-        />
+        <ReleaseChannelSelector v-model="appChannel" @update:modelValue="setAppChannel" :disabled="checkingForUpdates" />
       </div>
       
       <p v-if="checkingForUpdates">Checking for updates...</p>

@@ -4,7 +4,7 @@ import {getColorForReleaseType} from '@/utils';
 import {toTitleCase} from '@/utils/helpers/stringHelpers';
 import {isValidVersion, resolveArtwork} from '@/utils/helpers/packHelpers';
 import appPlatform from '@platform';
-import { ModalBody, Modal, UiToggle, Selection2, ModalFooter, UiButton, Input } from '@/components/ui';
+import {ModalBody, Modal, UiToggle, ModalFooter, UiButton, Input, UiBadge} from '@/components/ui';
 import { watch, ref, computed } from 'vue';
 import CategorySelector from '@/components/groups/modpack/create/CategorySelector.vue';
 import { useModpackStore } from '@/store/modpackStore.ts';
@@ -12,6 +12,10 @@ import { ModPack, PackProviders } from '@/core/types/appTypes.ts';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { useAppStore } from '@/store/appStore.ts';
 import {defaultInstanceCategory} from "@/core/constants.ts";
+import {UiSelectOption} from "@/components/ui/select/UiSelect.ts";
+import UiSelect from "@/components/ui/select/UiSelect.vue";
+import VersionSelector, {VersionSelectorOption} from "@/components/groups/modpack/components/VersionSelector.vue";
+import dayjs from "dayjs";
 
 const modpackStore = useModpackStore();
 const appStore = useAppStore();
@@ -31,7 +35,7 @@ const selectedVersionId = ref("");
 const selectedCategory = ref(defaultInstanceCategory);
 
 const allowPreRelease = ref(false);
-const useAdvanced = ref(false);
+const useLatestVersion = ref(true);
 
 const userPackName = ref("");
 
@@ -48,7 +52,7 @@ watch(() => open, async (newValue) => {
     // No stable versions, default to pre-release
     if (!hasStableVersion.value) {
       allowPreRelease.value = true;
-      useAdvanced.value = true;
+      useLatestVersion.value = false;
     }
 
     selectedVersionId.value = restrictedVersions.value[0].id.toString() ?? "";
@@ -98,19 +102,16 @@ const hasUnstableVersions = computed(() => {
     .some(e => isValidVersion(e.type, "alpha") || isValidVersion(e.type, "beta") || isValidVersion(e.type, "hotfix"))
 })
 
-function versions() {
+const versions = computed(() => {
   return restrictedVersions.value
-    .sort((a, b) => b.id - a.id)
     .map(e => ({
-      value: e.id.toString(),
-      label: e.name,
-      meta: timeFromNow(e.updated),
-      badge: {
-        color: getColorForReleaseType(e.type),
-        text: toTitleCase(e.type)
-      }
-    }))
-}
+      key: e.id.toString(),
+      value: e.name,
+      date: dayjs.unix(e.updated),
+      releaseType: e.type,
+    } as VersionSelectorOption))
+})
+
 </script>
 
 <template>
@@ -121,11 +122,12 @@ function versions() {
         
         <CategorySelector class="mb-4" v-model="selectedCategory" />
 
-        <UiToggle label="Show advanced options" v-model="useAdvanced" />
-        <Selection2 :open-up="true" v-if="useAdvanced" label="Version" :options="versions()" v-model="selectedVersionId" class="mb-4 mt-6" />
+        <UiToggle label="Use latest version" v-model="useLatestVersion" />
         
+        <VersionSelector :options="versions" v-model="selectedVersionId" v-if="!useLatestVersion" />
+
         <UiToggle
-          v-if="useAdvanced && hasUnstableVersions"
+          v-if="!useLatestVersion && hasUnstableVersions"
           v-model="allowPreRelease"
           label="Show pre-release builds (Stable by default)" 
           desc="Feeling risky? Enable pre-release builds to get access to Alpha and Beta versions of the Modpack"

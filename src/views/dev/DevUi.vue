@@ -105,13 +105,7 @@
   </div>
   
   <div class="mb-8">
-    <UiSelect :options="options">
-      <template #selected="{ value }">
-        <span class="text-white/70">
-          Custom render {{ value?.value ?? 'none' }} as selected
-        </span>
-      </template>
-      
+    <UiSelect :options="options">      
       <template #option="{ option }">
         <div class="p-2 hover:bg-white/10 transition-colors duration-200">
           {{ option.value }}

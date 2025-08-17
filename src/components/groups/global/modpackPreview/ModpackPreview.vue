@@ -67,8 +67,8 @@
 
 <template>
   <transition name="transition-fade">
-    <div v-if="globalStore.modpackPreview" class="px-18 pt-20 absolute top-0 left-0 h-full bg-black/60 backdrop-blur z-50" :style="`width: ${ads.adsEnabled.value ? 'calc(100% - 400px)' : '100%'};`" @click="globalStore.closeModpackPreview()">
-      <div class="h-full max-w-[1000px] mx-auto bg-[#2A2A2A] rounded-t-xl" @click.stop>
+    <div v-if="globalStore.modpackPreview" class="px-18 pt-20 absolute top-0 left-0 h-full bg-black/60 backdrop-blur z-50" :style="`width: ${ads.adsEnabled.value ? 'calc(100% - 400px)' : '100%'};`" @click.self="globalStore.closeModpackPreview()">
+      <div class="h-full max-w-[1000px] mx-auto bg-[#2A2A2A] rounded-t-xl">
         <Loader v-if="loading" />
         <div class="flex flex-col h-full" v-else-if="modpack">
           <header class="p-5 relative z-[1] rounded-t-xl" :style="`background-image: url(${backgroundArtwork}); background-size: cover;`">

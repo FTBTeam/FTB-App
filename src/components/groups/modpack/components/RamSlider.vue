@@ -105,7 +105,7 @@ const valueAsPercentage = computed(() => {
      </div>
    </div>
    
-   <UiToggle v-if="maxRam <= (appSettingsStore.systemHardware?.totalMemory ?? 0)" :align-right="true" label="Allow full ram allocation" v-model="allowDangerous" @input="resetMax" desc="It is recommended that in most cases that you stay below 10GB of RAM for a Minecraft instance. " />
+   <UiToggle class="mt-4" v-if="maxRam <= (appSettingsStore.systemHardware?.totalMemory ?? 0)" :align-right="true" label="Allow full ram allocation" v-model="allowDangerous" @input="resetMax" />
  </div>
 </template>
 

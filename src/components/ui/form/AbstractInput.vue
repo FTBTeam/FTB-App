@@ -24,7 +24,7 @@ const elmId = `input-${Math.random().toString(36).substring(2, 9)}`;
 
 <template>
   <div :class="{ 'w-full': fill }">
-    <label :for="elmId" v-if="label" class="inline-block text-xs font-bold uppercase text-white/80 mb-2 transition-color duration-300" :class="{ 'opacity-50 cursor-not-allowed': disabled, 'text-white/100': focused }">
+    <label :for="elmId" v-if="label" class="inline-block text-sm font-bold uppercase text-white/80 mb-2 transition-color duration-300" :class="{ 'opacity-50 cursor-not-allowed': disabled, 'text-white/100': focused }">
       {{ label }}
     </label>
     <div class="flex gap-2 items-center">

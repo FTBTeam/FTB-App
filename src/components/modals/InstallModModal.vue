@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { Selection2, Modal, ModalBody, ModalFooter, UiButton } from '@/components/ui';
+import {Modal, ModalBody, ModalFooter, UiButton, UiBadge, ProgressBar} from '@/components/ui';
 import {getColorForReleaseType, prettyByteFormat} from '@/utils';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {Mod} from '@/types';
@@ -7,9 +7,12 @@ import {BaseData, InstanceJson, OperationProgressUpdateData} from '@/core/types/
 import {compatibleCrossLoaderPlatforms} from '@/utils/helpers/packHelpers';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useAppStore } from '@/store/appStore.ts';
-import {faCheck, faDownload, faSpinner} from '@fortawesome/free-solid-svg-icons';
+import {faBolt, faDownload, faSpinner} from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import {alertController} from "@/core/controllers/alertController.ts";
+import {UiSelectOption} from "@/components/ui/select/UiSelect.ts";
+import UiSelect from "@/components/ui/select/UiSelect.vue";
+import {toTitleCase} from "@/utils/helpers/stringHelpers.ts";
 
 type InstallProgress = {
   percentage: number;
@@ -47,8 +50,7 @@ const emit = defineEmits<{
 const appStore = useAppStore();
 
 const installing = ref(false);
-const finishedInstalling = ref(false);
-const selectedVersion = ref<string | null>(null);
+const selectedVersion = ref<string>("");
 
 const installProgress = ref<InstallProgress>(emptyProgress);
 const wsReqId = ref("");
@@ -56,8 +58,7 @@ const wsReqId = ref("");
 function close() {
   installProgress.value = emptyProgress;
   installing.value = false;
-  finishedInstalling.value = false;
-  selectedVersion.value = null;
+  selectedVersion.value = "";
   emit('close')
 }
 
@@ -69,11 +70,6 @@ onUnmounted(() => {
   // Stop listening to events!
   appStore.emitter.off('ws/message', onInstallMessage);
 })
-
-watch(() => open, (newVal) => {
-  if (!newVal) return;
-  selectedVersion.value = options.value[0]?.value as any;
-});
 
 function onInstallMessage(data: BaseData & { [key: string]: any }) {
   if (data.type !== "operationUpdate" && data.type !== "instanceInstallModReply") {
@@ -89,11 +85,16 @@ function onInstallMessage(data: BaseData & { [key: string]: any }) {
       return;
     }
     
+    if (data.status !== 'success') {
+      return;
+    }
+    
     wsReqId.value = "";
     installing.value = false;
     installProgress.value = emptyProgress;
-    finishedInstalling.value = true;
     emit('installed')
+    alertController.success("Mod installed successfully!");
+    close();
     return;
   }
 
@@ -126,70 +127,107 @@ async function installMod() {
   })
 
   wsReqId.value = result.messageId;
-  selectedVersion.value = null;
+  selectedVersion.value = "";
 }
 
 const options = computed(() => {
+  if (!mod) {
+    return [];
+  }
+  
   const crossLoaderPlatforms = compatibleCrossLoaderPlatforms(mcVersion, modLoader.toLowerCase());
-  return mod!.versions
+  return (mod.versions
     .filter(e => e.targets.findIndex(a => a.type === 'modloader' && crossLoaderPlatforms.includes(a.name)) !== -1)
     .filter(e => e.targets.findIndex((a) => a.type === 'game' && a.name === 'minecraft' && a.version === mcVersion) !== -1)
     .sort((a, b) => b.id - a.id)
     .map((e) => ({
-      value: e.id,
-      label: e.name,
-      badge: {
-        text: e.type,
-        color: getColorForReleaseType(e.type),
-      },
-      meta: prettyByteFormat(e.size),
-    })) ?? []
+      key: e.id.toString(),
+      value: e.name,
+      size: e.size,
+      releaseType: e.type,
+    })) ?? []) as UiSelectOption<{size: number, releaseType: string}>[];
 });
-</script>obon
+
+watch([() => open, () => options.value], (updateOptions) => {
+  if (!updateOptions[0] || !updateOptions[1]) {
+    return;
+  }
+
+  selectedVersion.value = options.value[0]?.key as any;
+});
+
+const modLogo = computed(() => {
+  if (!mod) return;
+  
+  return mod.art.find(e => e.type === "default")?.url;
+})
+
+const modLink = computed(() => {
+  if (!mod) return undefined;
+  
+  return mod.links.find(e => e.type === "curseforge")?.link;
+})
+</script>
 
 <template>
    <modal :open="open" @closed="close" :close-on-background-click="!installing"
-          :title="mod ? mod.name : 'Loading...'" :sub-title="!installing && finishedInstalling ? 'Installed!' : `Select the version you want to install`" :external-contents="true"
+          title="Install mod" :sub-title="installing ? 'Installing' : `Select the version you want to install`" :external-contents="true"
    >
      <modal-body v-if="mod">
-       <div class="py-4" v-if="!installing && !finishedInstalling">
-         <selection2
-           label="Select mod version"
-           v-model="selectedVersion"
-           :options="options"
-         />
+       <div class="mt-4 mb-4 flex gap-6 items-center">
+         <div class="bg-white/5 border border-white/10 inline-block rounded-lg p-2">
+           <img :src="modLogo" class="max-h-[80px]" />
+         </div>
+         
+         <div>
+           <a :href="modLink" class="font-bold text-xl hover:underline">{{ mod.name }}</a>
+           <p class="line-clamp-2 mt-1">{{ mod.synopsis }}</p>
+           <p class="text-white/80 mt-2">By <b>{{ mod.authors.map(e => e.name).join(", ") }}</b></p>
+         </div>
+       </div>
+       
+       <div class="py-4" v-if="!installing">
+         <UiSelect :options="options" v-model="selectedVersion" label="Mod version">
+           <template #option="{ option, clazz }">
+             <div class="flex items-center gap-4" :class="clazz">
+               <UiBadge class="!font-bold text-shadow" :style="{ backgroundColor: `${getColorForReleaseType(option.releaseType)}` }">{{ toTitleCase(option.releaseType) }}</UiBadge>
+               <div class="flex-1">{{ option.value }}</div>
+               <div class="text-right ml-6 text-white/80">
+                 <span v-if="option.size">{{ prettyByteFormat(option.size) }}</span>
+                 <span v-else>Unknown size</span>
+               </div>
+             </div>
+           </template>
+         </UiSelect>
        </div>
 
-       <div v-if="!installing && !finishedInstalling" class="pt-8">
-         <div class="flex items-center gap-4 mb-4">
+       <div v-if="!installing" class="pt-8">
+         <div class="flex items-center gap-4 mb-6">
            <img src="../../assets/curse-logo.svg" alt="CurseForge logo" width="26" />
-           <b class="block">About mod installs</b>
+           <b class="block text-lg">About mod installs</b>
          </div>
-         <ul class="flex flex-col gap-3">
+         <ul class="flex flex-col gap-3 list-disc pl-4">
            <li>❤️ Each mod install directly supports CurseForge Developers!</li>
            <li>🛠️ We'll do our best to install mod dependencies for you</li>
          </ul>
        </div>
 
-       <div class="installing mt-6 mb-4" v-if="!finishedInstalling && installing">
-         <div class="progress font-bold"><font-awesome-icon :icon="faSpinner" spin class="mr-2" /> Installing</div>
-         <div class="stats">
-           <div class="stat">
-             <div class="text">Progress</div>
-             <div class="value">{{ installProgress.percentage }}%</div>
+       <div class="installing mt-6 mb-4" v-if="installing">
+         <div class="flex items-center justify-between">
+           <div class="progress font-bold text-lg">
+             <font-awesome-icon :icon="faSpinner" spin class="mr-2" /> Installing
+           </div>
+           <div>
+             <FontAwesomeIcon :icon="faBolt" class="mr-2" />{{(installProgress.speed / 12500000).toFixed(2)}} Mbps
            </div>
          </div>
+         <ProgressBar class="mt-4" :progress="installProgress.percentage / 100" />
        </div>
-
-       <p v-if="!installing && finishedInstalling">
-         <span class="block">Mod has been installed! Thank you for support CurseForge developers ❤️</span>
-       </p>
      </modal-body>
 
      <modal-footer>
-       <div class="flex justify-end gap-4" v-if="!installing || !finishedInstalling">
-         <ui-button type="success" :icon="faDownload" v-if="!installing && !finishedInstalling" :disabled="!selectedVersion" @click="installMod">Install</ui-button>
-         <ui-button type="primary" @click="close" :icon="faCheck" v-if="finishedInstalling">Close</ui-button>
+       <div class="flex justify-end gap-4" v-if="!installing">
+         <ui-button type="success" :icon="faDownload" v-if="!installing" :disabled="!selectedVersion" @click="installMod">Install</ui-button>
        </div>
      </modal-footer>
    </modal>

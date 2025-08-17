@@ -3,11 +3,9 @@ import {SugaredInstanceJson} from '@/core/types/javaApi';
 import PackCard2 from '@/components/groups/modpack/PackCard2.vue';
 import {containsIgnoreCase} from '@/utils/helpers/stringHelpers';
 import Loader from '@/components/ui/Loader.vue';
-import Selection2, {SelectionOptions} from '@/components/ui/Selection2.vue';
 import {resolveModloader} from '@/utils/helpers/packHelpers';
 import UiButton from '@/components/ui/UiButton.vue';
 import PackPreview from '@/components/groups/modpack/PackPreview.vue';
-import {RouterNames} from '@/router';
 import { useInstanceStore } from '@/store/instancesStore.ts';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useModpackStore } from '@/store/modpackStore.ts';
@@ -26,6 +24,10 @@ import {useGlobalStore} from "@/store/globalStore.ts";
 import InstanceSelectActions from "@/components/groups/instanceSelect/InstanceSelectActions.vue";
 import {faCheckSquare} from "@fortawesome/free-regular-svg-icons";
 import {defaultInstanceCategory} from "@/core/constants.ts";
+import {UiSelectOption} from "@/components/ui/select/UiSelect.ts";
+import {IconDefinition} from "@fortawesome/free-brands-svg-icons";
+import UiSelect from "@/components/ui/select/UiSelect.vue";
+import {RouterNames} from "@/router";
 
 const groupOptions = [
   ['Category', 'category'],
@@ -39,12 +41,12 @@ const sortOptions = [
   ['Total Playtime', 'totalPlaytime'],
 ]
 
-function createOrderedOptions(options: string[][]): SelectionOptions {
+function createOrderedOptions(options: string[][]): UiSelectOption<{ sort: string, icon: IconDefinition }>[] {
   return options.flatMap(([label, value]) => [
     [`${label}`, value, 'Asc'],
     [`${label}`, `-${value}`, 'Des']
   ])
-    .map(([label, value, dir]) => ({label, value, badge: {color: '#008BF8', text: dir, icon: dir === "Asc" ? faArrowDownAZ : faArrowDownZA}}))
+    .map(([label, value, dir]) => ({key: value, value: label, sort: dir, icon: dir === "Asc" ? faArrowDownAZ : faArrowDownZA}))
 }
 
 const sortByOptions = createOrderedOptions(sortOptions)
@@ -207,10 +209,24 @@ watch(groupBy, onSortChange)
   <div class="mod-packs h-full">
     <div class="page-spacing" v-if="!instanceStore.loading && instanceStore.instances.length > 0">
       <header class="text-lg flex gap-4 mb-6 items-center">
-        <Input :icon="faSearch" fill v-model="searchTerm" placeholder="Search" class="flex-1" />
+        <Input label="Search" :icon="faSearch" fill v-model="searchTerm" placeholder="Search" class="flex-1" />
         
-        <selection2 v-if="Object.keys(groupedPacks).length > 1" :icon="faFolder" direction="right" :min-width="300" :options="groupByOptions" v-model="groupBy" aria-label="Sort categories" data-balloon-pos="down-right" />
-        <selection2 :icon="faSort" direction="right" :min-width="300" :options="sortByOptions" v-model="sortBy" aria-label="Sort packs" data-balloon-pos="down-right" />
+        <UiSelect label="Group by" v-if="Object.keys(groupedPacks).length > 1" v-model="groupBy" :options="groupByOptions" :icon="faFolder" placement="bottom-end" :min-width="300">
+          <template #option="{ option, clazz }">
+            <div class="flex items-center gap-2" :class="clazz">
+              <FontAwesomeIcon :icon="option.icon" />
+              <span>{{ option.value }}</span>
+            </div>
+          </template>
+        </UiSelect>
+        <UiSelect label="Sort by" v-model="sortBy" :options="sortByOptions" :icon="faSort" placement="bottom-end" :min-width="300">
+          <template #option="{ option, clazz }">
+            <div class="flex items-center gap-2" :class="clazz">
+              <FontAwesomeIcon :icon="option.icon" />
+              <span>{{ option.value }}</span>
+            </div>
+          </template>
+        </UiSelect>
       </header>
       
       <div class="categories">

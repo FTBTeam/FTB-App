@@ -1,23 +1,23 @@
-import {SelectionOptions} from '@/components/ui/Selection2.vue';
+import {UiSelectOption} from "@/components/ui/select/UiSelect.ts";
 
 export const ReleaseChannelOptions = (includeUnset = false) => [
   {
-    value: 'release',
-    label: 'Release',
-    meta: '⭐️',
+    key: 'release',
+    value: 'Release',
+    icon: '⭐'
   },
   {
-    value: 'beta',
-    label: 'Beta',
-    meta: 'β',
+    key: 'beta',
+    value: 'Beta',
+    icon: 'β'
   },
   {
-    value: 'alpha',
-    label: 'Alpha',
-    meta: '⚠️',
+    key: 'alpha',
+    value: 'Alpha',
+    icon: '⚠'
   },
   ...(includeUnset ? [{
-    value: 'unset',
-    label: 'Use app default',
+    key: 'unset',
+    value: 'Use app default',
   }] : []),
-] as SelectionOptions;
+] as UiSelectOption<{ icon: string }>[];
