@@ -6,10 +6,12 @@ const {
   placeholder = '',
   icon,
   label,
+  isPassword = false,
   disabled = false,
   fill = false
 } = defineProps<{
   icon?: IconDefinition;
+  isPassword?: boolean;
   label?: string;
   placeholder?: string;
   disabled?: boolean;
@@ -35,7 +37,7 @@ const value = defineModel<string>({
     :disabled="disabled"
   >
     <template v-slot="{ blur, focus, class: clazz }">
-      <input :placeholder="placeholder" @blur="(e) => {
+      <input :type="isPassword ? 'password' : 'text'" :placeholder="placeholder" @blur="(e) => {
         blur()
         emit('blur', e)
       }" @focus="(e) => {

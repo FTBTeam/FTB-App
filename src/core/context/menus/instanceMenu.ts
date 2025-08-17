@@ -1,11 +1,13 @@
 import {ContextMenu, MenuItem, MenuOptions} from '@/core/context/menus/contextMenu';
-import {faCog, faFolder, faLocationPin, faPlay, faTrash} from '@fortawesome/free-solid-svg-icons';
+import {faCog, faCopy, faFolder, faLocationPin, faPlay, faTrash} from '@fortawesome/free-solid-svg-icons';
 import appPlatform from '@platform';
 import {SugaredInstanceJson} from '@/core/types/javaApi';
 import {InstanceActions} from '@/core/actions/instanceActions';
 import {InstanceController} from '@/core/controllers/InstanceController';
-import {dialogsController} from '@/core/controllers/dialogsController';
+import {dialog, dialogsController, form} from '@/core/controllers/dialogsController';
 import {useAccountsStore} from "@/store/accountsStore.ts";
+import {z} from "zod";
+import {alertController} from "@/core/controllers/alertController.ts";
 
 export type InstanceMenuContext = {
   instance: SugaredInstanceJson
@@ -24,6 +26,10 @@ export const generalInstancePaths = [
   ["kubejs", "KubeJS"],
   ["scripts", "Scripts"],
 ]
+
+const offlineValidator = z.object({
+  username: z.string().min(1, "Username is required")
+})
 
 export class InstanceMenu extends ContextMenu<InstanceMenuContext> {
   name(): String {
@@ -44,8 +50,30 @@ export class InstanceMenu extends ContextMenu<InstanceMenuContext> {
         title: 'Play offline',
         icon: faPlay,
         async action(context) {
-          // TODO: Offline action
-          await InstanceActions.start(context.instance)
+          const accountStore = useAccountsStore();
+          
+          new Promise<Record<string, string> | null>((resolve) => {
+            dialogsController.createDialog(dialog("Play Offline")
+              .withCloseAction(() => resolve(null))
+              .withSubTitle("Enter a username to play offline")
+              .withForm(form(offlineValidator, values => resolve(values))
+                .input("username", "Username", accountStore.mcActiveProfile?.username ?? "Offline Player")
+                .build())
+              .build());
+          // Don't stall up the action as this will cause the context menu to not close
+          }).then((result) => {
+            if (result === null)  return;
+            
+            if (!result?.username) {
+              alertController.error(`You must enter a username to play offline.`);
+              return;
+            }
+            
+            InstanceController
+              .from(context.instance)
+              .playOffline(result.username)
+              .catch(error => alertController.error(`Failed to start instance offline: ${error.message}`));
+          })
         },
         predicate: _ => {
           const accountStore = useAccountsStore();
@@ -89,6 +117,16 @@ export class InstanceMenu extends ContextMenu<InstanceMenuContext> {
             predicate: context => context.instance.rootDirs?.includes(e[0])
           })) as MenuItem<InstanceMenuContext>[]
         ]
+      },
+      {
+        separator: true,
+      },
+      {
+        title: 'Duplicate Instance',
+        icon: faCopy,
+        async action(context) {
+          InstanceController.from(context.instance).openDuplicateDialog()
+        }
       },
       {
         title: 'Settings',

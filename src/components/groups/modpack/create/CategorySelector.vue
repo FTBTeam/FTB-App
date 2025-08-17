@@ -16,7 +16,6 @@ const {
   label = undefined,
 } = defineProps<{
   label?: string;
-  openDown?: boolean;
 }>()
 
 const value = defineModel<string>()

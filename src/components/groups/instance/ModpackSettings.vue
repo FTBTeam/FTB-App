@@ -7,7 +7,6 @@ import { InstanceJson, JavaInstall, SugaredInstanceJson } from '@/core/types/jav
 import {RouterNames} from '@/router';
 import {button, dialog, dialogsController} from '@/core/controllers/dialogsController';
 import {alertController} from '@/core/controllers/alertController';
-import DuplicateInstanceModal from '@/components/modals/actions/DuplicateInstanceModal.vue';
 import ArtworkSelector from '@/components/groups/modpack/components/ArtworkSelector.vue';
 import {typeIdToProvider} from '@/utils/helpers/packHelpers';
 import CategorySelector from '@/components/groups/modpack/create/CategorySelector.vue';
@@ -59,7 +58,6 @@ const preferIPv4Arg = "-Djava.net.preferIPv4Stack=true"
 const instanceSettings = ref<SaveJson>({} as any);
 const previousSettings = ref<SaveJson>({} as any);
 
-const showDuplicate = ref(false);
 const jreSelection = ref('');
 const javaVersions = ref<JavaInstall[]>([]);
 const deleting = ref(false);
@@ -295,7 +293,7 @@ const isLoader = computed(() => {
         Open Folder
       </UiButton>
 
-      <UiButton size="small" :icon="faCopy" @click="showDuplicate = true" type="info" aria-label="Copy this instance to a new instance, mods, worlds and all">
+      <UiButton size="small" :icon="faCopy" @click="InstanceController.from(instance).openDuplicateDialog()" type="info" aria-label="Copy this instance to a new instance, mods, worlds and all">
         Duplicate
       </UiButton>
 
@@ -448,21 +446,6 @@ const isLoader = computed(() => {
         {{instanceSettings.shellArgs}} java {{instanceSettings.jvmArgs}} -Xmx{{prettyByteFormat(Math.floor(parseInt(instanceSettings.memory.toString()) * megabyteSize))}} -jar minecraft.jar {{instanceSettings.programArgs}}
       </code>
     </div>
-
-    <Modal
-      :open="showDuplicate"
-      :externalContents="true"
-      @closed="showDuplicate = false"
-      title="Duplicate Instance"
-      subTitle="Are you sure?!"
-    >
-      <duplicate-instance-modal
-        @finished="showDuplicate = false"
-        :uuid="instance.uuid"
-        :instanceName="instance.name"
-        :category="instance.category"
-      />
-    </Modal>
     
     <Modal :open="userSelectModLoader" title="Select Mod Loader" :sub-title="`This instance is currently using ${hasModloader ? instance.modLoader : 'Vanilla'}`" @closed="() => {
       userSelectModLoader = false
