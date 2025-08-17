@@ -104,7 +104,7 @@ const endpoints = {
   pinInstance:                    io<PinInstanceHandlerData, PinInstanceHandlerReply>(),
   installedInstances:             io<InstalledInstancesData, InstalledInstancesDataReply>(),
   launchInstance:                 io<Nullable<LaunchInstanceData, "cancelLaunch">, LaunchInstanceDataReply>(),
-  instanceCategories:             io<Partial<InstanceCategoryHandlerData>, InstanceCategoryHandlerReply>(),
+  instanceCategories:             io<Partial<Omit<InstanceCategoryHandlerData, "type" | "requestId" | "secret">> & BaseData, InstanceCategoryHandlerReply>(),
   "instance.kill":                io<KillInstanceData, KillInstanceDataReply>(),
   installInstance:                io<Nullable<InstallInstanceData, "importFrom" | "name" | "artPath">, InstallInstanceDataReply>(),
   cancelInstallInstance:          io<CancelInstallInstanceData, CancelInstallInstanceDataReply>(),
