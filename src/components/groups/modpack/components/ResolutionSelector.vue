@@ -80,32 +80,34 @@ const resolutionId = computed(() => {
 </script>
 
 <template>
-  <h2 class="text-lg mb-4 font-bold">
-    <FontAwesomeIcon :icon="faTv" class="mr-2" />
-    Resolution / Display Settings
-  </h2>
-  
-  <div class="">
-    <div class="flex items-center mb-4 gap-4" :class="{'cursor-not-allowed opacity-50 pointer-events-none': model.fullScreen}">
-      <InputNumber input-class="w-[100px]" input label="Width" v-model="model.width" @blur="emit('update', model)" @update:model-value="emit('update', model)" />
-      <InputNumber input-class="w-[100px]" label="Height" v-model="model.height" @blur="emit('update', model)" @update:model-value="emit('update', model)" />
+  <div>
+    <h2 class="text-lg mb-4 font-bold">
+      <FontAwesomeIcon :icon="faTv" class="mr-2" />
+      Resolution / Display Settings
+    </h2>
 
-      <UiSelect placement="bottom-end" class="ml-auto" label="Presets" placeholder="Select a preset" :options="resolutionList" v-model="resolutionId" @update:model-value="selectResolution">
-        <template #option="{ option, clazz, isItem }">
-          <div :class="clazz" class="flex justify-between items-center">
-            <span :class="{'inline-block mr-6 text-white': !isItem}">{{ option.value }}</span>
-            <span class="text-muted">{{ option.aspect }}</span>
-          </div>
-        </template>
-      </UiSelect>
+    <div class="">
+      <div class="flex items-center mb-4 gap-4" :class="{'cursor-not-allowed opacity-50 pointer-events-none': model.fullScreen}">
+        <InputNumber input-class="w-[100px]" input label="Width" v-model="model.width" @blur="emit('update', model)" @update:model-value="emit('update', model)" />
+        <InputNumber input-class="w-[100px]" label="Height" v-model="model.height" @blur="emit('update', model)" @update:model-value="emit('update', model)" />
+
+        <UiSelect placement="bottom-end" class="ml-auto" label="Presets" placeholder="Select a preset" :options="resolutionList" v-model="resolutionId" @update:model-value="selectResolution">
+          <template #option="{ option, clazz, isItem }">
+            <div :class="clazz" class="flex justify-between items-center">
+              <span :class="{'inline-block mr-6 text-white': !isItem}">{{ option.value }}</span>
+              <span class="text-muted">{{ option.aspect }}</span>
+            </div>
+          </template>
+        </UiSelect>
+      </div>
+
+      <ui-toggle
+        label="Fullscreen"
+        v-model="model.fullScreen"
+        @update:model-value="emit('update', model)"
+        class="mb-4"
+        :align-right="true"
+      />
     </div>
-
-    <ui-toggle
-      label="Fullscreen"
-      v-model="model.fullScreen"
-      @update:model-value="emit('update', model)"
-      class="mb-4"
-      :align-right="true"
-    />
   </div>
 </template>

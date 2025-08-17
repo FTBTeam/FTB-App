@@ -1,17 +1,15 @@
 <script lang="ts" setup>
 import {alertController} from '@/core/controllers/alertController';
-import {ReleaseChannelOptions} from '@/utils/commonOptions';
 import {prettyByteFormat} from '@/utils';
 import UiToggle from '@/components/ui/UiToggle.vue';
 import RamSlider from '@/components/groups/modpack/components/RamSlider.vue';
 import {SettingsData} from '@/core/types/javaApi';
 import { Loader, UiButton, Input } from '@/components/ui';
 import { useAppSettings } from '@/store/appSettingsStore.ts';
-import { computed, onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { faCode, faUndo } from '@fortawesome/free-solid-svg-icons';
 import TextArea from '@/components/ui/form/TextArea/TextArea.vue';
 import ResolutionSelector, {ResolutionValue} from "@/components/groups/modpack/components/ResolutionSelector.vue";
-import UiSelect from "@/components/ui/select/UiSelect.vue";
 import ReleaseChannelSelector from "@/components/groups/modpack/components/ReleaseChannelSelector.vue";
 
 const appSettingsStore = useAppSettings();
