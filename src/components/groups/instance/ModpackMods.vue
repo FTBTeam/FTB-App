@@ -342,7 +342,7 @@ const installedMods = computed<[number, number][]>(() => {
       
       <template v-if="packInstalled && instance">
         <p class="text-center italic opacity-80" v-if="!packMods.length">{{ instance.name }} does not have any mods installed</p>
-        <recycle-scroller v-else class="complex-mod mod" :items="packMods" :item-size="70" key-field="index" v-slot="{ item }">
+        <recycle-scroller v-else class="complex-mod mod" :items="packMods" :item-size="54" key-field="index" v-slot="{ item }">
           <div class="flex gap-6 items-center mb-4">
             <img v-if="item.curse && item.curse.icon" :src="item.curse.icon" class="rounded" width="40" alt="">
             <div class="placeholder bg-black rounded mt-2" style="width: 40px; height: 40px" v-else-if="item.fileName !== ''"></div>

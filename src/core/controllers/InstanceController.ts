@@ -9,6 +9,13 @@ import { LaunchingStatus, useRunningInstancesStore } from '@/store/runningInstan
 import { useInstanceStore } from '@/store/instancesStore.ts';
 import { useAccountsStore } from '@/store/accountsStore.ts';
 import {alertController} from "@/core/controllers/alertController.ts";
+import {dialog, DialogHolder, dialogsController, form} from "@/core/controllers/dialogsController.ts";
+import {z} from "zod";
+
+const duplicateValidator = z.object({
+  modpack_name: z.string().min(1, "Name is required"),
+  category: z.string().optional(),
+});
 
 export type SaveJson = {
   name: string;
@@ -165,6 +172,37 @@ export class InstanceController {
     
     InstanceController.logger.warn("Failed to delete instance", result);
     return false;
+  }
+  
+  openDuplicateDialog() {
+    let dialogHolder: DialogHolder;
+    new Promise<Record<string, string> | null>((resolve) => {
+      dialogHolder = dialogsController.createDialog(dialog("Duplicate Instance")
+        .withCloseAction(() => resolve(null))
+        .withSubTitle("Create an exact copy of this instance under a new name and category")
+        .withForm(form(duplicateValidator, values => resolve(values))
+          .withCloseOnSubmit(false)
+          .input("modpack_name", "Name", this.instance.name + " Copy")
+          .categorySelect("category", "Category", this.instance.categoryId)
+          .build())
+        .build());
+      // Don't stall up the action as this will cause the context menu to not close
+    }).then((result) => {
+      if (result === null) return;
+
+      if (!result.modpack_name || !result.category) {
+        alertController.error(`You must enter a name and select a category to duplicate the instance.`);
+        return;
+      }
+
+      dialogHolder.setWorking(true)
+      this.duplicateInstance(result.modpack_name, result.category)
+        .catch(error => alertController.error(`Failed to start instance offline: ${error.message}`))
+        .finally(() => {
+          dialogHolder.setWorking(false);
+          dialogHolder.close();
+        })
+    })
   }
   
   async duplicateInstance(newName: string, newCategory: string) {

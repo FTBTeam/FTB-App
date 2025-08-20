@@ -95,7 +95,7 @@ watch(() => middlewareData.value.hide?.referenceHidden, (hidden) => {
     <Teleport to="body">
       <transition name="transition-fade">
         <div v-if="open && !disabled"
-             class="z-[60] select-options-drop font-semibold bg-[#2a2a2a] max-h-[300px] overflow-auto p-2 w-fit border border-white/30 rounded-lg"
+             class="z-[600] select-options-drop font-semibold bg-[#2a2a2a] max-h-[300px] overflow-auto p-2 w-fit border border-white/30 rounded-lg"
              ref="dropRef"
              :style="{
               ...floatingStyles,

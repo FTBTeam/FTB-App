@@ -1,8 +1,10 @@
 import { Dialog, DialogButton, useDialogsStore } from '@/store/dialogStore.ts';
 import { IconDefinition } from '@fortawesome/free-brands-svg-icons';
 import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
+import {BasicUiSelectOption} from "@/components/ui/select/UiSelect.ts";
+import {ZodSchema} from "zod";
 
-class DialogHolder {
+export class DialogHolder {
   private readonly _dialog: Dialog;
   
   constructor(dialog: Dialog) {
@@ -129,64 +131,83 @@ export class DialogBuilder {
 
 export type DialogForm = {
   fields: FormField[];
-  validator: FormValidator;
+  validator: ZodSchema;
+  onSubmit: FormSubmitHandler;
+  closeOnSubmit: boolean
 }
 
 export type FormField = {
   name: string;
   label: string;
-  type: SupportedFieldTypes;
   initialValue?: string;
-  required?: boolean;
-}
+} & ({
+  type: "input" | "password" | "textarea";
+} | {
+  type: "select";
+  options: BasicUiSelectOption[];
+} | {
+  type: "category-select";
+})
 
-export type SupportedFieldTypes = "input" | "select" | "password" | "textarea"
-export type FormValidator = (context: Record<string, any>) => [boolean, string[]];
+export type FormSubmitHandler = (values: Record<string, string>) => void;
 
 export class FormBuilder {
-  private required = true;
   private fields: FormField[] = [];
+  private closeOnSubmit = true;
   
   private constructor(
-    private readonly validator: FormValidator
+    private readonly validator: ZodSchema,
+    private readonly onSubmit: FormSubmitHandler,
   ) {}
   
   static create(
-    validator: FormValidator,
+    validator: ZodSchema,
+    onSubmit: FormSubmitHandler
   ) {
-    return new FormBuilder(validator);
+    return new FormBuilder(validator, onSubmit);
   }
 
-  public input(name: string, label: string, initialValue?: string, required?: boolean) {
-    return this._field("input", name, label, initialValue, required);
+  public input(name: string, label: string, initialValue?: string) {
+    return this._field("input", name, label, initialValue);
   }
   
-  public select(name: string, label: string, initialValue?: string, required?: boolean) {
-    return this._field("select", name, label, initialValue, required)
-  }
-  
-  public password(name: string, label: string, initialValue?: string, required?: boolean) {
-    return this._field("password", name, label, initialValue, required)
-  }
-  
-  public textarea(name: string, label: string, initialValue?: string, required?: boolean) {
-    return this._field("textarea", name, label, initialValue, required)
-  }
-  
-  private _field(type: SupportedFieldTypes, name: string, label: string, initialValue?: string, required?: boolean) {
+  public categorySelect(name: string, label: string, initialValue?: string) {
     this.fields.push({
-      name,
-      label,
-      type,
-      initialValue: initialValue ?? "",
-      required: required ?? this.required,
+      name, label, type: "category-select", initialValue
     });
     
     return this;
   }
   
-  public optional() {
-    this.required = false;
+  public select(name: string, label: string, options: BasicUiSelectOption[], initialValue?: string) {
+    this.fields.push({
+      name, label, type: "select", options, initialValue, 
+    });
+    
+    return this;
+  }
+  
+  public password(name: string, label: string, initialValue?: string) {
+    return this._field("password", name, label, initialValue)
+  }
+  
+  public textarea(name: string, label: string, initialValue?: string) {
+    return this._field("textarea", name, label, initialValue)
+  }
+  
+  private _field(type: "input" | "password" | "textarea", name: string, label: string, initialValue?: string) {
+    this.fields.push({
+      name,
+      label,
+      type,
+      initialValue: initialValue ?? "",
+    });
+    
+    return this;
+  }
+  
+  public withCloseOnSubmit(closeOnSubmit: boolean) {
+    this.closeOnSubmit = closeOnSubmit;
     return this;
   }
   
@@ -194,13 +215,12 @@ export class FormBuilder {
     return {
       fields: this.fields,
       validator: this.validator,
+      onSubmit: this.onSubmit,
+      closeOnSubmit: this.closeOnSubmit,
     }
   }
 }
 
-/**
- * TODO: Add support for basic forms via a context and validation system
- */
 export class ButtonBuilder {
   action?: () => void;
   icon?: IconDefinition;
@@ -241,3 +261,4 @@ export class ButtonBuilder {
 
 export const dialog = (title: string) => DialogBuilder.create(title);
 export const button = (text: string) => ButtonBuilder.create(text)
+export const form = (validator: ZodSchema, onSubmit: FormSubmitHandler) => FormBuilder.create(validator, onSubmit);
