@@ -38,7 +38,7 @@ async function duplicate() {
     const controller = InstanceController.from(instance);
     try {
       await controller.duplicateInstance(newName, newCategory);
-    } catch (e) {
+    } catch (e: any) {
       alertController.error(`Failed to duplicate instance ${instance.name}: ${e.message}`);
       console.error(e);
     } finally {
