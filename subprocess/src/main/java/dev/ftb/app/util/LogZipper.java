@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import dev.ftb.app.AppMain;
 import dev.ftb.app.Constants;
 import dev.ftb.app.Instances;
 import dev.ftb.app.accounts.AccountManager;
@@ -220,7 +221,7 @@ public class LogZipper {
         for (Instance instance : instances) {
             var instanceObj = new JsonObject();
 
-            var packPathName = Constants.INSTANCES_FOLDER_LOC.relativize(instance.getDir()).toString();
+            var packPathName = AppMain.paths().instancesDir().relativize(instance.getDir()).toString();
 
             // Get the creation time of the instance dir
             var creationTime = 0L;
@@ -293,7 +294,7 @@ public class LogZipper {
         } catch (Throwable ignored) {
         }
 
-        Path debugLogFile = Constants.getDataDir().resolve("logs/debug.log");
+        Path debugLogFile = AppMain.paths().dataDir().resolve("logs/debug.log");
 
         if (Files.exists(debugLogFile)) {
             try {
@@ -307,7 +308,7 @@ public class LogZipper {
     }
     
     public String getHttpLogs() {
-        Path httpLogFile = Constants.getDataDir().resolve("logs/http-requests.log");
+        Path httpLogFile = AppMain.paths().dataDir().resolve("logs/http-requests.log");
 
         if (Files.exists(httpLogFile)) {
             try {
@@ -322,7 +323,7 @@ public class LogZipper {
 
     public void includeHistoricLogs(ZipOutputStream writer, List<String> files) {
         var existingFiles = files.stream()
-            .map(Constants.getDataDir().resolve("logs")::resolve)
+            .map(AppMain.paths().dataDir().resolve("logs")::resolve)
             .filter(Files::exists)
             .toList();
 
@@ -348,7 +349,7 @@ public class LogZipper {
 
         if (!OperatingSystem.current().isWindows()) {
             // Electron logs
-            appLogs.add(Constants.getDataDir().resolve("logs/electron-main.log"));
+            appLogs.add(AppMain.paths().dataDir().resolve("logs/electron-main.log"));
         } else {
             // Get AppData/Local
             var appData = System.getenv("LOCALAPPDATA");
@@ -367,7 +368,7 @@ public class LogZipper {
     }
 
     private String getRuntimes() {
-        var runtimesPath = Constants.BIN_LOCATION.resolve("runtime/installations.json");
+        var runtimesPath = AppMain.paths().binDir().resolve("runtime/installations.json");
         if (Files.notExists(runtimesPath)) {
             return "";
         }
@@ -382,11 +383,11 @@ public class LogZipper {
     }
 
     private String getVersions() {
-        return getTopLevelDirectoriesAsString(Constants.BIN_LOCATION.resolve("versions"));
+        return getTopLevelDirectoriesAsString(AppMain.paths().mcVersionsDir());
     }
 
     private String getInstances() {
-        return getTopLevelDirectoriesAsString(Constants.INSTANCES_FOLDER_LOC);
+        return getTopLevelDirectoriesAsString(AppMain.paths().instancesDir());
     }
 
     private String getInstancesFromMemory() {
@@ -514,12 +515,12 @@ public class LogZipper {
     }
     
     private static Path locateOutputPath() {
-        var outputPath = Constants.getDataDir().resolve("log-exports");
+        var outputPath = AppMain.paths().dataDir().resolve("log-exports");
         if (Files.notExists(outputPath)) {
             try {
                 Files.createDirectories(outputPath);
             } catch (IOException e) {
-                return Constants.getDataDir();
+                return AppMain.paths().dataDir();
             }
         }
         

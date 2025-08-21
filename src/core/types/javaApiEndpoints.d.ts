@@ -43,7 +43,6 @@ export type ApiEndpoints = 	"installedInstances" |
 	"storage.get" |
 	"appInit" |
 	"accounts.get-oauth" |
-	"videoCache" |
 	"getJavas" |
 	"profiles.remove" |
 	"accounts.store-oauth" |

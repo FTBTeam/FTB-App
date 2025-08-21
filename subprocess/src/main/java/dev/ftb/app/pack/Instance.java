@@ -3,7 +3,6 @@ package dev.ftb.app.pack;
 import com.google.gson.JsonParseException;
 import dev.ftb.app.Analytics;
 import dev.ftb.app.AppMain;
-import dev.ftb.app.Constants;
 import dev.ftb.app.Instances;
 import dev.ftb.app.data.InstanceJson;
 import dev.ftb.app.data.InstanceModifications;
@@ -19,8 +18,8 @@ import dev.ftb.app.install.tasks.DownloadTask;
 import dev.ftb.app.instance.InstanceCategory;
 import dev.ftb.app.minecraft.modloader.forge.ForgeJarModLoader;
 import dev.ftb.app.storage.settings.Settings;
-import dev.ftb.app.util.CurseMetadataCache.FileMetadata;
 import dev.ftb.app.util.*;
+import dev.ftb.app.util.CurseMetadataCache.FileMetadata;
 import net.covers1624.quack.collection.ColUtils;
 import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.JsonUtils;
@@ -32,7 +31,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.BindException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
@@ -47,7 +47,7 @@ public class Instance {
         81L,  // Vanilla
         104L, // Forge
         105L, // Fabric
-        116L  // NeoForge  
+        116L  // NeoForge
     );
     
     private static final Logger LOGGER = LogManager.getLogger();
@@ -565,7 +565,7 @@ public class Instance {
                     file.getSize(),
                     sha1,
                     String.valueOf(murmur),
-                    rich ? Constants.CURSE_METADATA_CACHE.getCurseMeta(mod, String.valueOf(murmur)) : null
+                    rich ? CurseMetadataCache.get().getCurseMeta(mod, String.valueOf(murmur)) : null
             ));
         }
 
@@ -596,7 +596,7 @@ public class Instance {
                 
                 CurseMetadata ids;
                 if (rich) {
-                    ids = Constants.CURSE_METADATA_CACHE.getCurseMeta(override.getCurseProject(), override.getCurseFile());
+                    ids = CurseMetadataCache.get().getCurseMeta(override.getCurseProject(), override.getCurseFile());
                 } else {
                     ids = CurseMetadata.basic(override.getCurseProject(), override.getCurseFile());
                 }
@@ -644,7 +644,7 @@ public class Instance {
 
             long curseProject = -1;
             long curseFile = -1;
-            FileMetadata metadata = Constants.CURSE_METADATA_CACHE.queryMetadata(murmurHash);
+            FileMetadata metadata = CurseMetadataCache.get().queryMetadata(murmurHash);
             if (metadata != null) {
                 LOGGER.info(" Identified as {} {} {}", metadata.name(), metadata.curseProject(), metadata.curseFile());
                 curseProject = metadata.curseProject();

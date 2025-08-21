@@ -1,6 +1,7 @@
 package dev.ftb.app.install.tasks.modloader.forge;
 
 import com.google.gson.JsonObject;
+import dev.ftb.app.AppMain;
 import dev.ftb.app.Constants;
 import dev.ftb.app.data.forge.VersionOverrides;
 import dev.ftb.app.data.forge.installerv1.InstallProfile;
@@ -63,7 +64,7 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
         //       what needs to be done for an installation.
         DownloadTask task = builder()
                 .url(appendIfMissing(Constants.CH_MAVEN, notation.toPath()))
-                .dest(notation.toPath(Constants.LIBRARY_LOCATION))
+                .dest(notation.toPath(AppMain.paths().mcLibrariesDir()))
                 .withValidation(DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true))
                 .tryCompanionHashes()
                 .build();
@@ -85,7 +86,7 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
         // TODO, this is a common path with above.
         DownloadTask task = builder()
                 .url(appendIfMissing(Constants.CH_MAVEN, notation.toPath()))
-                .dest(notation.toPath(Constants.LIBRARY_LOCATION))
+                .dest(notation.toPath(AppMain.paths().mcLibrariesDir()))
                 .withValidation(DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true))
                 .tryCompanionHashes()
                 .build();

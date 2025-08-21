@@ -1,5 +1,6 @@
 package dev.ftb.app.install.tasks.modloader.forge;
 
+import dev.ftb.app.AppMain;
 import dev.ftb.app.Constants;
 import dev.ftb.app.install.tasks.DownloadTask;
 import dev.ftb.app.install.tasks.DownloadTask.DownloadValidation;
@@ -39,7 +40,7 @@ public class LegacyForgeInstallTask extends AbstractForgeInstallTask {
         assert versionName != null;
 
         instance.props.hasInstMods = true;
-        Path versionsDir = Constants.BIN_LOCATION.resolve("versions");
+        Path versionsDir = AppMain.paths().mcVersionsDir();
         Path instMods = instance.getDir().resolve("instmods");
         
         instance.props.jvmArgs = instance.props.jvmArgs + " -Dfml.ignorePatchDiscrepancies=true -Dfml.ignoreInvalidMinecraftCertificates=true -Dminecraft.applet.TargetDirectory=\"" + instance.getDir().toAbsolutePath() + "\"";

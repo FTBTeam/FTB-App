@@ -2,6 +2,7 @@ package dev.ftb.app.pack;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import dev.ftb.app.AppMain;
 import dev.ftb.app.Constants;
 import dev.ftb.app.accounts.AccountManager;
 import dev.ftb.app.accounts.MicrosoftProfile;
@@ -50,7 +51,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import static dev.ftb.app.minecraft.jsons.VersionManifest.LEGACY_ASSETS_VERSION;
-import static dev.ftb.app.util.Log4jMarkers.*;
+import static dev.ftb.app.util.Log4jMarkers.MINECRAFT;
 import static net.covers1624.quack.collection.ColUtils.iterable;
 import static net.covers1624.quack.util.SneakyUtils.sneak;
 
@@ -139,9 +140,9 @@ public class InstanceLauncher {
         setPhase(Phase.INITIALIZING);
         progressTracker.reset(NUM_STEPS);
 
-        Path assetsDir = Constants.BIN_LOCATION.resolve("assets");
-        Path versionsDir = Constants.BIN_LOCATION.resolve("versions");
-        Path librariesDir = Constants.BIN_LOCATION.resolve("libraries");
+        Path assetsDir = AppMain.paths().mcAssetsDir();
+        Path versionsDir = AppMain.paths().mcVersionsDir();
+        Path librariesDir = AppMain.paths().mcLibrariesDir();
 
         Set<String> features = new HashSet<>();
         if (instance.props.width != 0 && instance.props.height != 0) {
@@ -463,7 +464,7 @@ public class InstanceLauncher {
 
             AssetIndexManifest.AssetObject icon = assetPair.getRight().objects.get("icons/minecraft.icns");
             if (icon != null) {
-                Path path = Constants.BIN_LOCATION.resolve("assets")
+                Path path = AppMain.paths().mcAssetsDir()
                         .resolve("objects")
                         .resolve(icon.getPath());
                 subMap.put("minecraft_icon", path.toAbsolutePath().toString());
