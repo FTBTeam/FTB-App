@@ -2,7 +2,7 @@ package dev.ftb.app.install.tasks.modloader.forge;
 
 import com.google.common.hash.Hashing;
 import com.google.gson.JsonObject;
-import dev.ftb.app.Constants;
+import dev.ftb.app.AppMain;
 import dev.ftb.app.data.forge.installerv1.InstallProfile;
 import dev.ftb.app.install.tasks.TaskProgressListener;
 import dev.ftb.app.minecraft.jsons.VersionManifest;
@@ -46,8 +46,8 @@ public class ForgeV1InstallTask extends AbstractForgeInstallTask {
 
     @Override
     public void execute(@Nullable CancellationToken cancelToken, @Nullable TaskProgressListener listener) throws Throwable {
-        Path versionsDir = Constants.BIN_LOCATION.resolve("versions");
-        Path librariesDir = Constants.BIN_LOCATION.resolve("libraries");
+        Path versionsDir = AppMain.paths().mcVersionsDir();
+        Path librariesDir = AppMain.paths().mcLibrariesDir();
 
         try (FileSystem fs = IOUtils.getJarFileSystem(installerJar, true)) {
             Path installerRoot = fs.getPath("/");

@@ -3,6 +3,7 @@ package dev.ftb.app.data;
 import com.google.common.hash.HashCode;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
+import dev.ftb.app.AppMain;
 import dev.ftb.app.Constants;
 import dev.ftb.app.install.tasks.DownloadTask;
 import dev.ftb.app.install.tasks.DownloadTask.DownloadValidation;
@@ -33,15 +34,13 @@ public class InstanceSupportMeta {
 
     private List<SupportEntry> supportMods = new LinkedList<>();
     private List<SupportEntry> supportAgents = new LinkedList<>();
-
-    @Nullable
+    
     public static InstanceSupportMeta update() throws IOException {
         return update(0);
     }
-
-    @Nullable
+    
     private static InstanceSupportMeta update(int depth) throws IOException {
-        Path metaFile = Constants.BIN_LOCATION.resolve("support-meta.json");
+        Path metaFile = AppMain.paths().binDir().resolve("support-meta.json");
         if (Files.exists(metaFile)) {
             try {
                 if (Files.readString(metaFile).trim().isEmpty()) {

@@ -15,6 +15,7 @@ import dev.ftb.app.data.modpack.ModpackVersionManifest;
 import dev.ftb.app.data.modpack.ModpackVersionModsManifest;
 import dev.ftb.app.data.modpack.ModsLookupManifest;
 import dev.ftb.app.pack.Instance;
+import dev.ftb.app.util.ModVersionCache;
 import okhttp3.MediaType;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -124,7 +125,7 @@ public class InstanceModsHandler implements IMessageHandler<InstanceModsData> {
 
                     for (var mod : richDataMods) {
                         if (mod.richData() == null) continue; // not possible, stopping ide complaints
-                        ModManifest manifest = Constants.MOD_VERSION_CACHE.queryMod(mod.richData().curseProject()).join();
+                        ModManifest manifest = ModVersionCache.get().queryMod(mod.richData().curseProject()).join();
                         if (manifest == null) continue;
 
                         var version = manifest.findLatestCompatibleVersion(modLoader.getName(), mcVersion);

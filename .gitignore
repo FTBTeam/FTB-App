@@ -82,3 +82,5 @@ overwolf/jdk-*/
 dist-electron
 *storybook.log
 .pnpm-store
+
+.ftba/
