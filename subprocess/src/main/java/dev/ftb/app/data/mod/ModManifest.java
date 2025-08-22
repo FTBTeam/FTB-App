@@ -18,10 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class ModManifest {
 
@@ -85,29 +82,38 @@ public class ModManifest {
     }
 
     public @Nullable Version findLatestCompatibleVersion(String modLoader, String mcVersion) {
-        return FastStream.of(versions)
-                .filter(e -> {
-                    Target gameTarget = e.getTarget("game");
-                    if (gameTarget == null || !gameTarget.getVersion().equals(mcVersion)) return false;
-                    
-                    Target loaderTarget = e.getTarget("modloader");
-                    if (loaderTarget == null) {
-                        // Lots of mods don't have a Forge requirement, as ModLoader selection was introduced after they were added.
-                        // By default, we just assume its Forge compatible. If this turns out to be an issue we can perhaps refine it.
-                        return modLoader.equals("forge");
-                    }
-                    
-                    // #ThanksForge
-                    if (mcVersion.equals("1.20.1") && (modLoader.equals("forge") || modLoader.equals("neoforge"))) {
-                        // 1.20.1 is special as most mods are compatible with both Forge and NeoForge as they're 
-                        // essentially identical. Although this isn't ideal, we'll allow either to be considered compatible
-                        return loaderTarget.getName().equals("forge") || loaderTarget.getName().equals("neoforge");
-                    }
-                    
-                    return loaderTarget.getName().equals(modLoader);
-                })
-                .sorted(Comparator.comparingLong(e -> -e.id))
-                .firstOrDefault();
+        List<ModManifest.Version> compatibleVersions = new ArrayList<>();
+        
+        for (Version version : versions) {
+            var gameTargets = version.getTargetsByType("game");
+            var isGameTargeted = gameTargets.stream().anyMatch(target -> target.getVersion().equals(mcVersion));
+            if (!isGameTargeted) {
+                continue;
+            }
+            
+            var modloaderTargets = version.getTargetsByType("modloader");
+            var isModloaderTargeted = modloaderTargets.stream().anyMatch(target -> target.getName().equals(modLoader));
+            if (!isModloaderTargeted && modloaderTargets.isEmpty() && modLoader.equals("forge")) {
+                // Lots of mods don't have a Forge requirement, as ModLoader selection was introduced after they were added.
+                // By default, we just assume its Forge compatible. If this turns out to be an issue we can perhaps refine it.
+                isModloaderTargeted = true;
+            }
+            
+            if (!isModloaderTargeted && mcVersion.equals("1.20.1") && (modLoader.equals("forge") || modLoader.equals("neoforge"))) {
+                // 1.20.1 is special as most mods are compatible with both Forge and NeoForge as they're 
+                // essentially identical. Although this isn't ideal, we'll allow either to be considered compatible
+                isModloaderTargeted = modloaderTargets.stream().anyMatch(target -> target.getName().equals("forge") || target.getName().equals("neoforge"));
+            }
+            
+            if (!isModloaderTargeted) {
+                continue;
+            }
+            
+            compatibleVersions.add(version);
+        }
+
+        return compatibleVersions.stream().max(Comparator.comparing(Version::getId))
+            .orElse(null);
     }
 
     public void visitCompatibleVersion(ModManifest requestedBy, ModCollector collector) {
@@ -230,6 +236,12 @@ public class ModManifest {
             return FastStream.of(targets)
                     .filter(e -> Objects.equals(e.type, target))
                     .firstOrDefault();
+        }
+        
+        public List<Target> getTargetsByType(String type) {
+            return targets.stream()
+                    .filter(e -> Objects.equals(e.type, type))
+                    .toList();
         }
 
         public FileValidation createValidation() {
