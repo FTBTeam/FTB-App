@@ -44,7 +44,7 @@ public class Settings {
             // Migration happened, we don't need to load.
 
             // Again, this shouldn't be needed but it looks like it is...
-            if (settingsData.instanceLocation().equals(AppMain.paths().dataDir())) {
+            if (settingsData.instanceLocation().equals(AppMain.paths().workingDir())) {
                 Settings.settingsData.setInstanceLocation(AppMain.paths().instancesDir());
             }
             
@@ -57,7 +57,7 @@ public class Settings {
             
             // Attempt to fix the instance location if it's fucked for some reason
             // I think something with path parsing might break it.
-            if (settingsData.instanceLocation().equals(AppMain.paths().dataDir())) {
+            if (settingsData.instanceLocation().equals(AppMain.paths().workingDir())) {
                 Settings.settingsData.setInstanceLocation(AppMain.paths().instancesDir());   
             }
         } catch (Throwable e) {
@@ -181,7 +181,7 @@ public class Settings {
                 getOrDefault("instanceLocation", input -> {
                     // This shouldn't be needed but it looks like it is...
                     var path = Path.of(input);
-                    if (path.equals(AppMain.paths().dataDir())) {
+                    if (path.equals(AppMain.paths().workingDir())) {
                         // Something borked...
                         LOGGER.error("Instance location is the same as the data directory. Using default.");
                         return AppMain.paths().instancesDir();

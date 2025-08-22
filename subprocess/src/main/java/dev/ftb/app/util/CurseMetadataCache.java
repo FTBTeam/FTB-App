@@ -36,7 +36,7 @@ public class CurseMetadataCache {
     
     public static CurseMetadataCache get() {
         if (instance == null) {
-            instance = new CurseMetadataCache(AppMain.paths().dataDir().resolve(".curse_meta.json"));
+            instance = new CurseMetadataCache(AppMain.paths().workingDir().resolve(".curse_meta.json"));
         }
         
         return instance;

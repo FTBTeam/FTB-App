@@ -251,7 +251,7 @@ idea.project.settings {
             jvmArgs += '-DCloudSaveManager.debug=true '                  // Enable debug logging for CloudSaveManager
             programParameters = '--dev'
             // Set the working directory to the root of the project.
-            workingDirectory = project.file('../')
+            workingDirectory = project.file('../.ftba')
         }
     }
 }

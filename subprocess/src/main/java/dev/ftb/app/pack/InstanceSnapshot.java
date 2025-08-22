@@ -46,7 +46,7 @@ public class InstanceSnapshot {
         this.createdAt = Instant.now();
         
         this.snapshotIdentifier = UUID.randomUUID();
-        this.snapshotLocation = AppMain.paths().dataDir().resolve("snapshots/snapshot-%s-%s.zip".formatted(this.instance.getUuid(), this.snapshotIdentifier));
+        this.snapshotLocation = AppMain.paths().workingDir().resolve("snapshots/snapshot-%s-%s.zip".formatted(this.instance.getUuid(), this.snapshotIdentifier));
     }
     
     public InstanceSnapshot specifyEffectedFiles(Set<String> affectedRootFiles) {

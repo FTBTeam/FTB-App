@@ -36,7 +36,7 @@ public class AccountManager {
 
     private AccountManager() {
         this.storeFile = AppMain.paths().storageDir().resolve("mc-accounts.json");
-        this.oldStoreFile = AppMain.paths().dataDir().resolve("profiles.json");
+        this.oldStoreFile = AppMain.paths().workingDir().resolve("profiles.json");
         
         loadProfiles();
     }

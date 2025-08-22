@@ -61,7 +61,7 @@ public class ModVersionCache {
     
     public static ModVersionCache get() {
         if (instance == null) {
-            instance = new ModVersionCache(AppMain.paths().dataDir().resolve(".mod_meta.json"));
+            instance = new ModVersionCache(AppMain.paths().workingDir().resolve(".mod_meta.json"));
         }
         
         return instance;

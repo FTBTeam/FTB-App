@@ -294,7 +294,7 @@ public class LogZipper {
         } catch (Throwable ignored) {
         }
 
-        Path debugLogFile = AppMain.paths().dataDir().resolve("logs/debug.log");
+        Path debugLogFile = AppMain.paths().workingDir().resolve("logs/debug.log");
 
         if (Files.exists(debugLogFile)) {
             try {
@@ -308,7 +308,7 @@ public class LogZipper {
     }
     
     public String getHttpLogs() {
-        Path httpLogFile = AppMain.paths().dataDir().resolve("logs/http-requests.log");
+        Path httpLogFile = AppMain.paths().workingDir().resolve("logs/http-requests.log");
 
         if (Files.exists(httpLogFile)) {
             try {
@@ -323,7 +323,7 @@ public class LogZipper {
 
     public void includeHistoricLogs(ZipOutputStream writer, List<String> files) {
         var existingFiles = files.stream()
-            .map(AppMain.paths().dataDir().resolve("logs")::resolve)
+            .map(AppMain.paths().workingDir().resolve("logs")::resolve)
             .filter(Files::exists)
             .toList();
 
@@ -349,7 +349,7 @@ public class LogZipper {
 
         if (!OperatingSystem.current().isWindows()) {
             // Electron logs
-            appLogs.add(AppMain.paths().dataDir().resolve("logs/electron-main.log"));
+            appLogs.add(AppMain.paths().workingDir().resolve("logs/electron-main.log"));
         } else {
             // Get AppData/Local
             var appData = System.getenv("LOCALAPPDATA");
@@ -515,12 +515,12 @@ public class LogZipper {
     }
     
     private static Path locateOutputPath() {
-        var outputPath = AppMain.paths().dataDir().resolve("log-exports");
+        var outputPath = AppMain.paths().workingDir().resolve("log-exports");
         if (Files.notExists(outputPath)) {
             try {
                 Files.createDirectories(outputPath);
             } catch (IOException e) {
-                return AppMain.paths().dataDir();
+                return AppMain.paths().workingDir();
             }
         }
         

@@ -14,12 +14,9 @@ import java.util.List;
 public class AppPaths {
     private static final Logger LOGGER = LoggerFactory.getLogger(AppPaths.class);
     
-    private static final String DOT_FTBA = ".ftba"; // This is the inner data directory name.
-    
     private final List<Path> paths = new LinkedList<>();
     
     private final Path workingDir;
-    private final Path dataDir;
     private final Path binDir;
     private final Path storageDir;
     
@@ -38,21 +35,20 @@ public class AppPaths {
     public AppPaths() {
         this.workingDir = Path.of(""); // This is where the app is run from and thus the working directory.
         
-        this.dataDir = this.resolvePath(this.workingDir, DOT_FTBA);
-        this.binDir = this.resolvePath(this.dataDir, "bin");
-        this.storageDir = this.resolvePath(this.dataDir,"storage");
+        this.binDir = this.resolvePath(this.workingDir, "bin");
+        this.storageDir = this.resolvePath(this.workingDir,"storage");
         
         this.mcLibrariesDir = this.resolvePath(this.binDir, "libraries");
         this.mcVersionsDir = this.resolvePath(this.binDir, "versions");
         this.mcAssetsDir = this.resolvePath(this.binDir, "assets");
         
-        this.instancesDir = this.resolvePath(this.dataDir, "instances");
+        this.instancesDir = this.resolvePath(this.workingDir, "instances");
         
         this.legacySettingsFile = this.binDir.resolve("settings.json");
         this.settingsFile = this.storageDir.resolve("settings.json");
         this.storageFile = this.storageDir.resolve("storage.json");
         this.credentialsFiles = this.storageDir.resolve("credentials.encr");
-        this.processMarkerFile = this.dataDir.resolve("app.pid");
+        this.processMarkerFile = this.workingDir.resolve("app.pid");
         
         this.ensureDirectoriesExist();
     }
@@ -79,11 +75,7 @@ public class AppPaths {
     public Path workingDir() {
         return workingDir;
     }
-
-    public Path dataDir() {
-        return dataDir;
-    }
-
+    
     public Path binDir() {
         return binDir;
     }

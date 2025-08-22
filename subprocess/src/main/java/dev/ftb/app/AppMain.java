@@ -215,7 +215,7 @@ public class AppMain {
 
         CompletableFuture.runAsync(localCache::clean);
 
-        if (!Files.isWritable(AppMain.paths().dataDir())) {
+        if (!Files.isWritable(AppMain.paths().workingDir())) {
             OpenModalData.openModal("Critical Error", "The FTBApp is unable to write to your selected data directory, this can be caused by file permission errors, anti-virus or any number of other configuration issues.<br />If you continue, the app will not work as intended and you may be unable to install or run any modpacks.", List.of(
                 new OpenModalData.ModalButton("Exit", "success", AppMain::exit),
                 new OpenModalData.ModalButton("Continue", "danger", () -> {
@@ -438,7 +438,6 @@ FTB App Subprocess startup;
 \t- OS Version:     {}
 \t- OS Arch:        {}
 - Paths
-\t- Data Dir:       {}
 \t- CWD:            {}
 - Arguments
 \t- Args:           {}
@@ -450,7 +449,6 @@ FTB App Subprocess startup;
             System.getProperty("os.name"),
             System.getProperty("os.version"),
             Architecture.current().name(),
-            paths().dataDir().toAbsolutePath(),
             paths().workingDir().toAbsolutePath(),
             String.join(" ", args),
             jvmArgs
