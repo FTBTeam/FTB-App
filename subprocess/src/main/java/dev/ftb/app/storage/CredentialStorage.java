@@ -1,7 +1,7 @@
 package dev.ftb.app.storage;
 
 import com.google.gson.Gson;
-import dev.ftb.app.Constants;
+import dev.ftb.app.AppMain;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -112,7 +112,7 @@ public class CredentialStorage {
             String encryptedCredentials = Base64.getEncoder().encodeToString(encryptedBytes);
             
             // Save the data to the file system
-            Files.writeString(Constants.CREDENTIALS_FILE, encryptedCredentials);
+            Files.writeString(AppMain.paths().credentialsFiles(), encryptedCredentials);
             return true;
         } catch (Exception e) {
             LOGGER.error("Failed to encrypt credentials", e);
@@ -127,7 +127,7 @@ public class CredentialStorage {
         }
         
         // Load the encrypted credentials from the file system
-        Path credentials = Constants.CREDENTIALS_FILE;
+        Path credentials = AppMain.paths().credentialsFiles();
         if (!Files.exists(credentials)) {
             LOGGER.warn("Failed to load credentials, credentials file does not exist");
             return false;

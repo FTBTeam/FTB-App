@@ -1,6 +1,6 @@
 package dev.ftb.app.minecraft.modloader.forge;
 
-import dev.ftb.app.Constants;
+import dev.ftb.app.AppMain;
 import dev.ftb.app.pack.Instance;
 import dev.ftb.app.util.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -30,12 +30,12 @@ public class ForgeJarModLoader {
             LOGGER.info("mc location: {}", mcFile.toAbsolutePath());
 
 			//Merge Jars, This will be a prePlayTask in release code
-			Path libVersionDir = Constants.LIBRARY_LOCATION.resolve("net/minecraftforge/forge/" + instance.getMcVersion() + "-" + instance.getModLoader());
+			Path libVersionDir = AppMain.paths().mcLibrariesDir().resolve("net/minecraftforge/forge/" + instance.getMcVersion() + "-" + instance.getModLoader());
             LOGGER.info("LibVersionDir: {}", libVersionDir);
 			FileUtils.createDirectories(libVersionDir);
             Path forgeVersion = libVersionDir.resolve("forge-" +instance.getMcVersion() + "-" + instance.getModLoader() + ".jar");
             LOGGER.info("forgeVersion: {}", forgeVersion);
-            Path versionsJar = Constants.VERSIONS_FOLDER_LOC.resolve(newname).resolve(newname + ".jar");
+            Path versionsJar = AppMain.paths().mcVersionsDir().resolve(newname).resolve(newname + ".jar");
 			FileUtils.createDirectories(versionsJar.getParent());
 
 			//Remove the forge jar that is loaded so we can build a new one, This will be required for us to load newly added core mods

@@ -75,8 +75,6 @@ import {
   UpdateInstanceData,
   UploadLogsData,
   UploadLogsDataReply,
-  VideoCacheHandlerData,
-  VideoCacheHandlerReply,
   WebRequestData,
   WebRequestDataResponse
 } from '@/core/types/javaApi';
@@ -143,7 +141,6 @@ const endpoints = {
   webRequest:                     io<Nullable<WebRequestData, "body">, WebRequestDataResponse>(),
   openDebugTools:                 io<BaseData, EmptyMessageResponse>(),
   instanceOverrideModLoader:      io<InstanceOverrideModLoaderData, InstanceOverrideModLoaderDataReply>(),
-  videoCache:                     io<VideoCacheHandlerData, VideoCacheHandlerReply>(),
   moveInstances:                  io<MoveInstancesHandlerData, MoveInstancesHandlerReply>(),
   "accounts.store-oauth":         io<StoreFtbAccountHandlerData, StoreFtbAccountHandlerReply>(),
   "accounts.get-oauth":           io<BaseData, GetFtbAccountHandlerReply>(),

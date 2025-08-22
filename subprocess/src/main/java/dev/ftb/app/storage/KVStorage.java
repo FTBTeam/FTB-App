@@ -4,9 +4,9 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
+import dev.ftb.app.AppMain;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.io.IOUtils;
-import dev.ftb.app.Constants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -44,9 +44,9 @@ public class KVStorage {
     }
 
     private static Map<String, String> load() {
-        if (Files.exists(Constants.KV_STORE_FILE)) {
+        if (Files.exists(AppMain.paths().storageFile())) {
             try {
-                return JsonUtils.parse(GSON, Constants.KV_STORE_FILE, MAP_TYPE);
+                return JsonUtils.parse(GSON, AppMain.paths().storageFile(), MAP_TYPE);
             } catch (IOException | JsonSyntaxException e) {
                 LOGGER.error("Failed to read generic storage", e);
             }
@@ -69,7 +69,7 @@ public class KVStorage {
 
     private boolean save() {
         try {
-            JsonUtils.write(GSON, IOUtils.makeParents(Constants.KV_STORE_FILE), data, MAP_TYPE);
+            JsonUtils.write(GSON, IOUtils.makeParents(AppMain.paths().storageFile()), data, MAP_TYPE);
         } catch (IOException e) {
             LOGGER.fatal("Failed to write data to the storage file", e);
             return false;

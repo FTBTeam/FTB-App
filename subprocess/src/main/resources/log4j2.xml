@@ -1,19 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="warn">
-    <Scripts>
-        <Script name="OsSelect" language="javascript"><![CDATA[
-            var osName = Java.type("java.lang.System").getProperty("os.name").toLowerCase();
-            var selected;
-            if (osName.contains("win")) {
-                selected = "Windows";
-            } else if (osName.contains("mac")) {
-                selected = "Mac";
-            } else {
-                selected = "Linux";
-            }
-            selected;
-        ]]></Script>
-    </Scripts>
     <Filters>
         <!-- Drop Minecraft logging -->
         <MarkerFilter marker="MINECRAFT" onMatch="${sys:InstanceLauncher.minecraft:-DENY}" onMismatch="NEUTRAL"/>
@@ -22,105 +8,39 @@
         <Console name="SysOut" target="SYSTEM_OUT">
             <PatternLayout pattern="[%d{HH:mm:ss}] [%t/%level] [%logger]: %msg%n"/>
         </Console>
-        <BetterScriptAppenderSelector name="HttpLog">
-            <ScriptRef ref="OsSelect"/>
-            <AppenderSet>
-                <RollingRandomAccessFile name="Windows" fileName="${env:LOCALAPPDATA}/.ftba/logs/http-requests.log" filePattern="${env:LOCALAPPDATA}/.ftba/logs/http-requests-%i.log.gz">
-                    <PatternLayout pattern="[%d{HH:mm:ss}]: %msg%n"/>
-                    <Policies>
-                        <OnStartupTriggeringPolicy/>
-                        <SizeBasedTriggeringPolicy size="200MB"/>
-                    </Policies>
-                    <DefaultRolloverStrategy max="3" fileIndex="min"/>
-                </RollingRandomAccessFile>
-                <RollingRandomAccessFile name="Mac" fileName="${sys:user.home}/Library/Application Support/.ftba/logs/http-requests.log" filePattern="${sys:user.home}/Library/Application Support/.ftba/logs/http-requests-%i.log.gz">
-                    <PatternLayout pattern="[%d{HH:mm:ss}]: %msg%n"/>
-                    <Policies>
-                        <OnStartupTriggeringPolicy/>
-                        <SizeBasedTriggeringPolicy size="200MB"/>
-                    </Policies>
-                    <DefaultRolloverStrategy max="3" fileIndex="min"/>
-                </RollingRandomAccessFile>
-                <RollingRandomAccessFile name="Linux" fileName="${sys:user.home}/.ftba/logs/http-requests.log" filePattern="${sys:user.home}/.ftba/logs/http-requests-%i.log.gz">
-                    <PatternLayout pattern="[%d{HH:mm:ss}]: %msg%n"/>
-                    <Policies>
-                        <OnStartupTriggeringPolicy/>
-                        <SizeBasedTriggeringPolicy size="200MB"/>
-                    </Policies>
-                    <DefaultRolloverStrategy max="3" fileIndex="min"/>
-                </RollingRandomAccessFile>
-            </AppenderSet>
-        </BetterScriptAppenderSelector>
-        <BetterScriptAppenderSelector name="Latest">
-            <ScriptRef ref="OsSelect"/>
-            <AppenderSet>
-                <RollingRandomAccessFile name="Windows" fileName="${env:LOCALAPPDATA}/.ftba/logs/latest.log" filePattern="${env:LOCALAPPDATA}/.ftba/logs/%d{yyyy-MM-dd}-%i.log.gz">
-                    <PatternLayout pattern="[%d{HH:mm:ss}] [%t/%level] [%logger]: %msg%n"/>
-                    <Policies>
-                        <TimeBasedTriggeringPolicy/>
-                        <OnStartupTriggeringPolicy/>
-                    </Policies>
-                    <DefaultRolloverStrategy max="3" fileIndex="min"/>
-                </RollingRandomAccessFile>
-                <RollingRandomAccessFile name="Mac" fileName="${sys:user.home}/Library/Application Support/.ftba/logs/latest.log" filePattern="${sys:user.home}/Library/Application Support/.ftba/logs/%d{yyyy-MM-dd}-%i.log.gz">
-                    <PatternLayout pattern="[%d{HH:mm:ss}] [%t/%level] [%logger]: %msg%n"/>
-                    <Policies>
-                        <TimeBasedTriggeringPolicy/>
-                        <OnStartupTriggeringPolicy/>
-                    </Policies>
-                    <DefaultRolloverStrategy max="3" fileIndex="min"/>
-                </RollingRandomAccessFile>
-                <RollingRandomAccessFile name="Linux" fileName="${sys:user.home}/.ftba/logs/latest.log" filePattern="${sys:user.home}/.ftba/logs/%d{yyyy-MM-dd}-%i.log.gz">
-                    <PatternLayout pattern="[%d{HH:mm:ss}] [%t/%level] [%logger]: %msg%n"/>
-                    <Policies>
-                        <TimeBasedTriggeringPolicy/>
-                        <OnStartupTriggeringPolicy/>
-                    </Policies>
-                    <DefaultRolloverStrategy max="3" fileIndex="min"/>
-                </RollingRandomAccessFile>
-            </AppenderSet>
-        </BetterScriptAppenderSelector>
-        <BetterScriptAppenderSelector name="Debug">
-            <ScriptRef ref="OsSelect"/>
-            <AppenderSet>
-                <RollingRandomAccessFile name="Windows" fileName="${env:LOCALAPPDATA}/.ftba/logs/debug.log" filePattern="${env:LOCALAPPDATA}/.ftba/logs/debug-%i.log.gz">
-                    <PatternLayout pattern="[%d{HH:mm:ss.SSS}] [%t/%level] [%logger]: %msg%n"/>
-                    <Policies>
-                        <OnStartupTriggeringPolicy/>
-                        <SizeBasedTriggeringPolicy size="200MB"/>
-                    </Policies>
-                    <DefaultRolloverStrategy max="3" fileIndex="min"/>
-                </RollingRandomAccessFile>
-                <RollingRandomAccessFile name="Mac" fileName="${sys:user.home}/Library/Application Support/.ftba/logs/debug.log" filePattern="${sys:user.home}/Library/Application Support/.ftba/logs/debug-%i.log.gz">
-                    <PatternLayout pattern="[%d{HH:mm:ss.SSS}] [%t/%level] [%logger]: %msg%n"/>
-                    <Policies>
-                        <OnStartupTriggeringPolicy/>
-                        <SizeBasedTriggeringPolicy size="200MB"/>
-                    </Policies>
-                    <DefaultRolloverStrategy max="3" fileIndex="min"/>
-                </RollingRandomAccessFile>
-                <RollingRandomAccessFile name="Linux" fileName="${sys:user.home}/.ftba/logs/debug.log" filePattern="${sys:user.home}/.ftba/logs/debug-%i.log.gz">
-                    <PatternLayout pattern="[%d{HH:mm:ss.SSS}] [%t/%level] [%logger]: %msg%n"/>
-                    <Policies>
-                        <OnStartupTriggeringPolicy/>
-                        <SizeBasedTriggeringPolicy size="200MB"/>
-                    </Policies>
-                    <DefaultRolloverStrategy max="3" fileIndex="min"/>
-                </RollingRandomAccessFile>
-            </AppenderSet>
-        </BetterScriptAppenderSelector>
+        
+        <RollingRandomAccessFile name="HttpLog" fileName="./.ftba/logs/http-requests.log" filePattern="./.ftba/logs/http-requests-%i.log.gz">
+            <PatternLayout pattern="[%d{HH:mm:ss}]: %msg%n"/>
+            <Policies>
+                <OnStartupTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="200MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="3" fileIndex="min"/>
+        </RollingRandomAccessFile>
+        
+        <RollingRandomAccessFile name="Latest" fileName="./.ftba/logs/latest.log" filePattern="./.ftba/logs/%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="[%d{HH:mm:ss}] [%t/%level] [%logger]: %msg%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <OnStartupTriggeringPolicy/>
+            </Policies>
+            <DefaultRolloverStrategy max="3" fileIndex="min"/>
+        </RollingRandomAccessFile>
+        
+        <RollingRandomAccessFile name="Debug" fileName="./.ftba/logs/debug.log" filePattern="./.ftba/logs/debug-%i.log.gz">
+            <PatternLayout pattern="[%d{HH:mm:ss.SSS}] [%t/%level] [%logger]: %msg%n"/>
+            <Policies>
+                <OnStartupTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="200MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="3" fileIndex="min"/>
+        </RollingRandomAccessFile>
     </Appenders>
     <Loggers>
         <Root level="all">
-            <AppenderRef ref="SysOut" level="${sys:console.level:-info}">
-                <MarkerFilter marker="SENTRY_ONLY" onMatch="DENY" onMismatch="NEUTRAL"/>
-            </AppenderRef>
-            <AppenderRef ref="Latest" level="info">
-                <MarkerFilter marker="SENTRY_ONLY" onMatch="DENY" onMismatch="NEUTRAL"/>
-            </AppenderRef>
-            <AppenderRef ref="Debug" level="trace">
-                <MarkerFilter marker="SENTRY_ONLY" onMatch="DENY" onMismatch="NEUTRAL"/>
-            </AppenderRef>
+            <AppenderRef ref="SysOut" level="${sys:console.level:-info}" />
+            <AppenderRef ref="Latest" level="info"/>
+            <AppenderRef ref="Debug" level="trace" />
         </Root>
         <Logger name="httplogger" level="info" additivity="false">
             <AppenderRef ref="HttpLog"/>

@@ -1,9 +1,7 @@
 package dev.ftb.app.api.handlers.instances;
 
 import com.google.gson.annotations.JsonAdapter;
-import net.covers1624.quack.gson.PathTypeAdapter;
 import dev.ftb.app.AppMain;
-import dev.ftb.app.Constants;
 import dev.ftb.app.Instances;
 import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.data.BaseData;
@@ -11,6 +9,7 @@ import dev.ftb.app.api.handlers.IMessageHandler;
 import dev.ftb.app.install.OperationProgressTracker;
 import dev.ftb.app.install.tasks.LocalCache;
 import dev.ftb.app.storage.settings.Settings;
+import net.covers1624.quack.gson.PathTypeAdapter;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +32,7 @@ public class MoveInstancesHandler implements IMessageHandler<MoveInstancesHandle
         var currentLocation = Settings.getSettings().instanceLocation();
         if (currentLocation.toString().isEmpty()) {
             // Something is borked, just assume the default location is the right one
-            currentLocation = Constants.INSTANCES_FOLDER_LOC;
+            currentLocation = AppMain.paths().instancesDir();
         }
         
         var newLocation = data.newLocation;

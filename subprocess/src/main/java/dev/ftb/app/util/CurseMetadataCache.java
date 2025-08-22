@@ -3,6 +3,7 @@ package dev.ftb.app.util;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
+import dev.ftb.app.AppMain;
 import dev.ftb.app.Constants;
 import dev.ftb.app.data.mod.CurseMetadata;
 import dev.ftb.app.data.mod.ModManifest;
@@ -26,18 +27,27 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 
 public class CurseMetadataCache {
-
     private static final Gson GSON = new Gson();
     private static final Logger LOGGER = LogManager.getLogger();
     private static final Type TYPE = new TypeToken<Map<String, FileMetadata>>() { }.getType();
 
+    private static CurseMetadataCache instance;
+    
+    public static CurseMetadataCache get() {
+        if (instance == null) {
+            instance = new CurseMetadataCache(AppMain.paths().dataDir().resolve(".curse_meta.json"));
+        }
+        
+        return instance;
+    }
+    
     private final Path file;
     private final Map<String, FileMetadata> metadata;
 
     // Cache per-run of failed requests to make things a tiny bit snappier.
     private final Set<String> failedCache = ConcurrentHashMap.newKeySet();
 
-    public CurseMetadataCache(Path file) {
+    private CurseMetadataCache(Path file) {
         this.file = file;
         Map<String, FileMetadata> metadata = null;
         if (Files.exists(file)) {
@@ -76,7 +86,7 @@ public class CurseMetadataCache {
     public @Nullable CurseMetadata getCurseMeta(long curseProject, long curseFile) {
         ModManifest mod = null;
         try {
-            mod = Constants.MOD_VERSION_CACHE.queryMod(curseProject).get();
+            mod = ModVersionCache.get().queryMod(curseProject).get();
         } catch (InterruptedException | ExecutionException ex) {
             LOGGER.warn("Failed to query mod version.", ex);
         }

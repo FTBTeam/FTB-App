@@ -1,7 +1,7 @@
 package dev.ftb.app.install.tasks;
 
 import com.google.common.hash.Hashing;
-import dev.ftb.app.Constants;
+import dev.ftb.app.AppMain;
 import dev.ftb.app.install.tasks.DownloadTask.DownloadValidation;
 import dev.ftb.app.minecraft.jsons.AssetIndexManifest;
 import dev.ftb.app.minecraft.jsons.VersionManifest;
@@ -63,7 +63,7 @@ public class InstallAssetsTask implements Task {
      * @return The list of tasks.
      */
     private static Pair<AssetIndexManifest, List<DownloadTask>> buildTaskList(VersionManifest.AssetIndex assetIndex) throws IOException {
-        Path assetsDir = Constants.BIN_LOCATION.resolve("assets");
+        Path assetsDir = AppMain.paths().mcAssetsDir();
         AssetIndexManifest manifest = AssetIndexManifest.update(assetsDir, assetIndex);
 
         Path objectsDir = assetsDir.resolve("objects");

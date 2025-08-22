@@ -1,6 +1,6 @@
 package dev.ftb.app.install.tasks.modloader;
 
-import dev.ftb.app.Constants;
+import dev.ftb.app.AppMain;
 import dev.ftb.app.install.tasks.DownloadTask;
 import dev.ftb.app.install.tasks.TaskProgressListener;
 import dev.ftb.app.minecraft.jsons.VersionManifest;
@@ -54,8 +54,8 @@ public abstract class FabricInstallTask extends ModLoaderInstallTask {
 
     @Override
     public void execute(@Nullable CancellationToken cancelToken, @Nullable TaskProgressListener listener) throws Throwable {
-        Path versionsDir = Constants.BIN_LOCATION.resolve("versions");
-        Path librariesDir = Constants.BIN_LOCATION.resolve("libraries");
+        Path versionsDir = AppMain.paths().mcVersionsDir();
+        Path librariesDir = AppMain.paths().mcLibrariesDir();
 
         Path versionJson = versionsDir.resolve(versionName).resolve(versionName + ".json");
 
