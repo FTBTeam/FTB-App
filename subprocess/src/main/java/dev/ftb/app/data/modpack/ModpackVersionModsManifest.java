@@ -3,6 +3,7 @@ package dev.ftb.app.data.modpack;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import dev.ftb.app.Constants;
+import dev.ftb.app.util.CurseMetadataCache;
 import dev.ftb.app.util.ModpackApiUtils;
 import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.JsonUtils;
@@ -89,20 +90,20 @@ public class ModpackVersionModsManifest {
         public String getFilename() { return Objects.requireNonNull(filename); }
         // @formatter:on
 
-        public static Mod fromLookupResponse(ModsLookupManifest.Datum datum) {
-            var mod = new Mod();
-            mod.fileId = datum.fileID();
-            mod.name = datum.name();
-            mod.synopsis = datum.synopsis();
-            mod.icon = datum.icon();
-            mod.curseSlug = datum.curseSlug();
-            mod.curseProject = datum.curseProject();
-            mod.curseFile = datum.curseFile();
-            mod.stored = datum.stored();
-            mod.filename = datum.filename();
+        public static Mod fromCurseMetadata(CurseMetadataCache.FileMetadata metaData) {
+            Mod mod = new Mod();
+            mod.fileId = metaData.fileId();
+            mod.name = metaData.name();
+            mod.synopsis = metaData.synopsis();
+            mod.icon = metaData.icon();
+            mod.curseSlug = metaData.curseSlug();
+            mod.curseProject = metaData.curseProject();
+            mod.curseFile = metaData.curseFile();
+            mod.stored = metaData.stored();
+            mod.filename = metaData.filename();
             return mod;
         }
-
+        
         @Override
         public String toString() {
             return new StringJoiner(", ", Mod.class.getSimpleName() + "[", "]")

@@ -13,8 +13,8 @@ import dev.ftb.app.data.mod.ModInfo;
 import dev.ftb.app.data.mod.ModManifest;
 import dev.ftb.app.data.modpack.ModpackVersionManifest;
 import dev.ftb.app.data.modpack.ModpackVersionModsManifest;
-import dev.ftb.app.data.modpack.ModsLookupManifest;
 import dev.ftb.app.pack.Instance;
+import dev.ftb.app.util.CurseMetadataCache;
 import dev.ftb.app.util.ModVersionCache;
 import okhttp3.MediaType;
 import okhttp3.Request;
@@ -58,13 +58,14 @@ public class InstanceModsHandler implements IMessageHandler<InstanceModsData> {
             });
     }
 
+    // TODO: Move this back over to the CurseMetadataCache
     private static CompletableFuture<Void> pollMods(InstanceModsData data, Instance instance, List<ModInfo> mods, @Nullable ModpackVersionManifest.Target modLoader, @Nullable String mcVersion) {
         return CompletableFuture.completedFuture(mods)
                 .thenApplyAsync(modsList -> {
                     var modsManifest = instance.getModsManifest();
                     var knownFileNames = modsManifest != null ? modsManifest.getMods().stream().map(ModpackVersionModsManifest.Mod::getFilename).toList() : List.of();
                     
-                    var allHashes = mods.stream()
+                    var unknownModHashes = mods.stream()
                         .filter(e -> !knownFileNames.contains(e.fileName()))
                         .map(ModInfo::murmurHash)
                         .filter(Objects::nonNull) // This shouldn't happen, but just in case.
@@ -76,25 +77,14 @@ public class InstanceModsHandler implements IMessageHandler<InstanceModsData> {
                         resolvedMods.addAll(modsManifest.getMods());
                     }
                     
-                    if (!allHashes.isEmpty()) {
-                        var client = Constants.httpClient();
-                        var request = client.newCall(new Request.Builder()
-                            .url(Constants.FTB_MODPACKS_API + "/mod/lookup/hashes")
-                            .post(RequestBody.create(new Gson().toJson(Map.of("hashes", allHashes)), MediaType.parse("application/json")))
-                            .build());
-
-                        try (var response = request.execute()) {
-                            var responseBody = response.body();
-                            if (!response.isSuccessful() || responseBody == null) {
-                                LOGGER.error("Failed to lookup mod hashes: {}", response.message());
-                                return null;
-                            }
-                            
-                            var responseJson = new Gson().fromJson(responseBody.string(), ModsLookupManifest.class);
-                            resolvedMods.addAll(responseJson.data().stream().map(ModpackVersionModsManifest.Mod::fromLookupResponse).toList());
-                        } catch (Exception e) {
-                            LOGGER.error("Failed to create HTTP client for mod data lookup.", e);
-                        }
+                    if (!unknownModHashes.isEmpty()) {
+                        Map<String, CurseMetadataCache.FileMetadata> resolvedMetaData = CurseMetadataCache.get().queryMetadata(unknownModHashes.toArray(new String[0]));
+                        resolvedMods.addAll(resolvedMetaData
+                            .values()
+                            .stream()
+                            .map(ModpackVersionModsManifest.Mod::fromCurseMetadata)
+                            .toList()
+                        );
                     }
 
                     var richModData = mods.stream()

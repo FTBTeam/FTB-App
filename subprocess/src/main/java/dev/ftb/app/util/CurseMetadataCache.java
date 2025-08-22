@@ -11,6 +11,9 @@ import dev.ftb.app.data.modpack.ModpackVersionModsManifest;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.net.DownloadAction;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
+import okhttp3.MediaType;
+import okhttp3.Request;
+import okhttp3.RequestBody;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -20,9 +23,7 @@ import java.io.StringWriter;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 
@@ -67,19 +68,14 @@ public class CurseMetadataCache {
 
     public @Nullable CurseMetadata getCurseMeta(@Nullable ModpackVersionModsManifest.Mod mod, String murmur) {
         if (mod != null) {
-            long projectId = mod.getCurseProject();
-            long fileId = mod.getCurseFile();
-            String name = mod.getName();
-            String synopsis = mod.getSynopsis();
-            String icon = mod.getIcon();
-            String slug = mod.getCurseSlug();
-            return CurseMetadata.full(projectId, fileId, name, slug, synopsis, icon);
+            return CurseMetadata.fromMod(mod);
         }
 
         FileMetadata metadata = queryMetadata(murmur);
         if (metadata != null) {
             return metadata.toCurseInfo();
         }
+        
         return null;
     }
 
@@ -144,6 +140,61 @@ public class CurseMetadataCache {
             return metadata;
         }
     }
+    
+    public synchronized Map<String, FileMetadata> queryMetadata(String... murmurHashes) {
+        var queryManifestData = new HashMap<String, FileMetadata>();
+        for (var hash : murmurHashes) {
+            var meta = findMetadata(hash);
+            if (meta != null) {
+                queryManifestData.put(hash, meta);
+            }
+        }
+        
+        var toQuery = new ArrayList<String>();
+        for (var hash : murmurHashes) {
+            if (failedCache.contains(hash)) continue;
+
+            if (!queryManifestData.containsKey(hash) && !failedCache.contains(hash)) {
+                toQuery.add(hash);
+            }
+        }
+        
+        if (toQuery.isEmpty()) {
+            return queryManifestData;
+        }
+
+        var client = Constants.httpClient();
+        var request = client.newCall(new Request.Builder()
+            .url(Constants.FTB_MODPACKS_API + "/mod/lookup/hashes")
+            .post(RequestBody.create(new Gson().toJson(Map.of("hashes", toQuery)), MediaType.parse("application/json")))
+            .build());
+        
+        var mutated = false;
+        try (var response = request.execute()) {
+            var responseBody = response.body();
+            if (!response.isSuccessful() || responseBody == null) {
+                LOGGER.error("Failed to lookup mod hashes: {}", response.message());
+                return null;
+            }
+
+            var responseJson = new Gson().fromJson(responseBody.string(), ModsLookupResponse.class);
+            for (var lookup : responseJson.data()) {
+                queryManifestData.put(String.valueOf(lookup.murmurHash()), lookup);
+                synchronized (this.metadata) {
+                    this.metadata.put(String.valueOf(lookup.murmurHash()), lookup);
+                    mutated = true;
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to create HTTP client for mod data lookup.", e);
+        }
+        
+        if (mutated) {
+            save();
+        }
+        
+        return queryManifestData;
+    }
 
     /**
      * Try and find existing metadata for the given file hash.
@@ -200,15 +251,61 @@ public class CurseMetadataCache {
             String curseSlug,
             long curseProject,
             long curseFile,
-//            long stored,
+            long stored,
+            long murmurHash,
             String filename
     ) {
-
         public CurseMetadata toCurseInfo() {
             return CurseMetadata.full(curseProject, curseFile, name, curseSlug, synopsis, icon);
         }
     }
 
+    public record ModsLookupResponse(
+        String notice,
+        String status,
+        List<CurseMetadataCache.FileMetadata> data
+    ) {}
+    
     public record FileLookupResponse(String status, FileMetadata meta) {
     }
+
+    /**
+     * {
+     *   "_notice": "This endpoint is deprecated and will be removed in the future. Please do not rely on this endpoint for any production code.",
+     *   "status": "success",
+     *   "meta": {
+     *     "fileId": 6420931,
+     *     "name": "EMI",
+     *     "synopsis": "Featureful and accessible modern item and recipe viewer with JEI compatibility",
+     *     "icon": "https://media.forgecdn.net/avatars/545/351/637878590194850929.png",
+     *     "curseSlug": "emi",
+     *     "curseProject": 580555,
+     *     "curseFile": 6420931,
+     *     "stored": 1744717501,
+     *     "filename": "emi-1.1.22+1.21.1+neoforge.jar",
+     *     "murmurHash": 1652373382
+     *   }
+     * }
+     */
+
+/**
+ * {
+ *   "_notice": "This endpoint is deprecated and will be removed in the future. Please do not rely on this endpoint for any production code.",
+ *   "status": "success",
+ *   "data": [
+ *     {
+ *       "fileId": 6420931,
+ *       "name": "EMI",
+ *       "synopsis": "Featureful and accessible modern item and recipe viewer with JEI compatibility",
+ *       "icon": "https://media.forgecdn.net/avatars/545/351/637878590194850929.png",
+ *       "curseSlug": "emi",
+ *       "curseProject": 580555,
+ *       "curseFile": 6420931,
+ *       "stored": 1744717501,
+ *       "filename": "emi-1.1.22+1.21.1+neoforge.jar",
+ *       "murmurHash": 1652373382
+ *     }
+ *   ]
+ * }
+ */
 }
