@@ -55,10 +55,6 @@ public class AppPaths {
         this.processMarkerFile = this.dataDir.resolve("app.pid");
         
         this.ensureDirectoriesExist();
-        
-        for (var path : this.paths) {
-            LOGGER.debug("Path registered: {}, Absolute of: {}", path, path.toAbsolutePath());
-        }
     }
     
     private void ensureDirectoriesExist() {
