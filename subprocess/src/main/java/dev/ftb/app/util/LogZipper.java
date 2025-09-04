@@ -221,7 +221,7 @@ public class LogZipper {
         for (Instance instance : instances) {
             var instanceObj = new JsonObject();
 
-            var packPathName = AppMain.paths().instancesDir().relativize(instance.getDir()).toString();
+            var packPathName = instance.getDir().getFileName().toString();
 
             // Get the creation time of the instance dir
             var creationTime = 0L;
