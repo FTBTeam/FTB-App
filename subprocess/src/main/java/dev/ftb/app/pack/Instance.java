@@ -136,7 +136,8 @@ public class Instance {
     }
     
     private void storeArtwork(ModpackManifest modpack, @Nullable String artPath) {
-        if (artPath != null) {
+        // Don't try and resolve a path of a url.
+        if (artPath != null && !artPath.startsWith("http://") && !artPath.startsWith("https://")) {
             try {
                 updateArtwork(Path.of(artPath));
             } catch (IOException ex) {
