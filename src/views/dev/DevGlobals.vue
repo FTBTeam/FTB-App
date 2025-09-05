@@ -45,9 +45,22 @@ function showChangelog() {
 function randomLongString() {
   // Generate a long random, space seperated, text based string by generating chars from hex
   // and joining them with a space
-  return Array.from({ length: 100 }, () => Math.floor(Math.random() * 16).toString(16))
-    .join(' ')
+  const randomLength = Math.floor(Math.random() * 100) + 50;
+  const string = Array.from({ length: randomLength }, () => Math.floor(Math.random() * 16).toString(16))
+    .join('')
     .toUpperCase();
+  
+  // Randomly insert spaces
+  let finalString = '';
+  for (let i = 0; i < string.length; i++) {
+    const chance = Math.random();
+    finalString += string[i];
+    if (chance < 0.15 && i !== string.length - 1) {
+      finalString += ' ';
+    }
+  }
+  
+  return finalString;
 }
 </script>
 
