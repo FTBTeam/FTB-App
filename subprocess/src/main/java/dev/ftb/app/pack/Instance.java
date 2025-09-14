@@ -527,7 +527,9 @@ public class Instance {
 
         // Populate all mods from the regular version manifest.
         for (ModpackVersionManifest.ModpackFile file : versionManifest.getFiles()) {
-            if (!file.getPath().startsWith("./mods") || !isMod(file.getName())) continue;
+            if ((!file.getPath().startsWith("./mods") && !file.getPath().startsWith("mods/")) || !isMod(file.getName())) {
+                continue;
+            }
 
             String sha1 = Objects.toString(file.getSha1OrNull(), null);
             long murmur = -1;
@@ -584,7 +586,7 @@ public class Instance {
                         file = null;
                     }
                 }
-                
+
                 CurseMetadata ids;
                 if (rich) {
                     ids = CurseMetadataCache.get().getCurseMeta(override.getCurseProject(), override.getCurseFile());
@@ -658,8 +660,10 @@ public class Instance {
             ));
 
             getOrCreateModifications().getOverrides().add(new ModOverride(state, fName2, sha1, murmurHash, curseProject, curseFile));
-            saveModifications();
         }
+
+        // Only save once all modifications have been added.
+        saveModifications();
 
         LOGGER.info("List built {} mods.", mods.size());
         return mods;
