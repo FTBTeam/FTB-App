@@ -78,7 +78,7 @@ public class InstanceModsHandler implements IMessageHandler<InstanceModsData> {
                     }
                     
                     if (!unknownModHashes.isEmpty()) {
-                        Map<String, CurseMetadataCache.FileMetadata> resolvedMetaData = CurseMetadataCache.get().queryMetadata(unknownModHashes.toArray(new String[0]));
+                        Map<String, CurseMetadataCache.FileMetadata> resolvedMetaData = CurseMetadataCache.get().queryMetadata(unknownModHashes.stream().map(Object::toString).toArray(String[]::new));
                         resolvedMods.addAll(resolvedMetaData
                             .values()
                             .stream()
