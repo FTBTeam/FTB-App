@@ -162,7 +162,7 @@ public class Instance {
                 // TODO we need to validate the state of mod modifications.
                 //      Dynamically add/remove them as manual modifications are always possible.
                 //      We should do this any time the Mods list is queried. I.e the frontend or installer requests it.
-                modifications = InstanceModifications.load(modificationsJson);
+                modifications = InstanceModifications.load(modificationsJson, this);
             }
         }
     }
@@ -519,7 +519,7 @@ public class Instance {
     public synchronized List<ModInfo> getMods(boolean rich) {
         LOGGER.info("Building instance mods list..");
         List<ModInfo> mods = new ArrayList<>();
-
+        
         ModpackVersionModsManifest modsManifest = rich ? getModsManifest() : null;
         InstanceModifications modifications = getModifications();
 
@@ -565,11 +565,11 @@ public class Instance {
                     enabled,
                     file.getSize(),
                     sha1,
-                    String.valueOf(murmur),
+                    murmur,
                     rich ? CurseMetadataCache.get().getCurseMeta(mod, String.valueOf(murmur)) : null
             ));
         }
-
+        
         // Mods added manually or via CurseForge integ.
         if (modifications != null) {
             for (ModOverride override : modifications.getOverrides()) {
@@ -577,21 +577,11 @@ public class Instance {
                 if (!override.getState().added() && !override.getState().updated()) continue;
 
                 Path file = modsDir.resolve(override.getFileName());
-                long murmurHash = -1;
                 if (!Files.exists(file)) {
                     // If t he file does not exist, it might be disabled, let's try that one as well
                     file = modsDir.resolve(override.getFileName() + ".disabled");
                     if (!Files.exists(file)) {
                         file = null;
-                    }
-                }
-
-                if (file != null) {
-                    try {
-                        var fileBytes = Files.readAllBytes(file);
-                        murmurHash = HashingUtils.createCurseForgeMurmurHash(fileBytes);
-                    } catch (IOException ex) {
-                        LOGGER.error("Error reading file for override: {}. Unable to process this whilst generating mods list.", override.getFileName(), ex);
                     }
                 }
                 
@@ -608,12 +598,12 @@ public class Instance {
                         override.getState().enabled(),
                         tryGetSize(file),
                         override.getSha1(),
-                        String.valueOf(murmurHash),
+                        override.getMurmurHash(),
                         ids
                 ));
             }
         }
-
+        
         for (Path path : FileUtils.listDir(modsDir)) {
             if (!Files.isRegularFile(path)) continue;
 
@@ -628,7 +618,7 @@ public class Instance {
             LOGGER.info("Found unknown mod in Mods folder. {}", fName);
             // We don't know about the mod! We need to add it and create a Modification for it.
 
-            String murmurHash;
+            long murmurHash;
             String sha1;
             long size;
             try {
@@ -636,7 +626,7 @@ public class Instance {
                 var fileBytes = Files.readAllBytes(path);     
                 
                 sha1 = DigestUtils.sha1Hex(fileBytes);
-                murmurHash = String.valueOf(HashingUtils.createCurseForgeMurmurHash(fileBytes));
+                murmurHash = HashingUtils.createCurseForgeMurmurHash(fileBytes);
 
             } catch (IOException ex) {
                 LOGGER.error("Error reading file. Unable to process this whilst generating mods list.", ex);
@@ -645,7 +635,7 @@ public class Instance {
 
             long curseProject = -1;
             long curseFile = -1;
-            FileMetadata metadata = CurseMetadataCache.get().queryMetadata(murmurHash);
+            FileMetadata metadata = CurseMetadataCache.get().queryMetadata(String.valueOf(murmurHash));
             if (metadata != null) {
                 LOGGER.info(" Identified as {} {} {}", metadata.name(), metadata.curseProject(), metadata.curseFile());
                 curseProject = metadata.curseProject();
@@ -667,7 +657,7 @@ public class Instance {
                     metadata != null ? metadata.toCurseInfo() : null
             ));
 
-            getOrCreateModifications().getOverrides().add(new ModOverride(state, fName2, sha1, curseProject, curseFile));
+            getOrCreateModifications().getOverrides().add(new ModOverride(state, fName2, sha1, murmurHash, curseProject, curseFile));
             saveModifications();
         }
 

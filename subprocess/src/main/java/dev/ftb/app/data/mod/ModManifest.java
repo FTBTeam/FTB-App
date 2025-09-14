@@ -203,6 +203,8 @@ public class ModManifest {
         private @Nullable String url;
         private final List<String> mirrors = new LinkedList<>();
         private @Nullable String sha1;
+        private @Nullable String md5;
+        private int murmur = -1;
         private long size;
 
         private boolean clientonly;
@@ -219,6 +221,8 @@ public class ModManifest {
         public String getUrl() { return Objects.requireNonNull(url); }
         public List<String> getMirrors() { return mirrors; }
         public String getSha1() { return Objects.requireNonNull(sha1); }
+        public String getMd5() { return Objects.requireNonNull(md5); }
+        public int getMurmur() { return murmur; }
         public long getSize() { return size; }
         public boolean isClientonly() { return clientonly; }
         public String getType() { return Objects.requireNonNull(type); }

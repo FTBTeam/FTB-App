@@ -186,7 +186,7 @@ public class ModInstaller implements ModCollector {
                             case DISABLED -> UPDATED_DISABLED;
                             default -> state;
                         };
-                        newOverrides.add(new ModOverride(newState, version.getName(), selfExisting.fileId(), version.getSha1(), mod.getId(), version.getId()));
+                        newOverrides.add(new ModOverride(newState, version.getName(), selfExisting.fileId(), version.getSha1(), version.getMurmur(), mod.getId(), version.getId()));
                     } else {
                         if (selfExisting.fileId() != -1) {
                             newOverrides.add(new ModOverride(
@@ -194,6 +194,7 @@ public class ModInstaller implements ModCollector {
                                     version.getName(),
                                     selfExisting.fileId(),
                                     version.getSha1(),
+                                    version.getMurmur(),
                                     mod.getId(),
                                     version.getId()
                             ));
@@ -202,7 +203,7 @@ public class ModInstaller implements ModCollector {
                         }
                     }
                 } else {
-                    newOverrides.add(new ModOverride(ADDED_ENABLED, version.getName(), version.getSha1(), mod.getId(), version.getId()));
+                    newOverrides.add(new ModOverride(ADDED_ENABLED, version.getName(), version.getSha1(), version.getMurmur(), mod.getId(), version.getId()));
                 }
             }
 
