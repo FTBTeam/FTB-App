@@ -49,7 +49,7 @@ public class AppMain {
     public static Socket socket = null;
     public static OutputStream socketWrite = null;
     public static boolean opened = false;
-    public static Executor taskExeggutor = Executors.newWorkStealingPool();
+    public static Executor taskExecutor = Executors.newWorkStealingPool();
     
     private static final AppPaths APP_PATHS = new AppPaths();
 

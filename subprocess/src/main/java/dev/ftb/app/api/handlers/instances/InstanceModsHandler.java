@@ -1,8 +1,6 @@
 package dev.ftb.app.api.handlers.instances;
 
-import com.google.gson.Gson;
 import dev.ftb.app.AppMain;
-import dev.ftb.app.Constants;
 import dev.ftb.app.Instances;
 import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.data.instances.InstanceModsData;
@@ -16,9 +14,6 @@ import dev.ftb.app.data.modpack.ModpackVersionModsManifest;
 import dev.ftb.app.pack.Instance;
 import dev.ftb.app.util.CurseMetadataCache;
 import dev.ftb.app.util.ModVersionCache;
-import okhttp3.MediaType;
-import okhttp3.Request;
-import okhttp3.RequestBody;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -138,7 +133,7 @@ public class InstanceModsHandler implements IMessageHandler<InstanceModsData> {
                 })
                 .thenRunAsync(() -> 
                     WebSocketHandler.sendMessage(new InstanceModsData.UpdateCheckingFinished(data)
-                ), AppMain.taskExeggutor);
+                ), AppMain.taskExecutor);
     }
     
 //    private static @Nullable CurseMetadata lookupCurseData(InstanceModsData data, @Nullable CurseMetadata meta, CompletableFuture<ModpackVersionModsManifest> modsManifestFuture, ModInfo mod) {

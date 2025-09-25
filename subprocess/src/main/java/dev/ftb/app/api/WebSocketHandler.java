@@ -150,7 +150,7 @@ public class WebSocketHandler {
         try {
             BaseData parsedData = GSON.fromJson(data, entry.getLeft());
             if (AppMain.isDevMode || (parsedData.secret != null && parsedData.secret.equals(Constants.WEBSOCKET_SECRET))) {
-                CompletableFuture.runAsync(() -> iMessageHandler.handle(parsedData), AppMain.taskExeggutor).exceptionally((t) -> {
+                CompletableFuture.runAsync(() -> iMessageHandler.handle(parsedData), AppMain.taskExecutor).exceptionally((t) -> {
                     LOGGER.error("Error handling message", t);
                     return null;
                 });
