@@ -606,6 +606,9 @@ public class Instance {
             }
         }
         
+        // TODO: Scan the mods folder for mods that have been manually disabled.
+        //       - This whole process needs to be re-thought out as doing it like this is ass.
+        
         for (Path path : FileUtils.listDir(modsDir)) {
             if (!Files.isRegularFile(path)) continue;
 
@@ -710,15 +713,12 @@ public class Instance {
         try {
             switch (override.getState()) {
                 // TODO, remove override if returning mod back to its original state?
-                case ENABLED, UPDATED_ENABLED, ADDED_ENABLED -> {
-                    Files.move(pathEnabled, pathDisabled);
-                }
-                case DISABLED, UPDATED_DISABLED, ADDED_DISABLED -> {
-                    Files.move(pathDisabled, pathEnabled);
-                }
+                case ENABLED, UPDATED_ENABLED, ADDED_ENABLED -> Files.move(pathEnabled, pathDisabled);
+                case DISABLED, UPDATED_DISABLED, ADDED_DISABLED -> Files.move(pathDisabled, pathEnabled);
                 // We should probably provide a 'restore' endpoint for this.
                 case REMOVED -> throw new IllegalArgumentException("Unable to toggle removed mod.");
             }
+            
             override.setState(override.getState().toggle());
         } catch (IOException ex) {
             throw new IllegalStateException("Failed to toggle mod.", ex);

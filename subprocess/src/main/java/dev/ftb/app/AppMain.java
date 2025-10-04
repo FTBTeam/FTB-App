@@ -60,7 +60,7 @@ public class AppMain {
     }
     
     public static boolean isDevMode = false;
-
+    
     // He a wide boi
     public static LongRunningTaskManager LONG_TASK_MANAGER = new LongRunningTaskManager();
 
@@ -158,8 +158,7 @@ public class AppMain {
                 Optional<ProcessHandle> frontendProcess = ProcessHandle.of(pid);
                 if (frontendProcess.isPresent()) {
                     ProcessHandle handle = frontendProcess.get();
-                    handle.onExit().thenRun(() ->
-                    {
+                    handle.onExit().thenRun(() -> {
                         while (isSyncing.get()) {
                             try {
                                 Thread.sleep(1000); // TODO: Replace with a a wait/notify
