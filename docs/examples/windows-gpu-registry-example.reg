@@ -1,0 +1,28 @@
+Windows Registry Editor Version 5.00
+
+; Example of Windows GPU Preferences configuration for FTB App Java runtimes
+; This shows what the registry looks like after the feature configures GPU preferences
+; 
+; Location: HKEY_CURRENT_USER\SOFTWARE\Microsoft\DirectX\UserGpuPreferences
+;
+; Note: Actual paths will vary based on your Windows username and installed Java versions
+; Do NOT import this file directly - it's for reference only!
+
+[HKEY_CURRENT_USER\SOFTWARE\Microsoft\DirectX\UserGpuPreferences]
+
+; Java 8 runtime example
+"C:\\Users\\ExampleUser\\AppData\\Local\\.ftba\\bin\\runtime\\OpenJDK8U-jre_x64_windows_hotspot_8u312b07\\bin\\javaw.exe"="GpuPreference=2;"
+
+; Java 17 runtime examples
+"C:\\Users\\ExampleUser\\AppData\\Local\\.ftba\\bin\\runtime\\OpenJDK17U-jre_x64_windows_hotspot_17.0.2_8\\bin\\javaw.exe"="GpuPreference=2;"
+"C:\\Users\\ExampleUser\\AppData\\Local\\.ftba\\bin\\runtime\\OpenJDK17U-jre_x64_windows_hotspot_17.0.7_7\\bin\\javaw.exe"="GpuPreference=2;"
+"C:\\Users\\ExampleUser\\AppData\\Local\\.ftba\\bin\\runtime\\OpenJDK17U-jre_x64_windows_hotspot_17.0.10_7\\bin\\javaw.exe"="GpuPreference=2;"
+
+; Java 21 runtime examples
+"C:\\Users\\ExampleUser\\AppData\\Local\\.ftba\\bin\\runtime\\OpenJDK21U-jre_x64_windows_hotspot_21.0.3_9\\bin\\javaw.exe"="GpuPreference=2;"
+"C:\\Users\\ExampleUser\\AppData\\Local\\.ftba\\bin\\runtime\\OpenJDK21U-jre_x64_windows_hotspot_21.0.4_7\\bin\\javaw.exe"="GpuPreference=2;"
+
+; GpuPreference values:
+;   0 = Let Windows decide (default)
+;   1 = Power saving (integrated GPU)
+;   2 = High performance (dedicated GPU)

@@ -5,6 +5,7 @@ import dev.ftb.app.migration.migrations.MigrateInstanceFilesToMetaFolder;
 import dev.ftb.app.migration.migrations.MigrateJVMDefaultsToInstances;
 import dev.ftb.app.migration.migrations.MigrateJVMDefaultsToSettingsDefaults;
 import dev.ftb.app.migration.migrations.MigrateRemoveLegacyInjectedMods;
+import dev.ftb.app.migration.migrations.MigrateSetupWindowsGpuPreferences;
 import dev.ftb.app.util.GsonUtils;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -24,7 +25,8 @@ public enum MigrationsManager {
         new MigrateJVMDefaultsToInstances(),
         new MigrateJVMDefaultsToSettingsDefaults(),
         new MigrateInstanceFilesToMetaFolder(),
-        new MigrateRemoveLegacyInjectedMods()
+        new MigrateRemoveLegacyInjectedMods(),
+        new MigrateSetupWindowsGpuPreferences()
     );
     
     private List<String> existingMigrations = new ArrayList<>();
