@@ -124,7 +124,8 @@ public class SettingsData {
                 0
             ),
             new WorkaroundSettings(
-                false
+                false,
+                true // Enable Windows GPU preference configuration by default
             )
         );
     }
@@ -446,13 +447,19 @@ public class SettingsData {
     public static final class WorkaroundSettings {
 
         public boolean ignoreForgeProcessorOutputHashes;
+        public boolean autoConfigureWindowsGpu;
 
-        public WorkaroundSettings(boolean ignoreForgeProcessorOutputHashes) {
+        public WorkaroundSettings(boolean ignoreForgeProcessorOutputHashes, boolean autoConfigureWindowsGpu) {
             this.ignoreForgeProcessorOutputHashes = ignoreForgeProcessorOutputHashes;
+            this.autoConfigureWindowsGpu = autoConfigureWindowsGpu;
         }
 
         public boolean ignoreForgeProcessorOutputHashes() {
             return ignoreForgeProcessorOutputHashes;
+        }
+        
+        public boolean autoConfigureWindowsGpu() {
+            return autoConfigureWindowsGpu;
         }
     }
     

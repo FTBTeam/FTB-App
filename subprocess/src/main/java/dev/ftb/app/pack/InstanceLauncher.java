@@ -18,6 +18,7 @@ import dev.ftb.app.minecraft.jsons.VersionManifest;
 import dev.ftb.app.minecraft.jsons.VersionManifest.AssetIndex;
 import dev.ftb.app.storage.settings.Settings;
 import dev.ftb.app.util.StreamGobblerLog;
+import dev.ftb.app.util.WindowsGpuPreferences;
 import dev.ftb.app.util.mc.MinecraftVersion;
 import dev.ftb.app.util.mc.MinecraftVersions;
 import net.covers1624.jdkutils.JavaInstall;
@@ -365,6 +366,12 @@ public class InstanceLauncher {
             LOGGER.info("Java executable: {}", javaExecutable.toString());
             LOGGER.info("Java executable: {}", javaExecutable.toUri());
             LOGGER.info("Java executable: {}", javaExecutable.toUri().toASCIIString());
+            
+            // Configure Windows GPU preference for this Java executable if enabled
+            if (instance.props.embeddedJre && Settings.getSettings().workaround().autoConfigureWindowsGpu()) {
+                WindowsGpuPreferences.configureJavaRuntime(javaExecutable);
+            }
+            
             progressTracker.updateDesc("Java Runtime Validated");
             progressTracker.finishStep();
 

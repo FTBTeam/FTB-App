@@ -66,6 +66,7 @@ public class WebSocketHandler {
         register("fileHash", FileHashData.class, new FileHashHandler()); // Not used
         register("uploadLogs", UploadLogsData.class, new UploadLogsHandler());
         register("getJavas", GetJavasData.class, new GetJavasHandler());
+        register("configureWindowsGpu", ConfigureWindowsGpuData.class, new ConfigureWindowsGpuHandler());
         register("instanceMods", InstanceModsData.class, new InstanceModsHandler());
         register("pong", PongLauncherData.class, new PongLauncherHandler());
         register("messageClient", MessageClientData.class, new MessageClientHandler()); // not really used but referenced

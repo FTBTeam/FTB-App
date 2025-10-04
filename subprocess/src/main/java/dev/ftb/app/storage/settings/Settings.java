@@ -223,7 +223,8 @@ public class Settings {
                     getOrDefault("speedLimit", Long::parseLong, DEFAULT_SETTINGS.download().speedLimit())
                 ),
                 new SettingsData.WorkaroundSettings(
-                    false
+                    false,
+                    true // Enable Windows GPU preference configuration by default
                 )
             );
         }
