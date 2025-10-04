@@ -427,7 +427,7 @@ ipcMain.handle("startSubprocess", async (_, args) => {
   log.debug("Starting subprocess", correctedPath, argsList)
 
   const electronPid = process.pid;
-  argsList.push(...["--pid", "" + electronPid])
+  argsList.push(...["--pid", "" + electronPid, "--electron"])
   if (process.argv.includes("ignore-pid-checks")) {
     argsList.push("--ignore-pid-checks")
   }

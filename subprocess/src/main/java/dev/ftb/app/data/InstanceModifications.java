@@ -3,6 +3,9 @@ package dev.ftb.app.data;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import dev.ftb.app.data.modpack.ModpackVersionManifest;
+import dev.ftb.app.pack.Instance;
+import dev.ftb.app.util.HashingUtils;
+import dev.ftb.app.util.MiscUtils;
 import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.JsonUtils;
 import org.jetbrains.annotations.Nullable;
@@ -21,11 +24,32 @@ public class InstanceModifications {
     private @Nullable ModpackVersionManifest.Target modLoaderOverride;
 
     private final List<ModOverride> overrides = new LinkedList<>();
+    private boolean requiresMurmurFix = true;
 
-    public static @Nullable InstanceModifications load(Path path) throws IOException, JsonParseException {
+    public static @Nullable InstanceModifications load(Path path, Instance instance) throws IOException, JsonParseException {
         if (!Files.exists(path)) return null;
 
-        return JsonUtils.parse(GSON, path, InstanceModifications.class);
+        InstanceModifications modifications = JsonUtils.parse(GSON, path, InstanceModifications.class);
+        if (modifications.requiresMurmurFix) {
+            for (ModOverride override : modifications.overrides) {
+                if (override.getMurmurHash() == -1) {
+                    var modPath = instance.path.resolve("mods").resolve(override.getFileName());
+                    if (Files.exists(modPath)) {
+                        try {
+                            var bytes = Files.readAllBytes(modPath);
+                            override.murmurHash = HashingUtils.createCurseForgeMurmurHash(bytes);
+                        } catch (Exception e) {
+                            override.murmurHash = 0;
+                        }
+                    }
+                }
+            }
+            
+            modifications.requiresMurmurFix = false;
+            save(path, modifications);
+        }
+        
+        return modifications;
     }
 
     public static void save(Path path, InstanceModifications modifications) throws IOException {
@@ -61,6 +85,7 @@ public class InstanceModifications {
 
         // For ADDED
         private @Nullable String sha1; // TODO is this useful?
+        private long murmurHash = -1;
         private long curseProject;
         private long curseFile;
 
@@ -74,21 +99,23 @@ public class InstanceModifications {
             this.id = id;
         }
 
-        public ModOverride(ModOverrideState state, String fileName, String sha1, long curseProject, long curseFile) {
+        public ModOverride(ModOverrideState state, String fileName, String sha1, long murmurHash, long curseProject, long curseFile) {
             this.state = state;
             this.fileName = fileName;
             this.sha1 = sha1;
             this.curseProject = curseProject;
             this.curseFile = curseFile;
+            this.murmurHash = murmurHash;
         }
 
-        public ModOverride(ModOverrideState state, String fileName, long id, String sha1, long curseProject, long curseFile) {
+        public ModOverride(ModOverrideState state, String fileName, long id, String sha1, long murmurHash, long curseProject, long curseFile) {
             this.state = state;
             this.fileName = fileName;
             this.id = id;
             this.sha1 = sha1;
             this.curseProject = curseProject;
             this.curseFile = curseFile;
+            this.murmurHash = murmurHash;
         }
 
         // @formatter:off
@@ -96,6 +123,7 @@ public class InstanceModifications {
         public String getFileName() { return Objects.requireNonNull(fileName); }
         public long getId() { return id; }
         public String getSha1() { return Objects.requireNonNull(sha1); }
+        public long getMurmurHash() { return murmurHash; }
         public long getCurseProject() { return curseProject; }
         public long getCurseFile() { return curseFile; }
         public void setState(ModOverrideState state) { this.state = state; }

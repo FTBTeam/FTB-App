@@ -40,7 +40,16 @@ export const useDialogsStore = defineStore("dialog", {
       this.dialogs.splice(this.dialogs.indexOf(dialog), 1)
     },
     updateDialog(dialog: Dialog) {
-      this.dialogs.splice(this.dialogs.indexOf(dialog), 1, dialog)
+      const index = this.dialogs.indexOf(dialog);
+      if (index === -1) {
+        console.warn("Dialog not found for update:", dialog.title);
+        return;
+      }
+      
+      const updatedDialogs = [...this.dialogs];
+      updatedDialogs[index] = dialog;
+      
+      this.dialogs = updatedDialogs;
     }
   }
 })

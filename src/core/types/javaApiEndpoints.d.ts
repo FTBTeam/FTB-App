@@ -36,13 +36,13 @@ export type ApiEndpoints = 	"installedInstances" |
 	"openDebugTools" |
 	"getInstanceFolders" |
 	"instanceVersionInfo" |
+	"instanceCategories" |
 	"instance.kill" |
 	"launchInstance" |
 	"instanceModToggle" |
 	"storage.get" |
 	"appInit" |
 	"accounts.get-oauth" |
-	"videoCache" |
 	"getJavas" |
 	"profiles.remove" |
 	"accounts.store-oauth" |

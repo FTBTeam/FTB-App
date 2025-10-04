@@ -49,7 +49,9 @@ public class AppMain {
     public static Socket socket = null;
     public static OutputStream socketWrite = null;
     public static boolean opened = false;
-    public static Executor taskExeggutor = Executors.newWorkStealingPool();
+    public static Executor taskExecutor = Executors.newWorkStealingPool();
+    
+    private static final AppPaths APP_PATHS = new AppPaths();
 
     static {
         Log4jUtils.redirectStreams();
@@ -58,7 +60,7 @@ public class AppMain {
     }
     
     public static boolean isDevMode = false;
-
+    
     // He a wide boi
     public static LongRunningTaskManager LONG_TASK_MANAGER = new LongRunningTaskManager();
 
@@ -87,6 +89,7 @@ public class AppMain {
             LOGGER.error("Failed to parse args, continuing with empty args", ex);
         }
 
+        Constants.PLATFORM = parsedArgs.containsKey("overwolf") ? "overwolf" : "electron";
         isDevMode = parsedArgs.containsKey("dev");
         Constants.IS_DEV_MODE = isDevMode;
 
@@ -114,13 +117,10 @@ public class AppMain {
             return;
         }
         
-        var appPath = Constants.getDataDir();
-        var appPidFile = appPath.resolve("app.pid");
-        
         // Read the pid and check if the process is still running
-        if (Files.exists(appPidFile)) {
+        if (Files.exists(paths().processMarkerFile())) {
             try {
-                var data = Files.readString(appPidFile);
+                var data = Files.readString(paths().processMarkerFile());
                 var pid = Long.parseLong(data);
                 ProcessHandle.of(pid).ifPresent((handle) -> {
                     // SHUT IT DOWN!
@@ -135,7 +135,7 @@ public class AppMain {
         // Write the current pid to the file
         var currentPid = ProcessHandle.current().pid();
         try {
-            Files.writeString(appPidFile, String.valueOf(currentPid));
+            Files.writeString(paths().processMarkerFile(), String.valueOf(currentPid));
         } catch (IOException ex) {
             LOGGER.error("Failed to write app.pid file", ex);
         }
@@ -158,8 +158,7 @@ public class AppMain {
                 Optional<ProcessHandle> frontendProcess = ProcessHandle.of(pid);
                 if (frontendProcess.isPresent()) {
                     ProcessHandle handle = frontendProcess.get();
-                    handle.onExit().thenRun(() ->
-                    {
+                    handle.onExit().thenRun(() -> {
                         while (isSyncing.get()) {
                             try {
                                 Thread.sleep(1000); // TODO: Replace with a a wait/notify
@@ -201,13 +200,13 @@ public class AppMain {
         // bois" before the front end requests any information but that's a further issue, not for this release
         initSettingsAndCache();
 
-        FileUtils.listDir(Constants.WORKING_DIR).stream()
+        FileUtils.listDir(paths().workingDir()).stream()
             .filter(e -> e.getFileName().toString().endsWith(".jar") && !e.getFileName().toString().contains(Constants.APPVERSION))
             .forEach(e -> {
                 try {
                     Files.deleteIfExists(e);
                 } catch (IOException ignored) {
-                    LOGGER.error("Failed to remove {} from {}", e.toString(), Constants.WORKING_DIR);
+                    LOGGER.error("Failed to remove {} from {}", e.toString(), paths().workingDir());
                 }
             });
 
@@ -215,7 +214,7 @@ public class AppMain {
 
         CompletableFuture.runAsync(localCache::clean);
 
-        if (!Files.isWritable(Constants.getDataDir())) {
+        if (!Files.isWritable(AppMain.paths().workingDir())) {
             OpenModalData.openModal("Critical Error", "The FTBApp is unable to write to your selected data directory, this can be caused by file permission errors, anti-virus or any number of other configuration issues.<br />If you continue, the app will not work as intended and you may be unable to install or run any modpacks.", List.of(
                 new OpenModalData.ModalButton("Exit", "success", AppMain::exit),
                 new OpenModalData.ModalButton("Continue", "danger", () -> {
@@ -415,6 +414,10 @@ public class AppMain {
         }
     }
 
+    public static AppPaths paths() {
+        return APP_PATHS;
+    }
+    
     private static void logAppDetails(String[] args) {
         List<String> jvmArgs = new ArrayList<>();
         try {
@@ -434,9 +437,7 @@ FTB App Subprocess startup;
 \t- OS Version:     {}
 \t- OS Arch:        {}
 - Paths
-\t- Data Dir:       {}
 \t- CWD:            {}
-\t- User home:      {}
 - Arguments
 \t- Args:           {}
 \t- JVM Args:       {}
@@ -447,9 +448,7 @@ FTB App Subprocess startup;
             System.getProperty("os.name"),
             System.getProperty("os.version"),
             Architecture.current().name(),
-            Constants.getDataDir(),
-            Constants.WORKING_DIR,
-            System.getProperty("user.home"),
+            paths().workingDir().toAbsolutePath(),
             String.join(" ", args),
             jvmArgs
         );

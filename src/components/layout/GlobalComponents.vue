@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import Changelog from '@/components/groups/changelogs/Changelog.vue';
-import Dialogs from '@/components/groups/global/Dialogs.vue';
+import Dialogs from '@/components/groups/global/dialog/Dialogs.vue';
 import Alerts from '@/components/groups/global/Alerts.vue';
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
@@ -9,10 +9,10 @@ import DevToolsActions from '@/components/layout/DevToolsActions.vue';
 import ContentMenuGlobal from '@/components/groups/global/contextMenu/ContentMenuGlobal.vue';
 import MicrosoftLoginModal from '@/components/groups/auth/MicrosoftLoginModal.vue';
 import LaunchInstanceDialog from '@/components/modals/LaunchInstanceDialog.vue';
-import { Modal, ModalBody, ModalFooter } from '@/components/ui';
-import { useAccountsStore } from '@/store/accountsStore.ts';
-import { useModalStore } from '@/store/modalStore.ts';
-import { ModalButton } from '@/core/types/javaApi';
+import {Modal, ModalBody, ModalFooter} from '@/components/ui';
+import {useAccountsStore} from '@/store/accountsStore.ts';
+import {useModalStore} from '@/store/modalStore.ts';
+import {ModalButton} from '@/core/types/javaApi';
 import FtbLoginModal from "@/components/groups/auth/FtbLoginModal.vue";
 import ModpackPreview from "@/components/groups/global/modpackPreview/ModpackPreview.vue";
 import ImagePreview from "@/components/groups/global/imagePreview/ImagePreview.vue";
@@ -36,40 +36,41 @@ function modalFeedback(button: ModalButton) {
 
 <template>
   <div class="global-components">
-    <ModpackPreview />
-    <content-menu-global />
-    <ImagePreview />
-    
-    <Modal 
-      v-if="modalStore.modal" 
+    <ModpackPreview/>
+    <content-menu-global/>
+    <ImagePreview/>
+
+    <Modal
+      v-if="modalStore.modal"
       :open="!!modalStore.modal"
-      @closed="() => modalStore.closeModal()" 
+      @closed="() => modalStore.closeModal()"
       :external-contents="true"
       :title="modalStore.modal.title"
       style="z-index: 50000"
     >
       <ModalBody>
-        <div class="break-all overflow-auto" v-html="modalStore.modal.message" />
+        <div class="break-all overflow-auto" v-html="modalStore.modal.message"/>
       </ModalBody>
       <ModalFooter>
         <div class="flex justify-end gap-4">
-          <UiButton v-for="(button, index) in modalStore.modal.buttons" :key="index" @click="modalFeedback(button)" :type="button.type as any">
-            {{ button.name }}            
+          <UiButton v-for="(button, index) in modalStore.modal.buttons" :key="index" @click="modalFeedback(button)"
+                    :type="button.type as any">
+            {{ button.name }}
           </UiButton>
         </div>
       </ModalFooter>
     </Modal>
-    
-    <MicrosoftLoginModal :open="accountStore.signInOpen" @closed="() => accountStore.openSignIn(false)" />
-    <FtbLoginModal :open="accountStore.signInFtbOpen" @closed="() => accountStore.openSignInFtb(false)" />
+
+    <MicrosoftLoginModal :open="accountStore.signInOpen" @closed="() => accountStore.openSignIn(false)"/>
+    <FtbLoginModal :open="accountStore.signInFtbOpen" @closed="() => accountStore.openSignInFtb(false)"/>
 
     <!-- Only checks for an update once during startup -->
-    <changelog />
-    <dialogs />
-    <alerts />
-    <launch-instance-dialog />
-    
-    <dev-tools-actions />
+    <changelog/>
+    <dialogs/>
+    <alerts/>
+    <launch-instance-dialog/>
+
+    <dev-tools-actions/>
   </div>
 </template>
 

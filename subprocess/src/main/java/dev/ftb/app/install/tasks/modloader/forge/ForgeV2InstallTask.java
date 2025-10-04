@@ -5,6 +5,7 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import dev.ftb.app.AppMain;
 import dev.ftb.app.Constants;
 import dev.ftb.app.data.forge.installerv2.InstallManifest;
 import dev.ftb.app.install.tasks.DownloadTask;
@@ -59,8 +60,8 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
 
     @Override
     public void execute(@Nullable CancellationToken cancelToken, @Nullable TaskProgressListener listener) throws Throwable {
-        Path versionsDir = Constants.BIN_LOCATION.resolve("versions");
-        Path librariesDir = Constants.BIN_LOCATION.resolve("libraries");
+        Path versionsDir = AppMain.paths().mcVersionsDir();
+        Path librariesDir = AppMain.paths().mcLibrariesDir();
 
         try (FileSystem fs = IOUtils.getJarFileSystem(installerJar, true)) {
             Path installerRoot = fs.getPath("/");
@@ -153,7 +154,7 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
         data.put("SIDE", "client");
         data.put("MINECRAFT_JAR", versionsDir.resolve(vanillaManifest.id).resolve(vanillaManifest.id + ".jar").toAbsolutePath().toString());
         data.put("MINECRAFT_VERSION", vanillaManifest.id);
-        data.put("ROOT", Constants.BIN_LOCATION.toAbsolutePath().toString());
+        data.put("ROOT", AppMain.paths().binDir().toAbsolutePath().toString());
         data.put("INSTALLER", installerJar.toAbsolutePath().toString());
         data.put("LIBRARY_DIR", librariesDir.toAbsolutePath().toString());
 
@@ -276,7 +277,7 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
         command.addAll(args);
 
         ProcessBuilder builder = new ProcessBuilder()
-                .directory(Constants.BIN_LOCATION.toFile())
+                .directory(AppMain.paths().binDir().toFile())
                 .command(command);
         LOGGER.info("Starting processor with command '{}'", String.join(" ", builder.command()));
         try {

@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import { ref, watch } from 'vue'
+
 type ProgressType = "primary" | "muted"
 
 const {
@@ -14,12 +16,29 @@ const {
   type?: ProgressType;
   inverted?: boolean;
 }>()
+
+const isResetting = ref(false);
+
+watch(() => progress, (newValue, oldValue) => {
+  if (newValue === oldValue || isResetting.value) {
+    return;
+  }
+  
+  // Is the new progress less than the old one?
+  if (newValue < oldValue) {
+    isResetting.value = true;
+    setTimeout(() => {
+      isResetting.value = false;
+    }, 100);
+  }
+});
 </script>
 
 <template>
-  <div class="progress" :class="{'infinite': infinite, 'animated': doProgressAnimation, [type]: true}">
+  <div class="progress" :class="{'infinite': infinite, 'animated': doProgressAnimation, 'inverted': inverted, [type]: true, 'resetting': isResetting}">
     <div class="bar" :style="{
-      width: inverted ? `${100 - progress * 100}%` : `${progress * 100}%`,
+      width: inverted ? `100%` : `${progress * 100}%`,
+      marginLeft: inverted ? `${100 - progress * 100}%` : '0',
     }"></div>
   </div>
 </template>
@@ -34,6 +53,10 @@ const {
   border-radius: 10px;
   overflow: hidden;
   position: relative;
+
+  &:not(.resetting) .bar {
+    transition: width .15s ease-in-out, margin-left 0.1s ease-in-out;
+  }
   
   .bar {
     height: 100%;
@@ -41,7 +64,7 @@ const {
   }
   
   &.muted .bar {
-    @apply bg-gray-700;
+    background: var(--color-gray-700);
   }
 
   &.animated::after {
@@ -67,6 +90,24 @@ const {
       100% {
         opacity: 0.08;
         left: 100%;
+      }
+    }
+  }
+
+  &.animated.inverted::after {
+    animation: rightToLeft 3s ease-in-out infinite;
+    @keyframes rightToLeft {
+      0% {
+        opacity: 0.08;
+        left: 100%;
+      }
+      50% {
+        opacity: 0.15;
+        left: 0;
+      }
+      100% {
+        opacity: 0.08;
+        left: -100%;
       }
     }
   }

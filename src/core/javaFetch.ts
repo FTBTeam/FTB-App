@@ -49,15 +49,15 @@ class FetchResponse implements FetchResponseRaw {
   }
   
   public text() {
-    return new TextDecoder().decode(new Uint8Array(this.body.bytes));
+    return new TextDecoder().decode(new Uint8Array(this.body?.bytes ?? []));
   }
   
   public json<T>() {
-    if (!this.body.contentType.includes("json")) {
-      throw new Error(`Unable to extract json data from content type of ${this.body.contentType}... Expected application/json\n\nFull response: ${this.text()}`)
+    if (!this.body?.contentType || !this.body?.contentType.includes("json")) {
+      throw new Error(`Unable to extract json data from content type of ${this.body?.contentType}... Expected application/json\n\nFull response: ${this.text()}`)
     }
     
-    return JSON.parse(new TextDecoder().decode(new Uint8Array(this.body.bytes))) as T
+    return JSON.parse(new TextDecoder().decode(new Uint8Array(this.body?.bytes ?? []))) as T
   }
   
   public raw(): Uint8Array {

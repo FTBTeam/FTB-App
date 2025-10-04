@@ -22,7 +22,7 @@ import {
   InstalledInstancesData,
   InstalledInstancesDataReply,
   InstallInstanceData,
-  InstallInstanceDataReply,
+  InstallInstanceDataReply, InstanceCategoryHandlerData, InstanceCategoryHandlerReply,
   InstanceConfigureData,
   InstanceConfigureDataReply,
   InstanceDeleteBackupHandlerReply,
@@ -75,8 +75,6 @@ import {
   UpdateInstanceData,
   UploadLogsData,
   UploadLogsDataReply,
-  VideoCacheHandlerData,
-  VideoCacheHandlerReply,
   WebRequestData,
   WebRequestDataResponse
 } from '@/core/types/javaApi';
@@ -104,6 +102,7 @@ const endpoints = {
   pinInstance:                    io<PinInstanceHandlerData, PinInstanceHandlerReply>(),
   installedInstances:             io<InstalledInstancesData, InstalledInstancesDataReply>(),
   launchInstance:                 io<Nullable<LaunchInstanceData, "cancelLaunch">, LaunchInstanceDataReply>(),
+  instanceCategories:             io<Partial<Omit<InstanceCategoryHandlerData, "type" | "requestId" | "secret">> & BaseData, InstanceCategoryHandlerReply>(),
   "instance.kill":                io<KillInstanceData, KillInstanceDataReply>(),
   installInstance:                io<Nullable<InstallInstanceData, "importFrom" | "name" | "artPath">, InstallInstanceDataReply>(),
   cancelInstallInstance:          io<CancelInstallInstanceData, CancelInstallInstanceDataReply>(),
@@ -142,7 +141,6 @@ const endpoints = {
   webRequest:                     io<Nullable<WebRequestData, "body">, WebRequestDataResponse>(),
   openDebugTools:                 io<BaseData, EmptyMessageResponse>(),
   instanceOverrideModLoader:      io<InstanceOverrideModLoaderData, InstanceOverrideModLoaderDataReply>(),
-  videoCache:                     io<VideoCacheHandlerData, VideoCacheHandlerReply>(),
   moveInstances:                  io<MoveInstancesHandlerData, MoveInstancesHandlerReply>(),
   "accounts.store-oauth":         io<StoreFtbAccountHandlerData, StoreFtbAccountHandlerReply>(),
   "accounts.get-oauth":           io<BaseData, GetFtbAccountHandlerReply>(),

@@ -114,7 +114,7 @@ function calculateWidth() {
 <template>
   <div class="context-menu-container">
     <transition name="slide-up">
-      <div class="context-menu" ref="elmRef" v-show="menu" :style="{
+      <div class="context-menu rounded-lg" ref="elmRef" v-show="menu" :style="{
         top: menuY + 'px',
         left: menuX + 'px'
       }">
@@ -126,27 +126,22 @@ function calculateWidth() {
 
 <style lang="scss" scoped>
 .context-menu {
-  $titleBarHeight: 28.8px;
+  $titleBarHeight: 2.5rem;
 
   position: fixed;
   z-index: 10000;
   padding: .4rem;
   max-height: calc(100vh - $titleBarHeight);
   max-width: calc(100vw - $titleBarHeight);
-  border: 1px solid rgba(white, .1);
   background-color: #0a0a0a;
   color: rgba(white, .8);
   box-shadow: 0 3px 20px rgb(0 0 0 / 30%);
-
-  border-radius: 3px;
-  min-width: 180px;
+  min-width: 140px;
 
   .items {
-    font-size: 0.875rem;
-
     .separator {
       height: 1px;
-      background-color: rgba(255 255 255 / 20%);
+      background-color: rgba(255, 255, 255, .1);
       margin: .5rem 0;
     }
   }

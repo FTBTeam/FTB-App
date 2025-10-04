@@ -3,7 +3,6 @@ package dev.ftb.app.pack;
 import com.google.gson.JsonParseException;
 import dev.ftb.app.Analytics;
 import dev.ftb.app.AppMain;
-import dev.ftb.app.Constants;
 import dev.ftb.app.Instances;
 import dev.ftb.app.data.InstanceJson;
 import dev.ftb.app.data.InstanceModifications;
@@ -16,10 +15,11 @@ import dev.ftb.app.data.modpack.ModpackManifest;
 import dev.ftb.app.data.modpack.ModpackVersionManifest;
 import dev.ftb.app.data.modpack.ModpackVersionModsManifest;
 import dev.ftb.app.install.tasks.DownloadTask;
+import dev.ftb.app.instance.InstanceCategory;
 import dev.ftb.app.minecraft.modloader.forge.ForgeJarModLoader;
 import dev.ftb.app.storage.settings.Settings;
-import dev.ftb.app.util.CurseMetadataCache.FileMetadata;
 import dev.ftb.app.util.*;
+import dev.ftb.app.util.CurseMetadataCache.FileMetadata;
 import net.covers1624.quack.collection.ColUtils;
 import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.JsonUtils;
@@ -31,7 +31,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.BindException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
@@ -46,7 +47,7 @@ public class Instance {
         81L,  // Vanilla
         104L, // Forge
         105L, // Fabric
-        116L  // NeoForge  
+        116L  // NeoForge
     );
     
     private static final Logger LOGGER = LogManager.getLogger();
@@ -75,13 +76,13 @@ public class Instance {
     private long startTime;
 
     // Brand-new instance.
-    public Instance(@Nullable String name, @Nullable String artPath, @Nullable String category, ModpackManifest modpack, ModpackVersionManifest versionManifest, String mcVersion, boolean isPrivate, byte packType) {
+    public Instance(@Nullable String name, @Nullable String artPath, @Nullable UUID categoryId, ModpackManifest modpack, ModpackVersionManifest versionManifest, String mcVersion, boolean isPrivate, byte packType) {
         props = new InstanceJson(modpack, versionManifest, mcVersion, isPrivate, packType);
         if (name != null) {
             props.name = name;
         }
 
-        props.category = Objects.requireNonNullElse(category, "Default");
+        props.categoryId = categoryId == null ? InstanceCategory.DEFAULT.uuid() : categoryId;
 
         path = Settings.getInstancesDir().resolve(folderNameFor(props));
         metaPath = path.resolve(META_FOLDER_NAME);
@@ -135,7 +136,8 @@ public class Instance {
     }
     
     private void storeArtwork(ModpackManifest modpack, @Nullable String artPath) {
-        if (artPath != null) {
+        // Don't try and resolve a path of a url.
+        if (artPath != null && !artPath.startsWith("http://") && !artPath.startsWith("https://")) {
             try {
                 updateArtwork(Path.of(artPath));
             } catch (IOException ex) {
@@ -160,7 +162,7 @@ public class Instance {
                 // TODO we need to validate the state of mod modifications.
                 //      Dynamically add/remove them as manual modifications are always possible.
                 //      We should do this any time the Mods list is queried. I.e the frontend or installer requests it.
-                modifications = InstanceModifications.load(modificationsJson);
+                modifications = InstanceModifications.load(modificationsJson, this);
             }
         }
     }
@@ -235,6 +237,11 @@ public class Instance {
     public @Nullable ModpackVersionModsManifest getModsManifest() {
         if (this.isCustom()) {
             // We don't need to query the mods manifest for these packs.
+            return null;
+        }
+        
+        if (this.props.id == -1 || this.props.versionId == -1) {
+            // This is a custom instance, we don't have a modpack ID or version ID.
             return null;
         }
         
@@ -485,12 +492,12 @@ public class Instance {
     }
 
     @Nullable
-    public Instance duplicate(String instanceName, @Nullable String category) throws IOException {
+    public Instance duplicate(String instanceName, @Nullable UUID category) throws IOException {
         InstanceJson json = new InstanceJson(props, UUID.randomUUID(), !instanceName.isEmpty() ? instanceName : props.name);
         json.totalPlayTime = 0;
         json.lastPlayed = 0;
         json.potentiallyBrokenDismissed = false;
-        json.category = category != null ? category : props.category;
+        json.categoryId = category != null ? category : props.categoryId;
 
         Path newDir = Settings.getInstancesDir().resolve(folderNameFor(json));
         Path newJson = newDir.resolve("instance.json");
@@ -512,7 +519,7 @@ public class Instance {
     public synchronized List<ModInfo> getMods(boolean rich) {
         LOGGER.info("Building instance mods list..");
         List<ModInfo> mods = new ArrayList<>();
-
+        
         ModpackVersionModsManifest modsManifest = rich ? getModsManifest() : null;
         InstanceModifications modifications = getModifications();
 
@@ -520,7 +527,9 @@ public class Instance {
 
         // Populate all mods from the regular version manifest.
         for (ModpackVersionManifest.ModpackFile file : versionManifest.getFiles()) {
-            if (!file.getPath().startsWith("./mods") || !isMod(file.getName())) continue;
+            if ((!file.getPath().startsWith("./mods") && !file.getPath().startsWith("mods/")) || !isMod(file.getName())) {
+                continue;
+            }
 
             String sha1 = Objects.toString(file.getSha1OrNull(), null);
             long murmur = -1;
@@ -558,11 +567,11 @@ public class Instance {
                     enabled,
                     file.getSize(),
                     sha1,
-                    String.valueOf(murmur),
-                    rich ? Constants.CURSE_METADATA_CACHE.getCurseMeta(mod, String.valueOf(murmur)) : null
+                    murmur,
+                    rich ? CurseMetadataCache.get().getCurseMeta(mod, String.valueOf(murmur)) : null
             ));
         }
-
+        
         // Mods added manually or via CurseForge integ.
         if (modifications != null) {
             for (ModOverride override : modifications.getOverrides()) {
@@ -570,7 +579,6 @@ public class Instance {
                 if (!override.getState().added() && !override.getState().updated()) continue;
 
                 Path file = modsDir.resolve(override.getFileName());
-                long murmurHash = -1;
                 if (!Files.exists(file)) {
                     // If t he file does not exist, it might be disabled, let's try that one as well
                     file = modsDir.resolve(override.getFileName() + ".disabled");
@@ -579,18 +587,9 @@ public class Instance {
                     }
                 }
 
-                if (file != null) {
-                    try {
-                        var fileBytes = Files.readAllBytes(file);
-                        murmurHash = HashingUtils.createCurseForgeMurmurHash(fileBytes);
-                    } catch (IOException ex) {
-                        LOGGER.error("Error reading file for override: {}. Unable to process this whilst generating mods list.", override.getFileName(), ex);
-                    }
-                }
-                
                 CurseMetadata ids;
                 if (rich) {
-                    ids = Constants.CURSE_METADATA_CACHE.getCurseMeta(override.getCurseProject(), override.getCurseFile());
+                    ids = CurseMetadataCache.get().getCurseMeta(override.getCurseProject(), override.getCurseFile());
                 } else {
                     ids = CurseMetadata.basic(override.getCurseProject(), override.getCurseFile());
                 }
@@ -601,12 +600,15 @@ public class Instance {
                         override.getState().enabled(),
                         tryGetSize(file),
                         override.getSha1(),
-                        String.valueOf(murmurHash),
+                        override.getMurmurHash(),
                         ids
                 ));
             }
         }
-
+        
+        // TODO: Scan the mods folder for mods that have been manually disabled.
+        //       - This whole process needs to be re-thought out as doing it like this is ass.
+        
         for (Path path : FileUtils.listDir(modsDir)) {
             if (!Files.isRegularFile(path)) continue;
 
@@ -621,7 +623,7 @@ public class Instance {
             LOGGER.info("Found unknown mod in Mods folder. {}", fName);
             // We don't know about the mod! We need to add it and create a Modification for it.
 
-            String murmurHash;
+            long murmurHash;
             String sha1;
             long size;
             try {
@@ -629,7 +631,7 @@ public class Instance {
                 var fileBytes = Files.readAllBytes(path);     
                 
                 sha1 = DigestUtils.sha1Hex(fileBytes);
-                murmurHash = String.valueOf(HashingUtils.createCurseForgeMurmurHash(fileBytes));
+                murmurHash = HashingUtils.createCurseForgeMurmurHash(fileBytes);
 
             } catch (IOException ex) {
                 LOGGER.error("Error reading file. Unable to process this whilst generating mods list.", ex);
@@ -638,7 +640,7 @@ public class Instance {
 
             long curseProject = -1;
             long curseFile = -1;
-            FileMetadata metadata = Constants.CURSE_METADATA_CACHE.queryMetadata(murmurHash);
+            FileMetadata metadata = CurseMetadataCache.get().queryMetadata(String.valueOf(murmurHash));
             if (metadata != null) {
                 LOGGER.info(" Identified as {} {} {}", metadata.name(), metadata.curseProject(), metadata.curseFile());
                 curseProject = metadata.curseProject();
@@ -660,9 +662,11 @@ public class Instance {
                     metadata != null ? metadata.toCurseInfo() : null
             ));
 
-            getOrCreateModifications().getOverrides().add(new ModOverride(state, fName2, sha1, curseProject, curseFile));
-            saveModifications();
+            getOrCreateModifications().getOverrides().add(new ModOverride(state, fName2, sha1, murmurHash, curseProject, curseFile));
         }
+
+        // Only save once all modifications have been added.
+        saveModifications();
 
         LOGGER.info("List built {} mods.", mods.size());
         return mods;
@@ -709,15 +713,12 @@ public class Instance {
         try {
             switch (override.getState()) {
                 // TODO, remove override if returning mod back to its original state?
-                case ENABLED, UPDATED_ENABLED, ADDED_ENABLED -> {
-                    Files.move(pathEnabled, pathDisabled);
-                }
-                case DISABLED, UPDATED_DISABLED, ADDED_DISABLED -> {
-                    Files.move(pathDisabled, pathEnabled);
-                }
+                case ENABLED, UPDATED_ENABLED, ADDED_ENABLED -> Files.move(pathEnabled, pathDisabled);
+                case DISABLED, UPDATED_DISABLED, ADDED_DISABLED -> Files.move(pathDisabled, pathEnabled);
                 // We should probably provide a 'restore' endpoint for this.
                 case REMOVED -> throw new IllegalArgumentException("Unable to toggle removed mod.");
             }
+            
             override.setState(override.getState().toggle());
         } catch (IOException ex) {
             throw new IllegalStateException("Failed to toggle mod.", ex);
@@ -733,7 +734,7 @@ public class Instance {
     private static long tryGetSize(Path file) {
         try {
             return Files.size(file);
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             return -1;
         }
     }

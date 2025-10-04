@@ -46,6 +46,7 @@ public class WebSocketHandler {
         register("appInit", AppInitHandler.Data.class, new AppInitHandler());
         register("moveInstances", MoveInstancesHandler.Data.class, new MoveInstancesHandler());
         register("installedInstances", InstalledInstancesData.class, new InstalledInstancesHandler());
+        register("instanceCategories", InstanceCategoryHandler.Data.class, new InstanceCategoryHandler());
         register("pinInstance", PinInstanceHandler.Data.class, new PinInstanceHandler());
         register("launchInstance", LaunchInstanceData.class, new LaunchInstanceHandler());
         register("instance.kill", KillInstanceData.class, new KillInstanceHandler());
@@ -92,8 +93,6 @@ public class WebSocketHandler {
         register("storage.get-all", BaseData.class, new StorageGetAllHandler());
 
         register("webRequest", WebRequestData.class, new WebRequestHandler());
-        register("videoCache", VideoCacheHandler.Data.class, new VideoCacheHandler());
-
         register("openDebugTools", BaseData.class, new OpenDebugToolsHandler());
     }
 
@@ -151,7 +150,7 @@ public class WebSocketHandler {
         try {
             BaseData parsedData = GSON.fromJson(data, entry.getLeft());
             if (AppMain.isDevMode || (parsedData.secret != null && parsedData.secret.equals(Constants.WEBSOCKET_SECRET))) {
-                CompletableFuture.runAsync(() -> iMessageHandler.handle(parsedData), AppMain.taskExeggutor).exceptionally((t) -> {
+                CompletableFuture.runAsync(() -> iMessageHandler.handle(parsedData), AppMain.taskExecutor).exceptionally((t) -> {
                     LOGGER.error("Error handling message", t);
                     return null;
                 });

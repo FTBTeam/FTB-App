@@ -9,6 +9,7 @@ import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
+import dev.ftb.app.AppMain;
 import dev.ftb.app.data.mod.ModManifest;
 import net.covers1624.quack.annotation.NonNullApi;
 import net.covers1624.quack.gson.JsonUtils;
@@ -55,7 +56,18 @@ public class ModVersionCache {
                 }
             });
 
-    public ModVersionCache(Path file) {
+    @Nullable
+    private static ModVersionCache instance;
+    
+    public static ModVersionCache get() {
+        if (instance == null) {
+            instance = new ModVersionCache(AppMain.paths().workingDir().resolve(".mod_meta.json"));
+        }
+        
+        return instance;
+    }
+    
+    private ModVersionCache(Path file) {
         this.file = file;
         Map<String, CacheEntry> modVersionCache = null;
         if (Files.exists(file)) {

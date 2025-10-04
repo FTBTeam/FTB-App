@@ -1,7 +1,6 @@
 <script lang="ts" setup>
-import Selection2, {SelectionOption} from '@/components/ui/Selection2.vue';
 import UiButton from '@/components/ui/UiButton.vue';
-import {stringIsEmpty} from '@/utils/helpers/stringHelpers';
+import {stringIsEmpty, toTitleCase} from '@/utils/helpers/stringHelpers';
 import {toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import {alertController} from '@/core/controllers/alertController';
 import Loader from '@/components/ui/Loader.vue';
@@ -10,10 +9,10 @@ import CategorySelector from '@/components/groups/modpack/create/CategorySelecto
 import ModloaderSelect from '@/components/groups/modpack/components/ModloaderSelect.vue';
 import UiToggle from '@/components/ui/UiToggle.vue';
 import RamSlider from '@/components/groups/modpack/components/RamSlider.vue';
-import {safeNavigate} from '@/utils';
+import {getColorForReleaseType, safeNavigate} from '@/utils';
 import {RouterNames} from '@/router';
 import { computed, onMounted, watch, ref } from 'vue';
-import { ModalBody, Modal, ModalFooter, Input, InputNumber } from '@/components/ui';
+import {ModalBody, Modal, ModalFooter, Input, UiBadge} from '@/components/ui';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { useModpackStore } from '@/store/modpackStore.ts';
 import { ModPack } from '@/core/types/appTypes.ts';
@@ -21,6 +20,11 @@ import { useAppSettings } from '@/store/appSettingsStore.ts';
 import { faArrowLeft, faArrowRight, faBoxes, faInfo, faPuzzlePiece } from '@fortawesome/free-solid-svg-icons';
 import { useAppStore } from '@/store/appStore.ts';
 import ArtworkSelector from "@/components/groups/modpack/components/ArtworkSelector.vue";
+import UiSelect from "@/components/ui/select/UiSelect.vue";
+import {UiSelectOption} from "@/components/ui/select/UiSelect.ts";
+import dayjs, {Dayjs} from "dayjs";
+import {defaultInstanceCategory} from "@/core/constants.ts";
+import ResolutionSelector from "@/components/groups/modpack/components/ResolutionSelector.vue";
 
 const appStore = useAppStore();
 const appSettingsStore = useAppSettings();
@@ -33,9 +37,9 @@ const step = ref(0);
 
 const userSelectedArtwork = ref<string | null>(null);
 const userPackName = ref("");
-const userVanillaVersion = ref(-1);
+const userVanillaVersion = ref("-1");
 const userModLoader = ref<[string, ModLoaderWithPackId] | null>(null)
-const userCategory = ref("Default");
+const userCategory = ref(defaultInstanceCategory);
 
 const vanillaPack = ref<ModPack | null>(null);
 const showVanillaSnapshots = ref(false);
@@ -47,17 +51,18 @@ const fatalError = ref(false);
 const userOverrideInstanceDefaults = ref(false);
 const userOverridePreferences = ref(false);
 
-const settingFullscreen = ref(false);
-const settingScreenResolution = ref("");
 const settingRam = ref(0);
-const userHeight = ref(0);
-const userWidth = ref(0);
+const settingResolution = ref({
+  width: 0,
+  height: 0,
+  fullScreen: false
+});
 
 function close() {
   step.value = 0;
   userSelectedArtwork.value = null;
   userPackName.value = "";
-  userVanillaVersion.value = -1;
+  userVanillaVersion.value = "-1";
   showVanillaSnapshots.value = false;
   
   userModLoader.value = null;
@@ -67,23 +72,18 @@ function close() {
   fatalError.value = false;
   userOverrideInstanceDefaults.value = false;
   userOverridePreferences.value = false;
-  settingFullscreen.value = false;
-  settingScreenResolution.value = "";
   settingRam.value = 0;
-  userHeight.value = 0;
-  userWidth.value = 0;
+  settingResolution.value = {
+    width: 0,
+    height: 0,
+    fullScreen: false
+  };
   emit('close');
 }
 
 onMounted(async () => {
   await loadInitialState();
 })
-
-function onScreenResolutionChange(newVal: string) {
-  const [width, height] = newVal.split("x");
-  userWidth.value = parseInt(width);
-  userHeight.value = parseInt(height);
-}
 
 watch(() => open, async (newValue) => {
   if (!newValue) {
@@ -95,11 +95,12 @@ watch(() => open, async (newValue) => {
 
 async function loadInitialState() {
   // Load back in the user defaults
-  settingFullscreen.value = appSettingsStore.rootSettings?.instanceDefaults.fullscreen ?? false;
-  settingScreenResolution.value = (appSettingsStore.rootSettings?.instanceDefaults.width ?? 0) + "x" + (appSettingsStore.rootSettings?.instanceDefaults.height ?? 0);
   settingRam.value = appSettingsStore.rootSettings?.instanceDefaults.memory ?? 0;
-  userWidth.value = appSettingsStore.rootSettings?.instanceDefaults.width ?? 0;
-  userHeight.value = appSettingsStore.rootSettings?.instanceDefaults.height ?? 0;
+  settingResolution.value = {
+    width: appSettingsStore.rootSettings?.instanceDefaults.width ?? 0,
+    height: appSettingsStore.rootSettings?.instanceDefaults.height ?? 0,
+    fullScreen: appSettingsStore.rootSettings?.instanceDefaults.fullscreen ?? false
+  };
   
   vanillaPack.value = await toggleBeforeAndAfter(() => modpackStore.getModpack(81, "modpacksch") ?? null, state => loadingVanilla.value = state);
 
@@ -110,21 +111,21 @@ async function loadInitialState() {
   }
 
   const vanillaLatest = vanillaVersions.value[0];
-  userPackName.value = `Minecraft ${vanillaLatest.label}`;
-  userVanillaVersion.value = vanillaLatest.value;
+  userPackName.value = `Minecraft ${vanillaLatest.value}`;
+  userVanillaVersion.value = vanillaLatest.key;
 }
 
-watch(userVanillaVersion, (newValue) => {
+watch(userVanillaVersion, (newValue, oldValue) => {
   if (!vanillaPack) {
     return;
   }
 
-  const version = vanillaPack.value?.versions.find(e => e.id === newValue);
+  const version = vanillaPack.value?.versions.find(e => e.id.toString() === newValue);
   if (!version) {
     return;
   }
 
-  const lastVersion = vanillaPack.value?.versions.find(e => e.id === newValue);
+  const lastVersion = vanillaPack.value?.versions.find(e => e.id.toString() === oldValue);
   // Update pack name
   if (userPackName.value === `Minecraft ${lastVersion?.name}`) {
     userPackName.value = `Minecraft ${version.name}`;
@@ -138,7 +139,7 @@ const canProceed = computed(() => {
 
   switch (step.value) {
     case 0:
-      return !stringIsEmpty(userPackName.value) && userVanillaVersion.value !== -1;
+      return !stringIsEmpty(userPackName.value) && userVanillaVersion.value !== "-1";
     case 1:
     case 2:
       return true;
@@ -163,9 +164,9 @@ function createInstance() {
     category: userCategory.value,
     ourOwn: true,
     ram: settingRam.value == appSettingsStore.rootSettings?.instanceDefaults.memory ? -1 : settingRam.value,
-    fullscreen: settingFullscreen.value === appSettingsStore.rootSettings?.instanceDefaults.fullscreen ? undefined : settingFullscreen.value,
-    width: userWidth.value == appSettingsStore.rootSettings?.instanceDefaults.width ? undefined : userWidth.value,
-    height: userHeight.value == appSettingsStore.rootSettings?.instanceDefaults.height ? undefined : userHeight.value,
+    fullscreen: settingResolution.value.fullScreen === appSettingsStore.rootSettings?.instanceDefaults.fullscreen ? undefined : settingResolution.value.fullScreen,
+    width: settingResolution.value.width == appSettingsStore.rootSettings?.instanceDefaults.width ? undefined : settingResolution.value.width,
+    height: settingResolution.value.height == appSettingsStore.rootSettings?.instanceDefaults.height ? undefined : settingResolution.value.height,
   }
 
   // Magic
@@ -195,33 +196,27 @@ function createInstance() {
 }
 
 const selectedMcVersion = computed(() => {
-  if (!vanillaPack || userVanillaVersion.value === -1) {
+  if (!vanillaPack || userVanillaVersion.value === "-1") {
     return "unknown";
   }
 
-  return vanillaPack.value?.versions.find(e => e.id === userVanillaVersion.value)?.name ?? "unknown";
+  return vanillaPack.value?.versions.find(e => e.id.toString() === userVanillaVersion.value)?.name ?? "unknown";
 })
 
-const vanillaVersions = computed<SelectionOption[]>(() => {
+const vanillaVersions = computed<UiSelectOption<{ type: string, date: Dayjs }>[]>(() => {
   if (!vanillaPack) {
     return []
   }
   
-  return vanillaPack.value?.versions
+  return (vanillaPack.value?.versions
     .filter(e => e.type.toLowerCase() === "release" || ((e.type.toLowerCase() === "alpha" || e.type.toLowerCase() === "beta") && showVanillaSnapshots.value))
     .sort((a, b) => b.id - a.id)
     .map(e => ({
-      label: e.name,
-      value: e.id,
-      meta: e.type
-    })) as SelectionOption[] ?? []
-})
-
-const screenResolutions = computed( () => {
-  return appSettingsStore.systemHardware?.supportedResolutions.map(e => ({
-    label: `${e.width}x${e.height}`,
-    value: `${e.width}x${e.height}`
-  })) ?? []
+      value: e.name,
+      key: e.id.toString(),
+      type: e.type,
+      date: dayjs.unix(e.updated)
+    })) ?? []) as UiSelectOption<{ type: string, date: Dayjs }>[];
 })
 </script>
 
@@ -239,7 +234,16 @@ const screenResolutions = computed( () => {
         <template v-if="!loadingVanilla">
           <ArtworkSelector class="mb-6" v-model="userSelectedArtwork" />
           <Input fill label="Name" placeholder="Next best instance!" v-model="userPackName" class="mb-4" />
-          <Selection2 :open-up="true" label="Minecraft version" class="mb-4" :options="vanillaVersions" v-model="userVanillaVersion" />
+          
+          <UiSelect :options="vanillaVersions" class="mb-4" label="Minecraft version" v-model="userVanillaVersion" :min-width="320">
+            <template #option="{ option, clazz }">
+              <div :class="clazz" class="flex justify-between items-center gap-4">
+                <div class="flex-1">{{ option.value }}</div>
+                <div class="text-white/80">{{ option.date.fromNow() }}</div>
+                <UiBadge class="font-bold text-shadow" :style="{backgroundColor: getColorForReleaseType(option.type)}">{{ toTitleCase(option.type) }}</UiBadge>
+              </div>
+            </template>
+          </UiSelect>
           
           <UiToggle class="mb-4" label="Show snapshots" desc="Snapshot versions of Minecraft are typically unstable and no longer maintained" v-model="showVanillaSnapshots" />
           
@@ -270,26 +274,7 @@ const screenResolutions = computed( () => {
         </div>
         
         <div :class="{'opacity-25 duration-200 transition-opacity pointer-events-none cursor-not-allowed': !userOverridePreferences}">
-          <UiToggle label="Fullscreen" class="mb-4" desc="Set Minecraft to fullscreen the game when possible" v-model="settingFullscreen" />
-          
-          <div :class="{'opacity-25 duration-200 transition-opacity pointer-events-none cursor-not-allowed': settingFullscreen}">
-            <Selection2 class="mb-4" :open-up="true" :options="screenResolutions" label="Screen resolution" v-model="settingScreenResolution" @input="onScreenResolutionChange" />
-
-            <div class="flex items-center mb-4">
-              <div class="block flex-1 mr-2">
-                <b>Width</b>
-                <small class="text-muted block mt-2">The Minecraft windows screen width</small>
-              </div>
-              <InputNumber class="mb-0" v-model="userWidth" />
-            </div>
-            <div class="flex items-center">
-              <div class="block flex-1 mr-2">
-                <b>Height</b>
-                <small class="text-muted block mt-2">The Minecraft windows screen height</small>
-              </div>
-              <InputNumber v-model="userHeight" class="mb-0" />
-            </div>
-          </div>
+          <ResolutionSelector v-model="settingResolution" />
         </div>
       </div>
     </ModalBody>

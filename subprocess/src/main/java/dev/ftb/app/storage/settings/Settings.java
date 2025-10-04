@@ -2,7 +2,7 @@ package dev.ftb.app.storage.settings;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import dev.ftb.app.Constants;
+import dev.ftb.app.AppMain;
 import dev.ftb.app.util.ProxyUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -44,8 +44,8 @@ public class Settings {
             // Migration happened, we don't need to load.
 
             // Again, this shouldn't be needed but it looks like it is...
-            if (settingsData.instanceLocation().equals(Constants.getDataDir())) {
-                Settings.settingsData.setInstanceLocation(Constants.INSTANCES_FOLDER_LOC);
+            if (settingsData.instanceLocation().equals(AppMain.paths().workingDir())) {
+                Settings.settingsData.setInstanceLocation(AppMain.paths().instancesDir());
             }
             
             return;
@@ -57,17 +57,17 @@ public class Settings {
             
             // Attempt to fix the instance location if it's fucked for some reason
             // I think something with path parsing might break it.
-            if (settingsData.instanceLocation().equals(Constants.getDataDir())) {
-                Settings.settingsData.setInstanceLocation(Constants.INSTANCES_FOLDER_LOC);   
+            if (settingsData.instanceLocation().equals(AppMain.paths().workingDir())) {
+                Settings.settingsData.setInstanceLocation(AppMain.paths().instancesDir());   
             }
         } catch (Throwable e) {
             LOGGER.warn("Failed to load settings file, using defaults.", e);
             Settings.settingsData = Settings.DEFAULT_SETTINGS;
             
             // Backup the old settings file
-            if (Files.exists(Constants.SETTINGS_FILE)) {
+            if (Files.exists(AppMain.paths().settingsFile())) {
                 try {
-                    Files.move(Constants.SETTINGS_FILE, Constants.SETTINGS_FILE.resolveSibling("settings.json.bak"));
+                    Files.move(AppMain.paths().settingsFile(), AppMain.paths().settingsFile().resolveSibling("settings.json.bak"));
                 } catch (IOException ex) {
                     LOGGER.warn("Failed to backup settings file.", ex);
                 }
@@ -81,14 +81,15 @@ public class Settings {
 
     public static void attemptMigration() {
         // Don't migrate if the new settings file exists or the old one doesn't
-        if (Files.notExists(Constants.SETTINGS_FILE_LEGACY) || Files.exists(Constants.SETTINGS_FILE)) {
+        Path legacySettingsFile = AppMain.paths().legacySettingsFile();
+        if (Files.notExists(legacySettingsFile) || Files.exists(AppMain.paths().settingsFile())) {
             return;
         }
         
         LOGGER.info("Migrating old settings to new format.");
 
         try {
-            var originalSettingsRaw = Files.readString(Constants.SETTINGS_FILE_LEGACY);
+            var originalSettingsRaw = Files.readString(legacySettingsFile);
             var originalSettings = new Gson().<HashMap<String, String>>fromJson(originalSettingsRaw, settingsTokenLegacy);
             var migrator = new SettingsMigrator(originalSettings);
             var newSettings = migrator.migrate();
@@ -99,7 +100,7 @@ public class Settings {
             
             // Delete the old settings file
             try {
-                Files.deleteIfExists(Constants.SETTINGS_FILE_LEGACY);
+                Files.deleteIfExists(legacySettingsFile);
             } catch (IOException e) {
                 LOGGER.error("Failed to delete old settings file.", e);
             }
@@ -107,7 +108,7 @@ public class Settings {
             LOGGER.error("Failed to migrate settings file. Aborting migration process.", e);
             LOGGER.info("Deleting old settings file. If possible");
             try {
-                Files.deleteIfExists(Constants.SETTINGS_FILE_LEGACY);
+                Files.deleteIfExists(legacySettingsFile);
             } catch (IOException ex) {
                 LOGGER.error("Failed to delete old settings file.", ex);
             }
@@ -180,10 +181,10 @@ public class Settings {
                 getOrDefault("instanceLocation", input -> {
                     // This shouldn't be needed but it looks like it is...
                     var path = Path.of(input);
-                    if (path.equals(Constants.getDataDir())) {
+                    if (path.equals(AppMain.paths().workingDir())) {
                         // Something borked...
                         LOGGER.error("Instance location is the same as the data directory. Using default.");
-                        return Constants.INSTANCES_FOLDER_LOC;
+                        return AppMain.paths().instancesDir();
                     }
                     
                     return path;

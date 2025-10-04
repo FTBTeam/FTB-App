@@ -103,7 +103,7 @@ const isUnix = computed(async () => await appPlatform.utils.getOsType() !== "win
 
 <style scoped lang="scss">
 .titlebar {
-  height: 2rem;
+  height: 2.5rem;
   background-color: #1d1c1c;
   display: grid;
   grid-template: 'left center right';
@@ -128,7 +128,6 @@ const isUnix = computed(async () => await appPlatform.utils.getOsType() !== "win
   }
   
   &.isMac {
-    height: 1.8em;
     text-align: center;
 
     .spacer {
@@ -137,7 +136,6 @@ const isUnix = computed(async () => await appPlatform.utils.getOsType() !== "win
     }
     
     .meta-title {
-      font-weight: 800;
       width: 100%;
       justify-content: center;
 
@@ -158,10 +156,10 @@ const isUnix = computed(async () => await appPlatform.utils.getOsType() !== "win
   .meta-title {
     grid-area: center;
     padding: 0 0.5rem;
-    font-size: 0.875rem;
+    font-size: 1.1rem;
     color: rgba(white, .5);
     display: flex;
-    font-weight: 500;
+    font-weight: 800;
     align-items: center;
     gap: 1.5rem;
     justify-content: center;

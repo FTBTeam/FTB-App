@@ -5,7 +5,7 @@ import {createLogger} from '@/core/logger';
 import {ref, useTemplateRef} from 'vue';
 import { useAccountsStore } from '@/store/accountsStore.ts';
 import { AuthProfile } from '@/core/types/appTypes.ts';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import {faExternalLink, faPlus} from '@fortawesome/free-solid-svg-icons';
 import {Popover, UiButton} from "@/components/ui";
 import {useAttachDomEvent} from "@/composables";
 import SidebarProfileItem from "@/components/layout/sidebar/SidebarProfileItem.vue";
@@ -151,10 +151,12 @@ async function confirm() {
               name: accountsStore.ftbAccount?.accountData.preferred_username ?? accountsStore.ftbAccount?.accountData.given_name ?? 'Unknown?',
               avatarUrl: accountsStore.ftbAccount?.accountData.picture
             }"
-                                :subtext="accountsStore.isPatreon ? 'Patreon Member' : undefined"
+                                :subtext="accountsStore.isPatreon ? '❤️ Patreon Member' : undefined"
                                 :active="true"
                                 :on-delete="ftbSignOut"
                                 :on-select="() => {}" />
+            
+            <a href="https://account.feed-the-beast.com" target="_blank"><UiButton :icon="faExternalLink">Go to accounts page</UiButton></a>
           </div>
 
           <p class="text-sm mb-4">Not yet available, check back soon 😁</p>

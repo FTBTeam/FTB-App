@@ -14,9 +14,9 @@ const {
   icon,
   ariaLabel = '',
   ariaLabelPos = 'down',
-  hoverEffect = false
+  hoverEffect = false,
 } = defineProps<{
-  type: ElementColorType;
+  type?: ElementColorType;
   icon?: IconDefinition;
   ariaLabel?: string;
   ariaLabelPos?: ElementAriaDirection;
@@ -45,7 +45,7 @@ const colorFromType = computed(() => colorFromElementColorType(type, !hoverEffec
   gap: .5rem;
 
   font-weight: normal; 
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   padding: .15rem .5rem;
   
   border-radius: 3px;  

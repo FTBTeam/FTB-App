@@ -61,17 +61,16 @@ const onlyQueue = computed(() => {
 <style lang="scss" scoped>
 .group {
   &:not(:last-child) {
-    margin-bottom: .5rem;
+    margin-bottom: .85rem;
   }
   
   .name {
-    font-weight: 600;
-    font-size: .8rem;
-    margin-bottom: 0.35rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
   }
   
   .row:not(:last-child) {
-    margin-bottom: 0.35rem;
+    margin-bottom: 0.85rem;
   }
 }
 
@@ -101,7 +100,7 @@ const onlyQueue = computed(() => {
     top: 0;
     left: 120%;
     z-index: 100;
-    width: 380px;
+    width: 360px;
     background-color: var(--color-background);
     padding: 1rem;
     border-radius: 5px;

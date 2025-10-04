@@ -4,8 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.JsonAdapter;
+import dev.ftb.app.AppMain;
 import net.covers1624.quack.gson.PathTypeAdapter;
-import dev.ftb.app.Constants;
 import org.jetbrains.annotations.Nullable;
 import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
@@ -50,11 +50,11 @@ public class SettingsData {
     public void write() {
         var jsonData = gson.toJson(this);
         try {
-            if (Files.notExists(Constants.SETTINGS_FILE.getParent())) {
-                Files.createDirectories(Constants.SETTINGS_FILE.getParent());
+            if (Files.notExists(AppMain.paths().settingsFile().getParent())) {
+                Files.createDirectories(AppMain.paths().settingsFile().getParent());
             }
             
-            Files.writeString(Constants.SETTINGS_FILE, jsonData);
+            Files.writeString(AppMain.paths().settingsFile(), jsonData);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -63,7 +63,7 @@ public class SettingsData {
     // Reader
     public static SettingsData read() {
         try {
-            var jsonData = Files.readString(Constants.SETTINGS_FILE);
+            var jsonData = Files.readString(AppMain.paths().settingsFile());
             if (jsonData.isBlank()) {
                 throw new IOException("Settings file is empty.");
             }
@@ -89,7 +89,7 @@ public class SettingsData {
     public static SettingsData createDefault() {
         return new SettingsData(
             Settings.DEFAULT_SPEC,
-            Constants.INSTANCES_FOLDER_LOC,
+            AppMain.paths().instancesDir(),
             false, // Feral Game Mode is disabled by default
             new GeneralSettings(
                 "release",

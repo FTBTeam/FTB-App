@@ -60,6 +60,14 @@ export default defineConfig({
       },
     },
   },
+  server: {
+    watch: {
+      ignored: [
+        "**/node_modules/**",
+        "**/subprocess/**",
+      ]
+    }
+  },
   css: {
     preprocessorOptions: {
       scss: {

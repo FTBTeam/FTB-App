@@ -4,7 +4,6 @@ import Loader from './Loader.vue'
 import Message from './Message.vue'
 import Popover from './Popover.vue'
 import ProgressBar from './ProgressBar.vue'
-import Selection2 from './Selection2.vue'
 import UiBadge from './UiBadge.vue'
 import UiButton from './UiButton.vue'
 import Pagination from './Pagination.vue'
@@ -22,7 +21,6 @@ export {
   Message,
   Popover,
   ProgressBar,
-  Selection2,
   UiButton,
   UiBadge,
   Pagination,

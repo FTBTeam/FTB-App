@@ -5,7 +5,6 @@ import dev.ftb.app.api.data.BaseData;
 import java.util.UUID;
 
 public class InstanceModToggleData extends BaseData {
-
     public UUID uuid;
 
     public long fileId;

@@ -10,3 +10,5 @@ export const constants = {
   isDevelopment: !production,
   platform: platform,
 }
+
+export const defaultInstanceCategory = "02c2cc8e-0b8d-45d0-ac1d-7e32b1c21cb0";

@@ -1,15 +1,16 @@
 <script lang="ts" setup>
 import {alertController} from '@/core/controllers/alertController';
-import {ReleaseChannelOptions} from '@/utils/commonOptions';
-import {computeAspectRatio, prettyByteFormat} from '@/utils';
+import {prettyByteFormat} from '@/utils';
 import UiToggle from '@/components/ui/UiToggle.vue';
 import RamSlider from '@/components/groups/modpack/components/RamSlider.vue';
 import {SettingsData} from '@/core/types/javaApi';
-import { Loader, UiButton, Selection2, Input, InputNumber } from '@/components/ui';
+import { Loader, UiButton, Input } from '@/components/ui';
 import { useAppSettings } from '@/store/appSettingsStore.ts';
-import { computed, onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { faCode, faUndo } from '@fortawesome/free-solid-svg-icons';
 import TextArea from '@/components/ui/form/TextArea/TextArea.vue';
+import ResolutionSelector, {ResolutionValue} from "@/components/groups/modpack/components/ResolutionSelector.vue";
+import ReleaseChannelSelector from "@/components/groups/modpack/components/ReleaseChannelSelector.vue";
 
 const appSettingsStore = useAppSettings();
 
@@ -18,9 +19,6 @@ const lastSettings = ref("")
 
 const loadedSettings = ref(false);
 
-const resolutionId = ref("");
-const usePresets = ref(false);
-
 onMounted(async () => {
   await appSettingsStore.loadSettings();
   loadedSettings.value = true;
@@ -28,14 +26,6 @@ onMounted(async () => {
   // Make a copy of the settings so we don't mutate the vuex state
   localSettings.value = { ...appSettingsStore.rootSettings } as SettingsData;
   lastSettings.value = JSON.stringify(localSettings.value)
-
-  resolutionId.value = resolutionList.value
-    .find((e) => e.value === `${localSettings.value.instanceDefaults.width ?? ''}|${localSettings.value.instanceDefaults.height ?? ''}`)
-    ?.value ?? "";
-
-  if (resolutionId.value !== "") {
-    usePresets.value = true;
-  }
 })
 
 function saveMutated() {
@@ -51,57 +41,16 @@ function saveMutated() {
   lastSettings.value = JSON.stringify(localSettings.value)
 }
 
-function selectResolution(id: string | null) {
-  if (!id) {
+function selectResolution(value: ResolutionValue) {
+  if (!value) {
     return;
   }
   
-  const selected = appSettingsStore.systemHardware?.supportedResolutions.find(e => `${e.width}|${e.height}` === id);
-  if (!selected) {
-    return;
-  }
-
-  localSettings.value.instanceDefaults.width = selected.width;
-  localSettings.value.instanceDefaults.height = selected.height;
+  localSettings.value.instanceDefaults.fullscreen = value.fullScreen;
+  localSettings.value.instanceDefaults.width = value.width;
+  localSettings.value.instanceDefaults.height = value.height;
   saveMutated();
 }
-
-const resolutionList = computed(() => {
-  const resList = [];
-  resList.push({
-    value: "",
-    label: "Custom",
-    meta: "Custom"
-  });
-
-  const resolutionOptions = appSettingsStore.systemHardware?.supportedResolutions ?? [];
-
-  // Sort the resList by the width, then by height
-  resolutionOptions.sort((a, b) => {
-    const aWidth = a.width ?? 0;
-    const aHeight = a.height ?? 0;
-    const bWidth = b.width ?? 0;
-    const bHeight = b.height ?? 0;
-    
-    if (aWidth !== bWidth) {
-      return bWidth - aWidth;
-    }
-    return bHeight - aHeight;
-  });
-  
-  for (const res of resolutionOptions) {
-    resList.push({
-      value: `${res.width}|${res.height}`,
-      label: `${res.width} x ${res.height}`,
-      // Calculate the aspect ratio in the form of a 16:9 for example
-      meta: computeAspectRatio(res.width, res.height)
-    })
-  }
-
-  return resList;
-})
-
-const channelOptions = computed(() => ReleaseChannelOptions());
 </script>
 
 <template>
@@ -119,56 +68,15 @@ const channelOptions = computed(() => ReleaseChannelOptions());
           The selected release channel will determine when we show that a supported modpack has an update.<span class="mb-2 block" /> Release is the most stable, then Beta should be playable and Alpha could introduce game breaking bugs.</small>
       </div>
       
-      <selection2
-        v-if="loadedSettings"
-        :options="channelOptions"
-        v-model="localSettings.instanceDefaults.updateChannel"
-        :style="{width: '192px'}"
-        @updated="() => saveMutated()"
-      />
+      <ReleaseChannelSelector v-if="loadedSettings" v-model="localSettings.instanceDefaults.updateChannel" @update:modelValue="saveMutated" />
     </div>
-    <p class="block text-white-700 text-lg font-bold mb-4">Window Size</p>
-    <div class="mb-4 border-b border-white/10 pb-6">
-      <ui-toggle label="Fullscreen" desc="Always open Minecraft in Fullscreen mode" v-model="localSettings.instanceDefaults.fullscreen" class="mb-4" @input="() => {
-        saveMutated()
-      }" />
-
-      <ui-toggle label="Use presets" desc="You can pick between preset window sizes or entering your own values for the windows width and height." v-model="usePresets" class="mb-4" />
-      
-      <div :class="{'cursor-not-allowed opacity-50 pointer-events-none': localSettings.instanceDefaults.fullscreen}">
-        <template v-if="usePresets">
-          <div class="flex items-center mb-4">
-            <div class="block flex-1 mr-2">
-              <b>Size presets</b>
-              <small class="text-muted block mt-2">Select a preset based on your system</small>
-            </div>
-
-            <selection2
-              v-if="resolutionList.length"
-              v-model="resolutionId"
-              @updated="v => selectResolution(v)"
-              :style="{width: '220px'}"
-              :options="resolutionList"
-            />
-          </div>
-        </template>
-        <template v-else>
-          <div class="flex items-center mb-4">
-            <div class="block flex-1 mr-2">
-              <b>Width</b>
-              <small class="text-muted block mt-2">The Minecraft windows screen width</small>
-            </div>
-            <InputNumber v-model="localSettings.instanceDefaults.width" @blur="saveMutated" />
-          </div>
-          <div class="flex items-center">
-            <div class="block flex-1 mr-2">
-              <b>Height</b>
-              <small class="text-muted block mt-2">The Minecraft windows screen height</small>
-            </div>
-            <InputNumber v-model="localSettings.instanceDefaults.height" @blur="saveMutated" />
-          </div>
-        </template>
-      </div>
+    
+    <div class="mb-4 border-b border-white/10 pb-4">
+      <ResolutionSelector :model-value="{
+        width: localSettings.instanceDefaults.width,
+        height: localSettings.instanceDefaults.height,
+        fullScreen: localSettings.instanceDefaults.fullscreen
+      }" @update="selectResolution" class="mb-6" />
     </div>
 
     <p class="block text-white-700 text-lg font-bold mb-4">Java</p>

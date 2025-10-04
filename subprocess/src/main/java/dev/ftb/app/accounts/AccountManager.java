@@ -3,9 +3,9 @@ package dev.ftb.app.accounts;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
-import net.covers1624.quack.gson.JsonUtils;
-import dev.ftb.app.Constants;
+import dev.ftb.app.AppMain;
 import dev.ftb.app.util.MiscUtils;
+import net.covers1624.quack.gson.JsonUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -24,8 +24,8 @@ public class AccountManager {
 
     public static final String SPEC_VERSION = "1.0.0";
 
-    private static final Path STORE_FILE = Constants.STORAGE_DIR.resolve("mc-accounts.json");
-    private static final Path OLD_STORE_FILE = Constants.getDataDir().resolve("profiles.json");
+    private final Path storeFile;
+    private final Path oldStoreFile;
     
     private static final AccountManager ACCOUNT_MANAGER = new AccountManager();
 
@@ -35,6 +35,9 @@ public class AccountManager {
     private MicrosoftProfile activeProfile = null;
 
     private AccountManager() {
+        this.storeFile = AppMain.paths().storageDir().resolve("mc-accounts.json");
+        this.oldStoreFile = AppMain.paths().workingDir().resolve("profiles.json");
+        
         loadProfiles();
     }
 
@@ -75,21 +78,21 @@ public class AccountManager {
 
     // Load profiles from json structure
     public void loadProfiles() {
-        if (Files.exists(OLD_STORE_FILE)) {
+        if (Files.exists(oldStoreFile)) {
             try {
-                Files.deleteIfExists(OLD_STORE_FILE);
+                Files.deleteIfExists(oldStoreFile);
             } catch (IOException e) {
                 LOGGER.error("Failed to move old profiles file.", e);
             }
         }
         
-        if (!Files.exists(STORE_FILE)) {
+        if (!Files.exists(storeFile)) {
             return;
         }
 
         try {
             // Get the profile data from the json file.
-            AccountStore store = JsonUtils.parse(GSON, STORE_FILE, AccountStore.class);
+            AccountStore store = JsonUtils.parse(GSON, storeFile, AccountStore.class);
             if (store == null) {
                 return;
             }
@@ -115,7 +118,7 @@ public class AccountManager {
     public void saveProfiles() {
         try {
             AccountStore store = new AccountStore(profiles, activeProfile != null ? activeProfile.getUuid() : null);
-            JsonUtils.write(GSON, STORE_FILE, store);
+            JsonUtils.write(GSON, storeFile, store);
         } catch (IOException e) {
             LOGGER.error("Failed to write profiles.", e);
         }

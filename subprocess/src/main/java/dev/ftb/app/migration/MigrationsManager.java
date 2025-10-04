@@ -1,6 +1,6 @@
 package dev.ftb.app.migration;
 
-import dev.ftb.app.Constants;
+import dev.ftb.app.AppMain;
 import dev.ftb.app.migration.migrations.MigrateInstanceFilesToMetaFolder;
 import dev.ftb.app.migration.migrations.MigrateJVMDefaultsToInstances;
 import dev.ftb.app.migration.migrations.MigrateJVMDefaultsToSettingsDefaults;
@@ -19,8 +19,7 @@ public enum MigrationsManager {
     INSTANCE;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MigrationsManager.class);
-    private static final Path MIGRATIONS_MEMORY = Constants.STORAGE_DIR.resolve("migrations.json");
-    
+
     private static final List<Migration> migrations = List.of(
         new MigrateJVMDefaultsToInstances(),
         new MigrateJVMDefaultsToSettingsDefaults(),
@@ -65,7 +64,7 @@ public enum MigrationsManager {
         try {
             existingMigrations.addAll(successfulMigrations.stream().map(Migration::id).toList());
             var json = GsonUtils.GSON.toJson(existingMigrations);
-            Files.writeString(MIGRATIONS_MEMORY, json);
+            Files.writeString(this.memoryFile(), json);
             existingMigrations.clear();
         } catch (Exception exception) {
             LOGGER.error("Failed to save migrations to memory", exception);
@@ -102,13 +101,13 @@ public enum MigrationsManager {
      */
     @Nullable
     private List<String> findRequiredMigrations() {
-        if (Files.notExists(MIGRATIONS_MEMORY)) {
+        if (Files.notExists(this.memoryFile())) {
             return migrations.stream().map(Migration::id).toList();
         }
 
         // Load the string list from the migrations.json
         try {
-            String json = Files.readString(MIGRATIONS_MEMORY);
+            String json = Files.readString(this.memoryFile());
             var migrationIds = GsonUtils.GSON.<List<String>>fromJson(json, List.class);
             existingMigrations = migrationIds;
             
@@ -124,5 +123,9 @@ public enum MigrationsManager {
         }
         
         return null;
+    }
+    
+    private Path memoryFile() {
+        return AppMain.paths().storageDir().resolve("migrations.json");
     }
 }

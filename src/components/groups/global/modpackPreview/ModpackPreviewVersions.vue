@@ -1,12 +1,13 @@
 <script lang="ts" setup>
 import {ModPack} from "@/core/types/appTypes.ts";
 import {computed, onMounted, ref, watch} from "vue";
-import {Loader, Selection2} from "@/components/ui";
-import {SelectionOption} from "@/components/ui/Selection2.vue";
+import {Loader} from "@/components/ui";
 import {standardDate} from "@/utils/helpers/dateHelpers.ts";
 import {modpackApi} from "@/core/pack-api/modpackApi.ts";
 import {marked} from "marked";
 import {alertController} from "@/core/controllers/alertController.ts";
+import {UiSelectOption} from "@/components/ui/select/UiSelect.ts";
+import UiSelect from "@/components/ui/select/UiSelect.vue";
 
 const {
   modpack
@@ -14,7 +15,7 @@ const {
   modpack: ModPack
 }>()
 
-const selectedVersion = ref<number>(-1)
+const selectedVersion = ref<string>("-1")
 const changelogData = ref<string>("")
 const loading = ref(false)
 
@@ -24,7 +25,7 @@ onMounted(() => {
 
 watch(() => modpack, (newValue, oldValue) => {
   if (!newValue) {
-    selectedVersion.value = -1;
+    selectedVersion.value = "-1";
     changelogData.value = "";
     return;
   }
@@ -48,13 +49,13 @@ function selectAndLoad(id?: number | string | null) {
   
   const resolvedVersion = modpack.versions.find(e => e.id === resolvedId);
   if (!resolvedVersion) {
-    selectedVersion.value = -1;
+    selectedVersion.value = "-1";
     changelogData.value = "";
     return;
   }
   
-  if (selectedVersion.value !== resolvedVersion.id) {
-    selectedVersion.value = resolvedVersion.id;
+  if (selectedVersion.value !== resolvedVersion.id.toString()) {
+    selectedVersion.value = resolvedVersion.id.toString();
   }
   
   loading.value = true;
@@ -64,15 +65,22 @@ function selectAndLoad(id?: number | string | null) {
     .finally(() => loading.value = false)
 }
 
-const options = computed<SelectionOption[]>(() => modpack.versions.map(e => ({
-  label: e.name,
-  value: e.id,
-  meta: standardDate(e.updated)
-})))
+const options = computed(() => modpack.versions.map(e => ({
+  key: e.id.toString(),
+  value: e.name,
+  date: standardDate(e.updated)
+}) as UiSelectOption<{ date: string }>))
 </script>
 
 <template>
-  <Selection2 class="mb-8" placeholder="Select version" v-model="selectedVersion" :options="options" @updated="(v) => selectAndLoad(v)" />
+  <UiSelect :options="options" v-model="selectedVersion" @update:modelValue="(v) => selectAndLoad(v)" class="mb-8" placeholder="Select version" :min-width="260">
+    <template #option="{ option, clazz }">
+      <div class="flex items-center justify-between" :class="clazz">
+        <div class="flex-1">{{ option.value }}</div>
+        <div class="text-white/80">{{ option.date }}</div>
+      </div>
+    </template>
+  </UiSelect>
   
   <template v-if="!loading">
     <div v-if="changelogData" class="wysiwyg" v-html="changelogData"></div>

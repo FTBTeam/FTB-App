@@ -14,21 +14,22 @@ import dev.ftb.app.install.tasks.modloader.ModLoaderInstallTask;
 import dev.ftb.app.instance.InstanceOperation;
 import dev.ftb.app.pack.CancellationToken;
 import dev.ftb.app.pack.Instance;
-import dev.ftb.app.util.PathFixingCopyingFileVisitor;
-import net.covers1624.quack.collection.ColUtils;
+import dev.ftb.app.util.FileUtils;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.util.MultiHasher;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -277,9 +278,25 @@ public class InstanceInstaller extends InstanceOperation {
             Path cfOverrides = getCFOverridesZip(manifest);
             if (cfOverrides != null) {
                 LOGGER.info("Extracting CurseForge overrides.");
-                try (FileSystem fs = IOUtils.getJarFileSystem(cfOverrides, true)) {
-                    Path root = fs.getPath("/overrides/");
-                    Files.walkFileTree(root, new PathFixingCopyingFileVisitor(root, instance.getDir()));
+                
+                try (ZipFile zipFile = new ZipFile.Builder().setFile(cfOverrides.toFile()).get()) {
+                    Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
+                    while (entries.hasMoreElements()) {
+                        var entry = entries.nextElement();
+                        
+                        if (entry.isDirectory()) continue; // Skip directories
+                        if (!entry.getName().startsWith("overrides/")) continue; // Only process overrides
+                        
+                        Path path = instance.getDir().resolve(FileUtils.stripInvalidChars(entry.getName()).replace("overrides/", ""));
+                        if (Files.exists(path)) {
+                            continue;
+                        }
+
+                        Files.createDirectories(path.getParent());
+                        try (var inputStream = zipFile.getInputStream(entry)) {
+                            Files.copy(inputStream, path, StandardCopyOption.REPLACE_EXISTING);
+                        }
+                    }
                 }
             }
 
@@ -398,7 +415,7 @@ public class InstanceInstaller extends InstanceOperation {
 
             Map<String, IndexedFile> knownFiles = getKnownFiles();
             try (Stream<Path> files = Files.walk(folder)) {
-                for (Path path : ColUtils.iterable(files)) {
+                for (Path path : files.toList()) {
                     if (Files.isDirectory(path)) continue; // Skip directories
                     if (filesToRemove.contains(path)) continue; // File will be deleted, ignore.
                     if (knownFiles.containsKey(instance.getDir().relativize(path).toString())) continue; // File is known.
@@ -538,7 +555,7 @@ public class InstanceInstaller extends InstanceOperation {
         FILES,
     }
 
-    public static record InvalidFile(
+    public record InvalidFile(
             Path path,
             @Nullable HashCode expectedHash,
             @Nullable HashCode actualHash,

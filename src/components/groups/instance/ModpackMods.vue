@@ -30,6 +30,7 @@ import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { Input } from '@/components/ui';
 import {packBlacklist} from "@/store/modpackStore.ts";
+import {prettyByteFormat} from "@/utils";
 
 type ApiMod = {
   fileId: number;
@@ -270,13 +271,21 @@ const packMods = computed(() => {
     }]
   }
 
-  return results.sort((a, b) => (a.curse?.name ?? a.fileName).localeCompare((b.curse?.name ?? b.fileName)));
+  return results
+    .reduce((itt, e, index) => {
+      return [...itt, {
+        index,
+        ...e
+      }]
+    }, [] as ModInfo[])
+    .sort((a, b) => (a.curse?.name ?? a.fileName).localeCompare((b.curse?.name ?? b.fileName)));
 });
 
 const simpleMods = computed(() => {
   const results = apiMods.value.filter(e => search.value === '' ? true : containsIgnoreCase(e.name ?? e.filename, search.value));
   if (results.length === 0 && search.value !== '') {
     return [{
+      index: 0,
       name: 'No results found',
       synopsis: 'Try searching for something else',
       icon: '',
@@ -333,7 +342,7 @@ const installedMods = computed<[number, number][]>(() => {
       
       <template v-if="packInstalled && instance">
         <p class="text-center italic opacity-80" v-if="!packMods.length">{{ instance.name }} does not have any mods installed</p>
-        <recycle-scroller v-else class="complex-mod mod" :items="packMods" :item-size="70" key-field="sha1" v-slot="{ item }">
+        <recycle-scroller v-else class="complex-mod mod" :items="packMods" :item-size="54" key-field="index" v-slot="{ item }">
           <div class="flex gap-6 items-center mb-4">
             <img v-if="item.curse && item.curse.icon" :src="item.curse.icon" class="rounded" width="40" alt="">
             <div class="placeholder bg-black rounded mt-2" style="width: 40px; height: 40px" v-else-if="item.fileName !== ''"></div>
@@ -349,8 +358,8 @@ const installedMods = computed<[number, number][]>(() => {
                   {{item.fileName}}
                 </template>
               </div>
-              <p class="text-sm opacity-75 select-text" v-if="item.curse?.name">{{item.fileName}}</p>
-              <p class="text-sm opacity-75 text-muted italic" v-else>(Not found on CurseForge)</p>
+              <p class="text-sm opacity-75 select-text" v-if="item.curse?.name">{{ prettyByteFormat(item.size) }} - {{item.fileName}}</p>
+              <p class="text-sm opacity-75 select-text text-muted italic" v-else>{{ prettyByteFormat(item.size) }}</p>
             </div>
             
             <div class="meta flex gap-6 items-center">

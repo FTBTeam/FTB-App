@@ -9,7 +9,7 @@ public record ModInfo(
         boolean enabled,
         long size,
         @Nullable String sha1,
-        @Nullable String murmurHash,
+        long murmurHash,
         @Nullable CurseMetadata curse
 ) {
 
