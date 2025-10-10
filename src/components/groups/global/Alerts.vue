@@ -105,10 +105,10 @@ function copy(alert: AlertWithUuid) {
 }
 
 const typeToColors = {
-  success: 'from-green-600/40',
-  error: 'from-red-600/40',
-  warning: 'from-orange-600/40',
-  info: 'from-blue-600/40',
+  success: 'bg-green-600/60',
+  error: 'bg-red-600/60',
+  warning: 'bg-orange-600/60',
+  info: 'bg-blue-600/60',
 }
 </script>
 
@@ -123,13 +123,13 @@ const typeToColors = {
          @mouseover="alert.mouseOver = true"
          @mouseleave="alert.mouseOver = false"
     >
-      <div class="pl-3 pr-6 rounded-l-lg icon-container flex items-center justify-center bg-gradient-to-r" :class="`${typeToColors[alert.type]}`">
+      <div class="px-3 rounded-l-lg icon-container flex items-center justify-center" :class="`${typeToColors[alert.type]}`">
         <FontAwesomeIcon :icon="typeIcons[alert.type]"/>
       </div>
-      <p class="whitespace-pre-wrap py-3 -ml-5 font-medium">{{ alert.message }}</p>
+      <p class="whitespace-pre-wrap py-3 font-medium">{{ alert.message }}</p>
       <div class="flex items-center gap-1 px-4 opacity-80 hover:opacity-100 transition-opacity duration-200">
         <FontAwesomeIcon :icon="alert.copied ? faCheck : faCopy" @click.stop="copy(alert)" />
-        <FontAwesomeIcon :icon="faTimesCircle" class="ml-2 p-1" v-if="!alert.persistent" @click.stop="removeAlert(alert, true)" />
+        <FontAwesomeIcon :icon="faTimesCircle" class="ml-2 p-1" @click.stop="removeAlert(alert, true)" />
       </div>
     </div>
   </transition-group>

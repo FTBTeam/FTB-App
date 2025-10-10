@@ -22,7 +22,7 @@ class AlertController {
   }
   
   error(message: string, options: Omit<AlertOptions, "type"> = {}) {
-    this.createAlert(message, { type: "error", ...options })
+    this.createAlert(message, { type: "error", ...options, persistent: true })
     this.logger.error("[alert] " + message)
   }
   

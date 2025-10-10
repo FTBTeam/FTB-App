@@ -405,7 +405,9 @@ export class InstanceInstallController {
 
     this.logger.debug('Unlocking install lock');
     this.installLock = false;
-    await this.checkQueue(); // Force a queue check again 
+    setTimeout(async () => {
+      await this.checkQueue(); // Force a queue check again
+    }, 1000); // Wait a second for the backend to clear out the background tasks
   }
 
   private updateInstallStatus(status: InstallStatus | null) {
