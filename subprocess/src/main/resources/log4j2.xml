@@ -9,7 +9,7 @@
             <PatternLayout pattern="[%d{HH:mm:ss}] [%t/%level] [%logger]: %msg%n"/>
         </Console>
         
-        <RollingRandomAccessFile name="HttpLog" fileName="./.ftba/logs/http-requests.log" filePattern="./.ftba/logs/http-requests-%i.log.gz">
+        <RollingRandomAccessFile name="HttpLog" fileName="./logs/http-requests.log" filePattern="./logs/http-requests-%i.log.gz">
             <PatternLayout pattern="[%d{HH:mm:ss}]: %msg%n"/>
             <Policies>
                 <OnStartupTriggeringPolicy/>
@@ -18,7 +18,7 @@
             <DefaultRolloverStrategy max="3" fileIndex="min"/>
         </RollingRandomAccessFile>
         
-        <RollingRandomAccessFile name="Latest" fileName="./.ftba/logs/latest.log" filePattern="./.ftba/logs/%d{yyyy-MM-dd}-%i.log.gz">
+        <RollingRandomAccessFile name="Latest" fileName="./logs/latest.log" filePattern="./logs/%d{yyyy-MM-dd}-%i.log.gz">
             <PatternLayout pattern="[%d{HH:mm:ss}] [%t/%level] [%logger]: %msg%n"/>
             <Policies>
                 <TimeBasedTriggeringPolicy/>
@@ -27,7 +27,7 @@
             <DefaultRolloverStrategy max="3" fileIndex="min"/>
         </RollingRandomAccessFile>
         
-        <RollingRandomAccessFile name="Debug" fileName="./.ftba/logs/debug.log" filePattern="./.ftba/logs/debug-%i.log.gz">
+        <RollingRandomAccessFile name="Debug" fileName="./logs/debug.log" filePattern="./logs/debug-%i.log.gz">
             <PatternLayout pattern="[%d{HH:mm:ss.SSS}] [%t/%level] [%logger]: %msg%n"/>
             <Policies>
                 <OnStartupTriggeringPolicy/>
