@@ -63,6 +63,8 @@ export class InstanceActions {
     await modpacksStore.clearModpacks();
     await instancesStore.loadInstances();
     
+    await modpacksStore.getFeaturedPacks()
+    
     if (announce) {
       alertController.success("Cache cleared");
     }
