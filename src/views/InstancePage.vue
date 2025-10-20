@@ -14,7 +14,7 @@ import { UiButton, ClosablePanel, Modal, Message, Input } from '@/components/ui'
 import {createLogger} from '@/core/logger';
 import {InstanceController} from '@/core/controllers/InstanceController';
 import { useRouter } from 'vue-router';
-import { computed, onMounted, ref } from 'vue';
+import {computed, onMounted, ref, watch} from 'vue';
 import { useModpackStore } from '@/store/modpackStore.ts';
 import { useInstanceStore } from '@/store/instancesStore.ts';
 import { useAccountsStore } from '@/store/accountsStore.ts';
@@ -62,16 +62,7 @@ onMounted(async () => {
     return;
   }
 
-  const quickNav = router.currentRoute.value.query.quickNav;
-  if (quickNav) {
-    logger.debug(`Quick nav detected, navigating to ${quickNav}`)
-    // Ensure the tab is valid
-    if (Object.values(ModpackPageTabs).includes(quickNav as ModpackPageTabs)) {
-      activeTab.value = quickNav as ModpackPageTabs;
-    } else {
-      logger.error("Invalid quick nav tab")
-    }
-  }
+  tryQuickNav()
 
   // TODO: (M#01) Allow to work without this.
   if (instance.value.id !== -1) {
@@ -98,6 +89,23 @@ onMounted(async () => {
   }
 
   offlineUserName.value = accountsStore.mcActiveProfile?.username ?? "MinecraftPlayer";  
+})
+
+function tryQuickNav() {
+  const quickNav = router.currentRoute.value.query.quickNav;
+  if (quickNav) {
+    logger.debug(`Quick nav detected, navigating to ${quickNav}`)
+    // Ensure the tab is valid
+    if (Object.values(ModpackPageTabs).includes(quickNav as ModpackPageTabs)) {
+      activeTab.value = quickNav as ModpackPageTabs;
+    } else {
+      logger.error("Invalid quick nav tab")
+    }
+  }
+}
+
+watch(() => router.currentRoute.value.query, () => {
+  tryQuickNav();
 })
 
 /**
@@ -151,6 +159,9 @@ function goBack() {
     router.push({ name: RouterNames.ROOT_LIBRARY });
   } else {
     activeTab.value = apiPack.value ? ModpackPageTabs.OVERVIEW : ModpackPageTabs.MODS;
+    if (router.currentRoute.value.query.quickNav) {
+      router.replace({ query: {} });
+    }
   }
 }
 

@@ -1,5 +1,4 @@
 import {SugaredInstanceJson} from '@/core/types/javaApi';
-import {safeNavigate} from '@/utils';
 import {RouterNames} from '@/router';
 import {ModpackPageTabs} from '@/views/InstancePage.vue';
 import {alertController} from '@/core/controllers/alertController';
@@ -10,6 +9,7 @@ import { useInstallStore } from '@/store/installStore.ts';
 import { useRunningInstancesStore } from '@/store/runningInstancesStore.ts';
 import { useModpackStore } from '@/store/modpackStore.ts';
 import { useInstanceStore } from '@/store/instancesStore.ts';
+import Router from "@/router.ts";
 
 export class InstanceActions {
   private static logger = createLogger("InstanceActions.ts");
@@ -51,7 +51,11 @@ export class InstanceActions {
   }
   
   static async openSettings(instance: SugaredInstanceJson) {
-    await safeNavigate(RouterNames.ROOT_LOCAL_PACK, {uuid: instance.uuid}, {quickNav: ModpackPageTabs.SETTINGS})
+    try {
+      await Router.push({name: RouterNames.ROOT_LOCAL_PACK, params: {uuid: instance.uuid}, query: {quickNav: ModpackPageTabs.SETTINGS}});
+    } catch (e) {
+      InstanceActions.logger.error("Failed to navigate to instance settings", e);
+    }
   }
   
   static async clearInstanceCache(announce = true) {
