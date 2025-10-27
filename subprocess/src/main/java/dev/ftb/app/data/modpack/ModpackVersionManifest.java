@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.lang.reflect.Type;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
@@ -374,7 +375,16 @@ public class ModpackVersionManifest {
         }
 
         public Path toPath(Path root, String nameSuffix) {
-            return root.resolve(getPath()).resolve(getName() + nameSuffix);
+            String name = getName() + nameSuffix;
+            String path = getPath();
+            try {
+                return root.resolve(path).resolve(name);
+            } catch (InvalidPathException exception) {
+                // Try again without formatting
+                String plaintextName = name.replaceAll("§(?:\\w|\\d)", "");
+                String plaintextPath = path.replaceAll("§(?:\\w|\\d)", "");
+                return root.resolve(plaintextPath).resolve(plaintextName);
+            }
         }
 
         public String instanceRelPath() {
