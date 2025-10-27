@@ -1,6 +1,7 @@
 import {ContextMenu, InstanceMenu, RunningInstanceOptionsMenu, SettingMenu} from '@/core/context/menus';
 import {ContextMenus} from '@/core/context/contextMenus';
-import { useAppStore } from '@/store/appStore.ts';
+import {useAppStore} from '@/store/appStore.ts';
+import {ModpackModsMenu} from "@/core/context/menus/modpackModsMenu.ts";
 
 class ContextController {
   private readonly registry: Map<string, ContextMenu<any>> = new Map();
@@ -9,6 +10,7 @@ class ContextController {
     this.register(ContextMenus.INSTANCE_MENU, new InstanceMenu());
     this.register(ContextMenus.NAV_SETTINGS_MENU, new SettingMenu());
     this.register(ContextMenus.RUNNING_INSTANCE_OPTIONS_MENU, new RunningInstanceOptionsMenu())
+    this.register(ContextMenus.MODPACK_MODS_MENU, new ModpackModsMenu());
   }
 
   private register<T>(name: ContextMenus, menu: ContextMenu<T>) {

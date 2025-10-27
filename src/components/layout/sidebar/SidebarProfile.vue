@@ -20,6 +20,7 @@ const { disabled = false } = defineProps<{
 const loading = ref(false);
 const open = ref(false);
 const awaitingConfirm = ref(false);
+const specialOpen = ref(false);
 
 const sidebarRef = useTemplateRef<HTMLDivElement>("sidebarRef");
 
@@ -33,7 +34,7 @@ useAttachDomEvent<MouseEvent>('click', event => {
     return;
   }
 
-  open.value = false;
+  closeMenu()
 });
 
 const logger = createLogger("SidebarProfile.vue")
@@ -85,12 +86,12 @@ async function setActiveProfile(profile: AuthProfile) {
 
 function openSignIn() {
   accountsStore.openSignIn(true);
-  open.value = false;
+  closeMenu()
 }
 
 function openSignInFtb() {
   accountsStore.openSignInFtb(true);
-  open.value = false;
+  closeMenu()
 }
 
 async function ftbSignOut() {
@@ -105,12 +106,29 @@ async function confirm() {
   setTimeout(() => awaitingConfirm.value = false, 200)
   return result
 }
+
+function openMenu(event: MouseEvent) {
+  if (open.value) {
+    closeMenu()
+    return;
+  }
+  
+  open.value = true;
+  if (event.shiftKey) {
+    specialOpen.value = true;
+  }
+}
+
+function closeMenu() {
+  open.value = false;
+  specialOpen.value = false;
+}
 </script>
 
 <template>
   <div class="profile-area" :class="{ disabled }" ref="sidebarRef">
     <div class="profile">
-      <div class="avatar cursor-pointer" @click="() => open = !open">
+      <div class="avatar cursor-pointer" @click="openMenu($event)">
         <Popover :text="!open ? 'Sign in or manage your accounts' : undefined">
             <img
               :src="getMinecraftHead(accountsStore.mcActiveProfile?.uuid ?? null)"
@@ -143,7 +161,7 @@ async function confirm() {
           <UiButton size="small" type="primary" :icon="faPlus" @click="() => openSignIn()">Add Minecraft Account</UiButton>
         </section>
 
-        <section>
+        <section v-if="specialOpen">
           <p class="font-bold mb-4">FTB Account</p>
 
           <div class="accounts" v-if="accountsStore.ftbAccount">
@@ -159,8 +177,7 @@ async function confirm() {
             <a href="https://account.feed-the-beast.com" target="_blank"><UiButton :icon="faExternalLink">Go to accounts page</UiButton></a>
           </div>
 
-          <p class="text-sm mb-4">Not yet available, check back soon 😁</p>
-          <UiButton v-if="!accountsStore.ftbAccount" :disabled="true" size="small" type="primary" :icon="faPlus" @click="() => openSignInFtb()">Add FTB Account</UiButton>
+          <UiButton v-if="!accountsStore.ftbAccount" size="small" type="primary" :icon="faPlus" @click="() => openSignInFtb()">Add FTB Account</UiButton>
         </section>
       </div>
     </div>
