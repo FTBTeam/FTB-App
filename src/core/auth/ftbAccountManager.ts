@@ -7,6 +7,7 @@ import dayjs from "dayjs";
 import {sendMessage} from "@/core/websockets/websocketsApi.ts";
 import {JWTIdTokenData} from "@/core/auth/jwtIdTokenData";
 import {retrying} from "@/utils/helpers/asyncHelpers.ts";
+import {InstanceActions} from "@/core/actions/instanceActions.ts";
 
 
 const logger = createLogger('ftbAccountManager.ts');
@@ -109,7 +110,10 @@ export class FtbAccountManager {
       accountStore.ftbAccount = {
         accountData: userData satisfies FTBAccountData,
         idTokenData: idToken,
+        token: this.tokenData.idToken
       }
+
+      await InstanceActions.clearInstanceCache(false)
     } catch (e) {
       logger.error("Failed to fetch user data", e);
       accountStore.ftbAccount = null;

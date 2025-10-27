@@ -78,7 +78,7 @@ export function colorFromElementColorType(type: ElementColorType, disabled: bool
 <style scoped lang="scss">
 .ui-button {
   position: relative;
-  padding: 0.6em 1.143em;
+  padding: 0.6em .8em;
   display: inline-block;
   text-align: center;
   font-weight: 500;
@@ -90,7 +90,7 @@ export function colorFromElementColorType(type: ElementColorType, disabled: bool
   }
 
   &.wider {
-    padding: 0.75em 2em;
+    padding: 0.75em 1.5em;
   }
   
   span {
@@ -104,15 +104,15 @@ export function colorFromElementColorType(type: ElementColorType, disabled: bool
   }
   
   &.small {
-    padding: 0.5rem 0.857rem;
+    padding: 0.5rem 0.6rem;
     &.wider {
-      padding: 0.4em 1.8em;
+      padding: 0.4em 1.5em;
     }
   }
   
   &.large {
     font-size: 1.1275em;
-    padding: 0.8em 1.1em; 
+    padding: 0.8em 1em; 
     
     &.wider {
       padding: 0.8em 2.4em;

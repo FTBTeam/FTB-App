@@ -317,9 +317,7 @@ const curseWebsite = computed(() => packInstance?.provider === "curseforge" && p
       <modpack-mods
         v-if="!isVanilla"
         v-show="activeTab === tabs.MODS"
-        :api-pack="packInstance"
-        :pack-installed="isInstalled"
-        :instance="instance"
+        :instance="instance as SugaredInstanceJson"
         @showFind="() => emit('searchForMods')"
         @searchForMods="() => emit('searchForMods')"
       />

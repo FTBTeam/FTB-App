@@ -3,6 +3,7 @@ import {sendMessage} from '@/core/websockets/websocketsApi.ts';
 import {AuthProfile} from '@/core/types/appTypes.ts';
 import {FtbAccountManager} from "@/core/auth/ftbAccountManager.ts";
 import {JWTIdTokenData} from "@/core/auth/jwtIdTokenData";
+import {InstanceActions} from "@/core/actions/instanceActions.ts";
 
 export type FTBAccountData = {
   preferred_username?: string;
@@ -20,6 +21,7 @@ type AccountsState = {
   ftbAccount: {
     accountData: FTBAccountData;
     idTokenData: JWTIdTokenData | null;
+    token: string;
   } | null;
   ftbAccountManager: FtbAccountManager;
   ftbLoggingIn: boolean;
@@ -78,7 +80,7 @@ export const useAccountsStore = defineStore("accounts", {
         return;
       }
       
-      this.ftbAccountManager.init(accountData.authData); 
+      this.ftbAccountManager.init(accountData.authData);
     },
     async signOutFtb() {
       this.ftbAccountManager.signOut();
@@ -86,6 +88,7 @@ export const useAccountsStore = defineStore("accounts", {
       this.ftbLoggingIn = false;
       
       await sendMessage("accounts.sign-out", {});
+      await InstanceActions.clearInstanceCache(false)
     }
   }
 })

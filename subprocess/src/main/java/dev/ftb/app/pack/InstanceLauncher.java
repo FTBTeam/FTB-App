@@ -196,6 +196,9 @@ public class InstanceLauncher {
                 stderrGobbler.start();
                 logThread.start();
 
+                logThread.addStopTarget(stdoutGobbler);
+                logThread.addStopTarget(stderrGobbler);
+
                 process.onExit().thenRunAsync(() -> {
                     // Not strictly necessary, but exits the log threads faster.
                     stdoutGobbler.stop();
@@ -983,6 +986,8 @@ public class InstanceLauncher {
         private final List<String> pendingMessages = new ArrayList<>(100);
         @Nullable
         private final PrintStream pw;
+        private List<StreamGobblerLog> gobblers = new ArrayList<>();
+        private int linesWritten = 0;
 
         public LogThread(Path path) {
             super("Instance Logging Thread");
@@ -1009,6 +1014,20 @@ public class InstanceLauncher {
                             LOGGER.info("Flushing {} messages.", toSend.size());
                         }
 
+                        // Solution for https://github.com/FTBTeam/FTB-App/issues/1296
+                        // After 100k lines, just stop sending the logs and terminate the logging thread along
+                        // with the stream gobblers to avoid accumulating too much data in memory.
+                        if (linesWritten > 100_000) {
+                            WebSocketHandler.sendMessage(new LaunchInstanceData.Logs(instance.getUuid(), List.of("[... Log truncated ...]")));
+                            // Now we need to kill this thread and the gobblers.
+                            stop = true;
+                            for (StreamGobblerLog gobbler : gobblers) {
+                                gobbler.stop();
+                            }
+                            this.interrupt();
+                            break;
+                        }
+
                         WebSocketHandler.sendMessage(new LaunchInstanceData.Logs(instance.getUuid(), toSend));
                     }
                 }
@@ -1031,6 +1050,7 @@ public class InstanceLauncher {
             if (streamingEnabled) {
                 synchronized (pendingMessages) {
                     pendingMessages.add(message);
+                    linesWritten ++;
                 }
             }
             if (pw != null) {
@@ -1045,6 +1065,10 @@ public class InstanceLauncher {
                     pendingMessages.clear();
                 }
             }
+        }
+
+        public void addStopTarget(StreamGobblerLog stdoutGobbler) {
+            gobblers.add(stdoutGobbler);
         }
     }
 }

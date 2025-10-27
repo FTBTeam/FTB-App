@@ -38,7 +38,7 @@ const {
   > .popover {
     position: absolute;
     left: 110%;
-    z-index: 30;
+    z-index: 2000;
     font-size: var(--balloon-font-size);
     background: black;
     white-space: nowrap;

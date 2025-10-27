@@ -4,6 +4,7 @@ import {SugaredInstanceJson} from '@/core/types/javaApi';
 import {generalInstancePaths} from "@/core/context/menus/instanceMenu.ts";
 import {gobbleError} from "@/utils/helpers/asyncHelpers.ts";
 import {sendMessage} from "@/core/websockets/websocketsApi.ts";
+import {useRunningInstancesStore} from "@/store/runningInstancesStore.ts";
 
 export type RunningInstanceMenuContext = {
   instance: SugaredInstanceJson
@@ -30,9 +31,6 @@ export class RunningInstanceOptionsMenu extends ContextMenu<RunningInstanceMenuC
         predicate: context => context.instance.rootDirs?.includes(e[0])
       })) as MenuItem<RunningInstanceMenuContext>[],
       {
-        separator: true 
-      },
-      {
         title: 'Kill instance',
         color: 'danger',
         async action(context) {
@@ -42,6 +40,10 @@ export class RunningInstanceOptionsMenu extends ContextMenu<RunningInstanceMenuC
             })
           });
         },
+        predicate(context) {
+          const runningInstances = useRunningInstancesStore();
+          return runningInstances.instances.find(i => i.uuid === context.instance.uuid) !== undefined;
+        }
       }
     ];
   }

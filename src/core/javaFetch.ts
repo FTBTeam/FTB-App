@@ -92,8 +92,8 @@ export class JavaFetch {
     const javaFetch = JavaFetch.create(constants.modpacksApi + "/" + endpoint);
     // Inject the authoization header
     const accountStore = useAccountsStore();
-    if (accountStore.ftbAccount && accountStore.ftbAccount.idTokenData) {
-      javaFetch.header("Authorization", `Bearer ${accountStore.ftbAccount.idTokenData}`);
+    if (accountStore.ftbAccount && accountStore.ftbAccount.token) {
+      javaFetch.header("Authorization", `Bearer ${accountStore.ftbAccount.token}`);
     }
     return javaFetch
   }
