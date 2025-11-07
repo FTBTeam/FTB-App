@@ -173,8 +173,8 @@ async function launchModPack() {
   if (instance.value.memory < instance.value.minMemory) {
     logger.debug("Showing low memory warning")
     const result = await dialogsController.createConfirmationDialog("Low memory",
-      `You are trying to launch the modpack with memory settings that are below the` +
-      `minimum required.This may cause the modpack to not start or crash frequently.\n\nWe recommend that you` +
+      `You are trying to launch the modpack with memory settings that are below the ` +
+      `minimum required. This may cause the modpack to not start or crash frequently.\n\nWe recommend that you ` +
       `increase the assigned memory to at least **${instance.value?.minMemory}MB**\n\nYou can change the memory by going to the settings tab of the modpack and adjusting the memory slider`
     )
 
