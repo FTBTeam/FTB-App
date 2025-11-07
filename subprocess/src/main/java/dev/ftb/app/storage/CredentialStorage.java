@@ -11,8 +11,6 @@ import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
-import java.net.NetworkInterface;
-import java.net.SocketException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.InvalidAlgorithmParameterException;
@@ -23,24 +21,42 @@ import java.security.spec.KeySpec;
 import java.util.*;
 
 /**
- * A non-ideal credential storage system backed by the users mac address.
+ * A non-secure storage for user credentials. The key is generated from consistent system information
+ * to effectively fingerprint the file to the user's machine. This is primarily to prevent relatively 
+ * simple grab and dump style attacks. Ultimately, this information should be store on the users systems
+ * keychain, windows credential manager, or equivalent but this is a decent stop gap.
  */
 public class CredentialStorage {
     private static final Logger LOGGER = LoggerFactory.getLogger(CredentialStorage.class);
     private static CredentialStorage INSTANCE;
     
+    private final String encryptionKey;
+    
     private HashMap<String, String> credentials = new HashMap<>();
-    private final byte[] macAddress;
     
     private CredentialStorage() {
-        macAddress = getMacAddress();
+        encryptionKey = generateEncryptionKey();
         LOGGER.info("Loading credentials for user");
         try {
-            // If it fails, it shouldn't be fatal. It will be a bit annoying for the user
+            // If it fails, it shouldn't be fatal. It will be a bit annoying for the user,
             // but it's not the end of the world. 
             load();
-        } catch (Exception e) {
-            LOGGER.error("Failed to load credentials", e);
+        } catch (NoSuchPaddingException | IllegalBlockSizeException | NoSuchAlgorithmException |
+                 InvalidKeySpecException | BadPaddingException | InvalidAlgorithmParameterException |
+                 InvalidKeyException | IOException e) {
+            // In some cases, we want to just delete the file to reset the credentials.
+            // In others, it's a legitimate error we can't recover from.
+            if (e instanceof BadPaddingException) {
+                LOGGER.warn("Failed to load credentials, deleting credentials file to reset", e);
+                try {
+                    Files.deleteIfExists(AppMain.paths().credentialsFiles());
+                } catch (IOException ioException) {
+                    // RIP.
+                    LOGGER.error("Failed to delete credentials file", ioException);
+                }
+            } else {
+                LOGGER.error("Failed to load credentials", e);
+            }
         }
     }
     
@@ -48,6 +64,7 @@ public class CredentialStorage {
         if (CredentialStorage.INSTANCE == null) {
             CredentialStorage.INSTANCE = new CredentialStorage();
         }
+        
         return CredentialStorage.INSTANCE;
     }
     
@@ -77,19 +94,14 @@ public class CredentialStorage {
     /**
      * Use the systems mac address to encrypt the users credentials.
      */
-    private boolean save() {
-        if (macAddress == null) {
-            LOGGER.error("Failed to save credentials, mac address is null");
-            return false;
-        }
-        
+    private void save() {        
         // Convert the credentials to a json string
         String credentialsJson = "";
         try {
             credentialsJson = new Gson().toJson(credentials);
         } catch (Exception e) {
             LOGGER.error("Failed to convert credentials to json", e);
-            return false;
+            return;
         }
         
         // Encrypt the credentials
@@ -113,96 +125,78 @@ public class CredentialStorage {
             
             // Save the data to the file system
             Files.writeString(AppMain.paths().credentialsFiles(), encryptedCredentials);
-            return true;
         } catch (Exception e) {
             LOGGER.error("Failed to encrypt credentials", e);
-            return false;
         }
     }
     
-    private boolean load() {
-        if (macAddress == null) {
-            LOGGER.error("Failed to load credentials, mac address is null");
-            return false;
-        }
-        
+    private void load() throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, IOException {        
         // Load the encrypted credentials from the file system
         Path credentials = AppMain.paths().credentialsFiles();
         if (!Files.exists(credentials)) {
             LOGGER.warn("Failed to load credentials, credentials file does not exist");
-            return false;
+            return;
         }
         
         // Decrypt the credentials
-        try {
-            String encryptedCredentials = Files.readString(credentials);
+        String encryptedCredentials = Files.readString(credentials);
 
-            var userHome = System.getProperty("user.home");
-            // Use the user home directory as the IV
-            byte[] iv = userHome.getBytes();
+        var userHome = System.getProperty("user.home");
+        // Use the user home directory as the IV
+        byte[] iv = userHome.getBytes();
 
-            GCMParameterSpec spec = new GCMParameterSpec(128, iv);
-            
-            var key = generateKey();
-            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-            cipher.init(Cipher.DECRYPT_MODE, key, spec);
-            
-            byte[] decryptedBytes = cipher.doFinal(Base64.getDecoder().decode(encryptedCredentials));
-            String decryptedCredentials = new String(decryptedBytes);
-            
-            // Convert the decrypted credentials to a HashMap
-            this.credentials = new Gson().fromJson(decryptedCredentials, HashMap.class);
-        } catch (IOException | NoSuchPaddingException | NoSuchAlgorithmException | InvalidKeySpecException |
-                 InvalidKeyException | IllegalBlockSizeException | BadPaddingException |
-                 InvalidAlgorithmParameterException e) {
-            throw new RuntimeException(e);
-        }
-
-        return true;
+        GCMParameterSpec spec = new GCMParameterSpec(128, iv);
+        
+        var key = generateKey();
+        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+        cipher.init(Cipher.DECRYPT_MODE, key, spec);
+        
+        byte[] decryptedBytes = cipher.doFinal(Base64.getDecoder().decode(encryptedCredentials));
+        String decryptedCredentials = new String(decryptedBytes);
+        
+        // Convert the decrypted credentials to a HashMap
+        this.credentials = new Gson().fromJson(decryptedCredentials, HashMap.class);
     }
     
     private SecretKeySpec generateKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
         SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-        KeySpec spec = new PBEKeySpec(new String(macAddress).toCharArray(), "FTBAPP".getBytes(), 65536, 256);
+        KeySpec spec = new PBEKeySpec(encryptionKey.toCharArray(), "FTBAPP".getBytes(), 65536, 256);
         return new SecretKeySpec(factory.generateSecret(spec).getEncoded(), "AES");
     }
 
-    public static byte[] getMacAddress() {
-        try {
-            List<NetworkInterface> networkInterfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
-            Optional<NetworkInterface> sortedNetworks = networkInterfaces.stream()
-                .filter(CredentialStorage::networkIsValid)
-                .min(Comparator.comparing(NetworkInterface::getName));
-            
-            if (sortedNetworks.isPresent()) {
-                var network = sortedNetworks.get();
-                var mac = network.getHardwareAddress();
-                LOGGER.debug("Interface: {} : {}", network.getDisplayName(), network.getName());
-                var address = new byte[mac.length * 10];
-                for (int i = 0; i < address.length; i++) {
-                    address[i] = mac[i - (Math.round(i / mac.length) * mac.length)];
-                }
-
-                return address;    
-            }
-        } catch (SocketException e) {
-            LOGGER.warn("Exception getting MAC address", e);
-        }
-
-        LOGGER.warn("Failed to get MAC address, using default logindata key");
-        return new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
-    }
-    
-    private static boolean networkIsValid(NetworkInterface network) {
-        try {
-            var mac = network.getHardwareAddress();
-            var name = network.getName();
-
-            return mac != null && mac.length > 0 && !network.isLoopback() && !network.isVirtual() && !network.isPointToPoint() && !name.startsWith("ham") && !name.startsWith("vir") && !name.startsWith("docker") && !name.startsWith("br-");
-        } catch (Throwable error) {
-            LOGGER.error("Failed to check if network is valid", error);
+    private String generateEncryptionKey() {
+        String appName = "FTBApp";
+        String storageName = "CredentialStorageV1";
+        
+        String userHome = System.getProperty("user.home");
+        String osName = System.getProperty("os.name");
+        String osArch = System.getProperty("os.arch");
+        String timeZone = System.getProperty("user.timezone");
+        
+        List<String> components = shuffleBasedOnUserHome(userHome, appName, storageName, userHome, osName, osArch, timeZone);
+        StringBuilder keyBuilder = new StringBuilder();
+        for (String component : components) {
+            keyBuilder.append(component).append("|");
         }
         
-        return false;
+        return keyBuilder.toString();
+    }
+
+    /**
+     * This should create a seed that produces a consistent shuffle based on the user's home directory.
+     * This way the order of the components is unique to the user but consistent across runs.
+     * 
+     * @param userHome The user's home directory
+     * @param components The components to shuffle
+     * @return A shuffled list of components
+     */
+    private List<String> shuffleBasedOnUserHome(String userHome, String... components) {
+        List<String> componentList = new ArrayList<>(Arrays.asList(components));
+        long seed = 0;
+        for (char c : userHome.toCharArray()) {
+            seed += c;
+        }
+        Collections.shuffle(componentList, new Random(seed));
+        return componentList;
     }
 }
