@@ -8,7 +8,16 @@ import {ContextMenus} from '@/core/context/contextMenus';
 import SidebarRunningInstances from '@/components/layout/sidebar/SidebarRunningInstances.vue';
 import Popover from '@/components/ui/Popover.vue';
 import {FontAwesomeIcon} from '@fortawesome/vue-fontawesome';
-import {faBookOpen, faCode, faCog, faHome, faInfoCircle, faRss, faSearch} from '@fortawesome/free-solid-svg-icons';
+import {
+  faBookOpen,
+  faCode,
+  faCog,
+  faHome,
+  faInfoCircle,
+  faRss,
+  faSearch,
+  faTshirt
+} from '@fortawesome/free-solid-svg-icons';
 import {constants} from '@/core/constants.ts';
 import InstallQueue from "@/components/groups/modpack/InstallQueue/InstallQueue.vue";
 
@@ -74,20 +83,32 @@ function navItemRightClick(event: MouseEvent, item: typeof navigation[0]): void 
     </div>
 
     <div class="nav-items nav-main mt-2">
-      <Popover :text="item.name" v-for="(item, index) in navigation" :key="index">
-        <RouterLink :to="{ name: item.to }" :draggable="false">
-          <div class="nav-item" @click.right="(e) => navItemRightClick(e, item)">
-            <div class="icon">
-              <FontAwesomeIcon :fixed-width="true" :icon="item.icon" class="mr-3"/>
+      <template v-for="(item, index) in navigation" :key="index">
+        <Popover :text="item.name">
+          <RouterLink :to="{ name: item.to }" :draggable="false">
+            <div class="nav-item" @click.right="(e) => navItemRightClick(e, item)">
+              <div class="icon">
+                <FontAwesomeIcon :fixed-width="true" :icon="item.icon" class="mr-3"/>
+              </div>
             </div>
-          </div>
-        </RouterLink>
-      </Popover>
+          </RouterLink>
+        </Popover>
+
+        <Popover v-if="item.name === 'Blog'" text="Shop FTB Merch">
+          <a href="https://shop.feed-the-beast.com/?utm_source=ftb-app&utm_medium=navigation&utm_campaign=app&utm_content=store-link" target="_blank" rel="noopener" class="mt-8">
+            <div class="nav-item">
+              <div class="icon">
+                <FontAwesomeIcon :fixed-width="true" :icon="faTshirt" class="mr-3"/>
+              </div>
+            </div>
+          </a>
+        </Popover>
+      </template>
 
       <SidebarRunningInstances/>
     </div>
 
-    <div class="nav-items">
+    <div class="nav-items">      
       <SidebarProfile class="block"/>
     </div>
 
