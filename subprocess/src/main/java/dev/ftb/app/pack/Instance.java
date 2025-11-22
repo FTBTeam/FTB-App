@@ -331,7 +331,7 @@ public class Instance {
             // TODO, do this on LocalInstance load, potentially combine with changes to make jvmArgs an array.
             var args = MiscUtils.splitCommand(props.jvmArgs);
             for (String arg : args) {
-                if (arg.contains("-Xmx") || arg.contains("-Xms")) {
+                if (arg.contains("-Xmx")) {
                     continue;
                 }
                 ctx.extraJVMArgs.add(arg);

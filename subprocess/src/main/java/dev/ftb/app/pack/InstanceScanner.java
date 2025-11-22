@@ -54,7 +54,7 @@ public class InstanceScanner {
         this.instanceDir = instanceDir;
         this.manifest = manifest;
         for (ModpackFile file : manifest.getFiles()) {
-            Path path = instanceDir.resolve(file.getPath()).resolve(file.getName());
+            Path path = file.toPath(instanceDir);
             modpackFiles.put(instanceDir.relativize(path).toString(), file);
         }
         this.instance = instance;

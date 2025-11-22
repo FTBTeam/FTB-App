@@ -6,7 +6,6 @@ import AdAside from './components/layout/AdAside.vue';
 import Sidebar from '@/components/layout/sidebar/Sidebar.vue';
 import { Loader } from '@/components/ui';
 import Onboarding from '@/components/modals/Onboarding.vue';
-import { DevToolsActions } from '@/components/layout';
 import GlobalComponents from './components/layout/GlobalComponents.vue';
 import {computed, onMounted, onUnmounted, ref, watch} from 'vue';
 import { alertController } from '@/core/controllers/alertController.ts';
@@ -201,7 +200,6 @@ const showSidebar = computed(() => !router.currentRoute.value.path.startsWith('/
     </div>
 
     <onboarding v-if="wsStore.ready && showOnboarding" @accepted="showOnboarding = false" />
-    <dev-tools-actions v-if="wsStore.ready" />
     <GlobalComponents />
   </div>
 </template>

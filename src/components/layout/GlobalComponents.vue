@@ -5,7 +5,6 @@ import Alerts from '@/components/groups/global/Alerts.vue';
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import UiButton from '@/components/ui/UiButton.vue';
-import DevToolsActions from '@/components/layout/DevToolsActions.vue';
 import ContentMenuGlobal from '@/components/groups/global/contextMenu/ContentMenuGlobal.vue';
 import MicrosoftLoginModal from '@/components/groups/auth/MicrosoftLoginModal.vue';
 import LaunchInstanceDialog from '@/components/modals/LaunchInstanceDialog.vue';
@@ -69,8 +68,6 @@ function modalFeedback(button: ModalButton) {
     <dialogs/>
     <alerts/>
     <launch-instance-dialog/>
-
-    <dev-tools-actions/>
   </div>
 </template>
 
