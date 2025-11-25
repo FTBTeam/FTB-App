@@ -54,7 +54,7 @@ export class SettingMenu extends ContextMenu<{ }> {
         separator: true
       },
       {
-        title: 'Refresh cache',
+        title: 'Refresh instance data',
         icon: faDatabase,
         async action() {
           await InstanceActions.clearInstanceCache()

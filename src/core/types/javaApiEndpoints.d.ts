@@ -13,6 +13,7 @@ export type ApiEndpoints = 	"installedInstances" |
 	"fileHash" |
 	"updateInstance" |
 	"profiles.refresh" |
+	"purge" |
 	"pinInstance" |
 	"pong" |
 	"ping" |

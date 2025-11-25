@@ -17,6 +17,7 @@ import dev.ftb.app.api.handlers.instances.backups.InstanceGetBackupsHandler;
 import dev.ftb.app.api.handlers.instances.backups.InstanceRestoreBackupHandler;
 import dev.ftb.app.api.handlers.other.*;
 import dev.ftb.app.api.handlers.profiles.*;
+import dev.ftb.app.api.handlers.purge.PurgeHandler;
 import dev.ftb.app.api.handlers.storage.StorageGetAllHandler;
 import dev.ftb.app.api.handlers.storage.StorageGetHandler;
 import dev.ftb.app.api.handlers.storage.StoragePutHandler;
@@ -94,6 +95,8 @@ public class WebSocketHandler {
 
         register("webRequest", WebRequestData.class, new WebRequestHandler());
         register("openDebugTools", BaseData.class, new OpenDebugToolsHandler());
+        
+        register("purge", PurgeHandler.Data.class, new PurgeHandler());
     }
 
     private static void register(String name, Class<? extends BaseData> clazz, IMessageHandler<? extends BaseData> handler) {
