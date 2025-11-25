@@ -52,7 +52,7 @@ import {
   PingLauncherData,
   PinInstanceHandlerData,
   PinInstanceHandlerReply,
-  PongLauncherData,
+  PongLauncherData, PurgeHandlerData, PurgeHandlerReply,
   RefreshAuthenticationProfileHandlerData,
   RefreshAuthenticationProfileHandlerReply,
   RemoveProfileHandlerData,
@@ -145,6 +145,7 @@ const endpoints = {
   "accounts.store-oauth":         io<StoreFtbAccountHandlerData, StoreFtbAccountHandlerReply>(),
   "accounts.get-oauth":           io<BaseData, GetFtbAccountHandlerReply>(),
   "accounts.sign-out":            io<BaseData, SignOutFTBAccountHandlerReply>(),
+  'purge':                        io<PurgeHandlerData, PurgeHandlerReply>(),
 } satisfies Record<ApiEndpoints, EndpointDefinition<any, any>>;
 
 export type EmptyMessageResponse = {}

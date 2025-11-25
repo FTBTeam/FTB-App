@@ -514,6 +514,15 @@ export interface StoreFtbAccountHandlerReply extends StoreFtbAccountHandlerData 
     completeToken: CompleteTokenData;
 }
 
+export interface PurgeHandlerData extends BaseData {
+    target: PurgeTarget;
+}
+
+export interface PurgeHandlerReply extends BaseData {
+    status: string;
+    message: string;
+}
+
 export interface StorageGetAllHandlerReply extends BaseData {
     response: string;
 }
@@ -603,7 +612,7 @@ export interface ModInfo {
     enabled: boolean;
     size: number;
     sha1: string;
-    murmurHash: string;
+    murmurHash: number;
     curse: CurseMetadata;
 }
 
@@ -758,5 +767,7 @@ export interface FileHashes {
 export type Action = "GET" | "CREATE" | "DELETE" | "RENAME";
 
 export type ValidCheckResult = "VALID" | "EXPIRED" | "NOT_LOGGED_IN" | "TOTAL_FAILURE";
+
+export type PurgeTarget = "ALL" | "INSTANCE_CACHE" | "RUNTIMES" | "MINECRAFT";
 
 export type Type = "BASIC" | "FULL";
