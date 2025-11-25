@@ -12,7 +12,7 @@ import {createLogger} from '@/core/logger';
 import {FontAwesomeIcon} from '@fortawesome/vue-fontawesome';
 import {onMounted, ref} from 'vue';
 import {useAppSettings} from '@/store/appSettingsStore.ts';
-import {faCheck, faCopy, faFileZipper, faFolderOpen, faSync, faTrash} from '@fortawesome/free-solid-svg-icons';
+import {faCheck, faCopy, faFileZipper, faFolderOpen, faTrash} from '@fortawesome/free-solid-svg-icons';
 import {faGithub} from '@fortawesome/free-brands-svg-icons';
 import {useAppStore} from '@/store/appStore.ts';
 import PurgeCacheCard from "@/components/groups/settings/PurgeCacheCard.vue";
