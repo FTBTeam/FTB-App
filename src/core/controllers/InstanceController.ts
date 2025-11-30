@@ -130,8 +130,7 @@ export class InstanceController {
       }
       
       InstanceController.logger.warn("Failed to launch instance", result);
-      loadingStatus.starting = false;
-      runningInstancesStore.updateLaunchingStatus(loadingStatus)
+      runningInstancesStore.clearLaunchingStatus()
       return;
     }
 
