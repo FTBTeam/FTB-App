@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { lastMessageIndexByUuid } from '@/core/controllers/runningStateProcessor.ts';
+import {clamp} from "@/utils";
 
 /**
  * Shorthand vars to save on memory footprint
@@ -132,7 +133,7 @@ export const useRunningInstancesStore = defineStore("runningInstances", {
         instanceData.preInitProgress = {
           stepName: step.desc,
           // Progress is a float from 0 to 1, we want it to be a number from 0 to 100
-          progress: step.progress * 100,
+          progress: clamp(step.progress * 100, 0, 100), // Ensure it's between 0 and 100
           steps: step.totalSteps,
           step: step.step
         }
