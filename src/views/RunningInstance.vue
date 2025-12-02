@@ -17,14 +17,16 @@ import {
   faCircleNotch,
   faEllipsisVertical,
   faFolderOpen,
+  faPlay,
   faSkullCrossbones,
 } from '@fortawesome/free-solid-svg-icons';
 // @ts-ignore (Literally no types :tada:)
 import {RecycleScroller} from 'vue-virtual-scroller'
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 import {artworkFileOrElse} from '@/utils/helpers/packHelpers.ts';
-import { AppContextController } from '@/core/context/contextController';
+import {AppContextController} from '@/core/context/contextController';
 import {ContextMenus} from "@/core/context/contextMenus.ts";
+import {InstanceController} from "@/core/controllers/InstanceController.ts";
 
 export interface Bar {
   title: string;
@@ -262,6 +264,14 @@ function showContextMenu(event: MouseEvent) {
   
   AppContextController.openMenu(ContextMenus.RUNNING_INSTANCE_OPTIONS_MENU, event, () => ({ instance: instance.value }));
 }
+
+async function playAgain() {
+  if (!instance.value) {
+    return;
+  }
+
+  await InstanceController.from(instance.value).play()
+}
 </script>
 
 <template>
@@ -300,22 +310,31 @@ function showContextMenu(event: MouseEvent) {
           </template>
           <div v-else class="flex mt-4 gap-4">
             <UiButton
+              v-if="instance && !runningInstance"
+              type="success"
+              @click="playAgain"
+            >
+              <FontAwesomeIcon :icon="faPlay" class="mr-2" />
+              Play again
+            </UiButton>
+            
+            <router-link v-if="instance" :to="{ name: RouterNames.ROOT_LOCAL_PACK, params: {uuid: instance.uuid} }">
+              <UiButton
+                v-if="!runningInstance"
+                type="info"
+              >
+                <FontAwesomeIcon :icon="faArrowLeft" class="mr-2" />
+                Back
+              </UiButton>
+            </router-link>
+            
+            <UiButton
               @click="openFolder"
               type="info"
             >
               <FontAwesomeIcon :icon="faFolderOpen" class="mr-2" />
               Open instance folder
             </UiButton>
-
-            <router-link :to="{ name: RouterNames.ROOT_LIBRARY }">
-              <UiButton
-                v-if="!runningInstance"
-                type="info"
-              >
-                <FontAwesomeIcon :icon="faArrowLeft" class="mr-2" />
-                Back to library
-              </UiButton>
-            </router-link>
             
             <UiButton
               v-if="runningInstance"

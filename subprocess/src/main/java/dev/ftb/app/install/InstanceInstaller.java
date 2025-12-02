@@ -598,6 +598,11 @@ public class InstanceInstaller extends InstanceOperation {
 
             // Just create an empty file.
             try {
+                if (Files.exists(this.destination)) {
+                    LOGGER.warn("Zero byte file destination already exists, skipping creation: {}", this.destination);
+                    return;
+                }
+                
                 Files.createFile(IOUtils.makeParents(this.destination));
             } catch (IOException e) {
                 LOGGER.error("Failed to create empty file: {}", this.destination, e);

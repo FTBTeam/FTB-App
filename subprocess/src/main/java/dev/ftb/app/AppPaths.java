@@ -3,6 +3,7 @@ package dev.ftb.app;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedList;
@@ -56,12 +57,24 @@ public class AppPaths {
     private void ensureDirectoriesExist() {
         for (Path path : this.paths) {
             try {
-                if (Files.notExists(path)) {
-                    Files.createDirectories(path);
+                if (Files.isDirectory(path)) {
+                    continue;
                 }
+                
+                if (Files.exists(path)) {
+                    // It's not a directory, but something exists here already.
+                    LOGGER.warn("Expected {} to be a directory, but it exists and is not a directory.", path);
+                    continue;
+                }
+                
+                Files.createDirectories(path);
+                LOGGER.info("Created directory {}.", path);
             } catch (Exception e) {
-                // TODO: How can we handle this better?
-                throw new RuntimeException("Failed to create directory: " + path, e);
+                if (e instanceof FileAlreadyExistsException) {
+                    LOGGER.warn("File {} already exists. Skipping.", path);
+                } else {
+                    LOGGER.error("Could not create directory {}.", path, e);
+                }
             }
         }
     }

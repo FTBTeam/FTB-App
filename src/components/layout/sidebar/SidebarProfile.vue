@@ -169,7 +169,7 @@ function closeMenu() {
               name: accountsStore.ftbAccount?.accountData.preferred_username ?? accountsStore.ftbAccount?.accountData.given_name ?? 'Unknown?',
               avatarUrl: accountsStore.ftbAccount?.accountData.picture
             }"
-                                :subtext="accountsStore.isPatreon ? '❤️ Patreon Member' : undefined"
+                                :subtext="accountsStore.isPatreon ? '❤️ Premium member' : undefined"
                                 :active="true"
                                 :on-delete="ftbSignOut"
                                 :on-select="() => {}" />

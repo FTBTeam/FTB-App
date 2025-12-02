@@ -1,5 +1,6 @@
 package dev.ftb.app.install.tasks.modloader.forge;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import dev.ftb.app.AppMain;
 import dev.ftb.app.Constants;
@@ -14,6 +15,7 @@ import dev.ftb.app.pack.Instance;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.maven.MavenNotation;
+import okhttp3.Request;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
@@ -51,8 +53,24 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
 
     public static AbstractForgeInstallTask createInstallTask(Instance instance, String mcVersion, String forgeVersion) throws IOException {
         if (FORGE_LEGACY_INSTALL.containsVersion(new DefaultArtifactVersion(mcVersion))) {
-            return new LegacyForgeInstallTask(instance, mcVersion, forgeVersion);
+            String finalForgeVersion = forgeVersion;
+            if (forgeVersion.contains("recommended") || forgeVersion.contains("latest")) {
+                // Load the promotions and find the correct latest vs recommended version.
+                var promotions = loadPromotions();
+                
+                // We need to find the key that contains the mcVersion and the type (latest/recommended)
+                String key = mcVersion + "-" + (forgeVersion.contains("recommended") ? "recommended" : "latest");
+                String resolvedVersion = promotions.promos.get(key);
+                if (resolvedVersion == null) {
+                    throw new IOException("Failed to resolve " + forgeVersion + " Forge version for Minecraft "+ mcVersion);
+                }
+                
+                finalForgeVersion = resolvedVersion; // This is the version
+            }
+            
+            return new LegacyForgeInstallTask(instance, mcVersion, finalForgeVersion);
         }
+        
         MavenNotation notation = getForgeNotation(mcVersion, forgeVersion);
         if (!"universal".equals(notation.classifier) && !"jar".equals(notation.extension)) {
             throw new IllegalStateException("Expected Forge 'universal.jar'. Got: " + notation);
@@ -172,6 +190,24 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
         return downloadTask.getDest();
 
     }
+    
+    private static Promotions loadPromotions() {
+        var request = new Request.Builder()
+            .url("https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json")
+            .get()
+            .build();
+        
+        try (var req = Constants.httpClient().newCall(request).execute()) {
+            if (!req.isSuccessful() || req.body() == null) {
+                throw new IOException("Failed to fetch Forge promotions: " + req);
+            }
+            
+            // Now we can parse it.
+            return new Gson().fromJson(req.body().string(), Promotions.class);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     protected static String topAndTail(String s) {
         return s.substring(1, s.length() - 1);
@@ -248,4 +284,6 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
         public void onFileDownloaded(FileValidation validation, Path dest) {
         }
     }
+    
+    private record Promotions(String homepage, Map<String, String> promos) {}
 }
