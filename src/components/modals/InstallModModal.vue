@@ -135,9 +135,12 @@ const options = computed(() => {
     return [];
   }
   
+  
   const crossLoaderPlatforms = compatibleCrossLoaderPlatforms(mcVersion, modLoader.toLowerCase());
+  console.log(mod.versions, crossLoaderPlatforms, modLoader, mcVersion);
   return (mod.versions
-    .filter(e => e.targets.findIndex(a => a.type === 'modloader' && crossLoaderPlatforms.includes(a.name)) !== -1)
+    // This needs to either, check it's a compatible loader, OR check if the mod has no loader, and if it's got no loader, assume it's for forge, and then check if the modloader is forge
+    .filter(e => e.targets.findIndex((a) => a.type === 'modloader' && crossLoaderPlatforms.includes(a.name)) !== -1 || (e.targets.findIndex(a => a.type === 'modloader') === -1 && modLoader.toLowerCase() === 'forge'))
     .filter(e => e.targets.findIndex((a) => a.type === 'game' && a.name === 'minecraft' && a.version === mcVersion) !== -1)
     .sort((a, b) => b.id - a.id)
     .map((e) => ({

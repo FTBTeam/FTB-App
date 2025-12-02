@@ -101,6 +101,8 @@ const onlyQueue = computed(() => {
     left: 120%;
     z-index: 100;
     width: 360px;
+    max-height: 500px;
+    overflow-y: auto;
     background-color: var(--color-background);
     padding: 1rem;
     border-radius: 5px;
