@@ -13,7 +13,7 @@ import dev.ftb.app.install.tasks.*;
 import dev.ftb.app.install.tasks.modloader.ModLoaderInstallTask;
 import dev.ftb.app.instance.InstanceOperation;
 import dev.ftb.app.pack.CancellationToken;
-import dev.ftb.app.pack.Instance;
+import dev.ftb.app.pack.Instance; 
 import dev.ftb.app.util.FileUtils;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.io.IOUtils;
