@@ -123,7 +123,7 @@ function highImpactAdStateChanged(state: 'loaded' | 'removed') {
           v-if="!isElectron"
           id="ow-ad-second"
           ref="adRefSecond"
-          style="max-width: 300px; max-height: 250px;"
+          style="width: 300px; height: 250px;"
         />
       </div>
 
