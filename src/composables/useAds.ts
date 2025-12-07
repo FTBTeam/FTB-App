@@ -7,8 +7,7 @@ import {Roles} from "@/core/auth/jwtIdTokenData";
 function idTokenHasPremiumAccess(resourceAccess: Record<string, Roles> | undefined): boolean {
   if (!resourceAccess) return false;
   
-  const values = Object.values(resourceAccess).flatMap(e => e.roles);
-  return values.includes("member:ads");
+  return resourceAccess?.["ftb-app"]?.roles.includes("member:ads");
 }
 
 export function useAds() {
