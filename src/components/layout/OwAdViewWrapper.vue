@@ -10,6 +10,7 @@
 // This is needed as it's a very weird component that vue3 doesn't like
 import {nextTick, onMounted, useTemplateRef} from 'vue';
 import appPlatform from '@platform';
+import {createLogger} from "@/core/logger.ts";
 
 const props = defineProps<{
   enableHighImpact?: boolean;
@@ -21,6 +22,7 @@ const emit = defineEmits<{
   (e: 'highImpactAdStateChanged', state: 'loaded' | 'removed'): void;
 }>();
 
+const logger = createLogger("OwAdViewWrapper.vue");
 const mountPoint = useTemplateRef("mountPoint")
 
 onMounted(() => {
@@ -38,15 +40,17 @@ onMounted(() => {
     mountPoint.value.innerHTML = "<owadview></owadview>"
   }
   
-  nextTick(() => {
-    // Find the `data-is-main-ad` element
-    const fancyAd = document.querySelector("owadview[data-is-main-ad='true']");
+  nextTick(() => {    
+    const fancyAd = mountPoint.value?.querySelector('owadview[data-is-main-ad="true"]');
     if (fancyAd) {
+      logger.info("High impact ad view loaded");
       fancyAd.addEventListener("high-impact-ad-loaded", () => {
+        logger.log("[AD] high-impact-ad-loaded");
         emit('highImpactAdStateChanged', 'loaded');
       });
-      
+
       fancyAd.addEventListener("high-impact-ad-removed", () => {
+        logger.log("[AD] high-impact-ad-removed");
         emit('highImpactAdStateChanged', 'removed');
       });
     }
