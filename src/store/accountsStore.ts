@@ -43,8 +43,8 @@ export const useAccountsStore = defineStore("accounts", {
   },
 
   getters: {
-    isPatreon(s) {
-      return s.ftbAccount && Object.values(s.ftbAccount.idTokenData?.resource_access ?? {}).flatMap(e => e.roles).includes("patreon:ads")
+    isPremiumMember(s) {
+      return s.ftbAccount && Object.values(s.ftbAccount.idTokenData?.resource_access ?? {}).flatMap(e => e.roles).includes("member:ads")
     }
   },
   
