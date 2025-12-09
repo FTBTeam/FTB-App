@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import appPlatform from '@platform';
 import {createLogger} from '@/core/logger';
-import { onMounted, useTemplateRef, ref, computed } from 'vue';
+import {onMounted, useTemplateRef, ref, computed, watch, nextTick} from 'vue';
 import { useAttachDomEvent } from '@/composables';
 import { constants } from '@/core/constants.ts';
 import { useAds } from '@/composables/useAds.ts';
@@ -113,6 +113,24 @@ async function loadAds(id: string, elm: any, options?: any) {
 function highImpactAdStateChanged(state: 'loaded' | 'removed') {
   highImpactAdLoaded.value = state === 'loaded';
 }
+
+watch(highImpactAdLoaded, (newVal, oldValue) => {
+  if (isSmallDisplay.value) {
+    return;
+  }
+  
+  if (!newVal && oldValue) {
+    nextTick(() => {
+      // Reload the ad when high impact ad is removed
+      loadAds("ad-2", adTwoRef.value, {
+        size: {
+          width: 300,
+          height: 250
+        }
+      });
+    })
+  }
+});
 </script>
 
 <template>
@@ -120,7 +138,6 @@ function highImpactAdStateChanged(state: 'loaded' | 'removed') {
     <div class="ad-container ads overwolf" v-if="!isElectron" key="adside-ad-type-ow">
       <div class="ad-holder small" v-if="!isSmallDisplay && !disableSmallerAd && !highImpactAdLoaded">
         <div
-          v-if="!isElectron"
           id="ow-ad-second"
           ref="adRefSecond"
           style="width: 300px; height: 250px;"
@@ -129,7 +146,6 @@ function highImpactAdStateChanged(state: 'loaded' | 'removed') {
 
       <div class="ad-holder">
         <div
-          v-if="!isElectron"
           id="ow-ad"
           ref="adRef"
           :style="{
