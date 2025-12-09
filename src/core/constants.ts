@@ -1,5 +1,5 @@
 const production = import.meta.env.PROD;
-const platform = import.meta.env.VITE_RUNTIME_PLATFORM
+const platform = import.meta.env.MODE === 'overwolf' ? 'overwolf' : 'electron';
 
 export const constants = {
   modpacksApi: "https://api.feed-the-beast.com/v1/modpacks",

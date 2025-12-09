@@ -1,6 +1,7 @@
 import dayjs from 'dayjs';
 import inspect from 'object-inspect';
 import log from 'electron-log/renderer';
+import platform from '@platform';
 
 enum LogLevel {
   SILLY = "silly",
@@ -101,6 +102,11 @@ class Logger {
   }
   
   private levelToMethod(level: LogLevel) {
+    const isOw = platform.isOverwolf
+    if (isOw) {
+      return console.log
+    }
+    
     switch (level) {
       case LogLevel.SILLY:
         return log.debug
@@ -136,7 +142,7 @@ class Logger {
 }
 
 const logger = new Logger({
-  source: "ftb-app",
+  source: "main",
 })
 
 export function createLogger(source: string, level?: LogLevel) {

@@ -1,9 +1,8 @@
 <script lang="ts" setup>
 import appPlatform from '@platform';
 import {createLogger} from '@/core/logger';
-import { onMounted, useTemplateRef, ref, computed } from 'vue';
+import {onMounted, useTemplateRef, ref, computed, nextTick} from 'vue';
 import { useAttachDomEvent } from '@/composables';
-import { constants } from '@/core/constants.ts';
 import { useAds } from '@/composables/useAds.ts';
 import OwAdViewWrapper from '@/components/layout/OwAdViewWrapper.vue';
 
@@ -57,13 +56,7 @@ function onResize() {
   }
 }
 
-const isDevEnv = constants.isDevelopment;
-
 async function loadAds(id: string, elm: any, options?: any) {
-  if (isDevEnv) {
-    return;
-  }
-
   logger.info(`[AD: ${id}] Loading advert system for ${id}`);
 
   if (typeof OwAd === 'undefined' || !OwAd) {
@@ -72,6 +65,10 @@ async function loadAds(id: string, elm: any, options?: any) {
   }
 
   logger.info(`[AD: ${id}] Created advert object`);
+
+  if (ads.value[id]) {
+    ads.value[id].shutdown();
+  }
 
   ads.value[id] = new OwAd(elm, options);
 
@@ -100,18 +97,39 @@ async function loadAds(id: string, elm: any, options?: any) {
   if (options?.enableHighImpact) {
     ads.value[id].addEventListener('high-impact-ad-loaded', () => {
       logger.info(`[AD: ${id}] High impact ad loaded`);
-      highImpactAdLoaded.value = true;
+      highImpactAdStateChanged('loaded');
     });
     
     ads.value[id].addEventListener('high-impact-ad-removed', () => {
       logger.info(`[AD: ${id}] High impact ad removed`);
-      highImpactAdLoaded.value = false;
+      highImpactAdStateChanged('removed');
     });
   }
 }
 
 function highImpactAdStateChanged(state: 'loaded' | 'removed') {
   highImpactAdLoaded.value = state === 'loaded';
+  if (state === 'loaded') {
+    if (ads.value["ad-2"]) {
+      logger.info('High impact ad loaded, shutting down smaller ad');
+      ads.value["ad-2"].shutdown();
+    }
+  } else {
+    logger.info('High impact ad removed, reloading smaller ad');
+    nextTick(() => {
+      if (isSmallDisplay.value) {
+        return;
+      }
+      
+      // Reload the ad when high impact ad is removed
+      loadAds("ad-2", adTwoRef.value, {
+        size: {
+          width: 300,
+          height: 250
+        }
+      });
+    })
+  }
 }
 </script>
 
@@ -120,7 +138,6 @@ function highImpactAdStateChanged(state: 'loaded' | 'removed') {
     <div class="ad-container ads overwolf" v-if="!isElectron" key="adside-ad-type-ow">
       <div class="ad-holder small" v-if="!isSmallDisplay && !disableSmallerAd && !highImpactAdLoaded">
         <div
-          v-if="!isElectron"
           id="ow-ad-second"
           ref="adRefSecond"
           style="width: 300px; height: 250px;"
@@ -129,7 +146,6 @@ function highImpactAdStateChanged(state: 'loaded' | 'removed') {
 
       <div class="ad-holder">
         <div
-          v-if="!isElectron"
           id="ow-ad"
           ref="adRef"
           :style="{

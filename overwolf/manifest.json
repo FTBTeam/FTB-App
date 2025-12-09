@@ -2,7 +2,7 @@
   "manifest_version": 1,
   "type": "WebApp",
   "meta": {
-    "name": "FTB App Preview",
+    "name": "FTB App",
     "version": "1.0.22",
     "minimum-overwolf-version": "0.157.0.17",
     "author": "Feed The Beast",
