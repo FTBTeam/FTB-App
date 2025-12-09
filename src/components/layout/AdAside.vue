@@ -67,6 +67,10 @@ async function loadAds(id: string, elm: any, options?: any) {
 
   logger.info(`[AD: ${id}] Created advert object`);
 
+  if (ads.value[id]) {
+    ads.value[id].shutdown();
+  }
+
   ads.value[id] = new OwAd(elm, options);
 
   const win = window as any;
@@ -106,15 +110,18 @@ async function loadAds(id: string, elm: any, options?: any) {
 
 function highImpactAdStateChanged(state: 'loaded' | 'removed') {
   highImpactAdLoaded.value = state === 'loaded';
-}
-
-watch(highImpactAdLoaded, (newVal, oldValue) => {
-  if (isSmallDisplay.value) {
-    return;
-  }
-  
-  if (!newVal && oldValue) {
+  if (state === 'loaded') {
+    if (ads.value["ad-2"]) {
+      logger.info('High impact ad loaded, shutting down smaller ad');
+      ads.value["ad-2"].shutdown();
+    }
+  } else {
+    logger.info('High impact ad removed, reloading smaller ad');
     nextTick(() => {
+      if (isSmallDisplay.value) {
+        return;
+      }
+      
       // Reload the ad when high impact ad is removed
       loadAds("ad-2", adTwoRef.value, {
         size: {
@@ -124,7 +131,7 @@ watch(highImpactAdLoaded, (newVal, oldValue) => {
       });
     })
   }
-});
+}
 </script>
 
 <template>
