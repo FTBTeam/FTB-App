@@ -57,13 +57,7 @@ function onResize() {
   }
 }
 
-const isDevEnv = constants.isDevelopment;
-
 async function loadAds(id: string, elm: any, options?: any) {
-  if (isDevEnv) {
-    return;
-  }
-
   logger.info(`[AD: ${id}] Loading advert system for ${id}`);
 
   if (typeof OwAd === 'undefined' || !OwAd) {
