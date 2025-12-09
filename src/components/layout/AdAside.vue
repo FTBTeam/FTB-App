@@ -97,12 +97,12 @@ async function loadAds(id: string, elm: any, options?: any) {
   if (options?.enableHighImpact) {
     ads.value[id].addEventListener('high-impact-ad-loaded', () => {
       logger.info(`[AD: ${id}] High impact ad loaded`);
-      highImpactAdLoaded.value = true;
+      highImpactAdStateChanged('loaded');
     });
     
     ads.value[id].addEventListener('high-impact-ad-removed', () => {
       logger.info(`[AD: ${id}] High impact ad removed`);
-      highImpactAdLoaded.value = false;
+      highImpactAdStateChanged('removed');
     });
   }
 }
