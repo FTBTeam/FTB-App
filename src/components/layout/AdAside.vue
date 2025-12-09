@@ -1,9 +1,8 @@
 <script lang="ts" setup>
 import appPlatform from '@platform';
 import {createLogger} from '@/core/logger';
-import {onMounted, useTemplateRef, ref, computed, watch, nextTick} from 'vue';
+import {onMounted, useTemplateRef, ref, computed, nextTick} from 'vue';
 import { useAttachDomEvent } from '@/composables';
-import { constants } from '@/core/constants.ts';
 import { useAds } from '@/composables/useAds.ts';
 import OwAdViewWrapper from '@/components/layout/OwAdViewWrapper.vue';
 
