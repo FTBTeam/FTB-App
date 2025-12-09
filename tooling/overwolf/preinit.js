@@ -1,7 +1,6 @@
-// NodeJS
-const path = require('path')
-const fs = require('fs')
-const { javaVersion, installJre } = require('./shared')
+import path from 'path';
+import fs from 'fs';
+import { javaVersion, installJre } from './shared.js';
 
 const javaPath = path.join(process.cwd(), "overwolf", "jdk-" + javaVersion);
 

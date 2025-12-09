@@ -142,7 +142,7 @@ class Logger {
 }
 
 const logger = new Logger({
-  source: "ftb-app",
+  source: "main",
 })
 
 export function createLogger(source: string, level?: LogLevel) {

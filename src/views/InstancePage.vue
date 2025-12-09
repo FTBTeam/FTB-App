@@ -336,7 +336,7 @@ export enum ModpackPageTabs {
     >
       <versions-borked-modal
         @closed="closeBorked"
-        @action="(e) => updateOrDowngrade(e)"
+        @action="(e: any) => updateOrDowngrade(e)"
         :is-downgrade="borkedVersionIsDowngrade"
         :fixed-version="borkedVersionDowngradeId"
         :notification="borkedVersionNotification ?? undefined"
