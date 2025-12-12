@@ -149,8 +149,8 @@ function highImpactAdStateChanged(state: 'loaded' | 'removed') {
           id="ow-ad"
           ref="adRef"
           :style="{
-            width: highImpactAdLoaded ? '440px' : '400px',
-            height: highImpactAdLoaded ? '670px' : '600px'
+            minWidth: highImpactAdLoaded ? '440px' : '400px',
+            minHeight: highImpactAdLoaded ? undefined : '600px'
           }"
         />
       </div>
@@ -158,7 +158,7 @@ function highImpactAdStateChanged(state: 'loaded' | 'removed') {
 
     <div class="ad-container ads" v-else key="adside-ad-type">
       <OwAdViewWrapper width="300px" height="250px" v-if="!disableSmallerAd && !highImpactAdLoaded" />
-      <OwAdViewWrapper :width="highImpactAdLoaded ? '440px' : '400px'" :height="highImpactAdLoaded ? '670px' : '600px'" enableHighImpact @highImpactAdStateChanged="highImpactAdStateChanged" />
+      <OwAdViewWrapper :width="highImpactAdLoaded ? '440px' : '400px'" :height="highImpactAdLoaded ? undefined : '600px'" enableHighImpact @highImpactAdStateChanged="highImpactAdStateChanged" />
     </div>
   </div>
 </template>
