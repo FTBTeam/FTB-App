@@ -1,7 +1,7 @@
 <template>
   <div ref="mountPoint" :style="{
-    minWidth: width,
-    minHeight: height,
+    width: width,
+    height: height,
     background: 'transparent'
   }" class="w-full h-full flex items-center justify-center"></div>
 </template>

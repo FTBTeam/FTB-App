@@ -149,8 +149,8 @@ function highImpactAdStateChanged(state: 'loaded' | 'removed') {
           id="ow-ad"
           ref="adRef"
           :style="{
-            minWidth: highImpactAdLoaded ? '440px' : '400px',
-            minHeight: highImpactAdLoaded ? undefined : '600px'
+            width: highImpactAdLoaded ? '440px' : '400px',
+            height: highImpactAdLoaded ? undefined : '600px'
           }"
         />
       </div>
