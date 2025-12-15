@@ -21,7 +21,7 @@
     "build:bin:mac:64": "npm run build -- -m --x64",
     "build:bin:mac:arm": "npm run build -- -m --arm64",
     "gen:license": "license-checker --excludePrivatePackages --json --production > licenses.json",
-    "overwolf:dev": "node tooling/overwolf/preinit.js && cross-env NODE_ENV=development vite build --mode overwolf --watch",
+    "overwolf:dev": "node tooling/overwolf/preinit.js && cross-env NODE_ENV=development vite build --mode overwolf",
     "overwolf:build": "cross-env NODE_ENV=production vue-tsc && cross-env NODE_ENV=production vite build --mode overwolf",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"

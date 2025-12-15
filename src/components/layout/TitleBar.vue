@@ -63,8 +63,9 @@ const isUnix = computed(async () => await appPlatform.utils.getOsType() !== "win
     <div class="meta-title">
       <span>FTB App</span>
     </div>
-    <div class="branch-container">
+    <div class="branch-container flex gap-2">
       <div @click="goToSettings" class="branch" v-if="branch && branch.toLowerCase() !== 'release'" aria-label="App channel" :data-balloon-pos="isMac ? 'down-right' : 'down-left'">{{ toTitleCase(branch) }}</div>
+      <div v-if="appPlatform.isOverwolf" class="branch" aria-label="Overwolf Edition" :data-balloon-pos="isMac ? 'down-right' : 'down-left'">Overwolf</div>
     </div>
     <div class="action-buttons" v-if="!isMac">
       <div class="icons">

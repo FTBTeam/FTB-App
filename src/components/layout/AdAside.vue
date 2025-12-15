@@ -144,13 +144,16 @@ function highImpactAdStateChanged(state: 'loaded' | 'removed') {
         />
       </div>
 
-      <div class="ad-holder">
+      <div class="ad-holder" :style="{
+        flex: highImpactAdLoaded ? '1' : undefined,
+      }">
         <div
           id="ow-ad"
           ref="adRef"
           :style="{
             width: highImpactAdLoaded ? '440px' : '400px',
-            height: highImpactAdLoaded ? undefined : '600px'
+            height: highImpactAdLoaded ? '100%' : '600px',
+            minHeight: highImpactAdLoaded ? '670px' : '600px'
           }"
         />
       </div>
