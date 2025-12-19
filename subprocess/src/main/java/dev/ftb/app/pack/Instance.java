@@ -116,20 +116,28 @@ public class Instance {
         
         this.tryPutMarkerFile();
     }
-
+        
     public void tryPutMarkerFile() {
+        // File size of the correct marker file is 179 bytes.
+        var payload = """
+{
+    "__comment": "This file is not used by the app anymore as it was moved to the .ftbapp folder, but it is still used as a marker for other things. Please do not delete it."
+}
+""";
+        
         try {
             Path markerFilePath = this.path.resolve(VERSION_FILE_NAME);
             if (Files.exists(markerFilePath)) {
                 // If the marker file already exists, we don't need to do anything.
+                var fileSize = Files.size(markerFilePath);
+                if (fileSize != 179) {
+                    // Fix the payload.
+                    Files.writeString(markerFilePath, payload);
+                }
                 return;
             }
             
-            Files.writeString(markerFilePath, """
-{
-    "__comment": "This file is not used by the app anymore as it was moved to the .ftbapp folder, but it is still used as a marker for other things. Please do not delete it.",
-}
-""");
+            Files.writeString(markerFilePath, payload);
         } catch (Exception e) {
             LOGGER.error("Failed to put marker file for instance.", e);
         }
