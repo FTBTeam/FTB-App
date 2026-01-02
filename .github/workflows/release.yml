@@ -319,7 +319,7 @@ jobs:
           git config --local user.email "mikey@feed-the-beast.com"
           git add flathub/dev.ftb.ftb-app.metainfo.xml
           git commit -m "[-ci-skip] Update Flathub XML for version ${{ github.event.release.tag_name }}"
-          git push origin ${{ github.ref }}
+          git push origin main
     
   # Publish to Overwolf
   release-overwolf:
