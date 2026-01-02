@@ -4,11 +4,10 @@ import { constants } from '@/core/constants.ts';
 import {useAccountsStore} from "@/store/accountsStore.ts";
 import {Roles} from "@/core/auth/jwtIdTokenData";
 
-function idTokenHasPatreonAccess(resourceAccess: Record<string, Roles> | undefined): boolean {
+function idTokenHasPremiumAccess(resourceAccess: Record<string, Roles> | undefined): boolean {
   if (!resourceAccess) return false;
   
-  const values = Object.values(resourceAccess).flatMap(e => e.roles);
-  return values.includes("patreon:ads");
+  return resourceAccess?.["ftb-app"]?.roles.includes("member:ads");
 }
 
 export function useAds() {
@@ -17,12 +16,12 @@ export function useAds() {
   const accountStore = useAccountsStore();
   
   const adsEnabled = computed(() => {
-    const isPatreon = idTokenHasPatreonAccess(accountStore.ftbAccount?.idTokenData?.resource_access);
-    if (isPatreon) {
+    const isPremium = idTokenHasPremiumAccess(accountStore.ftbAccount?.idTokenData?.resource_access);
+    if (isPremium) {
       return false;
     }
     
-    // Not patreon? Okay, are we in dev and debug ads disabled?
+    // Not premium? Okay, are we in dev and debug ads disabled?
     return !(!isProd && appSettingsStore.debugAdsDisabled);
   });
   
