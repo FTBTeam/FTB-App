@@ -45,17 +45,17 @@
   </content_rating>
 
   <releases>
-    <release version="1.29.3-beta.288" date="2026-01-02" />
+    <release version="1.29.3~beta.288" date="2026-01-02" />
     <release version="1.29.2" date="2025-12-02" />
-    <release version="1.29.2-beta.274" date="2025-12-02" />
-    <release version="1.29.2-beta.271" date="2025-11-25" />
-    <release version="1.29.2-beta.267" date="2025-11-25" />
-    <release version="1.29.1-beta.259" date="2025-11-09" />
-    <release version="1.29.0-beta.256" date="2025-11-07" />
-    <release version="1.29.0-beta.254" date="2025-11-07" />
-    <release version="1.29.0-beta.252" date="2025-10-27" />
-    <release version="1.29.0-beta.249" date="2025-10-10" />
-    <release version="1.29.0-beta.247" date="2025-10-04" />
+    <release version="1.29.2~beta.274" date="2025-12-02" />
+    <release version="1.29.2~beta.271" date="2025-11-25" />
+    <release version="1.29.2~beta.267" date="2025-11-25" />
+    <release version="1.29.1~beta.259" date="2025-11-09" />
+    <release version="1.29.0~beta.256" date="2025-11-07" />
+    <release version="1.29.0~beta.254" date="2025-11-07" />
+    <release version="1.29.0~beta.252" date="2025-10-27" />
+    <release version="1.29.0~beta.249" date="2025-10-10" />
+    <release version="1.29.0~beta.247" date="2025-10-04" />
     <release version="1.28.2" date="2025-08-17" />
     <release version="1.28.2~beta.230" date="2025-08-17" />
     <release version="1.28.1" date="2025-07-17" />
