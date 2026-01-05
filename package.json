@@ -13,7 +13,7 @@
   },
   "description": "FTB Desktop App for downloading and managing Modpacks",
   "scripts": {
-    "dev": "NODE_ENV=development vite",
+    "dev": "cross-env NODE_ENV=development vite",
     "dev:ads": "cross-env SHOW_ADS=true npm run dev",
     "build": "cross-env NODE_ENV=production vue-tsc && cross-env NODE_ENV=production vite build && ow-electron-builder --config ./electron-builder.yml",
     "build:bin:all:64": "npm run build -- -wl --x64",
@@ -77,7 +77,7 @@
     "@vitest/browser": "^3.1.1",
     "@vitest/coverage-v8": "^3.1.1",
     "archiver": "^5.3.1",
-    "cross-env": "^7.0.3",
+    "cross-env": "^10.1.0",
     "electron": "^37.2.6",
     "electron-builder": "^26.0.12",
     "electron-log": "^5.3.2",
