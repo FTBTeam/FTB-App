@@ -3,7 +3,7 @@ import appPlatform from '@platform'
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {gobbleError, toggleBeforeAndAfter} from '@/utils/helpers/asyncHelpers';
 import {InstanceController, SaveJson} from '@/core/controllers/InstanceController';
-import { InstanceJson, JavaInstall, SugaredInstanceJson } from '@/core/types/javaApi';
+import {InstanceJson, JavaInstall, SugaredInstanceJson} from '@/core/types/javaApi';
 import {RouterNames} from '@/router';
 import {button, dialog, dialogsController} from '@/core/controllers/dialogsController';
 import {alertController} from '@/core/controllers/alertController';
@@ -14,24 +14,28 @@ import {megabyteSize, prettyByteFormat} from '@/utils';
 import ModloaderSelect from '@/components/groups/modpack/components/ModloaderSelect.vue';
 import {ModLoaderWithPackId} from '@/core/types/modpacks/modloaders';
 import RamSlider from '@/components/groups/modpack/components/RamSlider.vue';
-import { computed, onMounted, ref, watch } from 'vue';
-import { useRouter } from 'vue-router';
-import { Modal, UiToggle, UiButton, Input } from '@/components/ui';
-import { useInstallStore } from '@/store/installStore.ts';
-import { useAppSettings } from '@/store/appSettingsStore.ts';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import {computed, onMounted, ref, watch} from 'vue';
+import {useRouter} from 'vue-router';
+import {Input, Modal, UiButton, UiToggle} from '@/components/ui';
+import {useInstallStore} from '@/store/installStore.ts';
+import {useAppSettings} from '@/store/appSettingsStore.ts';
+import {FontAwesomeIcon} from '@fortawesome/vue-fontawesome';
 import {
-  faChevronDown,
+  faChevronDown, faCoffee, faCog,
   faCopy,
   faDownload,
-  faFolder, faInfoCircle, faLock,
-  faPen, faTimes,
+  faFolder,
+  faInfoCircle,
+  faLock,
+  faPen,
+  faTimes,
   faTrash,
-  faUndo, faUnlock,
+  faUndo,
+  faUnlock,
   faWarning,
   faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { useAppStore } from '@/store/appStore.ts';
+import {useAppStore} from '@/store/appStore.ts';
 import TextArea from '@/components/ui/form/TextArea/TextArea.vue';
 import AbstractInput from "@/components/ui/form/AbstractInput.vue";
 import ResolutionSelector, {ResolutionValue} from "@/components/groups/modpack/components/ResolutionSelector.vue";
@@ -53,6 +57,8 @@ const emit = defineEmits<{
   (event: 'back'): void;
 }>()
 
+const tab = ref<string>('preferences');
+
 const preferIPv4Arg = "-Djava.net.preferIPv4Stack=true"
 
 const instanceSettings = ref<SaveJson>({} as any);
@@ -70,18 +76,18 @@ const userSelectedLoader = ref<[string, ModLoaderWithPackId] | null>(null);
 onMounted(async () => {
   const javas = await sendMessage("getJavas");
   javaVersions.value = javas.javas;
-  
+
   if (!instance.embeddedJre) {
     // Java version not in our list, thus it must be custom so flag it as custom
-    if (!javas.javas.find((e) =>  e.path === instance.jrePath)) {
+    if (!javas.javas.find((e) => e.path === instance.jrePath)) {
       jreSelection.value = '-1';
     } else {
       jreSelection.value = instance.jrePath;
     }
   }
-  
+
   instanceSettings.value = createInstanceSettingsFromInstance(instance);
-  previousSettings.value = { 
+  previousSettings.value = {
     ...instanceSettings.value
   }
 })
@@ -94,7 +100,7 @@ function selectResolution(value: ResolutionValue) {
   instanceSettings.value.fullScreen = value.fullScreen;
   instanceSettings.value.width = value.width;
   instanceSettings.value.height = value.height;
-  
+
   saveSettings();
 }
 
@@ -133,13 +139,13 @@ async function installModLoader() {
   if (!userSelectedLoader.value) {
     return;
   }
-  
+
   const result = await sendMessage("instanceOverrideModLoader", {
     uuid: instance.uuid,
     modLoaderId: parseInt(userSelectedLoader.value[1].packId, 10),
     modLoaderVersion: userSelectedLoader.value[1].id,
-  });  
-  
+  });
+
   if (result.status !== "error") {
     userSelectModLoader.value = false;
     userSelectedLoader.value = null;
@@ -160,16 +166,16 @@ async function toggleLock() {
   if (!newState && !(await dialogsController.createConfirmationDialog("Are you sure?", "Unlocking this instance will allow you to add extra mods and modify the instance in other ways. This can allow for destructive actions!\n\nAre you sure you want to unlock this instance?"))) {
     return;
   }
-  
+
   instanceSettings.value.locked = newState;
-  await saveSettings(); 
+  await saveSettings();
 }
 
 async function saveSettings() {
   if (JSON.stringify(previousSettings.value) === JSON.stringify(instanceSettings.value)) {
     return;
   }
-  
+
   const result = await InstanceController.from(instance)
     .updateInstance(instanceSettings.value);
 
@@ -228,6 +234,7 @@ function createInstanceSettingsFromInstance(instance: InstanceJson): SaveJson {
     shellArgs: instance.shellArgs,
     programArgs: instance.programArgs,
     preventMetaModInjection: instance.preventMetaModInjection,
+    preventMetaAgentInjection: instance.preventMetaAgentInjection
   }
 }
 
@@ -247,8 +254,26 @@ function preferIPv4Clicked(event: any) {
   } else {
     instanceSettings.value.jvmArgs = `${instanceSettings.value.jvmArgs} ${preferIPv4Arg}`.trim()
   }
-  
+
   saveSettings()
+}
+
+function resetToInstanceDefaults() {
+  const instanceDefaults = appSettingsStore.rootSettings?.instanceDefaults;
+  if (!instanceDefaults) return;
+
+  instanceSettings.value.width = instanceDefaults.width;
+  instanceSettings.value.height = instanceDefaults.height;
+  instanceSettings.value.fullScreen = instanceDefaults.fullscreen;
+  instanceSettings.value.memory = instanceDefaults.memory;
+  instanceSettings.value.jvmArgs = instanceDefaults.javaArgs;
+  instanceSettings.value.jrePath = '';
+  instanceSettings.value.releaseChannel = instanceDefaults.updateChannel;
+  instanceSettings.value.shellArgs = instanceDefaults.shellArgs;
+  instanceSettings.value.programArgs = instanceDefaults.programArgs;
+  instanceSettings.value.preventMetaModInjection = instanceDefaults.preventMetaModInjection;
+  instanceSettings.value.preventMetaAgentInjection = instanceDefaults.preventMetaAgentInjection;
+  saveSettings();
 }
 
 const prefersIPv4 = computed(() => instanceSettings.value?.jvmArgs?.includes(preferIPv4Arg))
@@ -263,7 +288,7 @@ watch(imageFile, (value) => {
 
 watch(() => instanceSettings.value.categoryId, (newValue, oldValue) => {
   if (newValue === oldValue) return;
-  
+
   saveSettings()
 })
 
@@ -275,8 +300,8 @@ const isLoader = computed(() => {
 
 <template>
   <div class="pack-settings">
-    <ArtworkSelector :pack="instance" class="mb-4" v-model="imageFile" :allow-remove="false" />
-    
+    <ArtworkSelector :pack="instance" class="mb-4" v-model="imageFile" :allow-remove="false"/>
+
     <div class="flex gap-6 items-center mb-6">
       <Input
         label="Instance Name"
@@ -284,77 +309,49 @@ const isLoader = computed(() => {
         @blur="saveSettings"
         fill
       />
-      
-      <CategorySelector :open-down="true" class="w-2/3" v-model="instanceSettings.categoryId" />
+
+      <CategorySelector :open-down="true" class="w-2/3" v-model="instanceSettings.categoryId"/>
     </div>
 
-    <div class="buttons flex flex-wrap gap-3 mb-8">      
+    <div class="buttons flex flex-wrap gap-3 mb-8">
       <UiButton size="small" type="info" :icon="faFolder" @click="browseInstance()">
         Open Folder
       </UiButton>
 
-      <UiButton size="small" :icon="faCopy" @click="InstanceController.from(instance).openDuplicateDialog()" type="info" aria-label="Copy this instance to a new instance, mods, worlds and all">
+      <UiButton size="small" :icon="faCopy" @click="InstanceController.from(instance).openDuplicateDialog()" type="info"
+                aria-label="Copy this instance to a new instance, mods, worlds and all">
         Duplicate
       </UiButton>
 
       <UiButton size="small" type="warning" :icon="instanceSettings.locked ? faUnlock : faLock" @click="toggleLock">
-        {{instanceSettings.locked ? 'Unlock' : 'Lock'}} instance
+        {{ instanceSettings.locked ? 'Unlock' : 'Lock' }} instance
       </UiButton>
-      
-      <UiButton v-if="instance.id != -1" size="small" :icon="faWrench" type="warning" aria-label="Something not looking right? This might help!" @click="repairInstance">
+
+      <UiButton v-if="instance.id != -1" size="small" :icon="faWrench" type="warning"
+                aria-label="Something not looking right? This might help!" @click="repairInstance">
         Repair
-      </UiButton>
-      
-      <UiButton size="small" type="danger" :icon="faTrash" @click="confirmDelete">
-        Delete instance
       </UiButton>
     </div>
 
-    <RamSlider class="mb-8" v-model="instanceSettings.memory" @update="saveSettings" />
+    <h2 class="text-lg mb-6 font-bold text-warning">
+      <FontAwesomeIcon :icon="faCog" class="mr-2"/>
+      Preferences
+    </h2>
+    
+    <RamSlider class="mb-8" v-model="instanceSettings.memory" @update="saveSettings"/>
 
     <ResolutionSelector :model-value="{
       fullScreen: instanceSettings.fullScreen,
       width: instanceSettings.width,
       height: instanceSettings.height
-    }" @update="selectResolution" />
-    
+    }" @update="selectResolution"/>
+
     <h2 class="text-lg mb-6 font-bold text-warning">
-      <FontAwesomeIcon :icon="faWarning" class="mr-2" />
-      Advanced
+      <FontAwesomeIcon :icon="faCoffee" class="mr-2"/>
+      Java
     </h2>
     
     <div class="mb-8">
-      <div class="flex items-center mb-6" v-if="!instance.isImport && !isLoader">
-        <div class="block flex-1 mr-2">
-          <b>Release Channel</b>
-          <small class="block text-muted mr-6 mt-2">
-            The selected release channel will determine when we show that a supported modpack has an update.<span class="mb-2 block" /> Release is the most stable, then Beta should be playable and Alpha could introduce game breaking bugs.</small>
-        </div>
-
-        <ReleaseChannelSelector v-model="instanceSettings.releaseChannel" @update:modelValue="() => saveSettings()" :include-unset="true" />
-      </div>
-
-      <div class="flex items-center mb-6">
-        <div class="block flex-1 mr-2" :class="{'opacity-75': instance.locked}">
-          <b>Modloader</b>
-          <div v-if="instance.locked" class="mt-2 text-red-400">The instances Modloader can not be modified whilst the instance is locked.</div>
-          <small class="block text-muted mr-6 mt-2">At any point you can update / down grade your mod loader for any modpack. This can sometimes be a destructive action and we recommend only doing this when you know what you're doing.</small>
-          
-          <div class="buttons flex gap-2 mt-4" v-if="!instance.locked">
-            <UiButton v-if="!hasModloader" size="small" type="info" :icon="faDownload" @click="userSelectModLoader = true">Install Modloader</UiButton>
-            <UiButton v-else size="small" type="info" :icon="faPen" @click="userSelectModLoader = true">Update Modloader</UiButton>
-          </div>
-        </div>
-      </div>
-      
-      <ui-toggle
-        :align-right="true"
-        label="Disable helper mod injection"
-        desc="The FTB App will inject helper mods into your instance to help the app and your instance work together. Sometimes this can cause issues with Minecraft, Mods, Etc. You can disable this behaviour here."
-        v-model="instanceSettings.preventMetaModInjection"
-        @input="saveSettings"
-        class="mb-6" />
-
       <section class="flex-1 mb-4">
         <AbstractInput label="Java version">
           <template v-slot="{ class: clazz }">
@@ -373,17 +370,17 @@ const isLoader = computed(() => {
               </select>
 
               <div class="absolute z-[1] top-1/2 -translate-1/2 right-1">
-                <FontAwesomeIcon :icon="faChevronDown" />
+                <FontAwesomeIcon :icon="faChevronDown"/>
               </div>
             </div>
           </template>
-          
+
           <template #suffix>
             <UiButton type="success" :icon="faFolder" @click="browseForJava">Browse</UiButton>
           </template>
         </AbstractInput>
       </section>
-      
+
       <div class="flex gap-4 flex-col mb-6">
         <TextArea
           label="Java runtime arguments"
@@ -399,7 +396,7 @@ const isLoader = computed(() => {
           fill
           :rows="4"
         />
-        
+
         <div class="flex gap-4">
           <UiButton size="small" :icon="faUndo" @click="() => {
             instanceSettings.jvmArgs = appSettingsStore.rootSettings?.instanceDefaults.javaArgs ?? ''
@@ -413,8 +410,8 @@ const isLoader = computed(() => {
             Reset to Vanilla defaults
           </UiButton>
         </div>
-        
-        <ui-toggle class="mb-4" label="Prefer IPv4 network requests" :value="prefersIPv4" @input="preferIPv4Clicked" />
+
+        <ui-toggle class="mb-4" label="Prefer IPv4 network requests" :value="prefersIPv4" @input="preferIPv4Clicked"/>
       </div>
 
       <Input
@@ -427,7 +424,7 @@ const isLoader = computed(() => {
         hint="These arguments are appended to the end of the java command, these are typically arguments Minecraft uses."
         fill
       />
-      
+
       <Input
         class="mb-6"
         label="Shell arguments"
@@ -438,34 +435,110 @@ const isLoader = computed(() => {
         fill
         hint="These arguments will be inserted before java is run, see the example below. It's recommended to not change these unless you know what you are doing."
       />
-      
+
       <p class="mb-2 font-bold">Startup preview</p>
       <p class="mb-4 block text-sm">This is for illustrative purposes only, this is not a complete example.</p>
 
       <code class="block bg-black rounded mb-6 px-2 py-2 overflow-x-auto select-text" v-if="instanceSettings.memory">
-        {{instanceSettings.shellArgs}} java {{instanceSettings.jvmArgs}} -Xmx{{prettyByteFormat(Math.floor(parseInt(instanceSettings.memory.toString()) * megabyteSize))}} -jar minecraft.jar {{instanceSettings.programArgs}}
+        {{ instanceSettings.shellArgs }} java {{ instanceSettings.jvmArgs }}
+        -Xmx{{ prettyByteFormat(Math.floor(parseInt(instanceSettings.memory.toString()) * megabyteSize)) }} -jar
+        minecraft.jar {{ instanceSettings.programArgs }}
       </code>
+
+      <h2 class="text-lg mb-6 font-bold text-warning">
+        <FontAwesomeIcon :icon="faWarning" class="mr-2"/>
+        Advanced
+      </h2>
+      
+      <div class="flex gap-4 mb-6">
+        <UiButton size="small" type="warning" :icon="faUndo" @click="resetToInstanceDefaults">
+          Reset all settings to Instance defaults
+        </UiButton>
+
+        <UiButton size="small" type="danger" :icon="faTrash" @click="confirmDelete">
+          Delete instance
+        </UiButton>
+      </div>
+
+      <div class="flex items-center mb-6">
+        <div class="block flex-1 mr-2" :class="{'opacity-75': instance.locked}">
+          <b>Modloader</b>
+          <div v-if="instance.locked" class="mt-2 text-red-400">The instances Modloader can not be modified whilst the
+            instance is locked.
+          </div>
+          <small class="block text-muted mr-6 mt-2">At any point you can update / down grade your mod loader for any
+            modpack. This can sometimes be a destructive action and we recommend only doing this when you know what
+            you're doing.</small>
+
+          <div class="buttons flex gap-2 mt-4" v-if="!instance.locked">
+            <UiButton v-if="!hasModloader" size="small" type="info" :icon="faDownload"
+                      @click="userSelectModLoader = true">Install Modloader
+            </UiButton>
+            <UiButton v-else size="small" type="info" :icon="faPen" @click="userSelectModLoader = true">Update
+              Modloader
+            </UiButton>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center mb-6" v-if="!instance.isImport && !isLoader">
+        <div class="block flex-1 mr-2">
+          <b>Release Channel</b>
+          <small class="block text-muted mr-6 mt-2">
+            The selected release channel will determine when we show that a supported modpack has an update.<span
+            class="mb-2 block"/> Release is the most stable, then Beta should be playable and Alpha could introduce game
+            breaking bugs.</small>
+        </div>
+
+        <ReleaseChannelSelector v-model="instanceSettings.releaseChannel" @update:modelValue="() => saveSettings()"
+                                :include-unset="true"/>
+      </div>
+
+      <ui-toggle
+        :align-right="true"
+        label="Disable helper mod injection"
+        desc="The FTB App will inject helper mods into your instance to help the app and your instance work together. Sometimes this can cause issues with Minecraft, Mods, Etc. You can disable this behaviour here."
+        v-model="instanceSettings.preventMetaModInjection"
+        @input="saveSettings"
+        class="mb-6"/>
+
+      <ui-toggle
+        :align-right="true"
+        label="Disable Java Agent injection"
+        desc="The FTB App will inject Java Agents into your instance to patch known vulnerabilities and issues. We do NOT recommend disabling this option!"
+        v-model="instanceSettings.preventMetaAgentInjection"
+        @input="saveSettings"
+        class="mb-6"/>
     </div>
-    
-    <Modal :open="userSelectModLoader" title="Select Mod Loader" :sub-title="`This instance is currently using ${hasModloader ? instance.modLoader : 'Vanilla'}`" @closed="() => {
+
+    <Modal :open="userSelectModLoader" title="Select Mod Loader"
+           :sub-title="`This instance is currently using ${hasModloader ? instance.modLoader : 'Vanilla'}`" @closed="() => {
       userSelectModLoader = false
       userSelectedLoader = null
     }">
-      
-      <modloader-select @select="e => userSelectedLoader = e" :mc-version="instance.mcVersion" :provide-latest-option="false" :show-none="false" />
 
-      <div class="text-lg mt-8 mb-4"><FontAwesomeIcon class="mr-2" :icon="faInfoCircle" />Notes</div>
-      
-      <p class="mb-3">You can select a Mod Loader to install or switch to using the selection below. Please be aware that if you are currently running a modpack, switching Mod Loader version may break the modpack.</p>
+      <modloader-select @select="e => userSelectedLoader = e" :mc-version="instance.mcVersion"
+                        :provide-latest-option="false" :show-none="false"/>
+
+      <div class="text-lg mt-8 mb-4">
+        <FontAwesomeIcon class="mr-2" :icon="faInfoCircle"/>
+        Notes
+      </div>
+
+      <p class="mb-3">You can select a Mod Loader to install or switch to using the selection below. Please be aware
+        that if you are currently running a modpack, switching Mod Loader version may break the modpack.</p>
       <p>Switching between Mod Loader provider (aka: Forge -> Fabric) will <b>not</b> remove incompatible mods.</p>
-      
+
       <template #footer>
         <div class="flex justify-end gap-4">
           <UiButton type="warning" :icon="faTimes" @click="() => {
             userSelectModLoader = false
             userSelectedLoader = null
-          }">Close</UiButton>
-          <UiButton type="success" :wider="true" :icon="faDownload" :disabled="userSelectedLoader === null" @click="() => installModLoader()">Install</UiButton>
+          }">Close
+          </UiButton>
+          <UiButton type="success" :wider="true" :icon="faDownload" :disabled="userSelectedLoader === null"
+                    @click="() => installModLoader()">Install
+          </UiButton>
         </div>
       </template>
     </Modal>

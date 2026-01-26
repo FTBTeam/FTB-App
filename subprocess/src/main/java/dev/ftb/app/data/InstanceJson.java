@@ -70,6 +70,7 @@ public class InstanceJson {
      * cause issues, so it's good to let the user have the option to turn them off
      */
     public boolean preventMetaModInjection = Settings.getSettings().instanceDefaults().preventMetaModInjection();
+    public boolean preventMetaAgentInjection = Settings.getSettings().instanceDefaults().preventMetaAgentInjection();
     
     public byte packType;
     // TODO migrate this to `isPrivate`
@@ -126,6 +127,7 @@ public class InstanceJson {
         pinned = other.pinned;
         potentiallyBrokenDismissed = other.potentiallyBrokenDismissed;
         preventMetaModInjection = other.preventMetaModInjection;
+        preventMetaAgentInjection = other.preventMetaAgentInjection;
     }
 
     // Copy instance.

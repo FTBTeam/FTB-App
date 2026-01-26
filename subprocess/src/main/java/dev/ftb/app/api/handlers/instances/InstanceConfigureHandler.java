@@ -16,11 +16,9 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Base64;
-import java.util.UUID;
 import java.util.function.Function;
 
 public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigureData> {
@@ -70,6 +68,7 @@ public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigu
             // Support for unlocking a modpack
             instance.props.locked = getOrDefault(updateJson, "locked", JsonElement::getAsBoolean, instance.props.locked);
             instance.props.preventMetaModInjection = getOrDefault(updateJson, "preventMetaModInjection", JsonElement::getAsBoolean, instance.props.preventMetaModInjection);
+            instance.props.preventMetaAgentInjection = getOrDefault(updateJson, "preventMetaAgentInjection", JsonElement::getAsBoolean, instance.props.preventMetaAgentInjection);
             
             var instanceImage = getOrDefault(updateJson, "instanceImage", JsonElement::getAsString, null);
             if (instanceImage != null && instanceImage.startsWith("data:")) {

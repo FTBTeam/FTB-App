@@ -386,11 +386,25 @@ if (!gotTheLock) {
   });
 }
 
-ipcMain.handle("startSubprocess", async (_, args) => {
+ipcMain.handle("startSubprocess", async (_, args) => {  
   log.debug("Starting subprocess")
   if (!import.meta.env.PROD) {
     log.debug("Not starting subprocess in dev mode")
     return;
+  }
+
+  let userDefinedJvmArgs = [] as string[];
+  try {
+    if (fs.existsSync(path.join(appHome, ".subprocess-jvm-args"))) {
+      const jvmArgsData = fs.readFileSync(path.join(appHome, ".subprocess-jvm-args"), 'utf-8');
+      // Each line its own arg
+      userDefinedJvmArgs = jvmArgsData.split("\n")
+        .map(arg => arg.trim())
+        .filter(arg => arg.length > 0);
+      log.info("Found .subprocess-jvm-args file, forcing IPv4 for subprocess");
+    }
+  } catch (e) {
+    log.error("Failed to read .subprocess-jvm-args file", e)
   }
   
   log.log("Starting subprocess")
@@ -431,7 +445,16 @@ ipcMain.handle("startSubprocess", async (_, args) => {
   if (process.argv.includes("ignore-pid-checks")) {
     argsList.push("--ignore-pid-checks")
   }
-
+  
+  // Inject java args before the -jar argument
+  if (userDefinedJvmArgs.length > 0) {
+    const jarIndex = argsList.findIndex(arg => arg === '-jar');
+    if (jarIndex !== -1) {
+      argsList.splice(jarIndex, 0, ...userDefinedJvmArgs);
+      log.debug("Injected user defined JVM args into subprocess args", userDefinedJvmArgs);
+    }
+  }
+    
   // Spawn the process so it can run in the background and capture the output
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {

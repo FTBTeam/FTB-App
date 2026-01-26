@@ -29,6 +29,7 @@ export type SaveJson = {
   releaseChannel: string;
   instanceImage?: string;
   preventMetaModInjection?: boolean;
+  preventMetaAgentInjection?: boolean;
   categoryId: string;
   locked: boolean;
   shellArgs: string;

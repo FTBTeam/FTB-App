@@ -177,7 +177,7 @@ async function toggleMod(file: ModInfo) {
   try {
     const toggleQuery = await sendMessage("instanceModToggle", {
       uuid: instance!.uuid,
-      fileName: file.fileName,
+      fileName: file.enabled ? file.fileName : file.fileName + '.disabled',
       fileId: file.fileId
     });
 

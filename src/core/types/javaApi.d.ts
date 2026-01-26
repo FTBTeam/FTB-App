@@ -594,6 +594,7 @@ export interface InstanceJson {
     locked: boolean;
     pinned: boolean;
     preventMetaModInjection: boolean;
+    preventMetaAgentInjection: boolean;
     packType: number;
     _private: boolean;
     totalPlayTime: number;
@@ -686,6 +687,7 @@ export interface InstanceSettings {
     fullscreen: boolean;
     updateChannel: string;
     preventMetaModInjection: boolean;
+    preventMetaAgentInjection: boolean;
     javaArgs: string;
     shellArgs: string;
     programArgs: string;

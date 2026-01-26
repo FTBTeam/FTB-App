@@ -203,6 +203,7 @@ public class Settings {
                     getOrDefault("fullscreen", Boolean::parseBoolean, DEFAULT_SETTINGS.instanceDefaults().fullscreen()),
                     getOrDefault("updateChannel", DEFAULT_SETTINGS.instanceDefaults().updateChannel()),
                     getOrDefault("preventMetaModInjection", Boolean::parseBoolean, DEFAULT_SETTINGS.instanceDefaults().preventMetaModInjection()),
+                    false, // There is no existing setting for this
                     getOrDefault("jvmargs", DEFAULT_SETTINGS.instanceDefaults().javaArgs()),
                     getOrDefault("shellArgs", DEFAULT_SETTINGS.instanceDefaults().shellArgs()),
                     "" // There is no existing setting for this
