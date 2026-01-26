@@ -80,14 +80,6 @@ function selectResolution(value: ResolutionValue) {
     </div>
 
     <p class="block text-white-700 text-lg font-bold mb-4">Java</p>
-
-    <ui-toggle 
-      label="Disable helper mod injection"
-      desc="The FTB App will inject helper mods into your instance to help the app and your instance work together. Sometimes this can cause issues with Minecraft, Mods, Etc. You can disable this behaviour here." 
-      v-model="localSettings.instanceDefaults.preventMetaModInjection" 
-      class="mb-4" @input="() => {
-        saveMutated()
-      }" />
     
     <ram-slider class="mb-6" v-model="localSettings.instanceDefaults.memory" @update="saveMutated" />
 
@@ -147,6 +139,24 @@ function selectResolution(value: ResolutionValue) {
     <code class="block bg-black rounded mb-6 px-2 py-2 overflow-x-auto" v-if="localSettings && localSettings.instanceDefaults.memory">
       {{localSettings.instanceDefaults.shellArgs}} java {{localSettings.instanceDefaults.javaArgs}} -Xmx{{prettyByteFormat(Math.floor(parseInt(localSettings.instanceDefaults.memory.toString()) * 1024 * 1000))}} -jar minecraft.jar {{localSettings.instanceDefaults.programArgs}}
     </code>
+
+    <ui-toggle
+      label="Disable helper mod injection"
+      desc="The FTB App will inject helper mods into your instance to help the app and your instance work together. Sometimes this can cause issues with Minecraft, Mods, Etc. You can disable this behaviour here."
+      v-model="localSettings.instanceDefaults.preventMetaModInjection"
+      align-right
+      class="mb-6" @input="() => {
+        saveMutated()
+      }" />
+
+    <ui-toggle
+      align-right
+      label="Disable Java Agent injection"
+      desc="The FTB App will inject Java Agents into your instance to patch known vulnerabilities and issues. We do NOT recommend disabling this option!"
+      v-model="localSettings.instanceDefaults.preventMetaAgentInjection"
+      class="mb-4" @input="() => {
+        saveMutated()
+      }" />
   </div>
   <Loader v-else />
 </template>

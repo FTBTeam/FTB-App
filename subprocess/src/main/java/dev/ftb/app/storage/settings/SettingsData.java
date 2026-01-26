@@ -104,6 +104,7 @@ public class SettingsData {
                 false,
                 "release",
                 false,
+                false,
                 String.join(" ", MOJANG_DEFAULT_ARGS), 
                 "",
                 ""
@@ -223,17 +224,19 @@ public class SettingsData {
         private boolean fullscreen;
         private String updateChannel;
         private boolean preventMetaModInjection;
+        private boolean preventMetaAgentInjection;
         private String javaArgs;
         private String shellArgs;
         private String programArgs;
 
-        public InstanceSettings(int width, int height, int memory, boolean fullscreen, String updateChannel, boolean preventMetaModInjection, String javaArgs, String shellArgs, String programArgs) {
+        public InstanceSettings(int width, int height, int memory, boolean fullscreen, String updateChannel, boolean preventMetaModInjection, boolean preventMetaAgentInjection, String javaArgs, String shellArgs, String programArgs) {
             this.width = width;
             this.height = height;
             this.memory = memory;
             this.fullscreen = fullscreen;
             this.updateChannel = updateChannel;
             this.preventMetaModInjection = preventMetaModInjection;
+            this.preventMetaAgentInjection = preventMetaAgentInjection;
             this.javaArgs = javaArgs;
             this.shellArgs = shellArgs;
             this.programArgs = programArgs;
@@ -260,6 +263,10 @@ public class SettingsData {
         }
         
         public boolean preventMetaModInjection() {
+            return preventMetaModInjection;
+        }
+        
+        public boolean preventMetaAgentInjection() {
             return preventMetaModInjection;
         }
 

@@ -394,13 +394,16 @@ public class Instance {
                 }
             }
             
-            for (InstanceSupportMeta.SupportEntry agent : supportMeta.getSupportAgents()) {
-                for (InstanceSupportMeta.SupportFile file : agent.getFiles()) {
-                    if (!file.canApply(props.modLoader, os)) continue;
-                    file.createTask(path).execute(null, null);
-                    ctx.extraJVMArgs.add("-javaagent:" + file.getName());
+            if (!this.props.preventMetaAgentInjection) {
+                for (InstanceSupportMeta.SupportEntry agent : supportMeta.getSupportAgents()) {
+                    for (InstanceSupportMeta.SupportFile file : agent.getFiles()) {
+                        if (!file.canApply(props.modLoader, os)) continue;
+                        file.createTask(path).execute(null, null);
+                        ctx.extraJVMArgs.add("-javaagent:" + file.getName());
+                    }
                 }
             }
+            
             if (!scanner.hasLegacyJavaFixer()) {
                 for (InstanceSupportMeta.SupportFile file : supportMeta.getSupportMods("legacyjavafixer")) {
                     if (!file.canApply(props.modLoader, os)) continue;
