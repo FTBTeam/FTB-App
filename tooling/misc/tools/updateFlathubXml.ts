@@ -41,7 +41,7 @@ for (const line of lines) {
 
   outputLines.push(line)
   
-  const release = `    <release version="${packageJson.version}" date="${dayjs().format("YYYY-MM-DD")}" />`
+  const release = `    <release version="${packageJson.version.replaceAll('-', '~')}" date="${dayjs().format("YYYY-MM-DD")}" />`
   
   outputLines.push(release);
 }

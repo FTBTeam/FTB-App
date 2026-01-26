@@ -1,7 +1,7 @@
 {
   "productName": "FTB Electron App",
   "name": "ftb-app",
-  "version": "1.29.3",
+  "version": "1.29.4",
   "private": true,
   "type": "module",
   "main": "dist-electron/main.js",

@@ -298,6 +298,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Make sure we check out on main and NOT on the tag
+          ref: main
       - uses: oven-sh/setup-bun@v2
       - name: Override packageJson
         uses: actions/download-artifact@v4
@@ -316,7 +319,7 @@ jobs:
           git config --local user.email "mikey@feed-the-beast.com"
           git add flathub/dev.ftb.ftb-app.metainfo.xml
           git commit -m "[-ci-skip] Update Flathub XML for version ${{ github.event.release.tag_name }}"
-          git push origin ${{ github.ref }}
+          git push origin main
     
   # Publish to Overwolf
   release-overwolf:
