@@ -57,8 +57,6 @@ const emit = defineEmits<{
   (event: 'back'): void;
 }>()
 
-const tab = ref<string>('preferences');
-
 const preferIPv4Arg = "-Djava.net.preferIPv4Stack=true"
 
 const instanceSettings = ref<SaveJson>({} as any);
