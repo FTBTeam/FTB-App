@@ -12,6 +12,7 @@ import { onUnmounted, watch, ref } from 'vue';
 import { safeLinkOpen } from '@/utils';
 import {faExternalLink, faQuestionCircle} from '@fortawesome/free-solid-svg-icons';
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
+import MinecraftAuthErrors from "@/components/groups/auth/MinecraftAuthErrors.vue";
 
 const {
   open,
@@ -250,6 +251,10 @@ function expiresInAsPercentage() {
 
   return (current / diff) * 100;
 }
+
+function parseCodeFromError(error: string): string | null {
+  return error.match(/Code:\s(auth:\d+)/)?.[1] ?? null;
+}
 </script>
 
 <template>
@@ -294,7 +299,9 @@ function expiresInAsPercentage() {
       <Loader title="Logging in ..."  v-if="loggingIn" />
       
       <template v-if="!loggingIn && logInError">
-        <Message type="danger" class="select-text">
+        <MinecraftAuthErrors v-if="accountType === 'Microsoft'" :code="parseCodeFromError(logInError) || 'unknown'" :error="logInError" />
+          
+        <Message v-else type="danger" class="select-text">
           <b class="mb-2 block">Something has gone wrong!</b>
           <p>{{ logInError }}</p>
         </Message>
