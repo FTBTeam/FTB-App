@@ -12,6 +12,9 @@ public enum CodedError {
     WRONG_BODY_TYPE("auth:94", "Response was not a JSON object"),
     BODY_READING_FAILED("auth:90", "Failed to read response body"),
     
+    // Special
+    REQUEST_REJECTED("auth:80", "Request was rejected by the server. Check firewall settings..."),
+    
     // Normal flow errors
     XBOX_ACCOUNT_MISSING("auth:50", "This account does not have an XBox Live account. You have likely not migrated your account."),
     XBOX_INVALID_REGION("auth:51", "Your account resides in a region that does not support Xbox Live..."),

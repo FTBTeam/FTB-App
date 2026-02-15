@@ -1,18 +1,22 @@
 package dev.ftb.app.accounts.auth;
 
-import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import dev.ftb.app.Constants;
 import dev.ftb.app.accounts.data.CodedError;
 import dev.ftb.app.accounts.data.ErrorWithCode;
 import dev.ftb.app.util.Result;
-import okhttp3.*;
+import okhttp3.MediaType;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 
 public class MicrosoftRequests {
@@ -186,6 +190,10 @@ public class MicrosoftRequests {
             
             var body = resBody.string();
             if (!body.startsWith("{")) {
+                if (body.toLowerCase().contains("the request is blocked")) {
+                    return Result.err(logAndCreateError(CodedError.REQUEST_REJECTED));
+                }
+                
                 LOGGER.error("Response was not a JSON object: {}", body);
                 return Result.err(logAndCreateError(CodedError.WRONG_BODY_TYPE));
             }

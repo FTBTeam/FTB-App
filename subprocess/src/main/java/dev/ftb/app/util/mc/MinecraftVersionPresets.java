@@ -109,7 +109,11 @@ public enum MinecraftVersionPresets {
     MC1_21_4(make(1, 21, 4, "1.21.4", 21, 24, 49, 1733220777L)),
     MC1_21_5(make(1, 21, 5, "1.21.5", 21, 25, 13, 1742904898L)),
     MC1_21_6(make(1, 21, 6, "1.21.6", 21, 25, 25, 1750158628L)),
-    MC1_21_7(make(1, 21, 7, "1.21.7", 21, 25, 27, 1751275936L));
+    MC1_21_7(make(1, 21, 7, "1.21.7", 21, 25, 27, 1751275936L)),
+    MC1_21_8(make(1, 21, 8, "1.21.8", 21, 25, 29, 1752753842L)),
+    MC1_21_9(make(1, 21, 9, "1.21.9", 21, 25, 40, 1759233523L)),
+    MC1_21_10(make(1, 21, 10, "1.21.10", 21, 25, 41, 1759828643L)),
+    MC1_21_11(make(1, 21, 11, "1.21.11", 21, 25, 50, 1765283010L));
 
     private final MinecraftVersion versionData;
     public static final List<MinecraftVersionPresets> VALUES = List.of(MinecraftVersionPresets.values());

@@ -37,7 +37,11 @@ const javaVersionJumps: JavaJump[] = [
   },
   {
     version: 21,
-    nextJump: "999999" // We don't have anything after java 21
+    nextJump: "26.1-snapshot-1"
+  },
+  {
+    version: 25,
+    nextJump: "999999"
   }
 ]
 
@@ -61,7 +65,7 @@ for (const version of reversedVersions) {
     continue;
   }
 
-  if (version.id.includes("w") || version.id.includes("-pre") || version.id.includes(" Pre-") || version.id.includes("-rc")) {
+  if (version.id.includes("w") || version.id.includes("-pre") || version.id.includes(" Pre-") || version.id.includes("-rc") || version.id.includes("-snapshot-")) {
     // We're in a snapshot, we don't record these but we do need to watch for the next jump.
     currentJavaVersion = jumpJavaVersion(version.id, currentJavaVersion);    
     continue;

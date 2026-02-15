@@ -5,7 +5,6 @@ import com.google.gson.JsonParseException;
 import dev.ftb.app.data.modpack.ModpackVersionManifest;
 import dev.ftb.app.pack.Instance;
 import dev.ftb.app.util.HashingUtils;
-import dev.ftb.app.util.MiscUtils;
 import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.JsonUtils;
 import org.jetbrains.annotations.Nullable;
@@ -116,6 +115,14 @@ public class InstanceModifications {
             this.curseProject = curseProject;
             this.curseFile = curseFile;
             this.murmurHash = murmurHash;
+        }
+        
+        public static ModOverride fromApi(ModOverrideState state, ModpackVersionManifest.ModpackFile mod) {
+            return new ModOverride(
+                state,
+                mod.getName(),
+                mod.getId()
+            );
         }
 
         // @formatter:off

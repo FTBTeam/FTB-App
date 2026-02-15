@@ -394,13 +394,16 @@ public class Instance {
                 }
             }
             
-            for (InstanceSupportMeta.SupportEntry agent : supportMeta.getSupportAgents()) {
-                for (InstanceSupportMeta.SupportFile file : agent.getFiles()) {
-                    if (!file.canApply(props.modLoader, os)) continue;
-                    file.createTask(path).execute(null, null);
-                    ctx.extraJVMArgs.add("-javaagent:" + file.getName());
+            if (!this.props.preventMetaAgentInjection) {
+                for (InstanceSupportMeta.SupportEntry agent : supportMeta.getSupportAgents()) {
+                    for (InstanceSupportMeta.SupportFile file : agent.getFiles()) {
+                        if (!file.canApply(props.modLoader, os)) continue;
+                        file.createTask(path).execute(null, null);
+                        ctx.extraJVMArgs.add("-javaagent:" + file.getName());
+                    }
                 }
             }
+            
             if (!scanner.hasLegacyJavaFixer()) {
                 for (InstanceSupportMeta.SupportFile file : supportMeta.getSupportMods("legacyjavafixer")) {
                     if (!file.canApply(props.modLoader, os)) continue;
@@ -535,7 +538,7 @@ public class Instance {
 
         // Populate all mods from the regular version manifest.
         for (ModpackVersionManifest.ModpackFile file : versionManifest.getFiles()) {
-            if ((!file.getPath().startsWith("./mods") && !file.getPath().startsWith("mods/")) || !isMod(file.getName())) {
+            if (!isInModPath(file.getPath()) || !isMod(file.getName())) {
                 continue;
             }
 
@@ -590,11 +593,12 @@ public class Instance {
                 if (!Files.exists(file)) {
                     // If t he file does not exist, it might be disabled, let's try that one as well
                     file = modsDir.resolve(override.getFileName() + ".disabled");
+                    System.out.println("Trying disabled mod path: " + file);
                     if (!Files.exists(file)) {
                         file = null;
                     }
                 }
-
+                
                 CurseMetadata ids;
                 if (rich) {
                     ids = CurseMetadataCache.get().getCurseMeta(override.getCurseProject(), override.getCurseFile());
@@ -614,20 +618,22 @@ public class Instance {
             }
         }
         
-        // TODO: Scan the mods folder for mods that have been manually disabled.
-        //       - This whole process needs to be re-thought out as doing it like this is ass.
-        
         for (Path path : FileUtils.listDir(modsDir)) {
             if (!Files.isRegularFile(path)) continue;
 
             String fName = path.getFileName().toString();
             if (!isMod(fName)) continue;
-
+            
             String fName2 = StringUtils.stripEnd(fName, ".disabled");
+            
             // Do we already know about the mod?
             if (ColUtils.anyMatch(mods, e -> e.fileName().equals(fName) || e.fileName().equals(fName2))) {
+                if (!fName2.equals(fName)) {
+                    System.out.println("Skipping known disabled mod: " + fName);
+                }
                 continue;
             }
+            
             LOGGER.info("Found unknown mod in Mods folder. {}", fName);
             // We don't know about the mod! We need to add it and create a Modification for it.
 
@@ -679,6 +685,10 @@ public class Instance {
         LOGGER.info("List built {} mods.", mods.size());
         return mods;
     }
+    
+    private static boolean isInModPath(String path) {
+        return path.startsWith("./mods") || path.startsWith("mods/");
+    }
 
     /**
      * Toggle a mod with the given fileId OR fileName.
@@ -714,7 +724,7 @@ public class Instance {
 
             boolean isEnabled = !fileName.endsWith(".disabled");
             ModOverrideState state = isEnabled ? ModOverrideState.ENABLED : ModOverrideState.DISABLED;
-            override = new ModOverride(state, fileName, fileId);
+            override = ModOverride.fromApi(state, file);
             modifications.getOverrides().add(override);
         }
 
