@@ -18,8 +18,12 @@ import dev.ftb.app.install.tasks.DownloadTask;
 import dev.ftb.app.instance.InstanceCategory;
 import dev.ftb.app.minecraft.modloader.forge.ForgeJarModLoader;
 import dev.ftb.app.storage.settings.Settings;
-import dev.ftb.app.util.*;
+import dev.ftb.app.util.CurseMetadataCache;
 import dev.ftb.app.util.CurseMetadataCache.FileMetadata;
+import dev.ftb.app.util.DialogUtil;
+import dev.ftb.app.util.FileUtils;
+import dev.ftb.app.util.HashingUtils;
+import dev.ftb.app.util.MiscUtils;
 import net.covers1624.quack.collection.ColUtils;
 import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.JsonUtils;
@@ -31,6 +35,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.BindException;
@@ -38,7 +43,12 @@ import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
@@ -144,11 +154,20 @@ public class Instance {
     }
     
     private void storeArtwork(ModpackManifest modpack, @Nullable String artPath) {
+        if (artPath != null && artPath.startsWith("data:") && artPath.contains(";base64,")) {
+            try {
+                updateArtworkFromBase64(artPath);
+            } catch (Exception ex) {
+                LOGGER.warn("Failed to update artwork from base64 string.", ex);
+            }
+            return;
+        }
+        
         // Don't try and resolve a path of a url.
         if (artPath != null && !artPath.startsWith("http://") && !artPath.startsWith("https://")) {
             try {
                 updateArtwork(Path.of(artPath));
-            } catch (IOException ex) {
+            } catch (Exception ex) {
                 downloadAndUpdateArt(modpack);
             }
             return;
@@ -186,6 +205,38 @@ public class Instance {
         } catch (IOException ex) {
             LOGGER.error("Failed to update artwork.", ex);
             throw ex;
+        }
+    }
+
+    /**
+     * Parses a base64 prefixed image string and updates the artwork with it.
+     * @param artPath The base64 string, prefixed with "base64:" and the extension, e.g. "data:image/png;base64,{base64data}"
+     */
+    private void updateArtworkFromBase64(String artPath) {
+        String withoutPrefix = artPath.substring("data:".length());
+        String imageTypeRaw = withoutPrefix.split(";")[0];
+        if (!imageTypeRaw.startsWith("image/")) {
+            LOGGER.error("Invalid base64 image type: {}", imageTypeRaw);
+            return;
+        }
+        
+        String extension = imageTypeRaw.substring("image/".length());
+        String[] base64DataRaw = withoutPrefix.split(",");
+        if (base64DataRaw.length != 2) {
+            LOGGER.error("Invalid base64 image data.");
+            return;
+        }
+        
+        String base64Data = base64DataRaw[1];
+        
+        // Decode the base64 data and update the artwork.
+        try {
+            byte[] imageBytes = Base64.getDecoder().decode(base64Data);
+            try (InputStream is = new ByteArrayInputStream(imageBytes)) {
+                updateArtwork(is, extension);
+            }
+        } catch (IllegalArgumentException | IOException ex) {
+            LOGGER.error("Failed to decode base64 image data.", ex);
         }
     }
     

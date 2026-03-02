@@ -15,6 +15,7 @@ export const appHome = logAndReturn(getAppHome(os.platform(), os.homedir(), path
 log.transports.file.resolvePathFn = () => path.join(appHome, 'logs', 'electron-main.log');
 log.initialize();
 
+let startInFullscreen = false;
 const __dirname = logAndReturn(path.dirname(fileURLToPath(import.meta.url)), "Resolved __dirname to: ");
 
 let openDebugTools = !!process.env.VITE_DEV_SERVER_URL;
@@ -23,6 +24,17 @@ for (let i = 0; i < process.argv.length; i++) {
     log.info("Debug tools flag found in args, opening dev tools");
     openDebugTools = true;
     break;
+  }
+  
+  if (process.argv[i] === '--fullscreen') {
+    startInFullscreen = true;
+  }
+}
+
+if (!startInFullscreen) {
+  // Apparently this being 1 flags as the steamdeck being in gamescope
+  if (process.env["SteamDeck"] && process.env["SteamDeck"] === "1") {
+    startInFullscreen = true;
   }
 }
 
@@ -227,13 +239,20 @@ async function createWindow() {
     width: 1545,
     height: 900,
     frame: false,
-    backgroundColor: '#2a2a2a'
+    backgroundColor: '#2a2a2a',
+    ...(startInFullscreen ? {
+      fullscreen: true,
+    } : {})
   })
   
   win.on("ready-to-show", () => {
     if (openDebugTools) {
       log.log("Opening dev tools on main window")
       win?.webContents.openDevTools();
+    }
+
+    if (startInFullscreen) {
+      win?.maximize()
     }
   })
 
