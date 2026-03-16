@@ -105,7 +105,7 @@ public class Constants {
     public static JdkInstallationManager getJdkManager() {
         if (JDK_INSTALL_MANAGER == null) {
             JDK_INSTALL_MANAGER = new JdkInstallationManager(
-                    AppMain.paths().binDir().resolve("runtime"),
+                    AppMain.paths().binDir().resolve("runtime").toAbsolutePath(),
                     new AdoptiumProvisioner(new OkHttpEngine() {
                         @Override
                         protected OkHttpClient getClient() {
