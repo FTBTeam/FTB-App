@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import UiSelect from "@/components/ui/select/UiSelect.vue";
 import {InputNumber, UiToggle} from "@/components/ui";
-import {computed} from "vue";
+import {computed, onMounted, ref} from "vue";
 import {UiSelectOption} from "@/components/ui/select/UiSelect.ts";
 import {computeAspectRatio} from "@/utils";
 import {useAppSettings} from "@/store/appSettingsStore.ts";
 import {faTv} from "@fortawesome/free-solid-svg-icons";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
-
-const appSettingsStore = useAppSettings();
+import platform from '@platform';
 
 export type ResolutionValue = {
   fullScreen: boolean;
@@ -18,9 +17,18 @@ export type ResolutionValue = {
 
 const model = defineModel<ResolutionValue>({default: {
   fullScreen: false,
-  width: 1920,
-  height: 1080
+  width: 1080,
+  height: 720
 }});
+
+const screenDimension = ref({
+  width: 1080,
+  height: 720
+})
+
+onMounted(() => {
+  platform.utils.getScreenSize().then(dim => screenDimension.value = dim);
+})
 
 const emit = defineEmits<{
   (e: 'update', value: ResolutionValue): void;
@@ -29,34 +37,29 @@ const emit = defineEmits<{
 function selectResolution(id: string) {
   if (id === null) return;
 
-  const selected = appSettingsStore.systemHardware?.supportedResolutions.find(e => `${e.width}|${e.height}` === id);
-  if (!selected) {
-    return;
-  }
+  const [ width, height ] = id.split('|');
 
-  model.value.width = selected.width;
-  model.value.height = selected.height;
+  model.value.width = parseInt(width);
+  model.value.height = parseInt(height);
 
   emit('update', model.value);
 }
 
+const commonResolutions = [
+  [854, 480], [1280, 720], [1366, 768], [1600, 900],
+  [1920, 1080], [2560, 1440], [3840, 2160]
+].reverse();
+
 const resolutionList = computed(() => {
   const resList: UiSelectOption<{aspect: string}>[] = [];
 
-  const resolutions = appSettingsStore.systemHardware?.supportedResolutions ?? [];
+  const {width, height} = screenDimension.value || { width: 1080, height: 720 };
+  
+  const filteredResolutions = commonResolutions
+    .filter(([w, h]) => w <= width && h <= height)
+    .map(([width, height]) => ({ width, height }));
 
-  resolutions.sort((a, b) => {
-    const { width: aWidth, height: aHeight } = a;
-    const { width: bWidth, height: bHeight } = b;
-
-    if (aWidth !== bWidth) {
-      return bWidth - aWidth;
-    }
-
-    return bHeight - aHeight;
-  });
-
-  for (const res of resolutions) {
+  for (const res of filteredResolutions) {
     resList.push({
       key: `${res.width}|${res.height}`,
       value: `${res.width} x ${res.height}`,

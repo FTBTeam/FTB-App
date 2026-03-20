@@ -14,6 +14,7 @@ export interface Util {
     randomUUID(): string;
   }
   openDevTools: () => void;
+  getScreenSize: () => Promise<{ width: number; height: number }>;
 }
 
 export interface Actions {

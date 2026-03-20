@@ -51,6 +51,9 @@ public class AppMain {
     public static boolean opened = false;
     public static Executor taskExecutor = Executors.newWorkStealingPool();
     
+    public static int screenWidth = 1080;
+    public static int screenHeight = 720;
+    
     private static final AppPaths APP_PATHS = new AppPaths();
 
     static {
@@ -93,6 +96,15 @@ public class AppMain {
         isDevMode = parsedArgs.containsKey("dev");
         Constants.IS_DEV_MODE = isDevMode;
 
+        if (parsedArgs.containsKey("screenWidth") && parsedArgs.containsKey("screenHeight")) {
+            try {
+                screenWidth = Integer.parseInt(parsedArgs.getOrDefault("screenWidth", "1080"));
+                screenHeight = Integer.parseInt(parsedArgs.getOrDefault("screenHeight", "720"));
+            } catch (Exception ex) {
+                LOGGER.error("Failed to parse screen dimensions, using defaults", ex);
+            }
+        }
+        
         logAppDetails(args);
 
         try {

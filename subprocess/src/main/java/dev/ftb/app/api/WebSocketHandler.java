@@ -58,7 +58,6 @@ public class WebSocketHandler {
         register("instanceConfigure", InstanceConfigureData.class, new InstanceConfigureHandler());
         register("instanceModToggle", InstanceModToggleData.class, new InstanceModToggleHandler());
         register("instanceOverrideModLoader", InstanceOverrideModLoaderData.class, new InstanceOverrideModLoaderHandler());
-        register("instanceBrowse", BrowseInstanceData.class, new BrowseInstanceHandler());
         register("getInstanceFolders", GetInstanceFoldersHandler.Request.class, new GetInstanceFoldersHandler());
         register("duplicateInstance", DuplicateInstanceHandler.Request.class, new DuplicateInstanceHandler());
         register("getSettings", SettingsInfoData.class, new SettingsInfoHandler());

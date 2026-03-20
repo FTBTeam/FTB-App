@@ -94,6 +94,25 @@ const setup = async () => {
       }
     }
   });
+
+  const screenSize = await new Promise(() => overwolf.utils.getMonitorsList((result) => {
+    if (!result.displays || result.displays.length === 0) {
+      resolve({ width: 1920, height: 1080 });
+    }
+
+    // Get the primary monitor
+    const primaryMonitor = result.displays.find((display) => display.is_primary);
+    const dpiX = primaryMonitor.dpiX || 96; // Default to 96 DPI if not available
+    const dpiY = primaryMonitor.dpiY || 96;
+    const scaleX = dpiX / 96;
+    const scaleY = dpiY / 96;
+    const width = Math.floor(primaryMonitor.width / scaleX);
+    const height = Math.floor(primaryMonitor.height / scaleY);
+    resolve({ width, height }); // If the DPI is normal, a 1080p monitor will return 1920x1080, if it's a 4k monitor with 200% scaling it will return 1920x1080 as well
+  })).catch(error => {
+    console.error("Failed to get monitor list, defaulting to 1920x1080", error);
+    return { width: 1920, height: 1080 };
+  });
   
   // Launch the backend
   const owDir = plugin.get().GetOverwolfDir();
@@ -102,7 +121,9 @@ const setup = async () => {
   const args = serializeToStringList([
     "--pid",
     pid,
-    "--overwolf"
+    "--overwolf",
+    "--screenWidth", screenSize.width,
+    "--screenHeight", screenSize.height,
   ])
   
   const jvmArgs = serializeToStringList(parseArgs(versionData.runtime.jvmArgs));

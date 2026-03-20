@@ -4,16 +4,10 @@ import { sendMessage } from '@/core/websockets/websocketsApi.ts';
 import { toggleBeforeAndAfter } from '@/utils/helpers/asyncHelpers.ts';
 import { constants } from '@/core/constants.ts';
 
-export interface Resolution {
-  width: number;
-  height: number;
-}
-
 export interface Hardware {
   totalMemory: number;
   totalCores: number;
   availableMemory: number;
-  supportedResolutions: Resolution[];
 }
 
 type AppState = {
@@ -53,8 +47,7 @@ export const useAppSettings = defineStore("appSettings", {
         this.systemHardware = {
           totalMemory: settings.totalMemory,
           totalCores: settings.totalCores,
-          availableMemory: settings.availableMemory,
-          supportedResolutions: settings.supportedResolutions
+          availableMemory: settings.availableMemory
         }
       }
     },

@@ -87,6 +87,11 @@ const Electron: ElectronOverwolfInterface = {
     openDevTools() {
       window.ipcRenderer.send('action/open-dev-tools');
     },
+    
+    async getScreenSize() {
+      const { width, height } = await window.ipcRenderer.invoke('getScreenSize');
+      return { width, height };
+    }
   },
 
   // Actions
@@ -227,7 +232,7 @@ const Electron: ElectronOverwolfInterface = {
             args: [
               ...jvmArgs,
               "-jar",
-              `${window.nodeUtils.path.resourcesPath}/${jarName}`,
+              `${window.nodeUtils.path.resourcesPath}/${jarName}`
             ],
             env: envVars
           });

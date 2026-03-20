@@ -10,7 +10,6 @@ import org.jetbrains.annotations.Nullable;
 import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
 
-import java.awt.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -131,23 +130,11 @@ public class SettingsData {
     }
     
     private static int getScreenWidth() {
-        if (System.getenv("CI") != null) return 1920; // CI doesn't have a screen size
-        try {
-            return (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth();
-        } catch (Exception e) {
-            // Fallback for environments where Toolkit is not available
-            return 1920; // Default width
-        }
+        return AppMain.screenWidth;
     }
     
     private static int getScreenHeight() {
-        if (System.getenv("CI") != null) return 1080; // CI doesn't have a screen size
-        try {
-            return (int) Toolkit.getDefaultToolkit().getScreenSize().getHeight();
-        } catch (Exception e) {
-            // Fallback for environments where Toolkit is not available
-            return 1080; // Default height
-        }
+        return AppMain.screenHeight;
     }
 
     public String spec() {

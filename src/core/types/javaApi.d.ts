@@ -313,8 +313,6 @@ export interface SettingsInfoDataReply extends SettingsInfoData {
     totalMemory: number;
     availableMemory: number;
     totalCores: number;
-    autoResolution: Dimension;
-    supportedResolutions: Dimension[];
 }
 
 export interface UploadLogsData extends BaseData {
@@ -644,11 +642,6 @@ export interface ModpackVersionManifest {
 }
 
 export interface Stage {
-}
-
-export interface Dimension {
-    width: number;
-    height: number;
 }
 
 export interface InstanceCategory {

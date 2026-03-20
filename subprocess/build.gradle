@@ -273,8 +273,7 @@ def standardTypescriptSettings = (GenerateTask task, File file) -> {
         "com.google.common.hash.HashCode",
         "com.google.gson.JsonElement",
         "com.google.gson.JsonArray",
-        "com.google.gson.JsonObject",
-        "java.awt.geom.Dimension2D"
+        "com.google.gson.JsonObject"
     ]
     task.customTypeMappings = [
         "java.nio.file.Path:string"

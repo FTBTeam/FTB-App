@@ -113,6 +113,23 @@ const Overwolf: ElectronOverwolfInterface = {
 
     openDevTools() {
       // No way to do this on overwolf atm
+    },
+    
+    async getScreenSize() {
+      return new Promise((resolve) => {
+        overwolf.utils.getMonitorsList((result: any) => {
+          if (!result.displays || result.displays.length === 0) {
+            resolve({ width: 1920, height: 1080 });
+          }
+          
+          // Get the primary monitor
+          const primaryMonitor = result.displays.find((display: any) => display.is_primary);
+          const pixelRatio = window.devicePixelRatio || 1;
+          const width = Math.floor(primaryMonitor.width / pixelRatio);
+          const height = Math.floor(primaryMonitor.height / pixelRatio);
+          resolve({ width, height }); // If the DPI is normal, a 1080p monitor will return 1920x1080, if it's a 4k monitor with 200% scaling it will return 1920x1080 as well
+        });
+      });
     }
   },
 
