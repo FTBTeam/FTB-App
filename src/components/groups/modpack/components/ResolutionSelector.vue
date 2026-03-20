@@ -4,7 +4,6 @@ import {InputNumber, UiToggle} from "@/components/ui";
 import {computed, onMounted, ref} from "vue";
 import {UiSelectOption} from "@/components/ui/select/UiSelect.ts";
 import {computeAspectRatio} from "@/utils";
-import {useAppSettings} from "@/store/appSettingsStore.ts";
 import {faTv} from "@fortawesome/free-solid-svg-icons";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 import platform from '@platform';
