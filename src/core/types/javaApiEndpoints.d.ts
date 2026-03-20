@@ -17,7 +17,6 @@ export type ApiEndpoints = 	"installedInstances" |
 	"pinInstance" |
 	"pong" |
 	"ping" |
-	"instanceBrowse" |
 	"moveInstances" |
 	"instanceRestoreBackup" |
 	"instanceInstallMod" |

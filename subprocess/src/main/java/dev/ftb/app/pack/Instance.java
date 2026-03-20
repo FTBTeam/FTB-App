@@ -499,14 +499,6 @@ public class Instance {
         return true;
     }
 
-    public boolean browse() {
-        return browse("");
-    }
-    
-    public boolean browse(String extraPath) {
-        return FileUtils.openFolder(path.resolve(extraPath));
-    }
-
     public void setModified(boolean state) {
         props.isModified = state;
     }

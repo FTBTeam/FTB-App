@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, shell } from 'electron';
+import {app, BrowserWindow, ipcMain, screen, shell} from 'electron';
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import { autoUpdater } from 'electron-updater';
@@ -464,6 +464,21 @@ ipcMain.handle("startSubprocess", async (_, args) => {
   if (process.argv.includes("ignore-pid-checks")) {
     argsList.push("--ignore-pid-checks")
   }
+
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width: workWidth, height: workHeight } = primaryDisplay.workAreaSize;
+  const scaleFactor = primaryDisplay.scaleFactor;
+
+  // If the scale factor is greater than 1, it means the display is using scaling (e.g. 125%, 150%, etc.)
+  // So if the display is 1080p with 100% scaling, the width and height will be 1920x1080, but if it's using 150% scaling, 
+  // the width and height will be 1280x720. To get the actual resolution, we need to multiply the width and height by the scale factor.
+  const width = Math.round(workWidth * scaleFactor);
+  const height = Math.round(workHeight * scaleFactor);
+
+  argsList.push(
+    "--screenWidth", "" + width,
+    "--screenHeight", "" + height
+  )
   
   // Inject java args before the -jar argument
   if (userDefinedJvmArgs.length > 0) {

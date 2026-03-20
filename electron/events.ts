@@ -1,4 +1,4 @@
-import { app, BrowserWindow, clipboard, dialog, ipcMain, shell } from 'electron';
+import { app, BrowserWindow, clipboard, dialog, ipcMain, shell, screen } from 'electron';
 import os from 'os';
 import { appHome, reloadMainWindow, updateApp } from './main';
 import fs from 'fs';
@@ -275,6 +275,20 @@ ipcMain.handle("ow/cpm/open-window", async (_, data) => {
     purposes: data ?? "purposes"
   });
 });
+
+ipcMain.handle("getScreenSize", async () => {
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width, height } = primaryDisplay.workAreaSize;
+  const scaleFactor = primaryDisplay.scaleFactor;
+
+  // If the scale factor is greater than 1, it means the display is using scaling (e.g. 125%, 150%, etc.)
+  // So if the display is 1080p with 100% scaling, the width and height will be 1920x1080, but if it's using 150% scaling, 
+  // the width and height will be 1280x720. To get the actual resolution, we need to multiply the width and height by the scale factor.
+  return {
+    width: Math.round(width * scaleFactor),
+    height: Math.round(height * scaleFactor)
+  };
+})
 
 // TODO: Moves these somewhere else plz
 
