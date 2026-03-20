@@ -19,7 +19,7 @@ apply plugin: com.hierynomus.gradle.license.LicenseReportingPlugin
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(25)
         vendor = JvmVendorSpec.ADOPTIUM
     }
 }
@@ -65,7 +65,7 @@ repositories {
 }
 
 dependencies {
-    def log4jVersion = '2.25.1'
+    def log4jVersion = '2.25.3'
     
     implementation "org.apache.logging.log4j:log4j-core:$log4jVersion"
     implementation "org.apache.logging.log4j:log4j-slf4j-impl:$log4jVersion"
@@ -78,7 +78,7 @@ dependencies {
     implementation 'org.nanohttpd:nanohttpd-websocket:2.3.1'
     implementation 'com.github.oshi:oshi-core:5.7.0'
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
-    implementation 'org.apache.commons:commons-compress:1.27.1'
+    implementation 'org.apache.commons:commons-compress:1.28.0'
     implementation 'commons-io:commons-io:2.19.0'
     implementation('org.apache.maven:maven-artifact:3.8.4') {
         exclude group: 'org.codehaus.plexus' // Not needed for this application.
@@ -91,10 +91,6 @@ dependencies {
     
     compileOnly 'org.jetbrains:annotations:22.0.0'
     compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
-
-//    if (file('debugger').exists()) {
-//        runtimeOnly project(":debugger")
-//    }
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -228,7 +224,7 @@ tasks.named('build').configure {
 }
 
 wrapper {
-    gradleVersion = "8.7"
+    gradleVersion = "8.14.4"
 }
 
 idea.project.settings {
