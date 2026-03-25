@@ -61,7 +61,7 @@ public enum MinecraftVersions {
     @Nullable
     public MinecraftVersion parse(String version) {
         // Non-special versions are the simplest to parse
-        if (version.startsWith("1.")) {
+        if (version.startsWith("1.") || version.matches("^\\d{2}\\..*")) {
             // This should be super simple to find.
             var parts = version.split("\\.");
 
