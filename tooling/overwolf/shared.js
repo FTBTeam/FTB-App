@@ -52,4 +52,4 @@ export async function installJre(javaVersion, javaPath) {
   fs.rmSync(filePath)
 }
 
-export const javaVersion = "jdk-25.0.2+10-jre"
+export const javaVersion = "25.0.2+10-jre"
