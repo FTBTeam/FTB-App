@@ -36,7 +36,6 @@ jobs:
           java-version: 25
       - name: Build subprocess
         env:
-          SUBPROCESS_SENTRY_DSN: ${{ secrets.SUBPROCESS_SENTRY_DSN }}
           GITHUB_BRANCH: "test"
           CI: true
         run: |
