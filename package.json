@@ -57,7 +57,7 @@
     "@fortawesome/free-solid-svg-icons": "^6.1.1",
     "@fortawesome/vue-fontawesome": "^3.0.8",
     "@overwolf/ow-cli": "0.1.2",
-    "@overwolf/ow-electron": "^39.6.0",
+    "@overwolf/ow-electron": "^39.6.1",
     "@overwolf/ow-electron-builder": "^26.0.12",
     "@overwolf/types": "^3.50.1",
     "@storybook/addon-essentials": "^8.6.12",
