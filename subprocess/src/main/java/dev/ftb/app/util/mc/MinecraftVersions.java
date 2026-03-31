@@ -81,14 +81,14 @@ public enum MinecraftVersions {
 
         // We're likely a snapshot, if we're a snapshot, we'll find the closest version to the snapshot.
         if (version.contains("w")) {
-            return findClosesVersionFromSnapshot(version);
+            return findClosestVersionFromSnapshot(version);
         }
 
         // We have no idea what this is.
         return null;
     }
 
-    private MinecraftVersion findClosesVersionFromSnapshot(String snapshot) {
+    private MinecraftVersion findClosestVersionFromSnapshot(String snapshot) {
         if (!snapshot.contains("w")) {
             throw new IllegalArgumentException("Invalid snapshot version: " + snapshot);
         }
