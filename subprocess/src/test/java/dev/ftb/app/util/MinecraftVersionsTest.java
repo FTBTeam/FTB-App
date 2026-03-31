@@ -16,16 +16,17 @@ public class MinecraftVersionsTest {
     @Test
     void parsesValidVersionToAvailableVersion() {
         List<String> tests = List.of(
-           "1.0.0",
-           "1.12.2",
-           "1.16.5",
-           "1.17.1", 
-           "1.21.1"
+            "1.0.0",
+            "1.12.2",
+            "1.16.5",
+            "1.17.1", 
+            "1.21.1", 
+            "26.1"
         );
         
         for (String test : tests) {
             MinecraftVersion version = MinecraftVersions.INSTANCE.parse(test);
-            assertNotNull(version);
+            assertNotNull(version, "Failed to parse version: " + test);
         }
         
         // Now test all of it's own known values
@@ -46,7 +47,8 @@ public class MinecraftVersionsTest {
             "24w44a", MinecraftVersionPresets.MC1_21_4,
             "24w40a", MinecraftVersionPresets.MC1_21_2,
             "16w39b", MinecraftVersionPresets.MC1_11_0,
-            "24w14potato", MinecraftVersionPresets.MC1_20_5
+            "24w14potato", MinecraftVersionPresets.MC1_20_5,
+            "26.1-snapshot-1", MinecraftVersionPresets.MC26_1_0
         );
         
         for (Map.Entry<String, MinecraftVersionPresets> test : tests.entrySet()) {
@@ -61,7 +63,9 @@ public class MinecraftVersionsTest {
         Map<String, MinecraftVersionPresets> tests = Map.of(
             "1.16.5-rc1", MinecraftVersionPresets.MC1_16_5,
             "1.17.1-pre2", MinecraftVersionPresets.MC1_17_1,
-            "1.21.1-rc6", MinecraftVersionPresets.MC1_21_1
+            "1.21.1-rc6", MinecraftVersionPresets.MC1_21_1,
+            "26.1-pre-1", MinecraftVersionPresets.MC26_1_0,
+            "26.1-rc-1", MinecraftVersionPresets.MC26_1_0
         );
         
         for (Map.Entry<String, MinecraftVersionPresets> test : tests.entrySet()) {
