@@ -8,7 +8,6 @@ import dev.ftb.app.install.tasks.TaskProgressListener;
 import dev.ftb.app.minecraft.jsons.VersionManifest;
 import dev.ftb.app.pack.CancellationToken;
 import dev.ftb.app.pack.Instance;
-import net.covers1624.quack.collection.ColUtils;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.util.HashUtils;
@@ -111,7 +110,9 @@ public class ForgeV1InstallTask extends AbstractForgeInstallTask {
     private void stripMeta(Path input, Path output) throws IOException {
         try (ZipFile zIn = new ZipFile(input.toFile());
              ZipOutputStream zOut = new ZipOutputStream(Files.newOutputStream(output))) {
-            for (ZipEntry entry : ColUtils.iterable(zIn.entries())) {
+            var iterator = zIn.entries().asIterator();
+            while (iterator.hasNext()) {
+                ZipEntry entry = iterator.next();
                 if (entry.getName().startsWith("META-INF")) continue;
                 if (entry.isDirectory()) {
                     zOut.putNextEntry(entry);

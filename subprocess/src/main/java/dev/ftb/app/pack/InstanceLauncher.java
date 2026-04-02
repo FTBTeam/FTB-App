@@ -52,7 +52,6 @@ import java.util.zip.ZipFile;
 
 import static dev.ftb.app.minecraft.jsons.VersionManifest.LEGACY_ASSETS_VERSION;
 import static dev.ftb.app.util.Log4jMarkers.MINECRAFT;
-import static net.covers1624.quack.collection.ColUtils.iterable;
 import static net.covers1624.quack.util.SneakyUtils.sneak;
 
 /**
@@ -672,7 +671,9 @@ public class InstanceLauncher {
             LOGGER.info(" Extracting from '{}'.", nativesJar);
             // TODO: move to NIO File system for zip?
             try (ZipFile zipFile = new ZipFile(nativesJar.toFile())) {
-                for (ZipEntry entry : iterable(zipFile.entries())) {
+                var iterator = zipFile.entries().asIterator();
+                while (iterator.hasNext()) {
+                    ZipEntry entry = iterator.next();
                     if (entry.isDirectory()) continue;
                     if (library.extract != null && !library.extract.shouldExtract(entry.getName())) continue;
                     Path dest = nativesDir.resolve(entry.getName());

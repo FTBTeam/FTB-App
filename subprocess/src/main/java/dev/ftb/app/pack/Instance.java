@@ -24,8 +24,6 @@ import dev.ftb.app.util.DialogUtil;
 import dev.ftb.app.util.FileUtils;
 import dev.ftb.app.util.HashingUtils;
 import dev.ftb.app.util.MiscUtils;
-import net.covers1624.quack.collection.ColUtils;
-import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.platform.OperatingSystem;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -670,7 +668,7 @@ public class Instance {
             String fName2 = StringUtils.stripEnd(fName, ".disabled");
             
             // Do we already know about the mod?
-            if (ColUtils.anyMatch(mods, e -> e.fileName().equals(fName) || e.fileName().equals(fName2))) {
+            if (mods.stream().anyMatch(e -> e.fileName().equals(fName) || e.fileName().equals(fName2))) {
                 if (!fName2.equals(fName)) {
                     System.out.println("Skipping known disabled mod: " + fName);
                 }
@@ -760,9 +758,10 @@ public class Instance {
         if (override == null) {
             // Could indicate a bug with listing instance mods. But, likely just broken call.
             if (fileId == -1) throw new IllegalArgumentException("Did not find an existing ModOverride for the given name. File ID required.");
-            ModpackVersionManifest.ModpackFile file = FastStream.of(versionManifest.getFiles())
+            ModpackVersionManifest.ModpackFile file = versionManifest.getFiles().stream()
                     .filter(e -> e.getId() == fileId)
-                    .firstOrDefault();
+                    .findFirst()
+                    .orElse(null);
             if (file == null) throw new IllegalArgumentException("Did not find any files with the given fileId.");
 
             boolean isEnabled = !fileName.endsWith(".disabled");

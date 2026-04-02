@@ -15,7 +15,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import static net.covers1624.quack.collection.ColUtils.onlyOrDefault;
+import static dev.ftb.app.util.StreamUtils.onlyOrDefault;
 
 /**
  * Minecraft 'Versions List' manifest.

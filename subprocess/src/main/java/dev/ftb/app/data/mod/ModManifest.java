@@ -8,7 +8,6 @@ import dev.ftb.app.Constants;
 import dev.ftb.app.install.FileValidation;
 import dev.ftb.app.install.ModCollector;
 import dev.ftb.app.util.ModpackApiUtils;
-import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.net.DownloadAction;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
@@ -71,9 +70,10 @@ public class ModManifest {
     }
 
     public @Nullable Version findVersion(long versionId) {
-        return FastStream.of(versions)
+        return versions.stream()
                 .filter(e -> e.id == versionId)
-                .firstOrDefault();
+                .findFirst()
+                .orElse(null);
     }
 
     public void visitVersion(ModCollector collector, Version version) {
@@ -237,9 +237,10 @@ public class ModManifest {
         }
 
         public @Nullable Target getTarget(String target) {
-            return FastStream.of(targets)
+            return targets.stream()
                     .filter(e -> Objects.equals(e.type, target))
-                    .firstOrDefault();
+                    .findFirst()
+                    .orElse(null);
         }
         
         public List<Target> getTargetsByType(String type) {

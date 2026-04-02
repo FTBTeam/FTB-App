@@ -5,7 +5,6 @@ import com.google.gson.JsonParseException;
 import dev.ftb.app.data.modpack.ModpackVersionManifest;
 import dev.ftb.app.pack.Instance;
 import dev.ftb.app.util.HashingUtils;
-import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.JsonUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,15 +61,17 @@ public class InstanceModifications {
     // @formatter:on
 
     public @Nullable ModOverride findOverride(long id) {
-        return FastStream.of(overrides)
+        return overrides.stream()
                 .filter(e -> e.getId() == id)
-                .firstOrDefault();
+                .findFirst()
+                .orElse(null);
     }
 
     public @Nullable ModOverride findOverride(String fileName) {
-        return FastStream.of(overrides)
+        return overrides.stream()
                 .filter(e -> e.getFileName().equals(fileName))
-                .firstOrDefault();
+                .findFirst()
+                .orElse(null);
     }
 
     public static class ModOverride {

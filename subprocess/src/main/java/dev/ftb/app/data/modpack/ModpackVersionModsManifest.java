@@ -5,7 +5,6 @@ import com.google.gson.JsonParseException;
 import dev.ftb.app.Constants;
 import dev.ftb.app.util.CurseMetadataCache;
 import dev.ftb.app.util.ModpackApiUtils;
-import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.net.DownloadAction;
@@ -61,9 +60,10 @@ public class ModpackVersionModsManifest {
     }
 
     public @Nullable Mod getMod(long fileId) {
-        return FastStream.of(mods)
+        return mods.stream()
                 .filter(e -> e.fileId == fileId)
-                .firstOrDefault();
+                .findFirst()
+                .orElse(null);
     }
 
     public static class Mod {

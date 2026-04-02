@@ -6,7 +6,6 @@ import com.google.gson.JsonParseException;
 import com.google.gson.annotations.JsonAdapter;
 import dev.ftb.app.Constants;
 import dev.ftb.app.util.ModpackApiUtils;
-import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.HashCodeAdapter;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.net.DownloadAction;
@@ -78,9 +77,10 @@ public class ModpackManifest {
 
     @Nullable
     public Art getFirstArt(String type) {
-        return FastStream.of(art)
+        return art.stream()
                 .filter(e -> e.getType().equals(type))
-                .firstOrDefault();
+                .findFirst()
+                .orElse(null);
     }
 
     // @formatter:off

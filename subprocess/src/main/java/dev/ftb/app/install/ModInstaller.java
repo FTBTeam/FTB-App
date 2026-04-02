@@ -10,11 +10,12 @@ import dev.ftb.app.data.mod.ModInfo;
 import dev.ftb.app.data.mod.ModManifest;
 import dev.ftb.app.install.tasks.*;
 import dev.ftb.app.pack.Instance;
-import net.covers1624.quack.collection.FastStream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import static dev.ftb.app.util.StreamUtils.onlyOrDefault;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -139,9 +140,8 @@ public class ModInstaller implements ModCollector {
             for (Pair<ModManifest, ModManifest.Version> toInstall : toInstall) {
                 ModManifest mod = toInstall.getKey();
                 ModManifest.Version version = toInstall.getValue();
-                ModInfo selfExisting = FastStream.of(existingMods)
-                        .filter(e -> e.curse() != null && e.curse().curseProject() == modId)
-                        .onlyOrDefault();
+                ModInfo selfExisting = onlyOrDefault(existingMods.stream()
+                        .filter(e -> e.curse() != null && e.curse().curseProject() == modId), null);
                 String suffix = selfExisting != null && !selfExisting.enabled() ? ".disabled" : "";
                 DownloadTask task = DownloadTask.builder()
                         .url(version.getUrl())
@@ -175,9 +175,10 @@ public class ModInstaller implements ModCollector {
                 }
 
                 if (selfExisting != null) {
-                    ModOverride existingOverride = FastStream.of(overrides)
+                    ModOverride existingOverride = overrides.stream()
                             .filter(e -> e.getCurseProject() == modId && e.getId() == selfExisting.fileId())
-                            .firstOrDefault();
+                            .findFirst()
+                            .orElse(null);
                     if (existingOverride != null) {
                         oldOverrides.add(existingOverride);
                         ModOverrideState state = existingOverride.getState();
