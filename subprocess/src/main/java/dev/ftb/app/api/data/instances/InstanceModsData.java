@@ -4,7 +4,7 @@ import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.data.mod.CurseMetadata;
 import dev.ftb.app.data.mod.ModInfo;
 import org.apache.commons.lang3.tuple.Pair;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.File;
 import java.util.List;

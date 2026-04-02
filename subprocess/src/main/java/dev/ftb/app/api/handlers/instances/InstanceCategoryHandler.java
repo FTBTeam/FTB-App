@@ -5,8 +5,7 @@ import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.api.handlers.IMessageHandler;
 import dev.ftb.app.instance.InstanceCategory;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.LinkedList;
 import java.util.UUID;
@@ -81,12 +80,12 @@ public class InstanceCategoryHandler implements IMessageHandler<InstanceCategory
             this.category = null; // Default to null, set if applicable
         }
         
-        public Reply(Data data, boolean success, String message, @NotNull InstanceCategory category) {
+        public Reply(Data data, boolean success, String message, InstanceCategory category) {
             this(data, success, message);
             this.category = category;
         }
         
-        public Reply(Data data, boolean success, String message, @NotNull LinkedList<InstanceCategory> categories) {
+        public Reply(Data data, boolean success, String message, LinkedList<InstanceCategory> categories) {
             this(data, success, message);
             this.categories = categories;
         }

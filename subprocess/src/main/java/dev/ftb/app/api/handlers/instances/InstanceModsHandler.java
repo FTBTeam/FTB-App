@@ -17,7 +17,7 @@ import dev.ftb.app.util.ModVersionCache;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -54,7 +54,7 @@ public class InstanceModsHandler implements IMessageHandler<InstanceModsData> {
     }
 
     // TODO: Move this back over to the CurseMetadataCache
-    private static CompletableFuture<Void> pollMods(InstanceModsData data, Instance instance, List<ModInfo> mods, @Nullable ModpackVersionManifest.Target modLoader, @Nullable String mcVersion) {
+    private static CompletableFuture<Void> pollMods(InstanceModsData data, Instance instance, List<ModInfo> mods, ModpackVersionManifest.@Nullable Target modLoader, @Nullable String mcVersion) {
         return CompletableFuture.completedFuture(mods)
                 .thenApplyAsync(modsList -> {
                     var modsManifest = instance.getModsManifest();

@@ -10,7 +10,7 @@ import dev.ftb.app.api.data.PrivateBaseData;
 import dev.ftb.app.api.handlers.IMessageHandler;
 import dev.ftb.app.util.MiscUtils;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public class AuthenticateMsProfileHandler implements IMessageHandler<AuthenticateMsProfileHandler.Data> {
     @Override

@@ -6,7 +6,7 @@ import dev.ftb.app.data.modpack.ModpackVersionManifest;
 import dev.ftb.app.pack.Instance;
 import dev.ftb.app.util.HashingUtils;
 import net.covers1624.quack.gson.JsonUtils;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -19,7 +19,7 @@ public class InstanceModifications {
 
     public static final Gson GSON = new Gson();
 
-    private @Nullable ModpackVersionManifest.Target modLoaderOverride;
+    private ModpackVersionManifest.@Nullable Target modLoaderOverride;
 
     private final List<ModOverride> overrides = new LinkedList<>();
     private boolean requiresMurmurFix = true;
@@ -55,9 +55,9 @@ public class InstanceModifications {
     }
 
     // @formatter:off
-    public @Nullable ModpackVersionManifest.Target getModLoaderOverride() { return modLoaderOverride; }
+    public ModpackVersionManifest.@Nullable Target getModLoaderOverride() { return modLoaderOverride; }
     public List<ModOverride> getOverrides() { return overrides; }
-    public void setModLoaderOverride(@Nullable ModpackVersionManifest.Target modLoaderOverride) { this.modLoaderOverride = modLoaderOverride; }
+    public void setModLoaderOverride(ModpackVersionManifest.@Nullable Target modLoaderOverride) { this.modLoaderOverride = modLoaderOverride; }
     // @formatter:on
 
     public @Nullable ModOverride findOverride(long id) {

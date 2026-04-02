@@ -6,7 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.annotations.JsonAdapter;
 import dev.ftb.app.AppMain;
 import net.covers1624.quack.gson.PathTypeAdapter;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
 

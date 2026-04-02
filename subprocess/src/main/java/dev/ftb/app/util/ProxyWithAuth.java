@@ -1,6 +1,6 @@
 package dev.ftb.app.util;
 
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.net.InetSocketAddress;
 import java.net.PasswordAuthentication;

@@ -9,7 +9,7 @@ import dev.ftb.app.data.modpack.ModpackVersionManifest;
 import dev.ftb.app.storage.settings.Settings;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.gson.PathTypeAdapter;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

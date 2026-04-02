@@ -22,9 +22,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Range;
+import org.jspecify.annotations.Nullable;
 
 import javax.net.ssl.SSLException;
 import java.io.IOException;
@@ -559,7 +557,7 @@ public class DownloadTask implements Task {
          * @param expectedSize The expected size. <code>-1</code> to disable.
          * @return The new {@link DownloadValidation}.
          */
-        public DownloadValidation withExpectedSize(@Range (from = -1, to = Long.MAX_VALUE) long expectedSize) {
+        public DownloadValidation withExpectedSize(long expectedSize) {
             return new DownloadValidation(expectedSize, expectedHashes, useETag, useOnlyIfModified);
         }
 
@@ -679,13 +677,13 @@ public class DownloadTask implements Task {
         private final TaskProgressListener listener;
         private long totalLen;
 
-        public ProgressSource(@NotNull Source delegate, TaskProgressListener listener) {
+        public ProgressSource(Source delegate, TaskProgressListener listener) {
             super(delegate);
             this.listener = listener;
         }
 
         @Override
-        public long read(@NotNull Buffer sink, long byteCount) throws IOException {
+        public long read(Buffer sink, long byteCount) throws IOException {
             long len = super.read(sink, byteCount);
             if (len == -1) {
                 listener.finish(totalLen);

@@ -11,11 +11,10 @@ import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import dev.ftb.app.AppMain;
 import dev.ftb.app.data.mod.ModManifest;
-import net.covers1624.quack.annotation.NonNullApi;
 import net.covers1624.quack.gson.JsonUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -30,7 +29,6 @@ import java.util.concurrent.*;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
 
-@NonNullApi
 public class ModVersionCache {
 
     private static final Gson GSON = new Gson();

@@ -7,7 +7,7 @@ import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.api.data.PrivateBaseData;
 import dev.ftb.app.api.handlers.IMessageHandler;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -24,8 +24,7 @@ public class GetProfilesHandler implements IMessageHandler<BaseData> {
     private static class Reply extends PrivateBaseData {
         Set<MicrosoftProfile.SharableData> profiles;
 
-        @Nullable
-        MicrosoftProfile.SharableData activeProfile;
+        MicrosoftProfile.@Nullable SharableData activeProfile;
 
         public Reply(BaseData data, Set<MicrosoftProfile.SharableData> profiles, @Nullable MicrosoftProfile profile) {
             this.requestId = data.requestId;

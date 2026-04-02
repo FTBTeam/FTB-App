@@ -7,7 +7,7 @@ import dev.ftb.app.install.FileValidation;
 import dev.ftb.app.install.tasks.DownloadTask;
 import dev.ftb.app.pack.Instance;
 import org.apache.commons.compress.archivers.zip.ZipFile;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;

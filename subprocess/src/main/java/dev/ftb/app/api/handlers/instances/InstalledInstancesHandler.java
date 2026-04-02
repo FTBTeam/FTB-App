@@ -9,7 +9,7 @@ import dev.ftb.app.data.InstanceJson;
 import dev.ftb.app.instance.InstanceCategory;
 import dev.ftb.app.pack.Instance;
 import net.covers1624.quack.gson.PathTypeAdapter;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;

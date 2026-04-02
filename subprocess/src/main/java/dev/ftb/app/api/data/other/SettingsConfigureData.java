@@ -2,7 +2,7 @@ package dev.ftb.app.api.data.other;
 
 import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.storage.settings.SettingsData;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public class SettingsConfigureData extends BaseData {
     public SettingsData settings;

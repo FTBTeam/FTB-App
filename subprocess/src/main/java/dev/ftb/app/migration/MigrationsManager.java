@@ -6,7 +6,7 @@ import dev.ftb.app.migration.migrations.MigrateJVMDefaultsToInstances;
 import dev.ftb.app.migration.migrations.MigrateJVMDefaultsToSettingsDefaults;
 import dev.ftb.app.migration.migrations.MigrateRemoveLegacyInjectedMods;
 import dev.ftb.app.util.GsonUtils;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

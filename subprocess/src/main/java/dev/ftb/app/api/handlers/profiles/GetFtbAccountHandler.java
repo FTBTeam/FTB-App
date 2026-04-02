@@ -6,7 +6,7 @@ import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.api.data.PrivateBaseData;
 import dev.ftb.app.api.handlers.IMessageHandler;
 import dev.ftb.app.storage.CredentialStorage;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public class GetFtbAccountHandler implements IMessageHandler<BaseData> {
     @Override
@@ -30,10 +30,9 @@ public class GetFtbAccountHandler implements IMessageHandler<BaseData> {
     
     public static class Reply extends PrivateBaseData {
         public boolean success;
-        @Nullable
-        public StoreFtbAccountHandler.CompleteTokenData authData;
+        public StoreFtbAccountHandler.@Nullable CompleteTokenData authData;
         
-        public Reply(BaseData data, @Nullable  StoreFtbAccountHandler.CompleteTokenData authData) {
+        public Reply(BaseData data, StoreFtbAccountHandler.@Nullable CompleteTokenData authData) {
             this.type = data.type + "Reply";
             this.requestId = data.requestId;
             this.success = authData != null;

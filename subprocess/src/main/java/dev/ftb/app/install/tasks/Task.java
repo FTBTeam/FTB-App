@@ -2,7 +2,7 @@ package dev.ftb.app.install.tasks;
 
 import dev.ftb.app.pack.CancellationToken;
 import dev.ftb.app.storage.settings.Settings;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
