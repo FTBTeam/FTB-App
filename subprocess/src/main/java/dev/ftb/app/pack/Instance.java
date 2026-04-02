@@ -863,8 +863,6 @@ public class Instance {
             return "forge";
         } else if (modloader.contains("fabric")) {
             return "fabric";
-        } else if (modloader.contains("quilt")) {
-            return "quilt";
         } else {
             return null;
         }

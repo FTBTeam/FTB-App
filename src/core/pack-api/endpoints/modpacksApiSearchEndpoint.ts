@@ -18,7 +18,7 @@ export class ModpacksApiSearchEndpoint extends ApiEndpoint {
     }
   }
   
-  async modSearch(query: string, mcVersion: string, loader: "forge" | "fabric" | "quilt" | "neoforge" | "all", limit = 50) {
+  async modSearch(query: string, mcVersion: string, loader: "forge" | "fabric" | "neoforge" | "all", limit = 50) {
     return this.fetchPublic<StatusResult<{mods: number[], total: number}>>("GET", `mod/search/${mcVersion}/${loader}/${limit}?term=${query}`);
   }
   

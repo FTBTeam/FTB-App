@@ -32,7 +32,6 @@ const instanceMoveModalComplete = ref(false);
 const instanceMoveLocations = ref({old: "", new: ""});
 
 const osType = ref<string | null>(null);
-const includeInstanceLogs = ref(false);
 
 const refreshing = ref(false);
 
@@ -76,9 +75,7 @@ async function uploadLogData() {
   uploadingLogs.value = true;
 
   try {
-    const result = await sendMessage("uploadLogs", {
-      includeInstanceLogs: includeInstanceLogs.value
-    })
+    const result = await sendMessage("uploadLogs", {})
 
     if (result.path) {
       await appPlatform.io.openFinder(result.path)
@@ -263,10 +260,7 @@ async function purge(type: PurgeTarget) {
           provide these logs to our App team to investigate.
         </p>
       </div>
-
-      <ui-toggle v-model="includeInstanceLogs" label="Include instance logs"
-                 desc="When enabled, any logs from your Modpacks / instances will also be included in the export."
-                 class="mt-4"/>
+      
       <ui-button type="info" :working="uploadingLogs" class="mt-6" @click="uploadLogData" :icon="faFileZipper">Export
         logs
       </ui-button>

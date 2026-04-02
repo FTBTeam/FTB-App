@@ -70,7 +70,6 @@ public class LogZipper {
     private final LazyValue<List<String>> ipAddresses = new LazyValue<>(this::getUserIpAddresses);
 
     private final long startTime;
-    private boolean includeInstances = false;
 
     private LogZipper() {
         this.startTime = System.currentTimeMillis();
@@ -78,11 +77,6 @@ public class LogZipper {
 
     public static LogZipper create() {
         return new LogZipper();
-    }
-
-    public LogZipper includeInstances(boolean includeInstances) {
-        this.includeInstances = includeInstances;
-        return this;
     }
     
     public Path generate() {
@@ -208,11 +202,7 @@ public class LogZipper {
         }
     }
 
-    private void includeInstanceLogs(ZipOutputStream writer) throws IOException {
-        if (!includeInstances) {
-            return;
-        }
-        
+    private void includeInstanceLogs(ZipOutputStream writer) throws IOException {        
         var instances = Instances.allInstances();
         if (instances.isEmpty()) {
             return;

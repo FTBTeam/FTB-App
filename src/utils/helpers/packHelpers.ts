@@ -63,7 +63,6 @@ const knownModloaders = [
   "vanilla",
   "neoforge",
   "fabric",
-  "quilt",
   "forge",
 ]
 
@@ -201,9 +200,8 @@ export function packUpdateAvailable(instance?: InstanceJson | SugaredInstanceJso
 export function compatibleCrossLoaderPlatforms(mcVersion: string, loader: string) {
   let innerLoader = loader.toLowerCase();
   
-  // fabric and quilt are forever compatible (so far)
   if (innerLoader === "fabric") {
-    return ["fabric", "quilt"];
+    return ["fabric"];
   }
   
   // Forge and NeoForge are compatible with each other during this version range

@@ -47,7 +47,6 @@ public abstract class ModLoaderInstallTask implements Task {
             case "neoforge" -> AbstractForgeInstallTask.createNeoForgeInstallTask(instance, mcVersion, mlVersion);
             case "forge" -> AbstractForgeInstallTask.createInstallTask(instance, mcVersion, mlVersion);
             case "fabric" -> FabricInstallTask.fabric(mcVersion, mlVersion);
-            case "quilt" -> FabricInstallTask.quilt(mcVersion, mlVersion);
             default -> throw new IllegalArgumentException("Unknown ModLoader name: " + mlName);
         };
     }
