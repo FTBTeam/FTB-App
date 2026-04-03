@@ -680,7 +680,6 @@ export interface InstanceSettings {
     updateChannel: string;
     preventMetaModInjection: boolean;
     preventMetaAgentInjection: boolean;
-    javaArgs: string;
     shellArgs: string;
     programArgs: string;
 }

@@ -14,8 +14,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static dev.ftb.app.Constants.MOJANG_DEFAULT_ARGS;
-
 /**
  * Damn settings need to be mutated so this can't be a record :cry:
  */
@@ -104,7 +102,6 @@ public class SettingsData {
                 "release",
                 false,
                 false,
-                String.join(" ", MOJANG_DEFAULT_ARGS), 
                 "",
                 ""
             ),
@@ -212,11 +209,10 @@ public class SettingsData {
         private String updateChannel;
         private boolean preventMetaModInjection;
         private boolean preventMetaAgentInjection;
-        private String javaArgs;
         private String shellArgs;
         private String programArgs;
 
-        public InstanceSettings(int width, int height, int memory, boolean fullscreen, String updateChannel, boolean preventMetaModInjection, boolean preventMetaAgentInjection, String javaArgs, String shellArgs, String programArgs) {
+        public InstanceSettings(int width, int height, int memory, boolean fullscreen, String updateChannel, boolean preventMetaModInjection, boolean preventMetaAgentInjection, String shellArgs, String programArgs) {
             this.width = width;
             this.height = height;
             this.memory = memory;
@@ -224,7 +220,6 @@ public class SettingsData {
             this.updateChannel = updateChannel;
             this.preventMetaModInjection = preventMetaModInjection;
             this.preventMetaAgentInjection = preventMetaAgentInjection;
-            this.javaArgs = javaArgs;
             this.shellArgs = shellArgs;
             this.programArgs = programArgs;
         }
@@ -257,10 +252,6 @@ public class SettingsData {
             return preventMetaModInjection;
         }
 
-        public String javaArgs() {
-            return javaArgs;
-        }
-
         public String shellArgs() {
             return shellArgs;
         }
@@ -284,11 +275,7 @@ public class SettingsData {
         public void setUpdateChannel(String updateChannel) {
             this.updateChannel = updateChannel;
         }
-
-        public void setJavaArgs(String javaArgs) {
-            this.javaArgs = javaArgs;
-        }
-
+        
         public void setShellArgs(String shellArgs) {
             this.shellArgs = shellArgs;
         }

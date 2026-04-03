@@ -3,6 +3,7 @@ package dev.ftb.app.pack;
 import com.google.gson.JsonParseException;
 import dev.ftb.app.Analytics;
 import dev.ftb.app.AppMain;
+import dev.ftb.app.Constants;
 import dev.ftb.app.Instances;
 import dev.ftb.app.data.InstanceJson;
 import dev.ftb.app.data.InstanceModifications;
@@ -85,7 +86,9 @@ public class Instance {
 
     // Brand-new instance.
     public Instance(@Nullable String name, @Nullable String artPath, @Nullable UUID categoryId, ModpackManifest modpack, ModpackVersionManifest versionManifest, String mcVersion, boolean isPrivate, byte packType) {
-        props = new InstanceJson(modpack, versionManifest, mcVersion, isPrivate, packType);
+        String[] jvmArgs = Constants.jvmArsFromMcVersion(mcVersion); 
+        
+        props = new InstanceJson(modpack, versionManifest, mcVersion, isPrivate, packType, jvmArgs);
         if (name != null) {
             props.name = name;
         }

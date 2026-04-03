@@ -40,7 +40,8 @@ public class MigrateJVMDefaultsToInstances implements Migration {
                 continue; // Skip instances that have already been modified
             }
             
-            instance.props.jvmArgs = String.join(" ", Constants.MOJANG_DEFAULT_ARGS);
+            String[] args = Constants.jvmArsFromMcVersion(instance.props.mcVersion);
+            instance.props.jvmArgs = String.join(" ", args);
             try {
                 instance.saveJson();
                 LOGGER.info("\tMigrated instance {}({}) to use default JVM args", instance.getName(), instance.getUuid());

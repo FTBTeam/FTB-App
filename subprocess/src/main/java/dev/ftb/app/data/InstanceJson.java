@@ -7,6 +7,7 @@ import com.google.gson.annotations.JsonAdapter;
 import dev.ftb.app.data.modpack.ModpackManifest;
 import dev.ftb.app.data.modpack.ModpackVersionManifest;
 import dev.ftb.app.storage.settings.Settings;
+import joptsimple.internal.Strings;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.gson.PathTypeAdapter;
 import org.jspecify.annotations.Nullable;
@@ -34,7 +35,7 @@ public class InstanceJson {
     public int recMemory = 4096;
     public int memory = Settings.getSettings().instanceDefaults().memory();
 
-    public String jvmArgs = Settings.getSettings().instanceDefaults().javaArgs();
+    public String jvmArgs = "";
     public String shellArgs = Settings.getSettings().instanceDefaults().shellArgs();
     
     @Nullable
@@ -138,7 +139,7 @@ public class InstanceJson {
     }
 
     // New instance.
-    public InstanceJson(ModpackManifest modpack, ModpackVersionManifest versionManifest, String mcVersion, boolean isPrivate, byte packType) {
+    public InstanceJson(ModpackManifest modpack, ModpackVersionManifest versionManifest, String mcVersion, boolean isPrivate, byte packType, String[] jvmArgs) {
         uuid = UUID.randomUUID();
 
         versionId = versionManifest.getId();
@@ -155,6 +156,7 @@ public class InstanceJson {
 
         this._private = isPrivate;
         this.packType = packType;
+        this.jvmArgs = Strings.join(jvmArgs, " ");
     }
 
     public static InstanceJson load(Path path) throws IOException {
