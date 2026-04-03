@@ -148,6 +148,11 @@ project(":web") {
 }
 
 downloadLicenses {
+    // Tmp fix for gradle 9 until the plugin is updated
+    report.html.destination = file("${layout.buildDirectory.get()}/reports/license")
+    report.xml.destination  = file("${layout.buildDirectory.get()}/reports/license")
+    report.json.destination = file("${layout.buildDirectory.get()}/reports/license")
+    
     // Can only be the debugger, just ignore
     includeProjectDependencies = false
 
