@@ -4,7 +4,7 @@ import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.api.handlers.instances.InstalledInstancesHandler;
 import dev.ftb.app.data.InstanceJson;
 import dev.ftb.app.pack.Instance;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.UUID;
 

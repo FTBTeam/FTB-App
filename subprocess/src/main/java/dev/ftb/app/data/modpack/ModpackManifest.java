@@ -6,14 +6,13 @@ import com.google.gson.JsonParseException;
 import com.google.gson.annotations.JsonAdapter;
 import dev.ftb.app.Constants;
 import dev.ftb.app.util.ModpackApiUtils;
-import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.HashCodeAdapter;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.net.DownloadAction;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -78,9 +77,10 @@ public class ModpackManifest {
 
     @Nullable
     public Art getFirstArt(String type) {
-        return FastStream.of(art)
+        return art.stream()
                 .filter(e -> e.getType().equals(type))
-                .firstOrDefault();
+                .findFirst()
+                .orElse(null);
     }
 
     // @formatter:off

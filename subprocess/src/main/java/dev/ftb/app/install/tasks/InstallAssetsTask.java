@@ -7,7 +7,7 @@ import dev.ftb.app.minecraft.jsons.AssetIndexManifest;
 import dev.ftb.app.minecraft.jsons.VersionManifest;
 import dev.ftb.app.pack.CancellationToken;
 import org.apache.commons.lang3.tuple.Pair;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;

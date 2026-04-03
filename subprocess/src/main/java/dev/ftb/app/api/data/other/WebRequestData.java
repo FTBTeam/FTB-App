@@ -1,7 +1,7 @@
 package dev.ftb.app.api.data.other;
 
 import dev.ftb.app.api.data.BaseData;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.List;

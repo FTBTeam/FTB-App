@@ -7,14 +7,13 @@ import dev.ftb.app.AppMain;
 import dev.ftb.app.Constants;
 import dev.ftb.app.install.tasks.DownloadTask;
 import dev.ftb.app.install.tasks.DownloadTask.DownloadValidation;
-import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.HashCodeAdapter;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.platform.OperatingSystem;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -82,9 +81,9 @@ public class InstanceSupportMeta {
     }
 
     public List<SupportFile> getSupportMods(String type) {
-        return FastStream.of(supportMods)
+        return supportMods.stream()
                 .filter(e -> e.getType().equals(type))
-                .flatMap(SupportEntry::getFiles)
+                .flatMap(e -> e.getFiles().stream())
                 .toList();
     }
 

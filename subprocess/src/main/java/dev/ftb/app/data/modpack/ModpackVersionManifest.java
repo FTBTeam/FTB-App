@@ -9,7 +9,6 @@ import dev.ftb.app.Constants;
 import dev.ftb.app.install.FileValidation;
 import dev.ftb.app.util.FileUtils;
 import dev.ftb.app.util.ModpackApiUtils;
-import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.HashCodeAdapter;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.net.DownloadAction;
@@ -19,7 +18,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -81,12 +80,12 @@ public class ModpackVersionManifest {
         name = other.name;
         specs = other.specs != null ? other.specs.copy() : null;
         type = other.type;
-        targets = FastStream.of(other.targets)
+        targets = other.targets.stream()
                 .map(Target::copy)
-                .toLinkedList();
-        files = FastStream.of(other.files)
+                .collect(Collectors.toCollection(LinkedList::new));
+        files = other.files.stream()
                 .map(ModpackFile::copy)
-                .toLinkedList();
+                .collect(Collectors.toCollection(LinkedList::new));
         installs = other.installs;
         plays = other.plays;
         updated = other.updated;
@@ -191,9 +190,9 @@ public class ModpackVersionManifest {
      */
     @Nullable
     public Target findTarget(String type) throws IllegalStateException {
-        LinkedList<Target> targetsMatching = FastStream.of(getTargets())
+        LinkedList<Target> targetsMatching = getTargets().stream()
                 .filter(e -> type.equals(e.getType()))
-                .toLinkedList();
+                .collect(Collectors.toCollection(LinkedList::new));
 
         if (targetsMatching.size() > 1) {
             // Should be impossible??
@@ -225,7 +224,7 @@ public class ModpackVersionManifest {
      * @return The count.
      */
     public int getTargetCount(String type) {
-        return FastStream.of(getTargets())
+        return (int) getTargets().stream()
                 .filter(e -> type.equals(e.getType()))
                 .count();
     }

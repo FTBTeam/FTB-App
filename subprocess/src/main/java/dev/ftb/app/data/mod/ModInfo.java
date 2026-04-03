@@ -1,6 +1,6 @@
 package dev.ftb.app.data.mod;
 
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public record ModInfo(
         long fileId,

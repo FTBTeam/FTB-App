@@ -1,11 +1,10 @@
 package dev.ftb.app.install.tasks;
 
 import dev.ftb.app.pack.CancellationToken;
-import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.util.SneakyUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.LinkedList;
@@ -52,8 +51,8 @@ public class ParallelTaskHelper {
         }
         // Throw the first failure with all others suppressed.
         SneakyUtils.throwUnchecked(
-                FastStream.of(failures)
-                        .fold((a, b) -> {
+                failures.stream()
+                        .reduce((a, b) -> {
                             a.addSuppressed(b);
                             return a;
                         })

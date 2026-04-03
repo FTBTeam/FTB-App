@@ -8,7 +8,7 @@ import dev.ftb.app.pack.Instance;
 import dev.ftb.app.util.MiscUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -51,9 +51,9 @@ public class DuplicateInstanceHandler implements IMessageHandler<DuplicateInstan
     private static class Reply extends Request {
         public String message;
         public boolean success;
-        public @Nullable InstalledInstancesHandler.SugaredInstanceJson instance;
+        public InstalledInstancesHandler.@Nullable SugaredInstanceJson instance;
 
-        public Reply(Request data, boolean success, String message, @Nullable InstalledInstancesHandler.SugaredInstanceJson instance) {
+        public Reply(Request data, boolean success, String message, InstalledInstancesHandler.@Nullable SugaredInstanceJson instance) {
             this.requestId = data.requestId;
             this.type = data.type + "Reply";
             this.uuid = instance == null ? "-1" : instance.uuid.toString();

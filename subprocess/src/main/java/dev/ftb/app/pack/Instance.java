@@ -3,6 +3,7 @@ package dev.ftb.app.pack;
 import com.google.gson.JsonParseException;
 import dev.ftb.app.Analytics;
 import dev.ftb.app.AppMain;
+import dev.ftb.app.Constants;
 import dev.ftb.app.Instances;
 import dev.ftb.app.data.InstanceJson;
 import dev.ftb.app.data.InstanceModifications;
@@ -24,8 +25,6 @@ import dev.ftb.app.util.DialogUtil;
 import dev.ftb.app.util.FileUtils;
 import dev.ftb.app.util.HashingUtils;
 import dev.ftb.app.util.MiscUtils;
-import net.covers1624.quack.collection.ColUtils;
-import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.platform.OperatingSystem;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -33,7 +32,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -87,7 +86,9 @@ public class Instance {
 
     // Brand-new instance.
     public Instance(@Nullable String name, @Nullable String artPath, @Nullable UUID categoryId, ModpackManifest modpack, ModpackVersionManifest versionManifest, String mcVersion, boolean isPrivate, byte packType) {
-        props = new InstanceJson(modpack, versionManifest, mcVersion, isPrivate, packType);
+        String[] jvmArgs = Constants.jvmArsFromMcVersion(mcVersion); 
+        
+        props = new InstanceJson(modpack, versionManifest, mcVersion, isPrivate, packType, jvmArgs);
         if (name != null) {
             props.name = name;
         }
@@ -670,7 +671,7 @@ public class Instance {
             String fName2 = StringUtils.stripEnd(fName, ".disabled");
             
             // Do we already know about the mod?
-            if (ColUtils.anyMatch(mods, e -> e.fileName().equals(fName) || e.fileName().equals(fName2))) {
+            if (mods.stream().anyMatch(e -> e.fileName().equals(fName) || e.fileName().equals(fName2))) {
                 if (!fName2.equals(fName)) {
                     System.out.println("Skipping known disabled mod: " + fName);
                 }
@@ -760,9 +761,10 @@ public class Instance {
         if (override == null) {
             // Could indicate a bug with listing instance mods. But, likely just broken call.
             if (fileId == -1) throw new IllegalArgumentException("Did not find an existing ModOverride for the given name. File ID required.");
-            ModpackVersionManifest.ModpackFile file = FastStream.of(versionManifest.getFiles())
+            ModpackVersionManifest.ModpackFile file = versionManifest.getFiles().stream()
                     .filter(e -> e.getId() == fileId)
-                    .firstOrDefault();
+                    .findFirst()
+                    .orElse(null);
             if (file == null) throw new IllegalArgumentException("Did not find any files with the given fileId.");
 
             boolean isEnabled = !fileName.endsWith(".disabled");

@@ -4,7 +4,7 @@ import com.google.common.hash.HashCode;
 import com.google.gson.*;
 import net.covers1624.quack.gson.HashCodeAdapter;
 import dev.ftb.app.minecraft.jsons.VersionManifest;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

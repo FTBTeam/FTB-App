@@ -1,6 +1,5 @@
 package dev.ftb.app.api.handlers.instances;
 
-import net.covers1624.quack.collection.FastStream;
 import dev.ftb.app.Instances;
 import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.data.instances.InstanceInstallModData;
@@ -59,7 +58,7 @@ public class InstanceInstallModHandler implements IMessageHandler<InstanceInstal
 
         // TODO, ModInstaller actually has the unavailable/unsatisifable dependency list available. We should tell the user this.
 
-        List<PendingInstall> pending = FastStream.of(modInstaller.getToInstall())
+        List<PendingInstall> pending = modInstaller.getToInstall().stream()
                 .map(e -> new PendingInstall(e.getKey().getId(), e.getValue().getId()))
                 .toList();
         WebSocketHandler.sendMessage(new InstanceInstallModData.Reply(data, "processing", "Processing install.", pending));

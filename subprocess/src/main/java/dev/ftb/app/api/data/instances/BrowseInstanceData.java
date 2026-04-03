@@ -2,7 +2,7 @@ package dev.ftb.app.api.data.instances;
 
 
 import dev.ftb.app.api.data.BaseData;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public class BrowseInstanceData extends BaseData
 {
