@@ -264,7 +264,6 @@ function resetToInstanceDefaults() {
   instanceSettings.value.height = instanceDefaults.height;
   instanceSettings.value.fullScreen = instanceDefaults.fullscreen;
   instanceSettings.value.memory = instanceDefaults.memory;
-  instanceSettings.value.jvmArgs = instanceDefaults.javaArgs;
   instanceSettings.value.jrePath = '';
   instanceSettings.value.releaseChannel = instanceDefaults.updateChannel;
   instanceSettings.value.shellArgs = instanceDefaults.shellArgs;
@@ -397,13 +396,12 @@ const isLoader = computed(() => {
 
         <div class="flex gap-4">
           <UiButton size="small" :icon="faUndo" @click="() => {
-            instanceSettings.jvmArgs = appSettingsStore.rootSettings?.instanceDefaults.javaArgs ?? ''
-          }">
-            Reset to Instance defaults
-          </UiButton>
-
-          <UiButton size="small" :icon="faUndo" @click="() => {
-            instanceSettings.jvmArgs = '-XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=32M'
+            // TODO: this needs a much more robust solution.
+            if (instance.mcVersion.startsWith('1.')) {
+              instanceSettings.jvmArgs = '-XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=32M'
+            } else {
+              instanceSettings.jvmArgs = '-XX:+UseCompactObjectHeaders -XX:+AlwaysPreTouch -XX:+UseStringDeduplication -XX:+UseZGC'
+            }
           }">
             Reset to Vanilla defaults
           </UiButton>
