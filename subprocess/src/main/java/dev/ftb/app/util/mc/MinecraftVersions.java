@@ -149,7 +149,7 @@ public enum MinecraftVersions {
                 continue;
             }
 
-            if (version.id().contains("w") || version.id().contains("-pre") || version.id().contains(" Pre-") || version.id().contains("-rc") || version.id().startsWith("b") || version.id().startsWith("a")) {
+            if (version.id().contains("w") || version.id().contains("-pre") || version.id().contains(" Pre-") || version.id().contains("-rc") || version.id().startsWith("b") || version.id().startsWith("a") || version.id().contains("-snapshot-") || version.id().contains("-pre-") || version.id().contains("-rc-")) {
                 // We're in a snapshot, we don't record these but we do need to watch for the next jump.
                 currentBump = jumpJavaVersion(version.id(), currentBump);
                 continue;

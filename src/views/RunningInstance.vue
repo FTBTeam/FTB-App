@@ -7,7 +7,7 @@ import {sendMessage} from '@/core/websockets/websocketsApi';
 import {safeNavigate} from '@/utils';
 import {createLogger} from '@/core/logger';
 import platform from '@platform';
-import {computed, onMounted, onUnmounted, ref, watch} from 'vue';
+import {computed, nextTick, onMounted, onUnmounted, ref, watch} from 'vue';
 import {InstanceMessageData, InstanceRunningData, useRunningInstancesStore} from '@/store/runningInstancesStore.ts';
 import {useRouter} from 'vue-router';
 import {useInstanceStore} from '@/store/instancesStore.ts';
@@ -71,13 +71,7 @@ const instance = computed(() => instanceStore.instances.find(e => e.uuid === rou
 const runningInstance = computed(() => runningInstanceStore.instances.find(e => e.uuid === router.currentRoute.value.params.uuid) ?? null);
 
 onMounted(async () => {
-  loading.value = false;
-  hasCrashed.value = false;
-  currentStep.value = emptyStep;
-  finishedLoading.value = false;
-  preInitMessages.value = new Set();
-  messages.value = [];
-  launchProgress.value = null;
+  resetPageState(true)
 
   if (localStorage.getItem("enabledLogTypes")) {
     enabledLogTypes.value = localStorage.getItem("enabledLogTypes")!.split(",");
@@ -269,8 +263,28 @@ async function playAgain() {
   if (!instance.value) {
     return;
   }
-
+  
   await InstanceController.from(instance.value).play()
+  resetPageState();
+}
+
+function resetPageState(firstTime = false) {
+  loading.value = false;
+  hasCrashed.value = false;
+  currentStep.value = emptyStep;
+  finishedLoading.value = false;
+  preInitMessages.value = new Set();
+  messages.value = [];
+  launchProgress.value = null;
+  if (firstTime) {
+    return;
+  }
+  
+  logsKey.value = "refreshme" + Math.random(); // Force refresh of logs
+  nextTick(() => {
+    logsKey.value = enabledLogTypes.value.join("|");
+    syncDataFromRunningData()
+  })
 }
 </script>
 
