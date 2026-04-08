@@ -5,7 +5,7 @@ import dev.ftb.app.accounts.MicrosoftProfile;
 import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.api.handlers.IMessageHandler;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public class AccountIsValidHandler implements IMessageHandler<AccountIsValidHandler.Data> {
     @Override

@@ -6,7 +6,7 @@ import dev.ftb.app.Constants;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;

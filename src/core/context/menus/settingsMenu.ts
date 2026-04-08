@@ -38,9 +38,7 @@ export class SettingMenu extends ContextMenu<{ }> {
         title: "Export app logs",
         icon: faFileZipper,
         async action() {
-          const result = await sendMessage("uploadLogs", {
-            includeInstanceLogs: false
-          });
+          const result = await sendMessage("uploadLogs", {});
           if (result.path) {
             await appPlatform.io.openFinder(result.path);
             alertController.success("Logs exported successfully, you can find them at " + result.path);

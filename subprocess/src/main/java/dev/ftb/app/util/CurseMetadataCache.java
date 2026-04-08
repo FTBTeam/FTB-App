@@ -16,7 +16,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -66,7 +66,7 @@ public class CurseMetadataCache {
         this.metadata = metadata;
     }
 
-    public @Nullable CurseMetadata getCurseMeta(@Nullable ModpackVersionModsManifest.Mod mod, String murmur) {
+    public @Nullable CurseMetadata getCurseMeta(ModpackVersionModsManifest.@Nullable Mod mod, String murmur) {
         if (mod != null) {
             return CurseMetadata.fromMod(mod);
         }

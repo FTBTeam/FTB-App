@@ -15,7 +15,7 @@ import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okio.Throttler;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.UUID;
@@ -59,14 +59,20 @@ public class Constants {
     @Nullable
     private static JdkInstallationManager JDK_INSTALL_MANAGER;
 
-    // Default arguments applied to all instances in the Minecraft launcher as of 29/11/2021
-    public static final String[] MOJANG_DEFAULT_ARGS = {
-            "-XX:+UnlockExperimentalVMOptions",
-            "-XX:+UseG1GC",
-            "-XX:G1NewSizePercent=20",
-            "-XX:G1ReservePercent=20",
-            "-XX:MaxGCPauseMillis=50",
-            "-XX:G1HeapRegionSize=32M"
+    public static final String[] UNDER_26_ARGS = new String[] {
+        "-XX:+UnlockExperimentalVMOptions",
+        "-XX:+UseG1GC",
+        "-XX:G1NewSizePercent=20",
+        "-XX:G1ReservePercent=20",
+        "-XX:MaxGCPauseMillis=50",
+        "-XX:G1HeapRegionSize=32M"
+    };
+
+    public static final String[] OVER_26_ARGS = new String[]{
+        "-XX:+UseCompactObjectHeaders",
+        "-XX:+AlwaysPreTouch",
+        "-XX:+UseStringDeduplication",
+        "-XX:+UseZGC"
     };
 
     public static void refreshHttpClient() {
@@ -126,5 +132,13 @@ public class Constants {
             GLOBAL_THROTTLER.bytesPerSecond(Long.MAX_VALUE);
         }
         return GLOBAL_THROTTLER;
+    }
+    
+    public static String[] jvmArsFromMcVersion(String mcVersion) {
+        if (mcVersion.startsWith("1.")) {
+            return Constants.UNDER_26_ARGS;
+        } else {
+            return Constants.OVER_26_ARGS;
+        }
     }
 }

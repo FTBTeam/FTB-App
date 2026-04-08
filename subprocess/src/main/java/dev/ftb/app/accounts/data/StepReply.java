@@ -3,7 +3,7 @@ package dev.ftb.app.accounts.data;
 import com.google.gson.JsonElement;
 import okhttp3.Response;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public record StepReply(
         boolean success,

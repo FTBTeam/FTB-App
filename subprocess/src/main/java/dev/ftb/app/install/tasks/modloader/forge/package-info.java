@@ -1,9 +1,4 @@
-@FieldsAreNonnullByDefault
-@ParametersAreNonnullByDefault
-@MethodsReturnNonnullByDefault
+@NullMarked
 package dev.ftb.app.install.tasks.modloader.forge;
 
-import net.covers1624.quack.annotation.FieldsAreNonnullByDefault;
-import net.covers1624.quack.annotation.MethodsReturnNonnullByDefault;
-
-import javax.annotation.ParametersAreNonnullByDefault;
+import org.jspecify.annotations.NullMarked;

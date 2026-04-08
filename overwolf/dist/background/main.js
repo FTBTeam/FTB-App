@@ -116,7 +116,7 @@ const setup = async () => {
   
   // Launch the backend
   const owDir = plugin.get().GetOverwolfDir();
-  const javaPath = owDir + "\\jdk-21.0.3+9-jre\\bin\\java.exe";
+  const javaPath = owDir + "\\jdk-25.0.2+10-jre\\bin\\java.exe";
   const pid = plugin.get().GetOverwolfPID();
   const args = serializeToStringList([
     "--pid",

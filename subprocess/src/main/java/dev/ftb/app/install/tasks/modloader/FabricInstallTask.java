@@ -6,7 +6,7 @@ import dev.ftb.app.install.tasks.TaskProgressListener;
 import dev.ftb.app.minecraft.jsons.VersionManifest;
 import dev.ftb.app.pack.CancellationToken;
 import net.covers1624.quack.gson.JsonUtils;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -14,7 +14,6 @@ import java.nio.file.Path;
 public abstract class FabricInstallTask extends ModLoaderInstallTask {
 
     private static final String FABRIC_META = "https://meta.fabricmc.net/";
-    private static final String QUILT_META = "https://meta.quiltmc.org/";
 
     private final String mcVersion;
     private final String loaderVersion;
@@ -34,18 +33,6 @@ public abstract class FabricInstallTask extends ModLoaderInstallTask {
             protected DownloadTask getProfileDownload(Path dest) {
                 return DownloadTask.builder()
                         .url(FABRIC_META + "v2/versions/loader/" + mcVersion + "/" + loaderVersion + "/profile/json")
-                        .dest(dest)
-                        .build();
-            }
-        };
-    }
-
-    public static FabricInstallTask quilt(String mcVersion, String loaderVersion) {
-        return new FabricInstallTask("quilt-loader", mcVersion, loaderVersion) {
-            @Override
-            protected DownloadTask getProfileDownload(Path dest) {
-                return DownloadTask.builder()
-                        .url(QUILT_META + "v3/versions/loader/" + mcVersion + "/" + loaderVersion + "/profile/json")
                         .dest(dest)
                         .build();
             }

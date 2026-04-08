@@ -4,7 +4,7 @@ import dev.ftb.app.pack.CancellationToken;
 import net.covers1624.quack.util.SneakyUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.CompletableFuture;
 

@@ -49,11 +49,11 @@ jobs:
           key: ubuntu-latest-gradle-${{ hashFiles('subprocess/settings.gradle', 'subprocess/gradle/wrapper/gradle-wrapper.properties', 'subprocess/build.gradle', 'subprocess/gradle.properties') }}
           restore-keys: |
             ubuntu-latest-gradle-
-      - name: Set up JDK 21
+      - name: Set up JDK 25
         uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
-          java-version: 21
+          java-version: 25
       - name: Override packageJson
         uses: actions/download-artifact@v8
         with:

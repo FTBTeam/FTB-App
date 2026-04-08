@@ -316,7 +316,6 @@ export interface SettingsInfoDataReply extends SettingsInfoData {
 }
 
 export interface UploadLogsData extends BaseData {
-    includeInstanceLogs: boolean;
 }
 
 export interface UploadLogsDataReply extends BaseData {
@@ -681,7 +680,6 @@ export interface InstanceSettings {
     updateChannel: string;
     preventMetaModInjection: boolean;
     preventMetaAgentInjection: boolean;
-    javaArgs: string;
     shellArgs: string;
     programArgs: string;
 }

@@ -7,7 +7,7 @@ import com.google.gson.JsonObject;
 import dev.ftb.app.minecraft.jsons.VersionManifest;
 import net.covers1624.quack.gson.MavenNotationAdapter;
 import net.covers1624.quack.maven.MavenNotation;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.LinkedList;

@@ -1,5 +1,6 @@
 package dev.ftb.app.util;
 
+import com.google.common.base.Suppliers;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -14,7 +15,6 @@ import dev.ftb.app.pack.Instance;
 import dev.ftb.app.storage.settings.Settings;
 import dev.ftb.app.storage.settings.SettingsData;
 import net.covers1624.quack.platform.OperatingSystem;
-import net.covers1624.quack.util.LazyValue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.Appender;
@@ -33,6 +33,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
@@ -67,10 +68,9 @@ public class LogZipper {
         .setPrettyPrinting()
         .create();
 
-    private final LazyValue<List<String>> ipAddresses = new LazyValue<>(this::getUserIpAddresses);
+    private final Supplier<List<String>> ipAddresses = Suppliers.memoize(this::getUserIpAddresses);
 
     private final long startTime;
-    private boolean includeInstances = false;
 
     private LogZipper() {
         this.startTime = System.currentTimeMillis();
@@ -78,11 +78,6 @@ public class LogZipper {
 
     public static LogZipper create() {
         return new LogZipper();
-    }
-
-    public LogZipper includeInstances(boolean includeInstances) {
-        this.includeInstances = includeInstances;
-        return this;
     }
     
     public Path generate() {
@@ -208,11 +203,7 @@ public class LogZipper {
         }
     }
 
-    private void includeInstanceLogs(ZipOutputStream writer) throws IOException {
-        if (!includeInstances) {
-            return;
-        }
-        
+    private void includeInstanceLogs(ZipOutputStream writer) throws IOException {        
         var instances = Instances.allInstances();
         if (instances.isEmpty()) {
             return;

@@ -1,14 +1,12 @@
 <script lang="ts" setup>
 import {alertController} from '@/core/controllers/alertController';
-import {prettyByteFormat} from '@/utils';
 import UiToggle from '@/components/ui/UiToggle.vue';
 import RamSlider from '@/components/groups/modpack/components/RamSlider.vue';
 import {SettingsData} from '@/core/types/javaApi';
-import { Loader, UiButton, Input } from '@/components/ui';
+import { Loader, Input } from '@/components/ui';
 import { useAppSettings } from '@/store/appSettingsStore.ts';
 import { onMounted, ref } from 'vue';
-import { faCode, faUndo } from '@fortawesome/free-solid-svg-icons';
-import TextArea from '@/components/ui/form/TextArea/TextArea.vue';
+import { faCode } from '@fortawesome/free-solid-svg-icons';
 import ResolutionSelector, {ResolutionValue} from "@/components/groups/modpack/components/ResolutionSelector.vue";
 import ReleaseChannelSelector from "@/components/groups/modpack/components/ReleaseChannelSelector.vue";
 
@@ -83,32 +81,6 @@ function selectResolution(value: ResolutionValue) {
     
     <ram-slider class="mb-6" v-model="localSettings.instanceDefaults.memory" @update="saveMutated" />
 
-    <div class="flex gap-4 flex-col mb-6">
-      <TextArea
-        label="Java runtime arguments"
-        class="mb-4"
-        hint="These arguments are appended to your instances upon start, they are normal java arguments. New lines will be removed."
-        v-model="localSettings.instanceDefaults.javaArgs"
-        @blur="() => {
-            // Remove all new lines and trim the string
-            localSettings.instanceDefaults.javaArgs = localSettings.instanceDefaults.javaArgs.trim().replaceAll(/(\r\n|\n|\r)/gm, '')
-            saveMutated()
-          }"
-        fill
-        :spellcheck="false"
-        :rows="4"
-      />
-
-      <div class="flex gap-4">
-        <UiButton size="small" :icon="faUndo" @click="() => {
-            localSettings.instanceDefaults.javaArgs = '-XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=32M'
-            saveMutated()
-          }">
-          Reset to Vanilla defaults
-        </UiButton>
-      </div>
-    </div>
-
     <Input
       class="mb-4"
       :icon="faCode"
@@ -132,13 +104,6 @@ function selectResolution(value: ResolutionValue) {
       fill
       hint="These arguments will be inserted before java is run, see the example below. It's recommended to not change these unless you know what you are doing."
     />
-    
-    <p class="mb-2">Startup preview</p>
-    <small class="mb-4 block">This is for illustrative purposes only, this is not a complete example.</small>
-    
-    <code class="block bg-black rounded mb-6 px-2 py-2 overflow-x-auto" v-if="localSettings && localSettings.instanceDefaults.memory">
-      {{localSettings.instanceDefaults.shellArgs}} java {{localSettings.instanceDefaults.javaArgs}} -Xmx{{prettyByteFormat(Math.floor(parseInt(localSettings.instanceDefaults.memory.toString()) * 1024 * 1000))}} -jar minecraft.jar {{localSettings.instanceDefaults.programArgs}}
-    </code>
 
     <ui-toggle
       label="Disable helper mod injection"

@@ -66,7 +66,7 @@ async function packageOpk() {
 
   console.log("Building opk..")
   archive.directory('overwolf/dist/', 'dist')
-  archive.directory('overwolf/jdk-21.0.3+9-jre/', 'jdk-21.0.3+9-jre')
+  archive.directory('overwolf/jdk-25.0.2+10-jre/', 'jdk-25.0.2+10-jre')
   archive.file("overwolf/OverwolfShim.dll", {name: 'OverwolfShim.dll'})
   archive.file("overwolf/launchericon.ico", {name: 'launchericon.ico'})
   archive.file(`overwolf/${manifestData.meta.icon}`, {name: manifestData.meta.icon})

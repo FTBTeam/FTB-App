@@ -3,7 +3,7 @@ package dev.ftb.app.util;
 import okhttp3.OkHttpClient;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import javax.net.ssl.*;
 import java.security.KeyStore;

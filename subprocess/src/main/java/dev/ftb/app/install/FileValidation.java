@@ -6,8 +6,7 @@ import dev.ftb.app.install.tasks.DownloadTask.DownloadValidation;
 import net.covers1624.quack.util.MultiHasher;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
 import net.covers1624.quack.util.MultiHasher.HashResult;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Range;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -44,7 +43,7 @@ public class FileValidation {
      * @param expectedSize The expected size. <code>-1</code> to disable.
      * @return The new {@link FileValidation}.
      */
-    public FileValidation withExpectedSize(@Range (from = -1, to = Long.MAX_VALUE) long expectedSize) {
+    public FileValidation withExpectedSize(long expectedSize) {
         return new FileValidation(expectedSize, expectedHashes);
     }
 

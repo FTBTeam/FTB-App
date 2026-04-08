@@ -7,7 +7,7 @@ import okhttp3.Request;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -15,6 +15,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.WeekFields;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.regex.Pattern;
 
 import static dev.ftb.app.Constants.MC_VERSIONS;
 
@@ -27,6 +28,7 @@ public enum MinecraftVersions {
     INSTANCE;
     
     private static final Logger logger = LoggerFactory.getLogger(MinecraftVersions.class);
+    private static final Pattern YEAR_RELEASE_PREFIX = Pattern.compile("^\\d{2}\\..*");
     
     // Populated with the default versions.
     private final List<MinecraftVersion> versions = new ArrayList<>(MinecraftVersionPresets.VALUES.stream().map(MinecraftVersionPresets::getVersionData).toList());
@@ -61,7 +63,7 @@ public enum MinecraftVersions {
     @Nullable
     public MinecraftVersion parse(String version) {
         // Non-special versions are the simplest to parse
-        if (version.startsWith("1.")) {
+        if (version.startsWith("1.") || YEAR_RELEASE_PREFIX.matcher(version).matches()) {
             // This should be super simple to find.
             var parts = version.split("\\.");
 
@@ -81,14 +83,14 @@ public enum MinecraftVersions {
 
         // We're likely a snapshot, if we're a snapshot, we'll find the closest version to the snapshot.
         if (version.contains("w")) {
-            return findClosesVersionFromSnapshot(version);
+            return findClosestVersionFromSnapshot(version);
         }
 
         // We have no idea what this is.
         return null;
     }
 
-    private MinecraftVersion findClosesVersionFromSnapshot(String snapshot) {
+    private MinecraftVersion findClosestVersionFromSnapshot(String snapshot) {
         if (!snapshot.contains("w")) {
             throw new IllegalArgumentException("Invalid snapshot version: " + snapshot);
         }

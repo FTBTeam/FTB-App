@@ -158,9 +158,6 @@ function _versionName() {
           <div class="notifier modloader" aria-label="NeoForge" data-balloon-pos="down-left" v-if="modloader.toLowerCase() === 'neoforge'">
             <img :width="30" src="../../../assets/images/neoforge.png" alt="" />
           </div>
-          <div class="notifier modloader" aria-label="QuiltMc" data-balloon-pos="down-left" v-if="modloader.toLowerCase() === 'quilt'">
-            <img :width="30" src="../../../assets/images/quiltmc.svg" alt="" />
-          </div>
         </div>
         
         <transition name="transition-fade" :duration="250">

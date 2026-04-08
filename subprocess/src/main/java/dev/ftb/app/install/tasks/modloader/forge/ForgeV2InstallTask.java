@@ -23,7 +23,6 @@ import joptsimple.util.PathConverter;
 import net.covers1624.jdkutils.JavaInstall;
 import net.covers1624.jdkutils.JavaVersion;
 import net.covers1624.jdkutils.JdkInstallationManager.ProvisionRequest;
-import net.covers1624.quack.collection.FastStream;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.maven.MavenNotation;
@@ -31,7 +30,7 @@ import net.covers1624.quack.util.HashUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,6 +38,7 @@ import java.lang.reflect.Type;
 import java.nio.file.*;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @SuppressWarnings ("UnstableApiUsage")
 public class ForgeV2InstallTask extends AbstractForgeInstallTask {
@@ -78,7 +78,7 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
             );
             VersionManifest vanillaManifest = downloadVanilla(versionsDir, instManifest.minecraft);
 
-            for (VersionManifest.Library library : FastStream.concat(forgeManifest.libraries, instManifest.libraries)) {
+            for (VersionManifest.Library library : Stream.concat(forgeManifest.libraries.stream(), instManifest.libraries.stream()).toList()) {
                 if (cancelToken != null) cancelToken.throwIfCancelled();
                 processLibrary(cancelToken, installerRoot, librariesDir, library);
             }

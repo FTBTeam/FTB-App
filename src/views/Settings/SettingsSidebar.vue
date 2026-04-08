@@ -16,7 +16,6 @@ import {
 const configData = appPlatform.config;
 </script>
 
-
 <template>
   <div class="settings-sidebar">
     <router-link to="/" class="back">

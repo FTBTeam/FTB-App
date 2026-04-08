@@ -5,13 +5,24 @@ import org.apache.tools.ant.filters.ReplaceTokens
 
 import java.time.Instant
 
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    
+    // Override the js version to ensure it works with java 25
+    dependencies {
+        classpath 'org.graalvm.js:js:25.0.0'
+    }
+}
+
 plugins {
     id 'java'
     id 'base'
     id "com.gradleup.shadow" version "8.3.6"
     id "com.palantir.git-version" version "3.1.0"
     id "com.github.hierynomus.license-report" version "0.16.1"
-    id "org.jetbrains.gradle.plugin.idea-ext" version "1.1.10"
+    id "org.jetbrains.gradle.plugin.idea-ext" version "1.4.1"
     id 'cz.habarta.typescript-generator' version "3.2.+"
 }
 
@@ -19,7 +30,7 @@ apply plugin: com.hierynomus.gradle.license.LicenseReportingPlugin
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(25)
         vendor = JvmVendorSpec.ADOPTIUM
     }
 }
@@ -65,7 +76,7 @@ repositories {
 }
 
 dependencies {
-    def log4jVersion = '2.25.1'
+    def log4jVersion = '2.25.3'
     
     implementation "org.apache.logging.log4j:log4j-core:$log4jVersion"
     implementation "org.apache.logging.log4j:log4j-slf4j-impl:$log4jVersion"
@@ -78,7 +89,7 @@ dependencies {
     implementation 'org.nanohttpd:nanohttpd-websocket:2.3.1'
     implementation 'com.github.oshi:oshi-core:5.7.0'
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
-    implementation 'org.apache.commons:commons-compress:1.27.1'
+    implementation 'org.apache.commons:commons-compress:1.28.0'
     implementation 'commons-io:commons-io:2.19.0'
     implementation('org.apache.maven:maven-artifact:3.8.4') {
         exclude group: 'org.codehaus.plexus' // Not needed for this application.
@@ -89,12 +100,7 @@ dependencies {
     implementation 'org.semver4j:semver4j:5.6.0'
     implementation 'com.electronwill.night-config:toml:3.6.4'
     
-    compileOnly 'org.jetbrains:annotations:22.0.0'
-    compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
-
-//    if (file('debugger').exists()) {
-//        runtimeOnly project(":debugger")
-//    }
+    compileOnly 'org.jspecify:jspecify:1.0.0'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -142,6 +148,11 @@ project(":web") {
 }
 
 downloadLicenses {
+    // Tmp fix for gradle 9 until the plugin is updated
+    report.html.destination = file("${layout.buildDirectory.get()}/reports/license")
+    report.xml.destination  = file("${layout.buildDirectory.get()}/reports/license")
+    report.json.destination = file("${layout.buildDirectory.get()}/reports/license")
+    
     // Can only be the debugger, just ignore
     includeProjectDependencies = false
 
@@ -228,7 +239,7 @@ tasks.named('build').configure {
 }
 
 wrapper {
-    gradleVersion = "8.7"
+    gradleVersion = "8.14.4"
 }
 
 idea.project.settings {
