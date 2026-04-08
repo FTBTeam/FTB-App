@@ -16,7 +16,6 @@ import dev.ftb.app.os.OS;
 import dev.ftb.app.storage.settings.Settings;
 import dev.ftb.app.task.LongRunningTaskManager;
 import dev.ftb.app.util.*;
-import dev.ftb.app.util.mc.MinecraftVersions;
 import net.covers1624.jdkutils.JavaInstall;
 import net.covers1624.jdkutils.locator.JavaLocator;
 import net.covers1624.quack.logging.log4j2.Log4jUtils;
@@ -243,7 +242,6 @@ public class AppMain {
         
         // Lastly, run any needed migrations after the app is ready
         MigrationsManager.INSTANCE.runMigrations();
-        MinecraftVersions.INSTANCE.init();
 
         //Hang indefinitely until this lock is interrupted.
         try {

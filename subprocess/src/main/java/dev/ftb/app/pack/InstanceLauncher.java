@@ -18,10 +18,9 @@ import dev.ftb.app.minecraft.jsons.VersionManifest;
 import dev.ftb.app.minecraft.jsons.VersionManifest.AssetIndex;
 import dev.ftb.app.storage.settings.Settings;
 import dev.ftb.app.util.StreamGobblerLog;
-import dev.ftb.app.util.mc.MinecraftVersion;
-import dev.ftb.app.util.mc.MinecraftVersions;
 import net.covers1624.jdkutils.JavaInstall;
 import net.covers1624.jdkutils.JavaVersion;
+import net.covers1624.jdkutils.JdkInstallationManager;
 import net.covers1624.jdkutils.JdkInstallationManager.ProvisionRequest;
 import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.maven.MavenNotation;
@@ -43,6 +42,7 @@ import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -323,50 +323,41 @@ public class InstanceLauncher {
 
             progressTracker.startStep("Validate Java Runtime");
             Path javaExecutable;
+            
+            // Let's pull the info directly from Minecrafts manifests
+            var locatedVersion = VersionListManifest.update(versionsDir).locate(instance.props.mcVersion);
+            if (locatedVersion == null) {
+                throw new RuntimeException("Failed to find version manifest for " + instance.props.mcVersion);
+            }
+
+            VersionManifest manifest = VersionManifest.update(versionsDir, locatedVersion);
+            
             if (instance.props.embeddedJre) {
-                String javaTarget = instance.versionManifest.getTargetVersion("runtime");
-                
-                String modLoader = instance.resolveBasicModLoader();
-                Path javaHome = null;
-                
                 ProvisionRequest.Builder provisionBuilder = new ProvisionRequest.Builder()
                     .preferJRE(true)
                     .downloadListener(progressTracker.requestListener());
-                
-                if (modLoader != null && modLoader.equals("fabric")) {
-                    // Fabric is special as it basically works with any minecraft version so instead of asking
-                    // fabric which version we should run, we instead just ask out internal lookup.
-                    var minecraftVersion = instance.getMcVersion();
-                    MinecraftVersion parsedVersion = MinecraftVersions.INSTANCE.parse(minecraftVersion);
-                    if (parsedVersion != null) {
-                        var parsedJavaVersion = JavaVersion.parse(String.valueOf(parsedVersion.javaVersion()));
-                        if (parsedJavaVersion != null) {
-                            javaHome = Constants.getJdkManager().provisionJdk(provisionBuilder.forVersion(parsedJavaVersion).build()); 
-                        }
-                    }
-                }
 
-                if (javaHome == null) {
-                    if (javaTarget == null) {
-                        LOGGER.warn("VersionManifest does not specify java runtime version. Falling back to Vanilla major version, latest.");
-                        javaHome = Constants.getJdkManager().provisionJdk(provisionBuilder.forVersion(getJavaVersion()).build());
-                    } else {
-                        javaHome = Constants.getJdkManager().provisionJdk(provisionBuilder.withSemver(javaTarget).build());
-                    }
+                JdkInstallationManager.ProvisionRequest provisionRequest;
+                // it's a native FTB modpack so we can trust it's java version
+                if (instance.props.packType == 0 && !instance.props.isImport && !instance.isCustom()) {
+                    provisionRequest = provisionBuilder
+                        .withSemver(instance.versionManifest.getTargetVersion("runtime"))
+                        .build();
+                } else {
+                    // Fallback to java8 I guess. Not ideal.
+                    provisionRequest = provisionBuilder
+                        .forVersion(manifest.getJavaVersionOrDefault(JavaVersion.JAVA_1_8))
+                        .build();
                 }
+                
+                var javaHome = Constants.getJdkManager().provisionJdk(provisionRequest);
                 
                 LOGGER.info("Java home: {}", javaHome);
-                LOGGER.info("Java home: {}", javaHome.toString());
-                LOGGER.info("Java home: {}", javaHome.toUri());
-                LOGGER.info("Java home: {}", javaHome.toUri().toASCIIString());
                 javaExecutable = JavaInstall.getJavaExecutable(javaHome, true);
             } else {
                 javaExecutable = instance.props.jrePath;
             }
             LOGGER.info("Java executable: {}", javaExecutable);
-            LOGGER.info("Java executable: {}", javaExecutable.toString());
-            LOGGER.info("Java executable: {}", javaExecutable.toUri());
-            LOGGER.info("Java executable: {}", javaExecutable.toUri().toASCIIString());
             progressTracker.updateDesc("Java Runtime Validated");
             progressTracker.finishStep();
 
@@ -459,7 +450,7 @@ public class InstanceLauncher {
             subMap.put("resolution_height", String.valueOf(instance.props.height));
 
             subMap.put("natives_directory", nativesDir.toAbsolutePath().toString());
-            List<Path> classpath = collectClasspath(librariesDir, versionsDir, libraries);
+            List<Path> classpath = collectClasspath(librariesDir, versionsDir, libraries, locatedVersion);
             subMap.put("classpath", classpath.stream().distinct().map(e -> e.toAbsolutePath().toString()).collect(Collectors.joining(File.pathSeparator)));
             subMap.put("classpath_separator", File.pathSeparator);
             subMap.put("library_directory", librariesDir.toAbsolutePath().toString());
@@ -716,8 +707,8 @@ public class InstanceLauncher {
                 .collect(Collectors.toList());
     }
 
-    private List<Path> collectClasspath(Path librariesDir, Path versionsDir, List<VersionManifest.Library> libraries) {        
-        List<Path> classpath = createUniqueLibraryList(libraries).stream()
+    private List<Path> collectClasspath(Path librariesDir, Path versionsDir, List<VersionManifest.Library> libraries, VersionListManifest.Version manifest) {        
+        List<Path> classpath = createUniqueLibraryList(libraries, manifest).stream()
                 .filter(e -> e.natives == null)
                 .map(e -> e.name.toPath(librariesDir))
                 .collect(Collectors.toList());
@@ -726,10 +717,10 @@ public class InstanceLauncher {
         return classpath;
     }
     
-    private List<VersionManifest.Library> createUniqueLibraryList(List<VersionManifest.Library> libraries) {
+    private List<VersionManifest.Library> createUniqueLibraryList(List<VersionManifest.Library> libraries, VersionListManifest.Version manifest) {
         // Newer versions of Minecraft & Modloaders will sometimes have duplicate libraries, this used to be handled by the modloader
         // by providing a refinded manifest, this is no longer the case so it's on us to identify and remove duplicates.
-        if (!requiresLibraryDeDuplication()) {
+        if (!requiresLibraryDeDuplication(manifest)) {
             return libraries;
         }
         
@@ -782,22 +773,20 @@ public class InstanceLauncher {
         return uniqueLibraries;
     }
 
-    private boolean requiresLibraryDeDuplication() {
+    private boolean requiresLibraryDeDuplication(VersionListManifest.Version version) {
         var modLoader = this.instance.props.modLoader;
-        var minecraftVersionRaw = this.instance.props.mcVersion;
-        var minecraftVersion = MinecraftVersions.INSTANCE.parse(minecraftVersionRaw);
-        
-        if (minecraftVersion == null) {
-            throw new IllegalStateException("Invalid Minecraft version: " + minecraftVersionRaw);
-        }
+        var releaseTime = Instant.parse(version.releaseTime);
         
         if (modLoader.contains("neoforge")) {
-            return minecraftVersion.semver().satisfies(">1.20.1");
+            // Time seconds mutated to be slightly before 1.20.1 released meaning we get a >=1.20.1 check
+            return releaseTime.isAfter(Instant.parse("2023-06-12T13:25:00+00:00"));
         } else if (modLoader.contains("fabric")) {
-            return minecraftVersion.semver().satisfies(">=1.21.2");
-        } else {
-            return minecraftVersion.semver().satisfies(">=1.21.4");
+            // Time seconds mutated to be slightly before 1.21.2 released meaning we get a >=1.21.2 check
+            return releaseTime.isAfter(Instant.parse("2024-10-22T09:58:00+00:00"));
         }
+        
+        // Time seconds mutated to be slightly before 1.21.4 released meaning we get a >=1.21.4 check
+        return releaseTime.isAfter(Instant.parse("2024-12-03T10:12:00+00:00"));
     }
 
     private String createVersionAgnosticMavenString(VersionManifest.Library library) {
