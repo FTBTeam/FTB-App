@@ -1,9 +1,13 @@
 package dev.ftb.app.minecraft.jsons;
 
+import com.google.common.hash.HashCode;
 import com.google.gson.JsonParseException;
+import com.google.gson.annotations.JsonAdapter;
+import dev.ftb.app.Constants;
 import dev.ftb.app.install.tasks.DownloadTask;
 import dev.ftb.app.install.tasks.DownloadTask.DownloadValidation;
 import dev.ftb.app.util.GsonUtils;
+import net.covers1624.quack.gson.HashCodeAdapter;
 import net.covers1624.quack.gson.JsonUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,9 +26,7 @@ import static dev.ftb.app.util.StreamUtils.onlyOrDefault;
  * <p>
  */
 public class VersionListManifest {
-
     private static final Logger LOGGER = LogManager.getLogger();
-    public static final String URL = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
 
     @Nullable
     public Latest latest;
@@ -39,9 +41,9 @@ public class VersionListManifest {
      * @throws JsonParseException Thrown when the Json cannot be parsed.
      */
     public static VersionListManifest update(Path versionsDir) throws IOException {
-        Path versionsFile = versionsDir.resolve("version_manifest.json");
+        Path versionsFile = versionsDir.resolve("version_manifest_v2.json");
         DownloadTask downloadTask = DownloadTask.builder()
-                .url(URL)
+                .url(Constants.MC_VERSIONS)
                 .dest(versionsFile)
                 .withValidation(DownloadValidation.of()
                         .withUseETag(true)
@@ -115,6 +117,9 @@ public class VersionListManifest {
         public String url;
         public String time;
         public String releaseTime;
+        @JsonAdapter(HashCodeAdapter.class)
+        public HashCode sha1;
+        public int complianceLevel;
     }
 
 }
