@@ -8,6 +8,7 @@ import {dialog, dialogsController, form} from '@/core/controllers/dialogsControl
 import {useAccountsStore} from "@/store/accountsStore.ts";
 import {z} from "zod";
 import {alertController} from "@/core/controllers/alertController.ts";
+import Router, {RouterNames} from "@/router.ts";
 
 export type InstanceMenuContext = {
   instance: SugaredInstanceJson
@@ -146,7 +147,8 @@ export class InstanceMenu extends ContextMenu<InstanceMenuContext> {
           dialogsController.createConfirmationDialog("Are you sure you want to delete this instance?", `Are you absolutely sure you want to delete \`${context.instance.name}\`? This action can not be undone, all your saves, configs, custom mods, etc will be removed.`)
             .then((result) => {
               if (!result) return;
-              
+
+              Router.push({name: RouterNames.ROOT_LIBRARY})
               InstanceController.from(context.instance)
                 .deleteInstance()
                 .catch(console.error)
