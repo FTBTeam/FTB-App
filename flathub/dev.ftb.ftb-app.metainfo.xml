@@ -45,6 +45,7 @@
   </content_rating>
 
   <releases>
+    <release version="1.29.7~beta.337" date="2026-04-13" />
     <release version="1.29.7~beta.335" date="2026-04-13" />
     <release version="1.29.6" date="2026-04-08" />
     <release version="1.29.6~beta.332" date="2026-04-08" />
