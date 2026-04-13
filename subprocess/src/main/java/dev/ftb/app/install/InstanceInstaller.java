@@ -288,9 +288,6 @@ public class InstanceInstaller extends InstanceOperation {
                         if (!entry.getName().startsWith("overrides/")) continue; // Only process overrides
                         
                         Path path = instance.getDir().resolve(FileUtils.stripInvalidChars(entry.getName()).replace("overrides/", ""));
-                        if (Files.exists(path)) {
-                            continue;
-                        }
 
                         Files.createDirectories(path.getParent());
                         try (var inputStream = zipFile.getInputStream(entry)) {
