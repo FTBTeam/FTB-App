@@ -95,7 +95,7 @@ const setup = async () => {
     }
   });
 
-  const screenSize = await new Promise(() => overwolf.utils.getMonitorsList((result) => {
+  const screenSize = await new Promise((resolve) => overwolf.utils.getMonitorsList((result) => {
     if (!result.displays || result.displays.length === 0) {
       resolve({ width: 1920, height: 1080 });
     }
