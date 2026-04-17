@@ -114,15 +114,27 @@
   <launchable type="desktop-id">dev.ftb.ftb-app.desktop</launchable>
   <screenshots>
     <screenshot type="default">
-      <image>https://cdn.feed-the-beast.com/app/art/ftb-app-home.webp</image>
+      <image>https://cdn.feed-the-beast.com/app/scrn/ftb-app-home-2.webp</image>
       <caption>Home page of the FTB App</caption>
     </screenshot>
     <screenshot>
-      <image>https://cdn.feed-the-beast.com/app/art/ftb-app-modpacks.webp</image>
+      <image>https://cdn.feed-the-beast.com/app/scrn/ftb-app-instances.webp</image>
+      <caption>Installed modpacks page</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://cdn.feed-the-beast.com/app/scrn/ftb-app-modpack.webp</image>
+      <caption>Modpack page showing the description</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://cdn.feed-the-beast.com/app/scrn/ftb-app-modpack-mods.webp</image>
+      <caption>Modpack page showing the list of mods in the modpack and a toggle to disable individual mods</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://cdn.feed-the-beast.com/app/scrn/ftb-app-search.webp</image>
       <caption>Search page for FTB modpacks</caption>
     </screenshot>
     <screenshot>
-      <image>https://cdn.feed-the-beast.com/app/art/ftb-app-curseforge.webp</image>
+      <image>https://cdn.feed-the-beast.com/app/scrn/ftb-app-search-cf.webp</image>
       <caption>Search page for CurseForge modpacks</caption>
     </screenshot>
   </screenshots>
