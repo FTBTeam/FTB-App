@@ -30,6 +30,8 @@ const instanceMoveModalShow = ref(false);
 const instanceMoveModalStage = ref("Preparing");
 const instanceMoveModalComplete = ref(false);
 const instanceMoveLocations = ref({old: "", new: ""});
+const instanceMoveProgress = ref({current: 0, total: 0});
+const instanceMoveCurrent = ref("");
 
 const osType = ref<string | null>(null);
 
@@ -128,6 +130,8 @@ async function moveInstances() {
     instanceMoveModalShow.value = true;
     instanceMoveModalStage.value = "Preparing";
     instanceMoveModalComplete.value = false;
+    instanceMoveProgress.value = {current: 0, total: 0};
+    instanceMoveCurrent.value = "";
     instanceMoveLocations.value = {
       old: localSettings.value.instanceLocation,
       new: location
@@ -143,6 +147,17 @@ async function moveInstances() {
           // It's done
         } else {
           instanceMoveModalStage.value = toTitleCase(typedData.stage.toString().replace("_", " "));
+          
+          // Update progress counts
+          instanceMoveProgress.value = {
+            current: typedData.steps,
+            total: typedData.totalSteps
+          };
+          
+          // Update current instance name if available
+          if (typedData.metadata && typedData.metadata.currentInstance) {
+            instanceMoveCurrent.value = typedData.metadata.currentInstance;
+          }
         }
       } else {
         const typedData = data as MoveInstancesHandlerReply;
@@ -326,7 +341,16 @@ async function purge(type: PurgeTarget) {
 
           <p>Moving <code>{{ instanceMoveLocations.old }}</code><br/>To <code>{{ instanceMoveLocations.new }}</code></p>
 
-          <p>Stage: <code>{{ instanceMoveModalStage }}</code></p>
+          <p>
+            Stage: <code>{{ instanceMoveModalStage }}</code>
+            <template v-if="instanceMoveProgress.total > 0">
+              ({{ instanceMoveProgress.current }}/{{ instanceMoveProgress.total }})
+            </template>
+          </p>
+          
+          <p v-if="instanceMoveCurrent">
+            Current: <code>{{ instanceMoveCurrent }}</code>
+          </p>
         </div>
 
         <progress-bar :infinite="true"/>

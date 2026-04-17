@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -113,14 +114,15 @@ public class MoveInstancesHandler implements IMessageHandler<MoveInstancesHandle
      * TODO: markers should allow us to resume a move if the app crashes or something
      */
     private void moveInstances(Data data, Path currentLocation, Path newLocation) {
-        var tracker = new OperationProgressTracker("instance-move", Map.of(
-            "currentLocation", currentLocation.toString(),
-            "newLocation", newLocation.toString()
-        ));
+        var metadata = new HashMap<String, String>();
+        metadata.put("currentLocation", currentLocation.toString());
+        metadata.put("newLocation", newLocation.toString());
+        
+        var tracker = new OperationProgressTracker("instance-move", metadata);
         
         CompletableFuture.runAsync(() -> {
             LOGGER.info("Progressing: moving instances from {} to {}", currentLocation, newLocation);
-            tracker.nextStage(MoveStage.COPYING);
+            tracker.nextStage(MoveStage.PREPARING);
             
             // Try and place a test file in the new location
             try {
@@ -159,19 +161,40 @@ public class MoveInstancesHandler implements IMessageHandler<MoveInstancesHandle
                 .map(e -> e.path)
                 .toList();
             
-            // In
+            // Count instances to move and set up progress tracking
+            int totalInstances = (int) instancesPaths.stream()
+                .filter(Files::isDirectory)
+                .count();
+            
+            LOGGER.info("Found {} instances to move", totalInstances);
+            tracker.nextStage(MoveStage.COPYING, totalInstances);
+            
+            // Copy instances
             for (var path : instancesPaths) {
                 if (!Files.isDirectory(path)) {
                     continue;
                 }
                 
                 requiredSuccesses ++;
+                String instanceName = path.getFileName().toString();
+                
                 try {
-                    LOGGER.info("Moving instance directory {} to {}", path.getFileName(), newLocation.resolve(path.getFileName()));
+                    LOGGER.info("Moving instance directory {} to {} ({}/{})", 
+                        instanceName, 
+                        newLocation.resolve(path.getFileName()),
+                        requiredSuccesses,
+                        totalInstances);
+                    
+                    // Update metadata with current instance before copying
+                    metadata.put("currentInstance", instanceName);
+                    
                     FileUtils.copyDirectory(path.toFile(), newLocation.resolve(path.getFileName()).toFile());
                     successfulFiles.add(path);
+                    
+                    // Send progress update after successful copy
+                    tracker.stepFinished();
                 } catch (Throwable t) {
-                    throw new RuntimeException("Failed to move instance directory " + path.getFileName(), t);
+                    throw new RuntimeException("Failed to move instance directory " + instanceName, t);
                 }
             }
 
@@ -232,6 +255,7 @@ public class MoveInstancesHandler implements IMessageHandler<MoveInstancesHandle
     }
 
     public enum MoveStage implements OperationProgressTracker.Stage {
+        PREPARING,
         COPYING,
         VALIDATING,
         REMOVING_OLD,        

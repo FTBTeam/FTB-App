@@ -58,6 +58,7 @@ public class OperationProgressTracker {
 
     public synchronized void stepFinished() {
         completedSteps++;
+        sendUpdate(true);
     }
 
     public TaskProgressListener listenerForStage() {
