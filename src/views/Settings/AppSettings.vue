@@ -10,9 +10,9 @@ import {dialogsController} from '@/core/controllers/dialogsController';
 import {toSentenceCase, toTitleCase} from '@/utils/helpers/stringHelpers';
 import {createLogger} from '@/core/logger';
 import {FontAwesomeIcon} from '@fortawesome/vue-fontawesome';
-import {onMounted, ref} from 'vue';
+import {onMounted, ref, computed} from 'vue';
 import {useAppSettings} from '@/store/appSettingsStore.ts';
-import {faCheck, faCopy, faFileZipper, faFolderOpen, faTrash} from '@fortawesome/free-solid-svg-icons';
+import {faCheck, faCopy, faFileZipper, faFolderOpen, faTrash, faSpinner} from '@fortawesome/free-solid-svg-icons';
 import {faGithub} from '@fortawesome/free-brands-svg-icons';
 import {useAppStore} from '@/store/appStore.ts';
 import PurgeCacheCard from "@/components/groups/settings/PurgeCacheCard.vue";
@@ -36,6 +36,11 @@ const instanceMoveCurrent = ref("");
 const osType = ref<string | null>(null);
 
 const refreshing = ref(false);
+
+const instanceMoveProgressPercent = computed(() => {
+  if (instanceMoveProgress.value.total === 0) return 0;
+  return instanceMoveProgress.value.current / instanceMoveProgress.value.total;
+});
 
 onMounted(async () => {
   await appSettingsStore.loadSettings()
@@ -336,27 +341,46 @@ async function purge(type: PurgeTarget) {
     <Modal :open="instanceMoveModalShow" title="Moving instances" :close-on-background-click="false"
            :has-closer="false">
       <template v-if="!instanceMoveModalComplete">
-        <div class="wysiwyg mb-6">
-          <p>This may take a while, please wait.</p>
-
-          <p>Moving <code>{{ instanceMoveLocations.old }}</code><br/>To <code>{{ instanceMoveLocations.new }}</code></p>
-
-          <p>
-            Stage: <code>{{ instanceMoveModalStage }}</code>
-            <template v-if="instanceMoveProgress.total > 0">
-              ({{ instanceMoveProgress.current }}/{{ instanceMoveProgress.total }})
-            </template>
-          </p>
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="font-bold text-lg">
+              <font-awesome-icon :icon="faSpinner" spin class="mr-2" />
+              {{ instanceMoveModalStage }}
+            </div>
+            <div v-if="instanceMoveProgress.total > 0" class="text-white/80">
+              {{ instanceMoveProgress.current }} / {{ instanceMoveProgress.total }} instances
+            </div>
+          </div>
           
-          <p v-if="instanceMoveCurrent">
-            Current: <code>{{ instanceMoveCurrent }}</code>
-          </p>
+          <div v-if="instanceMoveCurrent" 
+               class="bg-white/5 border border-white/10 rounded-lg p-4">
+            <div class="text-white/60 text-sm mb-1">Currently processing</div>
+            <div class="font-medium truncate">{{ instanceMoveCurrent }}</div>
+          </div>
+          
+          <ProgressBar 
+            v-if="instanceMoveProgress.total > 0" 
+            :progress="instanceMoveProgressPercent" 
+            class="mt-4" />
+          <ProgressBar v-else :infinite="true" class="mt-4" />
+          
+          <div class="text-sm text-white/60 pt-2 space-y-1">
+            <div class="flex items-start gap-2">
+              <span class="text-white/40 shrink-0">From:</span>
+              <span class="flex-1 break-all">{{ instanceMoveLocations.old }}</span>
+            </div>
+            <div class="flex items-start gap-2">
+              <span class="text-white/40 shrink-0">To:</span>
+              <span class="flex-1 break-all">{{ instanceMoveLocations.new }}</span>
+            </div>
+          </div>
         </div>
-
-        <progress-bar :infinite="true"/>
       </template>
-      <div class="wysiwyg" v-else>
-        <p>Instances moved successfully 🎉</p>
+      
+      <div v-else class="text-center py-6">
+        <div class="text-5xl mb-4">🎉</div>
+        <div class="font-bold text-xl mb-2">Migration complete!</div>
+        <div class="text-white/70">Your instances have been moved successfully</div>
       </div>
 
       <template #footer v-if="instanceMoveModalComplete">
