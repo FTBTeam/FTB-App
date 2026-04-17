@@ -37,7 +37,6 @@ public class Constants {
     public static final String FTB_MODPACKS_API = "https://api.feed-the-beast.com/v1/modpacks";
     public static final String META_JSON = FTB_MODPACKS_API + "/public/helpers/meta";
 
-    public static final String CH_MAVEN = "https://maven.creeperhost.net/";
     public static final String MC_JSONS = FTB_MODPACKS_API + "/public/helpers/versions/minecraftjsons/";
     
     //Other

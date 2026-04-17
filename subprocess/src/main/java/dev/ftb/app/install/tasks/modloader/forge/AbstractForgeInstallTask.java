@@ -81,7 +81,7 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
         //       I dislike that we have to download this file in a call path that just evaluates
         //       what needs to be done for an installation.
         DownloadTask task = builder()
-                .url(appendIfMissing(Constants.CH_MAVEN, notation.toPath()))
+                .url(appendIfMissing("https://maven.minecraftforge.net/", notation.toPath()))
                 .dest(notation.toPath(AppMain.paths().mcLibrariesDir()))
                 .withValidation(DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true))
                 .tryCompanionHashes()
@@ -103,7 +103,7 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
 
         // TODO, this is a common path with above.
         DownloadTask task = builder()
-                .url(appendIfMissing(Constants.CH_MAVEN, notation.toPath()))
+                .url(appendIfMissing("https://maven.neoforged.net/releases/", notation.toPath()))
                 .dest(notation.toPath(AppMain.paths().mcLibrariesDir()))
                 .withValidation(DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true))
                 .tryCompanionHashes()
@@ -193,7 +193,7 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
     
     private static Promotions loadPromotions() {
         var request = new Request.Builder()
-            .url("https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json")
+            .url("https://maven.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json")
             .get()
             .build();
         
@@ -272,7 +272,7 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
 
         return buf.toString();
     }
-
+    
     protected record PackedJarLocator(Path localPath) implements LocalFileLocator {
 
         @Override

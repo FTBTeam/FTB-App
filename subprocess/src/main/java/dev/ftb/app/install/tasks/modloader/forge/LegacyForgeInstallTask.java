@@ -49,7 +49,7 @@ public class LegacyForgeInstallTask extends AbstractForgeInstallTask {
 
         MavenNotation universal = getForgeNotation(mcVersion, forgeVersion);
         DownloadTask dlForge = DownloadTask.builder()
-                .url(appendIfMissing(Constants.CH_MAVEN, "/") + universal.toPath())
+                .url(appendIfMissing("https://maven.minecraftforge.net", "/") + universal.toPath())
                 .dest(instMods.resolve(versionName + ".jar"))
                 .build();
         if (!dlForge.isRedundant()) {

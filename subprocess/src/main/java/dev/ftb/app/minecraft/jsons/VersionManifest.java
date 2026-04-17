@@ -33,9 +33,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static dev.ftb.app.Constants.CH_MAVEN;
 import static java.util.Objects.requireNonNull;
-import static org.apache.commons.lang3.StringUtils.removeStart;
 
 /**
  * Version manifest for a given game version.
@@ -335,7 +333,7 @@ public class VersionManifest {
 
                     MavenNotation nativeNotation = name.withClassifier(classifier);
                     return DownloadTask.builder()
-                            .url(CH_MAVEN + nativeNotation.toPath())
+                            .url((url != null ? url : "https://libraries.minecraft.net/") + nativeNotation.toPath())
                             .dest(nativeNotation.toPath(librariesDir))
                             .build();
                 }
@@ -349,10 +347,8 @@ public class VersionManifest {
 
             // If we have a URL or no downloads, just do this.
             if (url != null || downloads == null) {
-                // The Vanilla launcher will explicitly use the 'url' property if it exists, however we override this to the CH maven.
-                // If the 'downloads' property is null, it tries from Mojang's maven directly, however we override this to the CH maven.
                 return DownloadTask.builder()
-                        .url(CH_MAVEN + name.toPath())
+                        .url((url != null ? url : "https://libraries.minecraft.net/") + name.toPath())
                         .dest(name.toPath(librariesDir))
                         .build();
             }
@@ -376,21 +372,9 @@ public class VersionManifest {
             if (artifact.sha1 != null) {
                 validation = validation.withHash(Hashing.sha1(), artifact.sha1);
             }
-
-            // Dumb hack for Forge/Mojang as Mojang doesnt support classifiers in maven coords.
-            String url = artifact.url;
-            int startIdx = url.indexOf(name.toModulePath());
-            if (startIdx != -1) {
-                url = CH_MAVEN + removeStart(url.substring(startIdx), "/");
-            }
-            if (url.isEmpty()) {
-                url = CH_MAVEN + removeStart(artifact.path, "/");
-            }
-
-            // Build the URL ourselves to use the CH maven instead of the provided 'url' attribute
+            
             return DownloadTask.builder()
-                    .url(url) // Prefer the ch mirror but fallback to the provided url.
-                    .withMirror(artifact.url)
+                    .url(artifact.url)
                     .dest(librariesDir.resolve(artifact.path))
                     .withValidation(validation)
                     .build();
