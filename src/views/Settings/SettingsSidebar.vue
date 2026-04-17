@@ -17,7 +17,7 @@ const configData = appPlatform.config;
 </script>
 
 <template>
-  <div class="settings-sidebar">
+  <div class="settings-sidebar dark:bg-dark-bg-gray-lighter">
     <router-link to="/" class="back">
       <FontAwesomeIcon :icon="faArrowLeft" class="mr-2" />
       Back to app
@@ -90,7 +90,6 @@ const configData = appPlatform.config;
 @import 'tailwindcss/theme' theme(reference);
 
 .settings-sidebar {
-  background-color: var(--color-background);
   width: 220px;
   padding: 1rem;
   display: flex;

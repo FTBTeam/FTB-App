@@ -27,7 +27,7 @@
     "build-storybook": "storybook build"
   },
   "engines": {
-    "node": "^22"
+    "node": "^24"
   },
   "dependencies": {
     "@floating-ui/vue": "^1.1.7",
@@ -51,11 +51,11 @@
   "devDependencies": {
     "@chromatic-com/storybook": "^3",
     "@electron/notarize": "^2.3.0",
-    "@fortawesome/fontawesome-svg-core": "^6.1.1",
-    "@fortawesome/free-brands-svg-icons": "^6.1.1",
-    "@fortawesome/free-regular-svg-icons": "^6.1.1",
-    "@fortawesome/free-solid-svg-icons": "^6.1.1",
-    "@fortawesome/vue-fontawesome": "^3.0.8",
+    "@fortawesome/fontawesome-svg-core": "^7.2.0",
+    "@fortawesome/free-brands-svg-icons": "^7.2.0",
+    "@fortawesome/free-regular-svg-icons": "^7.2.0",
+    "@fortawesome/free-solid-svg-icons": "^7.2.0",
+    "@fortawesome/vue-fontawesome": "^3.2.0",
     "@overwolf/ow-cli": "0.1.2",
     "@overwolf/ow-electron": "^39.6.1",
     "@overwolf/ow-electron-builder": "^26.0.12",
@@ -68,7 +68,7 @@
     "@storybook/test": "^8.6.12",
     "@storybook/vue3": "^8.6.12",
     "@storybook/vue3-vite": "^8.6.12",
-    "@tailwindcss/vite": "^4.1.7",
+    "@tailwindcss/vite": "^4.2.2",
     "@types/adm-zip": "^0.5.5",
     "@types/jest": "^29.4.0",
     "@types/node": "^22.13.10",
@@ -86,7 +86,7 @@
     "playwright": "^1.51.1",
     "sass": "^1.85.1",
     "storybook": "^8.6.12",
-    "tailwindcss": "^4.1.7",
+    "tailwindcss": "^4.2.2",
     "typescript": "^5.8.2",
     "vite": "^6.4.1",
     "vite-plugin-electron": "^0.29.0",

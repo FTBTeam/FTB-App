@@ -239,7 +239,7 @@ async function createWindow() {
     width: 1545,
     height: 900,
     frame: false,
-    backgroundColor: '#2a2a2a',
+    // backgroundColor: '#2a2a2a',
     ...(startInFullscreen ? {
       fullscreen: true,
     } : {})

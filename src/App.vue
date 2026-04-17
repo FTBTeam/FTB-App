@@ -180,7 +180,7 @@ const showSidebar = computed(() => !router.currentRoute.value.path.startsWith('/
 </script>
 
 <template>
-  <div id="app" class="theme-dark" :class="{'macos': isMac}">
+  <div id="root" class="dark dark:bg-dark-bg-gray dark:text-white" :class="{'macos': isMac}">
     <title-bar />
     <div class="app-container">
       <main class="main">

@@ -1,4 +1,10 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+    --color-dark-bg-gray: #2A2A2A;
+    --color-dark-bg-gray-lighter: #313131;
+}
 
 :root {
     --color-navbar: #313131;

@@ -22,7 +22,6 @@ import SettingsSidebar from '@/views/Settings/SettingsSidebar.vue';
     padding: 1.5rem;
     height: 100%;
     overflow-y: auto;
-    background-color: var(--color-navbar);
   }
 }
 </style>

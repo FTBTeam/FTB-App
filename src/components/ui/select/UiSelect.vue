@@ -92,7 +92,7 @@ watch(() => middlewareData.value.hide?.referenceHidden, (hidden) => {
       </template>
     </AbstractInput>
 
-    <Teleport to="body">
+    <Teleport to="#root">
       <transition name="transition-fade">
         <div v-if="open && !disabled"
              class="z-[100000] select-options-drop font-semibold bg-[#2a2a2a] max-h-[300px] overflow-auto p-2 w-fit border border-white/30 rounded-lg"
@@ -105,7 +105,7 @@ watch(() => middlewareData.value.hide?.referenceHidden, (hidden) => {
           <div v-for="option in options" :key="option.key" @click="() => {
             value = option.key
             open = false;
-          }" class="cursor-pointer">
+          }" class="cursor-pointer dark:text-white">
             <slot v-if="$slots.option" name="option" :is-item="true" :clazz="`p-2 hover:bg-white/10 rounded-lg cursor-pointer`" :option="option"></slot>
             <div v-else class="p-2 hover:bg-white/10 rounded-lg cursor-pointer">
               {{ option.value }}

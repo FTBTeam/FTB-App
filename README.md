@@ -28,7 +28,7 @@ If you have any issues with the FTB App, please open an issue on our [GitHub](ht
 
 ## Development
 
-The FTB App is built using Electron and Vue(2) and is written in TypeScript, styled with Scss and TailwindCSS. We also have a Java backend that uses websockets to communicate with the frontend.
+The FTB App is built using Electron and Vue(3) and is written in TypeScript, styled with Scss and TailwindCSS. We also have a Java backend that uses websockets to communicate with the frontend.
 
 ### Prerequisites
 

@@ -102,7 +102,6 @@ function selectResolution(value: ResolutionValue) {
       placeholder="/usr/local/application-wrapper"
       @blur="saveMutated"
       fill
-      hint="These arguments will be inserted before java is run, see the example below. It's recommended to not change these unless you know what you are doing."
     />
 
     <ui-toggle
