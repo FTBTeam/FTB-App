@@ -1,5 +1,6 @@
 import { Action, ActionContext, ActionType } from '../protocolActions';
 import {useGlobalStore} from "@/store/globalStore.ts";
+import {typeIdToProvider} from "@/utils/helpers/packHelpers.ts";
 
 export class ModpackInstallAction implements Action {
   namespace: ActionType = 'modpack';
@@ -25,6 +26,6 @@ export class ModpackInstallAction implements Action {
     }
 
     const globalStore = useGlobalStore();
-    globalStore.openModpackPreview(Number(packId), type === '0' ? 'modpacksch' : 'curseforge');
+    globalStore.openModpackPreview(Number(packId), typeIdToProvider(parseInt(type, 10)));
   }
 }

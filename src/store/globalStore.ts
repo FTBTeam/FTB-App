@@ -1,11 +1,11 @@
 import { defineStore } from 'pinia';
-import {ImagePreview, PackProviders} from "@/core/types/appTypes.ts";
+import {ImagePreview, PackProvider} from "@/core/types/appTypes.ts";
 
 type GlobalStore = {
   createInstanceVisible: boolean;
   imagePreview: ImagePreview | null;
   modpackPreview: {
-    provider: PackProviders,
+    provider: PackProvider,
     id: number;
   } | null;
 }
@@ -29,7 +29,7 @@ export const useGlobalStore = defineStore("global", {
     closeImagePreview() {
       this.imagePreview = null;
     },
-    openModpackPreview(id: number, provider: PackProviders) {
+    openModpackPreview(id: number, provider: PackProvider) {
       this.modpackPreview = { provider, id };
     },
     closeModpackPreview() {

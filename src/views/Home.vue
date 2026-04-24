@@ -10,7 +10,7 @@
     
     <div class="featured-packs">
       <h2 class="text-2xl font-bold text-white mb-4">Featured packs</h2>
-      <PackPreview v-if="modpackStore.featuredPackIds.length" v-for="packId in modpackStore.featuredPackIds" :key="packId" :packId="packId" provider="modpacksch" />
+      <PackPreview v-if="modpackStore.featuredPackIds.length" v-for="packId in modpackStore.featuredPackIds" :key="packId" :packId="packId" provider="ftb" />
       <Message type="warning" v-if="!modpackStore.featuredPackIds.length && !loadingFeatured">
         <p>No featured packs available at the moment</p>
       </Message>

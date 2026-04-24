@@ -76,7 +76,7 @@ async function loadAvailableLoaders(mcVersion: string) {
   const foundLoadersForVersion = {} as Record<string, ModLoaderWithPackId[]>;
 
   for (const loader of knownLoaders) {
-    const request = await JavaFetch.modpacksCh(`loaders/${mcVersion}/${loader}`).execute()
+    const request = await JavaFetch.modpacksApi(`loaders/${mcVersion}/${loader}`).execute()
     if (request?.status !== "success") {
       logger.log(`Failed to fetch loaders for ${loader}`)
       continue;

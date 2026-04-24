@@ -8,18 +8,18 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { computed, onMounted, ref } from 'vue';
 import { useFetchingPack } from '@/components/groups/modpack/useFetchingPack.ts';
 import { useInstallStore } from '@/store/installStore.ts';
-import { PackProviders } from '@/core/types/appTypes.ts';
+import {PackProvider} from '@/core/types/appTypes.ts';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import {useGlobalStore} from "@/store/globalStore.ts";
 
 const {
   packId,
   partialPack,
-  provider = "modpacksch"
+  provider = "ftb"
 } = defineProps<{
   packId?: number;
   partialPack?: SearchResultPack;
-  provider?: PackProviders;
+  provider?: PackProvider;
 }>()
 
 const showInstall = ref(false);
@@ -83,13 +83,13 @@ const isInstalling = computed(() => {
 
 <template>
   <div class="pack-preview-container">
-    <div class="pack-preview" v-if="packData" @click="() => globalStore.openModpackPreview(packData?.id ?? 0, packData?.platform ?? 'modpacksch')">
+    <div class="pack-preview" v-if="packData" @click="() => globalStore.openModpackPreview(packData?.id ?? 0, packData?.platform ?? 'ftb')">
       <div class="splash-art" v-if="artwork" :style="{ backgroundImage: `url(${artwork})` }" />
       <div class="logo">
         <img :src="logo" :alt="`Pack art for ${packData.name}`" />
       </div>
       <div class="pack-main">
-        <div class="name">{{ packData.name }} <span v-if="packData.authors.length">by</span> {{ provider === "modpacksch" && packTags.findIndex(e => e.name.toLowerCase() === "ftb") !== -1 ? "FTB Team" : packData.authors.map((e) => e.name).join(', ') }}</div>
+        <div class="name">{{ packData.name }} <span v-if="packData.authors.length">by</span> {{ provider === "ftb" && packTags.findIndex(e => e.name.toLowerCase() === "ftb") !== -1 ? "FTB Team" : packData.authors.map((e) => e.name).join(', ') }}</div>
         <div class="desc max-2-lines" :title="stringOrDefault(packData.synopsis, '')">
           {{ packData.synopsis }}
         </div>

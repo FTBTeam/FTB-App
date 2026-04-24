@@ -1,7 +1,7 @@
 import { ref } from 'vue';
 import { useModpackStore } from '@/store/modpackStore.ts';
 import { toggleBeforeAndAfter } from '@/utils/helpers/asyncHelpers.ts';
-import { ModPack, PackProviders } from '@/core/types/appTypes.ts';
+import {PackProvider, ModPack} from '@/core/types/appTypes.ts';
 
 export function useFetchingPack() {
   const apiModpack = ref<ModPack | null>(null);
@@ -9,7 +9,7 @@ export function useFetchingPack() {
   
   const modpackStore = useModpackStore();
   
-  async function fetchModpack(packId: number, provider: PackProviders = "modpacksch") {
+  async function fetchModpack(packId: number, provider: PackProvider = "ftb") {
     if (packId === -1) {
       return;
     }

@@ -13,7 +13,7 @@ import {alertController} from '@/core/controllers/alertController';
 import appPlatform from '@platform';
 import {createLogger} from '@/core/logger';
 import { useInstallStore } from '@/store/installStore.ts';
-import { PackProviders, Versions } from '@/core/types/appTypes.ts';
+import {PackProvider, Versions} from '@/core/types/appTypes.ts';
 import { useInstanceStore } from '@/store/instancesStore.ts';
 import { EmitEvents } from '@/store/appStore.ts';
 import { Emitter } from 'mitt';
@@ -29,7 +29,7 @@ export type InstallRequest = {
   updatingInstanceUuid?: string;
   importFrom?: string;
   categoryId?: string;
-  provider?: PackProviders;
+  provider?: PackProvider;
   private: boolean;
   ourOwn?: boolean;
   mcVersion?: string;
@@ -113,7 +113,7 @@ export class InstanceInstallController {
     alertController.info(`${request.name} queued for installation`);
   }
 
-  public async requestUpdate(instance: SugaredInstanceJson | InstanceJson, version: Versions | string | number, provider: PackProviders = 'modpacksch') {
+  public async requestUpdate(instance: SugaredInstanceJson | InstanceJson, version: Versions | string | number, provider: PackProvider = 'ftb') {
     this.logger.debug('Update requested', instance, version, provider);
 
     this.queue.push({
@@ -144,7 +144,7 @@ export class InstanceInstallController {
       logo: null,
       categoryId: categoryId,
       private: false,
-      provider: 'modpacksch',
+      provider: 'ftb',
       importFrom: path,
     });
 
@@ -249,7 +249,7 @@ export class InstanceInstallController {
         id: parseInt(request.id as string, 10),
         version: parseInt(request.version as string, 10),
         _private: request.private,
-        packType: !request.provider ? 0 : (request.provider === 'modpacksch' ? 0 : 1),
+        packType: !request.provider ? 0 : (request.provider === 'ftb' ? 0 : 1),
         importFrom: null,
         name: request.name,
         artPath: request.logo,

@@ -4,7 +4,7 @@
   import {computed, onMounted, ref, watch} from "vue";
   import {useModpackStore} from "@/store/modpackStore.ts";
   import {Loader} from "@/components/ui";
-  import {resolveArtwork} from "@/utils/helpers/packHelpers.ts";
+  import {resolveArtwork, sourceProviderToProvider} from "@/utils/helpers/packHelpers.ts";
   import Stat from "@/components/groups/global/modpackPreview/Stat.vue";
   import dayjs from "dayjs";
   import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
@@ -117,5 +117,5 @@
   <modpack-install-modal @close="(v) => {
     showInstallModal = false;
     if (v) globalStore.closeModpackPreview();
-  }" v-if="modpack" :open="showInstallModal" :pack-id="modpack.id" :provider="modpack.provider === 'modpacks.ch' ? 'modpacksch' : 'curseforge'" />
+  }" v-if="modpack" :open="showInstallModal" :pack-id="modpack.id" :provider="sourceProviderToProvider(modpack.provider)" />
 </template>

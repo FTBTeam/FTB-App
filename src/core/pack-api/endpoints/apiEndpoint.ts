@@ -32,10 +32,10 @@ export class ApiEndpoint {
   }
   
   public async fetchPublic<T>(method: HttpMethod, endpoint: string, baseEndpointOverride?: string) {
-    return this.fetch<T>(method, JavaFetch.modpacksCh, endpoint, baseEndpointOverride);
+    return this.fetch<T>(method, JavaFetch.modpacksApi, endpoint, baseEndpointOverride);
   }
   
   public async fetchPrivate<T>(method: HttpMethod, endpoint: string, baseEndpointOverride?: string) {
-    return this.fetch<T>(method, JavaFetch.modpacksChPrivate, endpoint, baseEndpointOverride);
+    return this.fetch<T>(method, JavaFetch.modpacksApiPrivate, endpoint, baseEndpointOverride);
   }
 }

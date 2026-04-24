@@ -286,7 +286,7 @@ watch(groupBy, onSortChange)
         <div class="featured-packs pb-6">
           <template v-if="!loadingFeatured && modpackStore.featuredPackIds.length">
             <h2 class="text-xl font-bold mb-3">Recommended Modpacks</h2>
-            <pack-preview v-for="packId in modpackStore.featuredPackIds" :key="packId" :packId="packId" provider="modpacksch" />
+            <pack-preview v-for="packId in modpackStore.featuredPackIds" :key="packId" :packId="packId" provider="ftb" />
           </template>
           <loader v-else-if="loadingFeatured" />
         </div>

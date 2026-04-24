@@ -84,11 +84,11 @@ export class JavaFetch {
   }
   
   //#region helper methods
-  public static modpacksCh(endpoint: string) {
+  public static modpacksApi(endpoint: string) {
     return JavaFetch.create(constants.modpacksApi + "/" + endpoint)
   }
   
-  public static modpacksChPrivate(endpoint: string) {
+  public static modpacksApiPrivate(endpoint: string) {
     const javaFetch = JavaFetch.create(constants.modpacksApi + "/" + endpoint);
     // Inject the authoization header
     const accountStore = useAccountsStore();

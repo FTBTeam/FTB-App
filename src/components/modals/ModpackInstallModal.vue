@@ -5,7 +5,7 @@ import {ModalBody, Modal, UiToggle, ModalFooter, UiButton, Input} from '@/compon
 import { watch, ref, computed } from 'vue';
 import CategorySelector from '@/components/groups/modpack/create/CategorySelector.vue';
 import { useModpackStore } from '@/store/modpackStore.ts';
-import { ModPack, PackProviders } from '@/core/types/appTypes.ts';
+import {PackProvider, ModPack} from '@/core/types/appTypes.ts';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { useAppStore } from '@/store/appStore.ts';
 import {defaultInstanceCategory} from "@/core/constants.ts";
@@ -18,11 +18,11 @@ const appStore = useAppStore();
 const {
   open,
   packId,
-  provider = "modpacksch",
+  provider = "ftb",
 } = defineProps<{
   open: boolean;
   packId: number;
-  provider: PackProviders;
+  provider: PackProvider;
 }>()
 
 const apiModpack = ref<ModPack | null>(null);

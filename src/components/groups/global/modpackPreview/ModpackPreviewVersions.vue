@@ -8,6 +8,7 @@ import {marked} from "marked";
 import {alertController} from "@/core/controllers/alertController.ts";
 import {UiSelectOption} from "@/components/ui/select/UiSelect.ts";
 import UiSelect from "@/components/ui/select/UiSelect.vue";
+import {sourceProviderToProvider} from "@/utils/helpers/packHelpers.ts";
 
 const {
   modpack
@@ -59,7 +60,7 @@ function selectAndLoad(id?: number | string | null) {
   }
   
   loading.value = true;
-  modpackApi.modpacks.getChangelog(modpack.id, resolvedVersion.id, modpack.provider === "modpacks.ch" ? "modpacksch" : "curseforge")
+  modpackApi.modpacks.getChangelog(modpack.id, resolvedVersion.id, sourceProviderToProvider(modpack.provider))
     .then(async data => changelogData.value = await marked.parse(data?.content ?? ""))
     .catch(e => alertController.error("Failed to load changelog", e))
     .finally(() => loading.value = false)

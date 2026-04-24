@@ -102,7 +102,7 @@ async function loadInitialState() {
     fullScreen: appSettingsStore.rootSettings?.instanceDefaults.fullscreen ?? false
   };
   
-  vanillaPack.value = await toggleBeforeAndAfter(() => modpackStore.getModpack(81, "modpacksch") ?? null, state => loadingVanilla.value = state);
+  vanillaPack.value = await toggleBeforeAndAfter(() => modpackStore.getModpack(81, "ftb") ?? null, state => loadingVanilla.value = state);
 
   if (!vanillaPack) {
     alertController.error("Failed to load Minecraft versions")

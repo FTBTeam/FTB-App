@@ -1,4 +1,4 @@
-import {Art, Authors, ModPackTag, PackProviders} from '@/core/types/appTypes.ts';
+import {Art, Authors, PackProvider, ModPackTag} from '@/core/types/appTypes.ts';
 
 export interface ListPackSearchResults {
   packs: SearchResultPack[];
@@ -13,7 +13,7 @@ export interface NoPackSearchResults {
 }
 
 export interface SearchResultPack {
-  platform: PackProviders;
+  platform: PackProvider;
   name: string;
   art: Art[];
   authors: Authors[];

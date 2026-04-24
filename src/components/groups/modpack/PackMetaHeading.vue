@@ -4,14 +4,14 @@ import {getColorForReleaseType} from '@/utils/colors';
 import {InstanceJson, SugaredInstanceJson} from '@/core/types/javaApi';
 import {resolveModloader, sourceProviderToProvider, typeIdToProvider} from '@/utils/helpers/packHelpers';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { ModPack, PackProviders } from '@/core/types/appTypes.ts';
+import {PackProvider, ModPack} from '@/core/types/appTypes.ts';
 import { packBlacklist } from '@/store/modpackStore.ts';
 import { faChevronLeft } from '@fortawesome/free-solid-svg-icons';
 
 type PackInfo = {
   id: number;
   modloader: string;
-  provider: PackProviders;
+  provider: PackProvider;
   isImport: boolean;
   source: 'remote' | 'local';
 }
@@ -91,16 +91,16 @@ const curseforgeWebsite = computed(() => apiPack?.links?.find(e => e.type === 'w
     <div class="meta" v-if="packInfo && !isVanilla">
       <div
         class="origin icon ftb"
-        v-if="!packInfo.isImport && packInfo.provider === 'modpacksch' && !isLoader"
+        v-if="!packInfo.isImport && packInfo.provider === 'ftb' && !isLoader"
         data-balloon-pos="left"
         aria-label="FTB Modpack"
       >
         <img src="../../../assets/images/ftb-logo.svg" alt="" />
       </div>
-      <a class="origin icon !cursor-pointer" v-else-if="packInfo.provider !== 'modpacksch' && curseforgeWebsite" data-balloon-pos="left" aria-label="Curseforge Modpack" target="_blank" :href="curseforgeWebsite">
+      <a class="origin icon !cursor-pointer" v-else-if="packInfo.provider !== 'ftb' && curseforgeWebsite" data-balloon-pos="left" aria-label="Curseforge Modpack" target="_blank" :href="curseforgeWebsite">
         <img src="../../../assets/curse-logo.svg" alt="" />
       </a>
-      <div class="origin icon" v-else-if="packInfo.provider !== 'modpacksch' && !curseforgeWebsite" data-balloon-pos="left" aria-label="Curseforge Modpack">
+      <div class="origin icon" v-else-if="packInfo.provider !== 'ftb' && !curseforgeWebsite" data-balloon-pos="left" aria-label="Curseforge Modpack">
         <img src="../../../assets/curse-logo.svg" alt="" />
       </div>
       <div class="modloader icon" v-if="packInfo.modloader === 'neoforge'" data-balloon-pos="left" aria-label="NeoForge Modloader">

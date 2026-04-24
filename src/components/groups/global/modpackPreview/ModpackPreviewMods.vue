@@ -62,7 +62,7 @@ async function loadMods(modpack: ModPack) {
     return;
   }
   
-  const localVersion = await modpackStore.getVersion(modpack.id, latestVersion.id, modpack.provider === "curseforge" ? "curseforge" : "modpacksch");
+  const localVersion = await modpackStore.getVersion(modpack.id, latestVersion.id, modpack.provider === "curseforge" ? "curseforge" : "ftb");
   if (!localVersion) {
     alertController.error("No version found");
     return;
@@ -70,7 +70,7 @@ async function loadMods(modpack: ModPack) {
   
   version.value = localVersion;
   try {
-    const req = await modpackApi.modpacks.getMods(modpack.id, latestVersion.id, modpack.provider === "curseforge" ? "curseforge" : "modpacksch");
+    const req = await modpackApi.modpacks.getMods(modpack.id, latestVersion.id, modpack.provider === "curseforge" ? "curseforge" : "ftb");
     if (req?.status === "success") {
       mods.value = req.mods;
     }
