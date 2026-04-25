@@ -11,8 +11,8 @@ import {faBolt, faDownload, faSpinner} from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import {alertController} from "@/core/controllers/alertController.ts";
 import {UiSelectOption} from "@/components/ui/select/UiSelect.ts";
-import UiSelect from "@/components/ui/select/UiSelect.vue";
 import {toTitleCase} from "@/utils/helpers/stringHelpers.ts";
+import UiSelectSingle from "@/components/ui/select/UiSelectSingle.vue";
 
 type InstallProgress = {
   percentage: number;
@@ -188,7 +188,7 @@ const modLink = computed(() => {
        </div>
        
        <div class="py-4" v-if="!installing">
-         <UiSelect :options="options" v-model="selectedVersion" label="Mod version">
+         <UiSelectSingle :options="options" v-model="selectedVersion" label="Mod version">
            <template #option="{ option, clazz }">
              <div class="flex items-center gap-4" :class="clazz">
                <UiBadge class="!font-bold text-shadow" :style="{ backgroundColor: `${getColorForReleaseType(option.releaseType)}` }">{{ toTitleCase(option.releaseType) }}</UiBadge>
@@ -199,7 +199,7 @@ const modLink = computed(() => {
                </div>
              </div>
            </template>
-         </UiSelect>
+         </UiSelectSingle>
        </div>
 
        <div v-if="!installing" class="pt-8">

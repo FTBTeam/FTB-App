@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import UiSelect from "@/components/ui/select/UiSelect.vue";
 import {InputNumber, UiToggle} from "@/components/ui";
 import {computed, onMounted, ref} from "vue";
 import {UiSelectOption} from "@/components/ui/select/UiSelect.ts";
@@ -7,6 +6,7 @@ import {computeAspectRatio} from "@/utils";
 import {faTv} from "@fortawesome/free-solid-svg-icons";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 import platform from '@platform';
+import UiSelectSingle from "@/components/ui/select/UiSelectSingle.vue";
 
 export type ResolutionValue = {
   fullScreen: boolean;
@@ -93,14 +93,14 @@ const resolutionId = computed(() => {
         <InputNumber input-class="w-[100px]" input label="Width" v-model="model.width" @blur="emit('update', model)" @update:model-value="emit('update', model)" />
         <InputNumber input-class="w-[100px]" label="Height" v-model="model.height" @blur="emit('update', model)" @update:model-value="emit('update', model)" />
 
-        <UiSelect placement="bottom-end" class="ml-auto" label="Presets" placeholder="Select a preset" :options="resolutionList" v-model="resolutionId" @update:model-value="selectResolution">
+        <UiSelectSingle placement="bottom-end" class="ml-auto" label="Presets" placeholder="Select a preset" :options="resolutionList" v-model="resolutionId" @update:model-value="selectResolution">
           <template #option="{ option, clazz, isItem }">
             <div :class="clazz" class="flex justify-between items-center">
               <span :class="{'inline-block mr-6 text-white': !isItem}">{{ option.value }}</span>
               <span class="text-muted">{{ option.aspect }}</span>
             </div>
           </template>
-        </UiSelect>
+        </UiSelectSingle>
       </div>
 
       <ui-toggle

@@ -11,7 +11,7 @@ import {faQuestion, faSearch} from "@fortawesome/free-solid-svg-icons";
 import {prettyByteFormat} from "@/utils";
 import {useGlobalStore} from "@/store/globalStore.ts";
 import {BasicUiSelectOption} from "@/components/ui/select/UiSelect.ts";
-import UiSelect from "@/components/ui/select/UiSelect.vue";
+import UiSelectSingle from "@/components/ui/select/UiSelectSingle.vue";
 
 const {
   modpack
@@ -146,9 +146,9 @@ const orderOptions: BasicUiSelectOption[] = [
         <Input :icon="faSearch" fill v-model="search" placeholder="Search..." />
       </div>
       <div class="flex gap-2">
-        <UiSelect placement="bottom-end" :options="viewOptions" v-model="viewMode" placeholder="List" />
-        <UiSelect placement="bottom-end" :options="sortOptions" v-model="sortBy" placeholder="Sort" />
-        <UiSelect placement="bottom-end" :options="orderOptions" v-model="orderBy" placeholder="Order" />
+        <UiSelectSingle placement="bottom-end" :options="viewOptions" v-model="viewMode" placeholder="List" />
+        <UiSelectSingle placement="bottom-end" :options="sortOptions" v-model="sortBy" placeholder="Sort" />
+        <UiSelectSingle placement="bottom-end" :options="orderOptions" v-model="orderBy" placeholder="Order" />
       </div>
     </div>
 

@@ -26,8 +26,8 @@ import {faCheckSquare} from "@fortawesome/free-regular-svg-icons";
 import {defaultInstanceCategory} from "@/core/constants.ts";
 import {UiSelectOption} from "@/components/ui/select/UiSelect.ts";
 import {IconDefinition} from "@fortawesome/free-brands-svg-icons";
-import UiSelect from "@/components/ui/select/UiSelect.vue";
 import {RouterNames} from "@/router";
+import UiSelectSingle from "@/components/ui/select/UiSelectSingle.vue";
 
 const groupOptions = [
   ['Category', 'category'],
@@ -211,22 +211,22 @@ watch(groupBy, onSortChange)
       <header class="text-lg flex gap-4 mb-6 items-center">
         <Input label="Search" :icon="faSearch" fill v-model="searchTerm" placeholder="Search" class="flex-1" />
         
-        <UiSelect label="Group by" v-if="Object.keys(groupedPacks).length > 1" v-model="groupBy" :options="groupByOptions" :icon="faFolder" placement="bottom-end" :min-width="300">
+        <UiSelectSingle label="Group by" v-if="Object.keys(groupedPacks).length > 1" v-model="groupBy" :options="groupByOptions" :icon="faFolder" placement="bottom-end" :min-width="300">
           <template #option="{ option, clazz }">
             <div class="flex items-center gap-2" :class="clazz">
               <FontAwesomeIcon :icon="option.icon" />
               <span>{{ option.value }}</span>
             </div>
           </template>
-        </UiSelect>
-        <UiSelect label="Sort by" v-model="sortBy" :options="sortByOptions" :icon="faSort" placement="bottom-end" :min-width="300">
+        </UiSelectSingle>
+        <UiSelectSingle label="Sort by" v-model="sortBy" :options="sortByOptions" :icon="faSort" placement="bottom-end" :min-width="300">
           <template #option="{ option, clazz }">
             <div class="flex items-center gap-2" :class="clazz">
               <FontAwesomeIcon :icon="option.icon" />
               <span>{{ option.value }}</span>
             </div>
           </template>
-        </UiSelect>
+        </UiSelectSingle>
       </header>
       
       <div class="categories">

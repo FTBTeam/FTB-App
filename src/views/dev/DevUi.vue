@@ -3,8 +3,8 @@
   import {onMounted, ref} from "vue";
   import {Input, Loader, Message, ProgressBar, UiBadge, UiToggle} from "@/components/ui";
   import {faSearch} from "@fortawesome/free-solid-svg-icons";
-  import UiSelect from "@/components/ui/select/UiSelect.vue";
   import Modal from "@/components/ui/modal/Modal.vue";
+  import UiSelectSingle from "@/components/ui/select/UiSelectSingle.vue";
   
   const testInput = ref("Test input")
   const testToggle = ref(false);
@@ -94,7 +94,7 @@
     <UiButton @click="selectModalOpen = true">Show modal with select</UiButton>
     <Modal :open="selectModalOpen" @closed="selectModalOpen = false" title="Select Modal" subTitle="This is a modal with a select component">
       <div class="pb-[400px]"></div>
-      <UiSelect :options="options" />
+      <UiSelectSingle :options="options" />
       <div class="pb-[400px]"></div>
       <template #footer>
         <div class="flex gap-4 justify-end">
@@ -105,13 +105,13 @@
   </div>
   
   <div class="mb-8">
-    <UiSelect :options="options">      
+    <UiSelectSingle :options="options">      
       <template #option="{ option }">
         <div class="p-2 hover:bg-white/10 transition-colors duration-200">
           {{ option.value }}
         </div>
       </template>
-    </UiSelect>
+    </UiSelectSingle>
   </div>
 
   <p class="font-bold uppercase mb-4 text-white/80">Badges</p>

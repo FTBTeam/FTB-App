@@ -7,8 +7,9 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { toTitleCase } from '@/utils/helpers/stringHelpers.ts';
 import { faExclamation, faInfo } from '@fortawesome/free-solid-svg-icons';
 import { createLogger } from '@/core/logger.ts';
-import UiSelect from "@/components/ui/select/UiSelect.vue";
 import {BasicUiSelectOption} from "@/components/ui/select/UiSelect.ts";
+import {supportedLoaders} from "@/core/constants.ts";
+import UiSelectSingle from "@/components/ui/select/UiSelectSingle.vue";
 
 const logger = createLogger("ModloaderSelect.vue")
 
@@ -72,7 +73,7 @@ async function loadLoaders() {
 }
 
 async function loadAvailableLoaders(mcVersion: string) {
-  const knownLoaders = ["neoforge", "forge", "fabric"];
+  const knownLoaders = supportedLoaders.map(e => e.key);
   const foundLoadersForVersion = {} as Record<string, ModLoaderWithPackId[]>;
 
   for (const loader of knownLoaders) {
@@ -145,7 +146,7 @@ const hasAvailableLoaders = computed(() => Object.keys(availableLoaders.value).l
 
      <UiToggle v-if="provideLatestOption && userLoaderProvider !== ''" class="mb-4" label="Use latest Mod Loader version (recommended)" desc="The latest version of each modloader is typically the most stable version" v-model="userUseLatestLoader" />
      
-     <UiSelect :options="loaderVersions" 
+     <UiSelectSingle :options="loaderVersions" 
                :disabled="userLoaderProvider === '' || loaderVersions.length === 0 || (provideLatestOption && userUseLatestLoader)" 
                label="Version"
                class="mb-4"

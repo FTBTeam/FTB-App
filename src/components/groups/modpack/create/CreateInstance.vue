@@ -20,11 +20,11 @@ import { useAppSettings } from '@/store/appSettingsStore.ts';
 import { faArrowLeft, faArrowRight, faBoxes, faInfo, faPuzzlePiece } from '@fortawesome/free-solid-svg-icons';
 import { useAppStore } from '@/store/appStore.ts';
 import ArtworkSelector from "@/components/groups/modpack/components/ArtworkSelector.vue";
-import UiSelect from "@/components/ui/select/UiSelect.vue";
 import {UiSelectOption} from "@/components/ui/select/UiSelect.ts";
 import dayjs, {Dayjs} from "dayjs";
 import {defaultInstanceCategory} from "@/core/constants.ts";
 import ResolutionSelector from "@/components/groups/modpack/components/ResolutionSelector.vue";
+import UiSelectSingle from "@/components/ui/select/UiSelectSingle.vue";
 
 const appStore = useAppStore();
 const appSettingsStore = useAppSettings();
@@ -235,7 +235,7 @@ const vanillaVersions = computed<UiSelectOption<{ type: string, date: Dayjs }>[]
           <ArtworkSelector class="mb-6" v-model="userSelectedArtwork" />
           <Input fill label="Name" placeholder="Next best instance!" v-model="userPackName" class="mb-4" />
           
-          <UiSelect :options="vanillaVersions" class="mb-4" label="Minecraft version" v-model="userVanillaVersion" :min-width="320">
+          <UiSelectSingle :options="vanillaVersions" class="mb-4" label="Minecraft version" v-model="userVanillaVersion" :min-width="320">
             <template #option="{ option, clazz }">
               <div :class="clazz" class="flex justify-between items-center gap-4">
                 <div class="flex-1">{{ option.value }}</div>
@@ -243,7 +243,7 @@ const vanillaVersions = computed<UiSelectOption<{ type: string, date: Dayjs }>[]
                 <UiBadge class="font-bold text-shadow" :style="{backgroundColor: getColorForReleaseType(option.type)}">{{ toTitleCase(option.type) }}</UiBadge>
               </div>
             </template>
-          </UiSelect>
+          </UiSelectSingle>
           
           <UiToggle class="mb-4" label="Show snapshots" desc="Snapshot versions of Minecraft are typically unstable and no longer maintained" v-model="showVanillaSnapshots" />
           
