@@ -368,10 +368,7 @@ const gotTheLock = app.requestSingleInstanceLock();
 
 if (!gotTheLock) {
   log.debug("Preventing extra windows of the app from loading", import.meta.env.MODE)
-  if (!import.meta.env.PROD) {
-    // Find the other instance and yeet it
-    app.quit();
-  }
+  app.quit();
 } else {
   log.debug("Lock found, let's try and focus the app")
   app.on('second-instance', (event, commandLine) => {
