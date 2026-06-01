@@ -66,6 +66,13 @@ repositories {
             includeGroupByRegex("net.rubygrapefruit.*")
         }
     }
+
+    maven {
+        url = "https://maven.creeperhost.net/"
+        content {
+            includeGroup "net.covers1624"
+        }
+    }
 }
 
 dependencies {
