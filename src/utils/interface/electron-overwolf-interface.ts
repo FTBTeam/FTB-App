@@ -82,7 +82,10 @@ export interface App {
     openWindow(tab: 'purposes' | 'features' | 'vendors'): Promise<void>;
     isFirstLaunch: () => Promise<boolean>;
     setFirstLaunched: () => Promise<void>;
-  }
+  },
+
+  getProtocolUrl(): Promise<string | null>;
+  pingAsReady(): void
 }
 
 export default interface ElectronOverwolfInterface {

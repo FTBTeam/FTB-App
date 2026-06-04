@@ -2,7 +2,7 @@ productName: FTB Electron App
 asar: true
 compression: maximum
 appId: dev.ftb.app
-copyright: Copyright © 2025 - Feed The Beast Ltd
+copyright: Copyright © 2026 - Feed The Beast Ltd
 generateUpdatesFilesForAllChannels: true
 files:
   - '!**/*'
@@ -55,6 +55,18 @@ linux:
   category: Game
   artifactName: ftb-app-linux-${version}-${arch}.${ext}
   synopsis: FTB Desktop App for downloading and managing Modpacks
+  desktop:
+    entry: |
+      [Desktop Entry]
+      Name=${productName}
+      Comment=${description}
+      Exec=${executable}
+      Terminal=false
+      Type=Application
+      Icon=dev.ftb.ftb-app
+      StartupWMClass=${productName}
+      MimeType=x-scheme-handler/ftb;
+      Categories=Game;
 directories:
   output: release
   buildResources: resources

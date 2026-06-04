@@ -40,7 +40,7 @@ public class VersionOverrides {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             OkHttpDownloadAction action = new OkHttpDownloadAction()
                     .setClient(Constants.httpClient())
-                    .setUrl(Constants.CH_MAVEN + "net/minecraftforge/forge/maven-metadata.xml")
+                    .setUrl("https://maven.minecraftforge.net/net/minecraftforge/forge/maven-metadata.xml")
                     .setDest(bos);
 
             action.execute();

@@ -32,6 +32,7 @@ public class CurseMetadataCache {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final Type TYPE = new TypeToken<Map<String, FileMetadata>>() { }.getType();
 
+    @Nullable
     private static CurseMetadataCache instance;
     
     public static CurseMetadataCache get() {

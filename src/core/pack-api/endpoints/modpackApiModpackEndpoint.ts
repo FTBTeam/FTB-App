@@ -1,6 +1,11 @@
 import {ApiEndpoint} from '@/core/pack-api/endpoints/apiEndpoint';
 import {StatusResult} from '@/core/pack-api/modpackApi';
-import {ModPack, ModpackModsResponse, ModpackVersion, PackProviders} from '@/core/types/appTypes.ts';
+import {
+  PackProvider,
+  ModPack,
+  ModpackModsResponse,
+  ModpackVersion
+} from '@/core/types/appTypes.ts';
 
 type PackIdList = {
   packs: number[];
@@ -22,8 +27,8 @@ export class ModpackApiModpackEndpoint extends ApiEndpoint {
     return this.fetchPrivate<StatusResult<PackIdList>>("GET", "private/100");
   }
   
-  async getModpack(id: number | string, provider: PackProviders = "modpacksch") {
-    if (provider === "modpacksch") {
+  async getModpack(id: number | string, provider: PackProvider = "ftb") {
+    if (provider === "ftb") {
       return this.fetchPrivate<StatusResult<ModPack>>("GET", "" + id);
     }
     
@@ -31,8 +36,8 @@ export class ModpackApiModpackEndpoint extends ApiEndpoint {
     return this.fetchPrivate<StatusResult<ModPack>>("GET", "" + id, "curseforge");
   }
   
-  async getModpackVersion(id: number, versionId: number, provider: PackProviders = "modpacksch") {
-    if (provider === "modpacksch") {
+  async getModpackVersion(id: number, versionId: number, provider: PackProvider = "ftb") {
+    if (provider === "ftb") {
       return this.fetchPrivate<StatusResult<ModpackVersion>>("GET", `${id}/${versionId}`);
     }
     
@@ -40,8 +45,8 @@ export class ModpackApiModpackEndpoint extends ApiEndpoint {
     return this.fetchPrivate<StatusResult<ModpackVersion>>("GET", `${id}/${versionId}`, "curseforge");
   }
   
-  async getChangelog(packId: number, versionId: number, provider: PackProviders = "modpacksch") {
-    if (provider === "modpacksch") {
+  async getChangelog(packId: number, versionId: number, provider: PackProvider = "ftb") {
+    if (provider === "ftb") {
       return this.fetchPrivate<StatusResult<{ content: string, html?: string }>>("GET", `${packId}/${versionId}/changelog`);
     }
     
@@ -49,8 +54,8 @@ export class ModpackApiModpackEndpoint extends ApiEndpoint {
     return this.fetchPrivate<StatusResult<{ content: string, html?: string }>>("GET", `${packId}/${versionId}/changelog`, "curseforge");
   }
   
-  async getMods(packId: number, versionId: number, provider: PackProviders = "modpacksch") {
-    if (provider === "modpacksch") {
+  async getMods(packId: number, versionId: number, provider: PackProvider = "ftb") {
+    if (provider === "ftb") {
       return this.fetchPrivate<StatusResult<ModpackModsResponse>>("GET", `${packId}/${versionId}/mods`);
     }
     

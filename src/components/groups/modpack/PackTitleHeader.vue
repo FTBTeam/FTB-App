@@ -46,7 +46,7 @@ const isLoader = computed(() => {
         {{ packInstance?.name }}
         <template v-if="packInstance && packInstance.authors && packInstance.authors.length">
           by 
-          <span v-if='provider === "modpacksch" && packInstance.tags.findIndex(e => e.name.toLowerCase() === "ftb") !== -1'>FTB Team</span>
+          <span v-if='provider === "ftb" && packInstance.tags.findIndex(e => e.name.toLowerCase() === "ftb") !== -1'>FTB Team</span>
           <span v-else v-for="(author, i) in packInstance.authors" :key="'athrs' + i">{{ author.name }}</span>
         </template>
         -

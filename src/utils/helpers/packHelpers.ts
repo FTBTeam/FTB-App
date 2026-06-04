@@ -2,7 +2,7 @@ import missingArtSquare from '@/assets/images/ftb-missing-pack-art.webp';
 import missingArtSplash from '@/assets/images/ftb-no-pack-splash-normal.webp';
 import {InstanceJson, SugaredInstanceJson} from '@/core/types/javaApi';
 import {SearchResultPack} from '@/core/types/modpacks/packSearch';
-import { ModPack, PackProviders, Versions } from '@/core/types/appTypes.ts';
+import {PackProvider, ModPack, Versions} from '@/core/types/appTypes.ts';
 import { packBlacklist } from '@/store/modpackStore.ts';
 import { useAppSettings } from '@/store/appSettingsStore.ts';
 import {toTitleCase} from "@/utils/helpers/stringHelpers.ts";
@@ -138,19 +138,19 @@ export function isValidVersion(version: string, type: VersionTypes = "all") {
 /**
  * Converts a number type to a string provider type
  */
-export function typeIdToProvider(id: number): PackProviders {
+export function typeIdToProvider(id: number): PackProvider {
   switch (id) {
-    case 0: return "modpacksch";
+    case 0: return "ftb";
     case 1: return "curseforge";
-    default: return "modpacksch"
+    default: return "ftb"
   }
 }
 
-export function sourceProviderToProvider(source: string): PackProviders {
+export function sourceProviderToProvider(source: string): PackProvider {
   switch (source) {
     case "curseforge": return "curseforge";
-    case "modpacks.ch": return "modpacksch";
-    default: return "modpacksch";
+    case "modpacks.ch": return "ftb";
+    default: return "ftb";
   }
 }
 

@@ -3,9 +3,9 @@ import {DialogForm} from "@/core/controllers/dialogsController.ts";
 import {Input} from "@/components/ui";
 import {onMounted} from "vue";
 import TextArea from "@/components/ui/form/TextArea/TextArea.vue";
-import UiSelect from "@/components/ui/select/UiSelect.vue";
 import CategorySelector from "@/components/groups/modpack/create/CategorySelector.vue";
 import {defaultInstanceCategory} from "@/core/constants.ts";
+import UiSelectSingle from "@/components/ui/select/UiSelectSingle.vue";
 
 const {
   form,
@@ -55,7 +55,7 @@ function initData() {
           v-model="model[field.name]"
         />
         
-        <UiSelect
+        <UiSelectSingle
           fill
           v-if="field.type === 'select'"
           :options="field.options"

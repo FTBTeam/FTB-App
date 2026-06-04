@@ -59,18 +59,18 @@ version = appVersion
 repositories {
     mavenLocal()
     mavenCentral()
-    
-    maven { 
-        url = 'https://maven.creeperhost.net'
-        content {
-            includeGroup("net.covers1624")
-        }
-    }
-    
+
     maven { 
         url = "https://repo.gradle.org/artifactory/libs-releases/"
         content {
             includeGroupByRegex("net.rubygrapefruit.*")
+        }
+    }
+
+    maven {
+        url = "https://maven.creeperhost.net/"
+        content {
+            includeGroup "net.covers1624"
         }
     }
 }
