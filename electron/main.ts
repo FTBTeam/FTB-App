@@ -402,13 +402,13 @@ if (!app.requestSingleInstanceLock()) {
         }
         appData.mainWindow.focus();
         
-        // TOOD: re-eval this.
+        // Looks like this is triggered on the app
         commandLine.forEach((c) => {
           log.debug("Command line arg", c)
           if (c.indexOf('ftb://') !== -1) {
             log.debug("Sending protocol url to frontend")
             // @ts-ignore
-            win.webContents.send('parseProtocolURL', c);
+            appData.mainWindow.webContents.send('parseProtocolURL', c);
           }
         });
       }

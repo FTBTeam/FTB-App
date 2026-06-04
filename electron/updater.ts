@@ -47,14 +47,7 @@ export function updateApp(source: string) {
   // Get all known windows and close them
   log.debug("Removing all listeners and closing windows");
   app.removeAllListeners('window-all-closed');
-
-  log.debug("Closing all windows")
-  BrowserWindow.getAllWindows().forEach((window) => {
-    log.debug("Closing window", window.id)
-    window.removeAllListeners('close');
-    window.destroy();
-  });
-
+  
   log.debug("Quitting app")
   autoUpdater.quitAndInstall();
 }
