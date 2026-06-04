@@ -12,8 +12,7 @@ import { RouterNames } from '@/router';
 import { onMounted, ref, watch } from 'vue';
 import { packBlacklist } from '@/store/modpackStore.ts';
 import {PackProvider} from '@/core/types/appTypes.ts';
-import {faFilter, faInfo, faSearch, faWarning} from '@fortawesome/free-solid-svg-icons';
-import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
+import {faInfo, faSearch, faWarning} from '@fortawesome/free-solid-svg-icons';
 
 const logger = createLogger("BrowseModpacks.vue")
 const router = useRouter();
