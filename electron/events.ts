@@ -193,14 +193,14 @@ ipcMain.handle("action/app/change-channel", async (_, data) => {
     // Ask the user if they want to update
     log.debug("Update downloaded", version)
 
-    const latestVersion = autoUpdater.currentVersion.version;
+    const latestVersion = updateResult.updateInfo.releaseName ?? updateResult.updateInfo.version ?? "unknown";
     const currentVersion = app.getVersion();
 
     log.debug("Latest version", latestVersion)
     log.debug("Current version", currentVersion)
 
     const result = await dialog.showMessageBox({
-      message: `A new version of the app is available, would you like to update?, ${latestVersion} -> ${currentVersion}`,
+      message: `A new version of the app is available, would you like to update from ${currentVersion} to ${latestVersion}?`,
       type: "info",
       buttons: ["Yes", "No"],
       defaultId: 0,
