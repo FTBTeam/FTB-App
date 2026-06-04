@@ -1,64 +1,89 @@
-import {app, BrowserWindow, ipcMain, screen, shell} from 'electron';
-import { fileURLToPath } from 'node:url'
 import path from 'node:path'
+import os from 'node:os';
+import { fileURLToPath } from 'node:url'
+
+import {app, BrowserWindow, ipcMain, shell} from 'electron';
 import { autoUpdater } from 'electron-updater';
-import { getAppHome } from '../src/utils/nuturalHelpers.ts';
-import os from 'os';
-import fs from 'fs';
-import { ChildProcess, spawn } from 'child_process';
 import log from 'electron-log/main';
+
+import './events.ts'
+import { getAppHome } from '../src/utils/nuturalHelpers.ts';
+import {AppData} from "./app";
+import {setupUpdater} from "./updater.ts";
+import {logAndReturn} from "./helpers/utils.ts";
+import {LogAndEmit} from "./helpers/loggingEmitter.ts";
+import {startSubprocess} from "./subprocess.ts";
+
+// Constants
+const __dirname = logAndReturn(path.dirname(fileURLToPath(import.meta.url)), "Resolved __dirname to: ");
+
+process.env.APP_ROOT = logAndReturn(path.join(__dirname, '..'), "App root directory is: ");
+
+export const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
+export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
+
+process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
+
+// App & State
+export const appHome = logAndReturn(getAppHome(os.platform(), os.homedir(), path.join), "App home directory is: ");
+
+export const appData: AppData = {
+  protocolSpace: 'ftb',
+  state: {
+    appStarted: false,
+    initialProtocolUrl: null,
+    ws: null,
+    isSubprocessSetup: false,
+    preserveSubprocess: false,
+  },
+  subprocess: null,
+  mainWindow: null,
+  prelaunchWindow: null,
+  options: {
+    startInFullscreen: false,
+    openDebugTools: !!process.env.VITE_DEV_SERVER_URL,
+  },
+  paths: {
+    home: appHome,
+    logFile: path.join(appHome, 'logs', 'electron-main.log')
+  }
+}
 
 autoUpdater.logger = log;
 
-export const appHome = logAndReturn(getAppHome(os.platform(), os.homedir(), path.join), "App home directory is: ");
-
-log.transports.file.resolvePathFn = () => path.join(appHome, 'logs', 'electron-main.log');
+log.transports.file.resolvePathFn = () => appData.paths.logFile;
 log.initialize();
 
-let startInFullscreen = false;
-const __dirname = logAndReturn(path.dirname(fileURLToPath(import.meta.url)), "Resolved __dirname to: ");
+log.info("App has been started with the following:\n" + JSON.stringify(process.argv, null, 2))
 
-let openDebugTools = !!process.env.VITE_DEV_SERVER_URL;
 for (let i = 0; i < process.argv.length; i++) {
   if (process.argv[i] === '--open-dev-tools') {
     log.info("Debug tools flag found in args, opening dev tools");
-    openDebugTools = true;
+    appData.options.openDebugTools = true;
     break;
   }
   
   if (process.argv[i] === '--fullscreen') {
-    startInFullscreen = true;
+    appData.options.startInFullscreen = true;
   }
 }
 
-if (!startInFullscreen) {
+if (!appData.options.startInFullscreen) {
   // Apparently this being 1 flags as the steamdeck being in gamescope
   if (process.env["SteamDeck"] && process.env["SteamDeck"] === "1") {
-    startInFullscreen = true;
+    appData.options.startInFullscreen = true;
   }
 }
 
 log.log("FTB App starting...")
-import './events.ts'
+setupUpdater(appData)
 
-const protocolSpace = 'ftb';
+// Register the custom protocol handler for the app
 if (!import.meta.env.PROD && process.platform === 'win32') {
-  app.setAsDefaultProtocolClient(protocolSpace, process.execPath, [path.resolve(process.argv[1])]);
+  app.setAsDefaultProtocolClient(appData.protocolSpace, process.execPath, [path.resolve(process.argv[1])]);
 } else {
-  app.setAsDefaultProtocolClient(protocolSpace);
+  app.setAsDefaultProtocolClient(appData.protocolSpace);
 }
-
-
-// export let startupProtocolUrl: string | null;
-
-let cachedProcessData = null as {
-  pid: number;
-  port: number;
-  secret: string;
-} | null;
-
-let appCommunicationSetup = false;
-let preserveSubprocess = false;
 
 /**
  * Fix for SUID sandbox issues on Linux
@@ -68,52 +93,12 @@ if (process.platform == "linux") {
   app.commandLine.appendSwitch("--no-sandbox");
 }
 
-// for (let i = 0; i < process.argv.length; i++) {
-//   if (process.argv[i].indexOf(protocolSpace) !== -1) {
-//     startupProtocolUrl = process.argv[i];
-//     break;
-//   }
-// }
-
-process.env.APP_ROOT = logAndReturn(path.join(__dirname, '..'), "App root directory is: ");
-
-// 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
-export const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
-export const MAIN_DIST = path.join(process.env.APP_ROOT, 'dist-electron')
-export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
-
-process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
-
-//#region AutoUpdater Setup
-autoUpdater.allowDowngrade = true;
-autoUpdater.channel = logAndReturn(loadChannel(), "Loaded auto updater channel: ");
-
-autoUpdater.on('checking-for-update', () => LogAndEmit.create('updater:checking-for-update').execute());
-autoUpdater.on("update-cancelled", (info) => LogAndEmit.create('updater:update-cancelled').meta(info).execute());
-autoUpdater.on('update-available', (info) => LogAndEmit.create('updater:update-available').meta(info).args(info.version).execute());
-autoUpdater.on('update-not-available', (info) => LogAndEmit.create('updater:update-not-available').meta(info).execute());
-autoUpdater.on('error', (error, message) => LogAndEmit.create('updater:error').meta({error: error, message: message}).execute());
-autoUpdater.on('download-progress', (progress) => LogAndEmit.create('updater:download-progress')
-  .meta(process)
-  .args({
-    total: progress.total,
-    delta: progress.delta,
-    transferred: progress.transferred,
-    percent: progress.percent,
-    bytesPerSecond: progress.bytesPerSecond
-  })
-  .execute());
-
-autoUpdater.on('update-downloaded', (event) => {
-  LogAndEmit.create('updater:update-downloaded')
-    .meta(event)
-    .execute()
-});
-
-ipcMain.on("updater:download-update", () => {
-  autoUpdater.downloadUpdate().catch((e) => log.error("Failed to download update", e));
-})
-//#endregion
+for (let i = 0; i < process.argv.length; i++) {
+  if (process.argv[i].indexOf(appData.protocolSpace) !== -1) {
+    appData.state.initialProtocolUrl = process.argv[i];
+    break;
+  }
+}
 
 log.info("Auto updater config: ")
 for (const [key, value] of Object.entries(autoUpdater)) {
@@ -135,34 +120,30 @@ for (const [key, value] of Object.entries(autoUpdater)) {
   log.info(`  ${key}: ${value} (type: ${typeof value})`);
 }
 
-let subprocess: ChildProcess | null = null;
-export let win: BrowserWindow | null;
-export let prelaunchWindow: BrowserWindow | null = null;
-
 ipcMain.on('action/launch-app', async () => {
   log.debug("Launching app")
-  if (win) {
+  if (appData.mainWindow) {
     // This shouldn't happen, but if it does, just close the window
-    win.close();
+    appData.mainWindow.close();
   }
 
   createWindow().catch(e => log.error("Failed to create window", e));
   // Kill the prelaunch window
-  if (prelaunchWindow) {
-    prelaunchWindow.destroy()
+  if (appData.prelaunchWindow) {
+    appData.prelaunchWindow.destroy()
   }
 })
 
 async function createPreLaunchWindow() {
-  if (prelaunchWindow) {
-    prelaunchWindow.destroy();
-    prelaunchWindow = null;
+  if (appData.prelaunchWindow) {
+    appData.prelaunchWindow.destroy();
+    appData.prelaunchWindow = null;
     log.log("Prelaunch window already exists, closing it")
   }
   
   log.debug("Creating prelaunch window")
   
-  prelaunchWindow = new BrowserWindow({
+  const newWindow = new BrowserWindow({
     title: 'FTB Launch',
     minWidth: 380,
     minHeight: 510,
@@ -185,35 +166,39 @@ async function createPreLaunchWindow() {
       sandbox: false
     },
   });
+  
+  // Assign the new window to the app data
+  appData.prelaunchWindow = newWindow;
 
   if (VITE_DEV_SERVER_URL) {
-    prelaunchWindow.loadURL(VITE_DEV_SERVER_URL + "prelaunch.html").catch(log.warn)
+    newWindow.loadURL(VITE_DEV_SERVER_URL + "prelaunch.html").catch(log.warn)
   } else {
     // win.loadFile('dist/index.html')
-    prelaunchWindow.loadFile(path.join(RENDERER_DIST, 'prelaunch.html')).catch(log.warn)
+    newWindow.loadFile(path.join(RENDERER_DIST, 'prelaunch.html')).catch(log.warn)
   }
 
-  prelaunchWindow.on("ready-to-show", () => {
-    // Try and force focus on the prelaunchWindow
-    prelaunchWindow?.show();
-    if (!prelaunchWindow?.isFocused()) {
-      prelaunchWindow?.focus();
+  newWindow.on("ready-to-show", () => {
+    // Try and force focus on the newWindow
+    newWindow?.show();
+    if (!newWindow?.isFocused()) {
+      newWindow?.focus();
     }
     
-    if (openDebugTools) {
+    if (appData.options.openDebugTools) {
       log.log("Opening dev tools")
-      prelaunchWindow?.webContents.openDevTools();
+      newWindow?.webContents.openDevTools();
     }
   });
 
-  prelaunchWindow.on('closed', () => {
-    prelaunchWindow = null;
+  newWindow.on('closed', () => {
+    appData.prelaunchWindow = null;
   });
+  
 }
 
 ipcMain.on("prelaunch/im-ready", async () => {
   if (VITE_DEV_SERVER_URL) {
-    LogAndEmit.create("updater:update-not-available").meta("No updates available as we are in dev mode").execute()
+    LogAndEmit.create("updater:update-not-available", appData).meta("No updates available as we are in dev mode").execute()
     return;
   }
   
@@ -224,7 +209,7 @@ ipcMain.on("prelaunch/im-ready", async () => {
 
 async function createWindow() {
   log.log("Creating main window")
-  win = new BrowserWindow({
+  const newWindow = new BrowserWindow({
     title: 'FTB App',
     // icon: path.join(process.env.VITE_PUBLIC, 'favicon.ico'),
     webPreferences: {
@@ -239,33 +224,35 @@ async function createWindow() {
     width: 1545,
     height: 900,
     frame: false,
-    // backgroundColor: '#2a2a2a',
-    ...(startInFullscreen ? {
+    backgroundColor: '#2a2a2a',
+    ...(appData.options.startInFullscreen ? {
       fullscreen: true,
     } : {})
   })
+
+  // Assign the new window to the app data
+  appData.mainWindow = newWindow;
   
-  win.on("ready-to-show", () => {
-    if (openDebugTools) {
+  newWindow.on("ready-to-show", () => {
+    if (appData.options.openDebugTools) {
       log.log("Opening dev tools on main window")
-      win?.webContents.openDevTools();
+      newWindow.webContents.openDevTools();
     }
 
-    if (startInFullscreen) {
-      win?.maximize()
+    if (appData.options.startInFullscreen) {
+      newWindow.maximize()
     }
   })
 
   if (VITE_DEV_SERVER_URL) {
-    await win.loadURL(VITE_DEV_SERVER_URL)
+    await newWindow.loadURL(VITE_DEV_SERVER_URL)
   } else {
-    // win.loadFile('dist/index.html')
-    await win.loadFile(path.join(RENDERER_DIST, 'index.html'))
+    await newWindow.loadFile(path.join(RENDERER_DIST, 'index.html'))
   }
 
-  win.webContents.setWindowOpenHandler((data) => {
+  newWindow.webContents.setWindowOpenHandler((data) => {
     const {url} = data;
-    if (url.startsWith(protocolSpace)) {
+    if (url.startsWith(appData.protocolSpace)) {
       return { action: 'allow' };
     }
     
@@ -273,21 +260,21 @@ async function createWindow() {
     return { action: 'deny' };
   });
   
-  win.on('closed', () => {
+  newWindow.on('closed', () => {
     // Kill the subprocess if it's running
-    if (subprocess !== null && !preserveSubprocess) {
-      subprocess.kill();
+    if (appData.subprocess !== null && !appData.state.preserveSubprocess) {
+      appData.subprocess.kill();
     }
-    win = null;
+    appData.mainWindow = null;
   });
 }
 
 export async function reloadMainWindow() {
-  if (!win) {
+  if (!appData.mainWindow) {
     return;
   }
 
-  preserveSubprocess = true;
+  appData.state.preserveSubprocess = true;
   log.info("Reloading main window")
 
   // Create a tmp window to keep the app alive
@@ -296,10 +283,12 @@ export async function reloadMainWindow() {
   });
 
   // Reset the port and secret scanning
-  appCommunicationSetup = false;
+  appData.state.isSubprocessSetup = false;
 
   // Enable the windows frame
-  win.destroy()
+  appData.mainWindow.destroy()
+  appData.mainWindow = null;
+  
   await createWindow()
 
   // Close the tmp window
@@ -312,8 +301,21 @@ export async function reloadMainWindow() {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
-    win = null
-    prelaunchWindow = null;
+    
+    if (appData.mainWindow) {
+      appData.mainWindow.destroy();
+      appData.mainWindow = null;
+    }
+    
+    if (appData.prelaunchWindow) {
+      appData.prelaunchWindow.destroy();
+      appData.prelaunchWindow = null;
+    }
+    
+    if (appData.subprocess) {
+      appData.subprocess.kill();
+      appData.subprocess = null;
+    }
   }
 })
 
@@ -329,7 +331,7 @@ app.on('activate', async () => {
 app.whenReady().then(() => {
   createPreLaunchWindow();
   
-  // protocol.handle(protocolSpace, async (event) => {
+  // protocol.handle(appData.protocolSpace, async (event) => {
   //   if (event.url) {
   //   }
   //  
@@ -346,27 +348,37 @@ app.on('render-process-gone', (_, webContents, details) => {
   }
   
   // yolo, try and open devtools to debug
-  if (webContents && openDebugTools) {
+  if (webContents && appData.options.openDebugTools) {
     log.info("Render process gone, opening devtools")
     webContents.openDevTools();
   }
 });
 
-app.on("open-url", async (_, customSchemeData) => {
-  if (win) {
-    win.webContents.send('parseProtocolURL', customSchemeData);
+// We either handle the protocol right away, or we store it in the app data until the app is ready and requests it from us.
+app.on("open-url", async (e, customSchemeData) => {
+  console.log("Received protocol URL", customSchemeData, "app started?", appData.state.appStarted)
+  if (appData.state.appStarted && appData.mainWindow) {
+    appData.mainWindow.webContents.send('parseProtocolURL', customSchemeData);
+  } else {
+    e.preventDefault();
+    appData.state.initialProtocolUrl = customSchemeData;
   }
 });
 
-// app.on('activate', () => {
-//   if (!prelaunchWindow && !win) {
-//     createPreLaunchWindow("AppActivate").catch(log.error)
-//   }
-// });
+ipcMain.handle("startSubprocess", async (_, args) => {
+  return startSubprocess(appData, args)
+});
 
-const gotTheLock = app.requestSingleInstanceLock();
+ipcMain.handle("protocol/get-startup-url", () => {
+  return appData.state.initialProtocolUrl;
+});
 
-if (!gotTheLock) {
+ipcMain.on("app/ready", () => {
+  appData.state.appStarted = true;
+  log.info("App is ready, appStarted flag set to true")
+})
+
+if (!app.requestSingleInstanceLock()) {
   log.debug("Preventing extra windows of the app from loading", import.meta.env.MODE)
   app.quit();
 } else {
@@ -374,21 +386,23 @@ if (!gotTheLock) {
   app.on('second-instance', (event, commandLine) => {
     // Someone tried to run a second instance, we should focus our window.
     log.info(`Event: ${event}, commandLine: ${commandLine}`);
-    if (prelaunchWindow) {
-      if (prelaunchWindow.isMinimized()) {
-        prelaunchWindow.restore()
+    if (appData.prelaunchWindow) {
+      if (appData.prelaunchWindow.isMinimized()) {
+        appData.prelaunchWindow.restore()
       }
       
-      if (!prelaunchWindow.isFocused()) {
-        prelaunchWindow.focus();
+      if (!appData.prelaunchWindow.isFocused()) {
+        appData.prelaunchWindow.focus();
       }
     } else {
-      if (win) {
-        if (win.isMinimized()) {
+      if (appData.mainWindow) {
+        if (appData.mainWindow.isMinimized()) {
           log.debug("Window is minimized, restoring")
-          win.restore();
+          appData.mainWindow.restore();
         }
-        win.focus();
+        appData.mainWindow.focus();
+        
+        // TOOD: re-eval this.
         commandLine.forEach((c) => {
           log.debug("Command line arg", c)
           if (c.indexOf('ftb://') !== -1) {
@@ -401,255 +415,3 @@ if (!gotTheLock) {
     }
   });
 }
-
-ipcMain.handle("startSubprocess", async (_, args) => {  
-  log.debug("Starting subprocess")
-  if (!import.meta.env.PROD) {
-    log.debug("Not starting subprocess in dev mode")
-    return;
-  }
-
-  let userDefinedJvmArgs = [] as string[];
-  try {
-    if (fs.existsSync(path.join(appHome, ".subprocess-jvm-args"))) {
-      const jvmArgsData = fs.readFileSync(path.join(appHome, ".subprocess-jvm-args"), 'utf-8');
-      // Each line its own arg
-      userDefinedJvmArgs = jvmArgsData.split("\n")
-        .map(arg => arg.trim())
-        .filter(arg => arg.length > 0);
-      log.info("Found .subprocess-jvm-args file, forcing IPv4 for subprocess");
-    }
-  } catch (e) {
-    log.error("Failed to read .subprocess-jvm-args file", e)
-  }
-  
-  log.log("Starting subprocess")
-
-  const javaPath = args.javaPath;
-  const argsList = args.args as string[]
-  const env = args.env as string[]
-
-  if (subprocess !== null && cachedProcessData === null) {
-    // Check if the process is still running
-    let pid = subprocess.pid;
-    subprocess.unref();
-
-    // Kill the subprocess
-    if (pid) {
-      try {
-        process.kill(pid, 'SIGINT');
-      } catch (e) {
-        log.error("Failed to kill subprocess", e)
-      }
-    }
-
-    log.debug("Subprocess is already running, killing it")
-  }
-
-  if (subprocess && cachedProcessData !== null) {
-    return {
-      port: cachedProcessData.port,
-      secret: cachedProcessData.secret
-    }
-  }
-
-  const correctedPath = javaPath.replace(/\\/g, "/");
-  log.debug("Starting subprocess", correctedPath, argsList)
-
-  const electronPid = process.pid;
-  argsList.push(...["--pid", "" + electronPid, "--electron"])
-  if (process.argv.includes("ignore-pid-checks")) {
-    argsList.push("--ignore-pid-checks")
-  }
-
-  const primaryDisplay = screen.getPrimaryDisplay();
-  const { width, height } = primaryDisplay.workAreaSize;
-
-  argsList.push(
-    "--screenWidth", "" + width,
-    "--screenHeight", "" + height
-  )
-  
-  // Inject java args before the -jar argument
-  if (userDefinedJvmArgs.length > 0) {
-    const jarIndex = argsList.findIndex(arg => arg === '-jar');
-    if (jarIndex !== -1) {
-      argsList.splice(jarIndex, 0, ...userDefinedJvmArgs);
-      log.debug("Injected user defined JVM args into subprocess args", userDefinedJvmArgs);
-    }
-  }
-    
-  // Spawn the process so it can run in the background and capture the output
-  return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      reject("Subprocess timed out")
-    }, 30_000) // 30 seconds
-
-    const mappedEnv = env.reduce((curr, itt) => {
-      const [key, value] = itt.split("=");
-      curr[key] = value;
-      return curr;
-    }, {} as Record<string, string>)
-
-    log.debug("Mapped env", mappedEnv)
-    log.debug("Args list", argsList)
-
-    appCommunicationSetup = false;
-    subprocess = spawn(correctedPath, argsList, {
-      detached: true,
-      stdio: ['ignore', 'pipe', 'pipe'], // ignore stdin, pipe stdout and stderr
-      env: {
-        ...process.env,
-        ...mappedEnv,
-      },
-      cwd: appHome
-    });
-
-    subprocess.stderr?.on('data', (data) => {
-      let outputData = data.toString();
-      if (outputData.endsWith("\n")) {
-        outputData = outputData.slice(0, -1);
-      }
-      log.debug("Subprocess stderr", outputData)
-    });
-
-    subprocess.stdout?.on('data', (data) => {
-      let outputData = data.toString();
-      if (outputData.endsWith("\n")) {
-        outputData = outputData.slice(0, -1);
-      }
-
-      log.debug("Subprocess stdout", outputData)
-      if (!appCommunicationSetup) {
-        if (data.includes("Backend Ready! Port=")) {
-          const port = parseInt(outputData.match(/Port=(\d+)/)![1]);
-          const secret = outputData.match(/OneTimeToken=(\w+-\w+-\w+-\w+-\w+)/)![1];
-
-          if (!(!port || !secret || isNaN(port))) {
-            log.debug('Found port and secret', port, secret);
-            appCommunicationSetup = true;
-            clearTimeout(timeout);
-
-            if (subprocess?.pid) {
-              cachedProcessData = {
-                pid: subprocess.pid,
-                port: port,
-                secret: secret,
-              };
-
-              log.debug('Cached process data', cachedProcessData);
-            }
-
-            resolve({
-              port,
-              secret,
-            });
-          }
-        }
-      }
-    });
-
-    subprocess?.on('error', (err) => {
-      log.error("Subprocess error", err)
-    });
-
-    subprocess.on('exit', (code, signal) => {
-      log.debug("Subprocess exited", code, signal)
-    });
-
-    subprocess?.on('close', (code) => {
-      log.debug("Subprocess closed", code)
-    });
-  })
-});
-
-function loadChannel() {
-  try {
-    const channelFile = path.join(appHome, 'storage', 'electron-settings.json');
-    if (!fs.existsSync(channelFile)) {
-      return 'stable';
-    }
-
-    try {
-      const channelData = JSON.parse(fs.readFileSync(channelFile, 'utf-8'));
-      if (channelData.channel) {
-        return channelData.channel;
-      }
-    } catch (e) {
-      log.error("Failed to load channel data", e)
-    }
-
-  } catch (e) {
-    log.error("Failed to load channel", e)
-  }
-
-  return 'stable';
-}
-
-export function updateApp(source: string) {
-  log.debug("Quitting and installing app from: ", source)
-
-  // Get all known windows and close them
-  log.debug("Removing all listeners and closing windows");
-  app.removeAllListeners('window-all-closed');
-
-  log.debug("Closing all windows")
-  BrowserWindow.getAllWindows().forEach((window) => {
-    log.debug("Closing window", window.id)
-    window.removeAllListeners('close');
-    window.destroy();
-  });
-
-  log.debug("Quitting app")
-  autoUpdater.quitAndInstall();
-}
-
-class LogAndEmit {
-  private readonly eventName: string;
-  private _args: any[] = [];
-  private _meta: any | null = {};
-  
-  private constructor(name: string) {
-    this.eventName = name;
-  }
-  
-  public static create(name: string) {
-    return new LogAndEmit(name);
-  }
-  
-  public args(...args: any[]) {
-    this._args = args;
-    return this;
-  }
-  
-  public meta(meta: any) {
-    this._meta = meta;
-    return this;
-  }
-  
-  public execute() {
-    log.debug("Emitting event", this.eventName, this._args, this._meta);
-    if (!prelaunchWindow && !win) {
-      log.warn("No window to send event to, skipping", this.eventName);
-      return;
-    }
-    
-    const target = prelaunchWindow ? prelaunchWindow : win;
-    if (!target) {
-      log.warn("No target window to send event to, skipping", this.eventName);
-      return;
-    }
-    
-    target.webContents.send(this.eventName, ...this._args);
-  }
-}
-
-function logAndReturn<T>(value: T, message: string): T {
-  log.debug(message, value);
-  return value;
-}
-
-// async function logAndReturnAsync<T>(value: T, message: string): Promise<T> {
-//   log.debug(message, value);
-//   return value;
-// }

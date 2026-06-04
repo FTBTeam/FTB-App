@@ -1,6 +1,6 @@
 import { app, BrowserWindow, clipboard, dialog, ipcMain, shell, screen } from 'electron';
 import os from 'os';
-import { appHome, reloadMainWindow, updateApp } from './main';
+import { appHome, reloadMainWindow } from './main';
 import fs from 'fs';
 import https from 'https';
 import { execSync } from 'child_process';
@@ -9,6 +9,7 @@ import { autoUpdater } from 'electron-updater';
 import path from 'path';
 import { JavaVerifier } from './javaVerifier.ts';
 import log from 'electron-log/main';
+import {updateApp} from "./updater.ts";
 
 let checkUpdaterLock = false;
 

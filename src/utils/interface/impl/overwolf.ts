@@ -318,6 +318,12 @@ const Overwolf: ElectronOverwolfInterface = {
         return false;
       },
       async setFirstLaunched() {},
+    },
+    async getProtocolUrl(): Promise<string | null> {
+      return null;
+    },
+    pingAsReady() {
+      // NO-OP
     }
   },
 

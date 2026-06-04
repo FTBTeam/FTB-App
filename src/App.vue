@@ -19,6 +19,7 @@ import { createLogger } from '@/core/logger.ts';
 import { retrying } from '@/utils/helpers/asyncHelpers.ts';
 import {getOrCreateOauthClient} from "@/utils";
 import {AppNotification} from "@/types.ts";
+import {handleAction} from "@/core/protocol/protocolActions.ts";
 
 const logger = createLogger("App.vue")
 
@@ -99,6 +100,7 @@ watch(() => wsStore.ready, (value) => {
 })
 
 async function initAppLoad() {
+  appPlatform.app.pingAsReady()
   await appSettingsStore.loadSettings();
   
   await Promise.all([
@@ -112,6 +114,13 @@ async function initAppLoad() {
   getOrCreateOauthClient()
     .finally(() => accountStore.loadFtbAccount().catch((e) => logger.error(e)))
     .catch((e) => logger.error(e))
+  
+  appPlatform.app.getProtocolUrl()
+    .then((protocolUrl) => {
+      if (protocolUrl) {
+        handleAction(protocolUrl)
+      }
+    })
 }
 
 function refreshHandler(data: any) {
