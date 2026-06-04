@@ -1,7 +1,7 @@
 import path from "node:path";
 import fs from "node:fs";
 
-import {app, BrowserWindow, ipcMain} from "electron";
+import {app, ipcMain} from "electron";
 import log from "electron-log/main";
 import {autoUpdater} from "electron-updater";
 

@@ -56,7 +56,13 @@ log.initialize();
 
 log.info("App has been started with the following:\n" + JSON.stringify(process.argv, null, 2))
 
+// Protocol parsing.
 for (let i = 0; i < process.argv.length; i++) {
+  if (process.argv[i].indexOf(appData.protocolSpace) !== -1) {
+    appData.state.initialProtocolUrl = process.argv[i];
+    break;
+  }
+  
   if (process.argv[i] === '--open-dev-tools') {
     log.info("Debug tools flag found in args, opening dev tools");
     appData.options.openDebugTools = true;
@@ -91,13 +97,6 @@ if (!import.meta.env.PROD && process.platform === 'win32') {
  */
 if (process.platform == "linux") {
   app.commandLine.appendSwitch("--no-sandbox");
-}
-
-for (let i = 0; i < process.argv.length; i++) {
-  if (process.argv[i].indexOf(appData.protocolSpace) !== -1) {
-    appData.state.initialProtocolUrl = process.argv[i];
-    break;
-  }
 }
 
 log.info("Auto updater config: ")
