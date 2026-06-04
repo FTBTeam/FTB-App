@@ -9,12 +9,12 @@ import SidebarRunningInstances from '@/components/layout/sidebar/SidebarRunningI
 import Popover from '@/components/ui/Popover.vue';
 import {FontAwesomeIcon} from '@fortawesome/vue-fontawesome';
 import {
+  faBlog,
   faBookOpen,
   faCode,
   faCog,
   faHome,
   faInfoCircle,
-  faRss,
   faSearch,
   faTshirt
 } from '@fortawesome/free-solid-svg-icons';
@@ -40,7 +40,7 @@ const navigation = [
   {
     name: 'Blog',
     to: RouterNames.ROOT_BLOG,
-    icon: faRss,
+    icon: faBlog,
   },
   {
     name: 'Support',

@@ -147,9 +147,6 @@ async function searchPacks() {
         fill
         :placeholder="`Search ${currentTab === 'ftb' ? 'FTB Modpacks' : 'Curseforge Modpacks'}`"
       />
-      <div v-if="currentTab === 'ftb'">
-        <FontAwesomeIcon :icon="faFilter" /> Filters
-      </div>
     </div>
     
     <Message :icon="faWarning" type="danger" class="my-6" v-if="error">
