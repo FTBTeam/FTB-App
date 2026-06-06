@@ -49,7 +49,9 @@ export function updateApp(source: string) {
   app.removeAllListeners('window-all-closed');
   
   log.debug("Quitting app")
-  autoUpdater.quitAndInstall();
+  
+  // On macOS, we need to pass proper parameters to ensure the update installs
+  autoUpdater.quitAndInstall(false, true);
 }
 
 function loadChannel() {
