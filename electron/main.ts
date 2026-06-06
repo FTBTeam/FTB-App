@@ -59,7 +59,7 @@ log.info("App has been started with the following:\n" + JSON.stringify(process.a
 // Protocol parsing.
 for (let i = 0; i < process.argv.length; i++) {
   if (process.argv[i].indexOf(appData.protocolSpace) !== -1) {
-    appData.state.initialProtocolUrl = process.argv[i];
+    handleProtocolUrl(process.argv[i], "app-launch");
     break;
   }
   
@@ -85,8 +85,12 @@ log.log("FTB App starting...")
 setupUpdater(appData)
 
 // Register the custom protocol handler for the app
-if (!import.meta.env.PROD && process.platform === 'win32') {
-  app.setAsDefaultProtocolClient(appData.protocolSpace, process.execPath, [path.resolve(process.argv[1])]);
+if (process.defaultApp) {
+  if (process.argv.length >= 2) {
+    app.setAsDefaultProtocolClient(appData.protocolSpace, process.execPath, [
+      path.resolve(process.argv[1]),
+    ]);
+  }
 } else {
   app.setAsDefaultProtocolClient(appData.protocolSpace);
 }
@@ -329,13 +333,10 @@ app.on('activate', async () => {
 
 app.whenReady().then(() => {
   createPreLaunchWindow();
-  
-  // protocol.handle(appData.protocolSpace, async (event) => {
-  //   if (event.url) {
-  //   }
-  //  
-  //   return new Response(null);
-  // })
+  const customProtocol = process.argv.find(item => item.startsWith(appData.protocolSpace + "://"));
+  if (customProtocol) {
+    handleProtocolUrl(customProtocol, "app-ready");
+  }
 })
 
 app.on('render-process-gone', (_, webContents, details) => {
@@ -355,13 +356,8 @@ app.on('render-process-gone', (_, webContents, details) => {
 
 // We either handle the protocol right away, or we store it in the app data until the app is ready and requests it from us.
 app.on("open-url", async (e, customSchemeData) => {
-  console.log("Received protocol URL", customSchemeData, "app started?", appData.state.appStarted)
-  if (appData.state.appStarted && appData.mainWindow) {
-    appData.mainWindow.webContents.send('parseProtocolURL', customSchemeData);
-  } else {
-    e.preventDefault();
-    appData.state.initialProtocolUrl = customSchemeData;
-  }
+  e.preventDefault();
+  handleProtocolUrl(customSchemeData, "open-url");
 });
 
 ipcMain.handle("startSubprocess", async (_, args) => {
@@ -377,6 +373,7 @@ ipcMain.on("app/ready", () => {
   log.info("App is ready, appStarted flag set to true")
 })
 
+
 if (!app.requestSingleInstanceLock()) {
   log.debug("Preventing extra windows of the app from loading", import.meta.env.MODE)
   app.quit();
@@ -385,32 +382,39 @@ if (!app.requestSingleInstanceLock()) {
   app.on('second-instance', (event, commandLine) => {
     // Someone tried to run a second instance, we should focus our window.
     log.info(`Event: ${event}, commandLine: ${commandLine}`);
-    if (appData.prelaunchWindow) {
-      if (appData.prelaunchWindow.isMinimized()) {
-        appData.prelaunchWindow.restore()
-      }
-      
-      if (!appData.prelaunchWindow.isFocused()) {
-        appData.prelaunchWindow.focus();
-      }
-    } else {
-      if (appData.mainWindow) {
-        if (appData.mainWindow.isMinimized()) {
-          log.debug("Window is minimized, restoring")
-          appData.mainWindow.restore();
-        }
-        appData.mainWindow.focus();
-        
-        // Looks like this is triggered on the app
-        commandLine.forEach((c) => {
-          log.debug("Command line arg", c)
-          if (c.indexOf('ftb://') !== -1) {
-            log.debug("Sending protocol url to frontend")
-            // @ts-ignore
-            appData.mainWindow.webContents.send('parseProtocolURL', c);
-          }
-        });
-      }
+    if (appData.mainWindow) {
+      restoreOrFocus(appData.mainWindow);
+    } else if (appData.prelaunchWindow) {
+      restoreOrFocus(appData.prelaunchWindow);
     }
+
+    commandLine.forEach((c) => {
+      log.debug("Command line arg", c)
+      if (c.indexOf(appData.protocolSpace + '://') !== -1) {
+        handleProtocolUrl(c, "second-instance");
+      }
+    });
   });
+}
+
+function restoreOrFocus(window: BrowserWindow) {
+  if (window.isMinimized()) {
+    window.restore();
+  }
+  
+  if (!window.isFocused()) {
+    window.focus();
+  }
+}
+
+function handleProtocolUrl(url: string, source: string) {
+  log.info(`Handling protocol URL from source ${source}: ${url}`)
+  
+  if (appData.state.appStarted) {
+    log.info("App is ready, sending protocol URL to renderer")
+    appData.mainWindow?.webContents.send('parseProtocolURL', url);
+  } else {
+    log.info("App is not ready, storing protocol URL in app data")
+    appData.state.initialProtocolUrl = url;
+  }
 }
