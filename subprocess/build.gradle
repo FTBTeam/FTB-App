@@ -41,6 +41,14 @@ base {
     archivesName = "app"
 }
 
+def localProps = new Properties()
+def localPropsFile = file('local.properties')
+if (localPropsFile.exists()) {
+    localProps.load(localPropsFile.newInputStream())
+}
+
+def cfApiKey = providers.environmentVariable("CF_API_KEY").orElse(localProps.getProperty('cf_api_key', '')).get()
+
 def packageJson = new JsonSlurper().parse(file("../package.json"))
 def appVersion = packageJson.version
 
@@ -114,7 +122,7 @@ test {
 tasks.register('processSource', Sync) {
     from sourceSets.main.java
     inputs.property 'version', version
-    filter(ReplaceTokens, tokens: [APPVERSION: version, BRANCH: branch, COMMIT: details.gitHash])
+    filter(ReplaceTokens, tokens: [APPVERSION: version, BRANCH: branch, COMMIT: details.gitHash, CFAPIKEY: cfApiKey])
     into "$buildDir/src"
 }
 
@@ -251,6 +259,7 @@ idea.project.settings {
         "Start Backend"(org.jetbrains.gradle.ext.Application) {
             mainClass = "dev.ftb.app.AppMain"
             moduleName = "ftb-app.main"
+            envs = ['CF_API_KEY': localProps.getProperty('cf_api_key', '')]
             jvmArgs = '-ea '                                             // Enable assertions
             jvmArgs += '-Dconsole.level=ALL '                            // Direct ALL log levels to console.
             jvmArgs += '-DDownloadTask.debug=true '                      // Enable Quack DownloadAction logging from DownloadTask

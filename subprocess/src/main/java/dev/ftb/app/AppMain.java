@@ -90,7 +90,7 @@ public class AppMain {
         } catch (Throwable ex) {
             LOGGER.error("Failed to parse args, continuing with empty args", ex);
         }
-
+        
         Constants.PLATFORM = parsedArgs.containsKey("overwolf") ? "overwolf" : "electron";
         isDevMode = parsedArgs.containsKey("dev");
         Constants.IS_DEV_MODE = isDevMode;

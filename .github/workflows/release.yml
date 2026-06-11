@@ -62,6 +62,7 @@ jobs:
       - name: Build subprocess
         env:
           GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+          CF_API_KEY: ${{ secrets.CF_API_KEY }}
         run: |
           cd subprocess
           ./gradlew clean build -si
