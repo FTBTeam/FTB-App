@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import {SearchResultPack} from '@/core/types/modpacks/packSearch';
-import {resolveArtwork} from '@/utils/helpers/packHelpers';
+import {resolveArtwork, sourceProviderToProvider} from '@/utils/helpers/packHelpers';
 import {stringOrDefault} from '@/utils/helpers/stringHelpers';
 import ModpackInstallModal from '@/components/modals/ModpackInstallModal.vue';
 import {dialogsController} from '@/core/controllers/dialogsController';
@@ -83,7 +83,7 @@ const isInstalling = computed(() => {
 
 <template>
   <div class="pack-preview-container">
-    <div class="pack-preview" v-if="packData" @click="() => globalStore.openModpackPreview(packData?.id ?? 0, packData?.platform ?? 'ftb')">
+    <div class="pack-preview" v-if="packData" @click="() => globalStore.openModpackPreview(packData?.id ?? 0, sourceProviderToProvider(packData?.platform ?? 'ftb'))">
       <div class="splash-art" v-if="artwork" :style="{ backgroundImage: `url(${artwork})` }" />
       <div class="logo">
         <img :src="logo" :alt="`Pack art for ${packData.name}`" />

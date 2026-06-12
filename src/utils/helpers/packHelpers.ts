@@ -149,7 +149,10 @@ export function typeIdToProvider(id: number): PackProvider {
 export function sourceProviderToProvider(source: string): PackProvider {
   switch (source) {
     case "curseforge": return "curseforge";
-    case "modpacks.ch": return "ftb";
+    case "modpacksch":
+    case "ftb":
+    case "modpacks.ch": 
+      return "ftb";
     default: return "ftb";
   }
 }
