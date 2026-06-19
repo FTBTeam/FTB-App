@@ -429,7 +429,6 @@ const isLoader = computed(() => {
         placeholder="/usr/local/application-wrapper"
         @blur="saveSettings"
         fill
-        hint="These arguments will be inserted before java is run, see the example below. It's recommended to not change these unless you know what you are doing."
       />
 
       <p class="mb-2 font-bold">Startup preview</p>

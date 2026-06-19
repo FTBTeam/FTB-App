@@ -11,4 +11,19 @@ export const constants = {
   platform: platform,
 }
 
+export const supportedLoaders: {key: string, value: string}[] = [
+  {
+    key: "neoforge",
+    value: "NeoForge"
+  },
+  {
+    key: "fabric",
+    value: "Fabric"
+  },
+  {
+    key: "Forge",
+    value: "Forge"
+  }
+] as const
+
 export const defaultInstanceCategory = "02c2cc8e-0b8d-45d0-ac1d-7e32b1c21cb0";

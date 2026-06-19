@@ -7,7 +7,8 @@ import {modpackApi} from "@/core/pack-api/modpackApi.ts";
 import {marked} from "marked";
 import {alertController} from "@/core/controllers/alertController.ts";
 import {UiSelectOption} from "@/components/ui/select/UiSelect.ts";
-import UiSelect from "@/components/ui/select/UiSelect.vue";
+import {sourceProviderToProvider} from "@/utils/helpers/packHelpers.ts";
+import UiSelectSingle from "@/components/ui/select/UiSelectSingle.vue";
 
 const {
   modpack
@@ -59,7 +60,7 @@ function selectAndLoad(id?: number | string | null) {
   }
   
   loading.value = true;
-  modpackApi.modpacks.getChangelog(modpack.id, resolvedVersion.id, modpack.provider === "modpacks.ch" ? "modpacksch" : "curseforge")
+  modpackApi.modpacks.getChangelog(modpack.id, resolvedVersion.id, sourceProviderToProvider(modpack.provider))
     .then(async data => changelogData.value = await marked.parse(data?.content ?? ""))
     .catch(e => alertController.error("Failed to load changelog", e))
     .finally(() => loading.value = false)
@@ -73,14 +74,14 @@ const options = computed(() => modpack.versions.map(e => ({
 </script>
 
 <template>
-  <UiSelect :options="options" v-model="selectedVersion" @update:modelValue="(v) => selectAndLoad(v)" class="mb-8" placeholder="Select version" :min-width="260">
+  <UiSelectSingle :options="options" v-model="selectedVersion" @update:modelValue="(v) => selectAndLoad(v)" class="mb-8" placeholder="Select version" :min-width="260">
     <template #option="{ option, clazz }">
       <div class="flex items-center justify-between" :class="clazz">
         <div class="flex-1">{{ option.value }}</div>
         <div class="text-white/80">{{ option.date }}</div>
       </div>
     </template>
-  </UiSelect>
+  </UiSelectSingle>
   
   <template v-if="!loading">
     <div v-if="changelogData" class="wysiwyg" v-html="changelogData"></div>

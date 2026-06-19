@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { createLogger } from '@/core/logger.ts';
 import { modpackApi } from '@/core/pack-api/modpackApi.ts';
-import { ModPack, ModpackVersion, PackProviders } from '@/core/types/appTypes.ts';
+import {PackProvider, ModPack, ModpackVersion} from '@/core/types/appTypes.ts';
 
 const logger = createLogger("modpacks/modpacksState.ts");
 
@@ -37,7 +37,7 @@ export const useModpackStore = defineStore("modpack", {
   },
 
   actions: {
-    async getModpack(id: number, provider: PackProviders = "modpacksch"): Promise<ModPack | null> {
+    async getModpack(id: number, provider: PackProvider = "ftb"): Promise<ModPack | null> {
       if (id === -1) {
         return null;
       }
@@ -57,7 +57,7 @@ export const useModpackStore = defineStore("modpack", {
       return modpack;
     },
     
-    async getVersion(id: number, version: number, provider: PackProviders = "modpacksch") {
+    async getVersion(id: number, version: number, provider: PackProvider = "ftb") {
       if (id === -1) {
         return null;
       }

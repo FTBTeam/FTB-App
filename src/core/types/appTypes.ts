@@ -76,7 +76,7 @@ export interface Targets {
   updated: number;
 }
 
-export type PackProviders = "modpacksch" | "curseforge"
+export type PackProvider = "ftb" | "curseforge"
 
 export interface ModPackLink {
   id: number;

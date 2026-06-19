@@ -11,14 +11,14 @@ import { createLogger } from '@/core/logger';
 import { RouterNames } from '@/router';
 import { onMounted, ref, watch } from 'vue';
 import { packBlacklist } from '@/store/modpackStore.ts';
-import { PackProviders } from '@/core/types/appTypes.ts';
-import { faInfo, faSearch, faWarning } from '@fortawesome/free-solid-svg-icons';
+import {PackProvider} from '@/core/types/appTypes.ts';
+import {faInfo, faSearch, faWarning} from '@fortawesome/free-solid-svg-icons';
 
 const logger = createLogger("BrowseModpacks.vue")
 const router = useRouter();
 
 const searchValue = ref('');
-const currentTab = ref<PackProviders>('modpacksch');
+const currentTab = ref<PackProvider>('ftb');
 const searchResults = ref<SearchResultPack[]>([]);
 const loading = ref(false);
 const error = ref('');
@@ -29,7 +29,7 @@ const visiblePacks = ref<number[]>([]);
 
 onMounted(() => {
   if (router.currentRoute.value.query.provider) {
-    currentTab.value = router.currentRoute.value.query.provider as PackProviders;
+    currentTab.value = router.currentRoute.value.query.provider as PackProvider;
   }
   
   try {
@@ -78,7 +78,7 @@ const debouncedSearch = debounce(() => {
   searchPacks();
 }, 500);
 
-async function changeTab(tab: PackProviders) {
+async function changeTab(tab: PackProvider) {
   if (currentTab.value === tab) {
     return;
   }
@@ -125,9 +125,9 @@ async function searchPacks() {
     <div class="search-and-switcher mb-4">
       <div class="switcher shadow">
         <div
-          @click="changeTab('modpacksch')"
+          @click="changeTab('ftb')"
           class="btn-icon bg-navbar ftb"
-          :class="{ active: currentTab === 'modpacksch' }"
+          :class="{ active: currentTab === 'ftb' }"
         >
           <img src="@/assets/images/ftb-logo.svg" alt="" />
         </div>
@@ -144,7 +144,7 @@ async function searchPacks() {
         v-model="searchValue"
         :icon="faSearch"
         fill
-        :placeholder="`Search ${currentTab === 'modpacksch' ? 'FTB Modpacks' : 'Curseforge Modpacks'}`"
+        :placeholder="`Search ${currentTab === 'ftb' ? 'FTB Modpacks' : 'Curseforge Modpacks'}`"
       />
     </div>
     

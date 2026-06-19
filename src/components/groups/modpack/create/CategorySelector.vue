@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import { useInstanceStore } from '@/store/instancesStore.ts';
 import {ref, computed} from 'vue';
-import UiSelect from "@/components/ui/select/UiSelect.vue";
 import {faCheck, faPlus, faTimes} from "@fortawesome/free-solid-svg-icons";
 import UiButton from "@/components/ui/UiButton.vue";
 import {Input} from "@/components/ui";
@@ -9,6 +8,7 @@ import {alertController} from "@/core/controllers/alertController.ts";
 import {defaultInstanceCategory} from "@/core/constants.ts";
 import {toggleBeforeAndAfter} from "@/utils/helpers/asyncHelpers.ts";
 import {sendMessage} from "@/core/websockets/websocketsApi.ts";
+import UiSelectSingle from "@/components/ui/select/UiSelectSingle.vue";
 
 const instanceStore = useInstanceStore();
 
@@ -75,7 +75,7 @@ const isValid = computed(() => {
 
 <template>
   <div class="" v-if="!showCreate">
-    <UiSelect :label="label ?? 'Category'" 
+    <UiSelectSingle :label="label ?? 'Category'" 
               :options="_options"
               v-model="value"
               class="flex-1"
@@ -83,7 +83,7 @@ const isValid = computed(() => {
       <template #suffix>
         <UiButton size="small" :icon="faPlus" @click="showCreate = true" />
       </template>
-    </UiSelect>
+    </UiSelectSingle>
   </div>
   <div class="" v-else>
     <Input :disabled="adding" placeholder="Category name" label="New Category Name" fill v-model="extraCategory">

@@ -8,7 +8,7 @@ import appPlatform from '@platform';
 import {SugaredInstanceJson} from '@/core/types/javaApi';
 import { Loader, ProgressBar } from '@/components/ui';
 import { parseMarkdown, safeLinkOpen } from '@/utils';
-import {typeIdToProvider} from '@/utils/helpers/packHelpers';
+import {sourceProviderToProvider, typeIdToProvider} from '@/utils/helpers/packHelpers';
 import WorldsTab from '@/components/groups/modpack/WorldsTab.vue';
 import { computed } from 'vue';
 import { useInstallStore } from '@/store/installStore.ts';
@@ -304,7 +304,7 @@ const curseWebsite = computed(() => packInstance?.provider === "curseforge" && p
         </div>
         <div
           class="wysiwyg"
-          v-if="packInstance?.provider === 'modpacks.ch' && packInstance && packInstance.description !== undefined"
+          v-if="sourceProviderToProvider(packInstance?.provider ?? 'ftb') === 'ftb' && packInstance && packInstance.description !== undefined"
           v-html="parseMarkdown(packInstance.description ?? '')"
         />
         <div class="description" v-else-if="packInstance?.provider === 'curseforge' && packInstance && packInstance.description !== undefined" v-html="cursePackBody()"></div>

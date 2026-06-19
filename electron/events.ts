@@ -1,6 +1,6 @@
 import { app, BrowserWindow, clipboard, dialog, ipcMain, shell, screen } from 'electron';
 import os from 'os';
-import { appHome, reloadMainWindow, updateApp } from './main';
+import { appHome, reloadMainWindow } from './main';
 import fs from 'fs';
 import https from 'https';
 import { execSync } from 'child_process';
@@ -9,6 +9,7 @@ import { autoUpdater } from 'electron-updater';
 import path from 'path';
 import { JavaVerifier } from './javaVerifier.ts';
 import log from 'electron-log/main';
+import {updateApp} from "./updater.ts";
 
 let checkUpdaterLock = false;
 
@@ -192,14 +193,14 @@ ipcMain.handle("action/app/change-channel", async (_, data) => {
     // Ask the user if they want to update
     log.debug("Update downloaded", version)
 
-    const latestVersion = autoUpdater.currentVersion.version;
+    const latestVersion = updateResult.updateInfo.releaseName ?? updateResult.updateInfo.version ?? "unknown";
     const currentVersion = app.getVersion();
 
     log.debug("Latest version", latestVersion)
     log.debug("Current version", currentVersion)
 
     const result = await dialog.showMessageBox({
-      message: `A new version of the app is available, would you like to update?, ${latestVersion} -> ${currentVersion}`,
+      message: `A new version of the app is available, would you like to update from ${currentVersion} to ${latestVersion}?`,
       type: "info",
       buttons: ["Yes", "No"],
       defaultId: 0,

@@ -31,9 +31,9 @@ import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { Input } from '@/components/ui';
 import {prettyByteFormat} from "@/utils";
-import UiSelect from "@/components/ui/select/UiSelect.vue";
 import {AppContextController} from "@/core/context/contextController.ts";
 import {ContextMenus} from "@/core/context/contextMenus.ts";
+import UiSelectSingle from "@/components/ui/select/UiSelectSingle.vue";
 
 const logger = createLogger("ModpackMods.vue")
 
@@ -252,7 +252,7 @@ const installedMods = computed<[number, number][]>(() => {
           updateAll: () => updateAll(),
         }
       }))" :icon="faEllipsisVertical">Options</ui-button>
-      <ui-select :options="filters" :icon="faFilter" placeholder="Filter" placement="bottom-end" v-model="filterType" />
+      <UiSelectSingle :options="filters" :icon="faFilter" placeholder="Filter" placement="bottom-end" v-model="filterType" />
     </div>
     
     <div class="mods">      

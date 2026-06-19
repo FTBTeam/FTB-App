@@ -338,6 +338,9 @@ public class ModpackVersionManifest {
         private JsonArray tags;
 
         public long updated;
+        
+        @Nullable
+        private CurseForgeIds curseforge;
 
         public ModpackFile() {
         }
@@ -431,6 +434,7 @@ public class ModpackVersionManifest {
         public void setUrl(@Nullable String url) { this.url = url; }
         public void setSha1(HashCode sha1) { this.sha1 = sha1; }
         public void setSize(long size) { this.size = size; }
+        @Nullable public CurseForgeIds getCurseForgeIds() { return curseforge; }
         // @formatter:on
     }
     
@@ -448,6 +452,27 @@ public class ModpackVersionManifest {
         public long cfMurmur;
     }
 
+    public static final class CurseForgeIds {
+        private String project;
+        private String file;
+        
+        public int projectAsInt() {
+            return Integer.parseInt(project);
+        }
+        
+        public int fileAsInt() {
+            return Integer.parseInt(file);
+        }
+
+        public String project() {
+            return project;
+        }
+
+        public String file() {
+            return file;
+        }
+    }
+    
     private static final class SpecsSerializer implements JsonDeserializer<Specs>, JsonSerializer<Specs> {
 
         @Nullable

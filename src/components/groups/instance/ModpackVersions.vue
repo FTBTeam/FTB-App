@@ -79,7 +79,7 @@ function setActive(versionId: number) {
 async function fetchLog(versionId: number) {
   try {
     const changelog = await toggleBeforeAndAfter(
-      () => modpackApi.modpacks.getChangelog(packInstance.id, versionId, isCursePack.value ? "curseforge" : "modpacksch"),
+      () => modpackApi.modpacks.getChangelog(packInstance.id, versionId, isCursePack.value ? "curseforge" : "ftb"),
       state => loading.value = state
     )
 

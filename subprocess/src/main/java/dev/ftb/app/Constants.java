@@ -37,11 +37,13 @@ public class Constants {
     public static final String FTB_MODPACKS_API = "https://api.feed-the-beast.com/v1/modpacks";
     public static final String META_JSON = FTB_MODPACKS_API + "/public/helpers/meta";
 
-    public static final String CH_MAVEN = "https://maven.creeperhost.net/";
     public static final String MC_JSONS = FTB_MODPACKS_API + "/public/helpers/versions/minecraftjsons/";
     
     //Other
     public static final int WEBSOCKET_PORT = 13377;
+
+    public static final String CF_API_KEY = "@CFAPIKEY@";
+    
     public static final String APPVERSION = "@APPVERSION@";
     public static final String BRANCH = "@BRANCH@";
     public static final String COMMIT = "@COMMIT@";
@@ -140,5 +142,14 @@ public class Constants {
         } else {
             return Constants.OVER_26_ARGS;
         }
+    }
+    
+    public static String curseForgeApiKey() {
+        if (CF_API_KEY.startsWith("@") && CF_API_KEY.endsWith("@")) {
+            String env = System.getenv("CF_API_KEY");
+            return env != null ? env : "";
+        }
+        
+        return CF_API_KEY;
     }
 }

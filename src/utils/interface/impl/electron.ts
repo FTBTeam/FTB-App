@@ -284,6 +284,13 @@ const Electron: ElectronOverwolfInterface = {
         
         fs.writeFile(path.join(appHome, "bin", ".first-launch"), "");
       }
+    },
+    async getProtocolUrl(): Promise<string | null> {
+      return await window.ipcRenderer.invoke("protocol/get-startup-url");
+    },
+    
+    pingAsReady() {
+      window.ipcRenderer.send("app/ready");
     }
   },
   

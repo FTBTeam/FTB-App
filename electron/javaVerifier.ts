@@ -5,10 +5,10 @@ import fs from 'fs';
 import { execSync } from 'child_process';
 import { MetaData } from '@platform';
 import { retrying } from '../src/utils/helpers/asyncHelpers.ts';
-import { prelaunchWindow } from './main.ts';
 import { dialog } from 'electron';
 import AdmZip from 'adm-zip';
 import log from 'electron-log/main'
+import {appData} from "./main.ts";
 
 export class JavaVerifier {
   private readonly metaData: MetaData;
@@ -174,7 +174,7 @@ export class JavaVerifier {
   }
   
   private emitUpdate(message: string) {
-    prelaunchWindow?.webContents.send("java/message", message)
+    appData.prelaunchWindow?.webContents.send("java/message", message)
   }
   
   private async getJavaFromApi() {

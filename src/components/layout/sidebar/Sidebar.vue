@@ -13,8 +13,7 @@ import {
   faCode,
   faCog,
   faHome,
-  faInfoCircle,
-  faRss,
+  faInfoCircle, faNewspaper,
   faSearch,
   faTshirt
 } from '@fortawesome/free-solid-svg-icons';
@@ -40,7 +39,7 @@ const navigation = [
   {
     name: 'Blog',
     to: RouterNames.ROOT_BLOG,
-    icon: faRss,
+    icon: faNewspaper,
   },
   {
     name: 'Support',

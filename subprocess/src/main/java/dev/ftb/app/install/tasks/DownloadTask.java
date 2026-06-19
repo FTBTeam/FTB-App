@@ -218,6 +218,10 @@ public class DownloadTask implements Task {
                     .url(url)
                     .addHeader("User-Agent", Constants.USER_AGENT);
 
+            if (url.startsWith("https://edge.forgecdn.net/files")) {
+                builder.addHeader("x-api-key", Constants.curseForgeApiKey());
+            }
+            
             if (validation.useETag && Files.exists(eTagFile)) {
                 try {
                     builder.addHeader("If-None-Match", Files.readString(eTagFile));
