@@ -1,7 +1,7 @@
 import path from "node:path";
 import fs from "node:fs";
 
-import {app, ipcMain} from "electron";
+import {app, dialog, ipcMain} from "electron";
 import log from "electron-log/main";
 import {autoUpdater} from "electron-updater";
 
@@ -43,15 +43,16 @@ export function setupUpdater(appData: AppData) {
 
 export function updateApp(source: string) {
   log.debug("Quitting and installing app from: ", source)
-
-  // Get all known windows and close them
-  log.debug("Removing all listeners and closing windows");
-  app.removeAllListeners('window-all-closed');
-  
-  log.debug("Quitting app")
   
   // On macOS, we need to pass proper parameters to ensure the update installs
-  autoUpdater.quitAndInstall(false, true);
+  try {
+    autoUpdater.quitAndInstall(false, true);
+    
+    log.debug("Removing all listeners and closing windows");
+    app.removeAllListeners('window-all-closed');
+  } catch (e) {
+    dialog.showErrorBox("Update Error", "Failed to install update: " + e);
+  }
 }
 
 function loadChannel() {
