@@ -67,6 +67,7 @@ linux:
       StartupWMClass=${productName}
       MimeType=x-scheme-handler/ftb;
       Categories=Game;
+      X-Desktop-Source-File=electron-builder.yml
 directories:
   output: release
   buildResources: resources

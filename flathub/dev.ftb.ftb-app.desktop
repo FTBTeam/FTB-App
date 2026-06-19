@@ -8,3 +8,4 @@ StartupWMClass=FTB Electron App
 Comment=FTB Electron App for downloading and managing minecraft modpacks
 MimeType=x-scheme-handler/ftb;
 Categories=Game;
+X-Desktop-Source-File=flathub
