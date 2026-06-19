@@ -1,6 +1,6 @@
 [Desktop Entry]
 Name=FTB App
-Exec=ftb.sh
+Exec=ftb.sh %u
 Terminal=false
 Type=Application
 Icon=dev.ftb.ftb-app
