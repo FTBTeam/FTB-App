@@ -1,6 +1,6 @@
 [Desktop Entry]
 Name=FTB App
-Exec=ftb.sh
+Exec=ftb.sh %u
 Terminal=false
 Type=Application
 Icon=dev.ftb.ftb-app
@@ -8,3 +8,4 @@ StartupWMClass=FTB Electron App
 Comment=FTB Electron App for downloading and managing minecraft modpacks
 MimeType=x-scheme-handler/ftb;
 Categories=Game;
+X-Desktop-Source-File=flathub
