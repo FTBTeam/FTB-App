@@ -12,8 +12,6 @@ body:
       options:
         - Windows 11
         - Windows 10
-        - Windows 8.1
-        - Windows 7
         - Windows Insider Preview
         - Windows Other
         - MacOS (Latest)
@@ -25,7 +23,7 @@ body:
   - type: textarea
     id: debugcode
     attributes:
-      label: Debug Code
+      label: App logs
       description: |
         Please right click on the settings cog on the left hand panel. Select "Export logs zip". This will give you a zip, most likely in your downloads folder, please send that file here by dragging and dropping it into the reply box belo. We can't help you without it. If this file is too big for GitHub, please use a service [Google Drive](https://drive.google.com/) or [DropBox](https://dropbox.com/)
 
