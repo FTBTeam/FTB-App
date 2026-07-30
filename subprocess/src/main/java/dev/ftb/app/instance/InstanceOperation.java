@@ -58,7 +58,10 @@ public abstract class InstanceOperation {
 
                     String relPath = entry.getName().replace('\\', '/');
                     String fileName = entry.getName().substring(entry.getName().lastIndexOf('/') + 1);
-                    HashCode sha1 = Hashing.sha1().hashBytes(zipFile.getInputStream(entry).readAllBytes());
+                    HashCode sha1;
+                    try (var entryStream = zipFile.getInputStream(entry)) {
+                        sha1 = Hashing.sha1().hashBytes(entryStream.readAllBytes());
+                    }
                     long length = entry.getSize();
 
                     knownFiles.put(relPath, new IndexedFile(relPath, fileName, sha1, length));
