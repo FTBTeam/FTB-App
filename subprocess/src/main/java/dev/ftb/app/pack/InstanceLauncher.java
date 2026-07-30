@@ -391,7 +391,10 @@ public class InstanceLauncher {
             token.throwIfCancelled();
 
             progressTracker.startStep("Extract natives");
-            Path nativesDir = versionsDir.resolve(instance.props.modLoader).resolve(instance.props.modLoader + "-natives-" + System.nanoTime());
+            Path nativesParentDir = versionsDir.resolve(instance.props.modLoader);
+            String nativesDirPrefix = instance.props.modLoader + "-natives-";
+            cleanupOrphanedNativeDirs(nativesParentDir, nativesDirPrefix);
+            Path nativesDir = nativesParentDir.resolve(nativesDirPrefix + System.nanoTime());
             extractNatives(nativesDir, librariesDir, libraries);
             progressTracker.updateDesc("Natives Extracted");
             progressTracker.finishStep();
@@ -643,6 +646,29 @@ public class InstanceLauncher {
         }
         rootListener.finish(progressAggregator.getProcessed());
         LOGGER.info("Libraries validated!");
+    }
+
+    /**
+     * Apply a cleanup pass to remove any orphaned native extraction directories from previous runs.
+     */
+    private static void cleanupOrphanedNativeDirs(Path parentDir, String prefix) {
+        if (Files.notExists(parentDir)) return;
+        try (Stream<Path> children = Files.list(parentDir)) {
+            children
+                    .filter(Files::isDirectory)
+                    .filter(dir -> dir.getFileName().toString().startsWith(prefix))
+                    .forEach(dir -> {
+                        LOGGER.info("Removing orphaned native extraction directory from a previous run: {}", dir);
+                        try (Stream<Path> files = Files.walk(dir)) {
+                            files.sorted(Comparator.reverseOrder()).forEach(sneak(Files::delete));
+                        } catch (IOException e) {
+                            LOGGER.warn("Failed to delete orphaned native directory '{}', scheduling for app exit.", dir, e);
+                            dir.toFile().deleteOnExit();
+                        }
+                    });
+        } catch (IOException e) {
+            LOGGER.warn("Failed to scan for orphaned native directories in '{}'.", parentDir, e);
+        }
     }
 
     private void extractNatives(Path nativesDir, Path librariesDir, List<VersionManifest.Library> libraries) throws IOException {
