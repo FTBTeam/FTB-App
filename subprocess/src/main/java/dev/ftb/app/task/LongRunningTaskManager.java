@@ -34,7 +34,9 @@ public class LongRunningTaskManager {
     public boolean anyTasksRunning(Class<?> filter) {
         synchronized (operations) {
             for (LongRunningOperation operation : operations) {
-                return filter.isAssignableFrom(operation.getClass());
+                if (filter.isAssignableFrom(operation.getClass())) {
+                    return true;
+                }
             }
         }
         return false;
