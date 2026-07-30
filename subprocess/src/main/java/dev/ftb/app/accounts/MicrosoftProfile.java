@@ -128,7 +128,7 @@ public class MicrosoftProfile {
 
             JsonObject xstsData = xstsResult.unwrap();
             if (!xstsData.has("DisplayClaims") || !xstsData.has("Token")) {
-                LOGGER.error("Invalid XSTS response: {}", xstsData);
+                LOGGER.error("Invalid XSTS response, missing expected fields. Present fields: {}", xstsData.keySet());
                 return false;
             }
             
@@ -140,7 +140,7 @@ public class MicrosoftProfile {
 
             JsonObject xstsTokenData = xstsTokenResult.unwrap();
             if (!xstsTokenData.has("DisplayClaims")) {
-                LOGGER.error("Invalid XSTS Tokens response: {}", xstsTokenData);
+                LOGGER.error("Invalid XSTS Tokens response, missing expected fields. Present fields: {}", xstsTokenData.keySet());
                 return false;
             }
             

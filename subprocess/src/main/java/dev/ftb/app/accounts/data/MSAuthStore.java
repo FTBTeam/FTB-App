@@ -1,5 +1,7 @@
 package dev.ftb.app.accounts.data;
 
+import org.jspecify.annotations.Nullable;
+
 import java.util.StringJoiner;
 import java.util.UUID;
 
@@ -24,10 +26,14 @@ public class MSAuthStore {
     public String toString() {
         return new StringJoiner(", ", MSAuthStore.class.getSimpleName() + "[", "]")
                 .add("minecraftUuid=" + minecraftUuid)
-                .add("minecraftToken='" + minecraftToken + "'")
+                .add("minecraftToken=" + redact(minecraftToken))
                 .add("xblUserHash='" + xblUserHash + "'")
-                .add("liveAccessToken='" + liveAccessToken + "'")
-                .add("liveRefreshToken='" + liveRefreshToken + "'")
+                .add("liveAccessToken=" + redact(liveAccessToken))
+                .add("liveRefreshToken=" + redact(liveRefreshToken))
                 .toString();
+    }
+
+    private static String redact(@Nullable String secret) {
+        return secret == null ? "null" : "<redacted>";
     }
 }
