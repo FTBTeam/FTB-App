@@ -104,7 +104,7 @@ public class LogZipper {
         systemDetails.addProperty("arch", System.getProperty("os.arch"));
         systemDetails.addProperty("javaVersion", System.getProperty("java.version"));
         systemDetails.addProperty("javaVendor", System.getProperty("java.vendor"));
-        obj.add("appDetails", appDetails);
+        obj.add("systemDetails", systemDetails);
 
         var providerInstanceMapping = new JsonObject();
         for (Instance instance : Instances.allInstances()) {
