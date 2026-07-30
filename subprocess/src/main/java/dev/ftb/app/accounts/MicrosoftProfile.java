@@ -6,11 +6,13 @@ import dev.ftb.app.accounts.auth.MicrosoftRequests;
 import dev.ftb.app.accounts.data.ErrorWithCode;
 import dev.ftb.app.accounts.data.MinecraftProfileData;
 import dev.ftb.app.util.Result;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -219,5 +221,17 @@ public class MicrosoftProfile {
         EXPIRED,
         NOT_LOGGED_IN,
         TOTAL_FAILURE
+    }
+
+    @Override
+    public boolean equals(@Nullable Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        MicrosoftProfile that = (MicrosoftProfile) o;
+        return Objects.equals(uuid, that.uuid);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(uuid);
     }
 }
