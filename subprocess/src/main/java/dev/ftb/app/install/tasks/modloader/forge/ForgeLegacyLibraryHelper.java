@@ -44,6 +44,7 @@ public class ForgeLegacyLibraryHelper {
                     1997327,
                     "b6f5d9926b0afbde9f4dbe3db88c5247be7794bb"
                 ));
+                // Intentionally not breaking here, 1.4.7 uses the same libraries as 1.4.2
             case "1.4.2":
                 libraries.add(makeTask(libsDir.resolve("argo-2.25.jar"),
                     "https://cdn.feed-the-beast.com/app/assets/jars/thirdparty/argo-2.25.jar",

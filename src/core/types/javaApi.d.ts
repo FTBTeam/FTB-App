@@ -10,15 +10,6 @@ export interface PrivateBaseData extends BaseData {
     notViableForLogging: boolean;
 }
 
-export interface BrowseInstanceData extends BaseData {
-    uuid: string;
-    folder: string;
-}
-
-export interface BrowseInstanceDataReply extends BaseData {
-    status: string;
-}
-
 export interface CancelInstallInstanceData extends BaseData {
     uuid: string;
 }
