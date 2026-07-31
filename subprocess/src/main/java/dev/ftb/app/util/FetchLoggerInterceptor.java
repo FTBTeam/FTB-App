@@ -66,11 +66,11 @@ public class FetchLoggerInterceptor implements Interceptor {
         
         for (var header : headers) {
             var key = header.getFirst();
-            if (IGNORED_HEADERS.contains(key.toLowerCase()) || key.startsWith("access-control-")) {
+            if (IGNORED_HEADERS.contains(key.toLowerCase()) || key.toLowerCase().startsWith("access-control-")) {
                 continue; // Skip logging ignored headers
             }
             
-            if (key.startsWith("Authorization") || key.startsWith("Cookie")) {
+            if (key.toLowerCase().startsWith("authorization") || key.toLowerCase().startsWith("cookie")) {
                 // Redact sensitive information like Authorization tokens or Cookies
                 LOGGER.info("-- {}: REDACTED", key);
                 continue;
