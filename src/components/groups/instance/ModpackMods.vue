@@ -212,7 +212,7 @@ const packMods = computed(() => {
       size: 0,
       sha1: '',
       curse: {} as any,
-      murmurHash: ''
+      murmurHash: 0
     }]
   }
   

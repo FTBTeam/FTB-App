@@ -1,4 +1,5 @@
 import { parseInput as realParseInput } from './protocolActions';
+import { describe, expect, test } from 'vitest'
 
 describe('ProtocolActions validator', () => {
   const parseInput = (input: string) => realParseInput(input, false);
