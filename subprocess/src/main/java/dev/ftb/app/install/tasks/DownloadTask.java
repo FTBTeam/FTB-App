@@ -424,7 +424,7 @@ public class DownloadTask implements Task {
                 ResponseBody body = response.body();
                 if (body != null) return body.contentLength();
 
-                return NumberUtils.toInt(response.header("Content-Length"));
+                return NumberUtils.toLong(response.header("Content-Length"));
             }
         } catch (Throwable ex) {
             LOGGER.error("Could not perform a HEAD request to '{}'", url, ex);
