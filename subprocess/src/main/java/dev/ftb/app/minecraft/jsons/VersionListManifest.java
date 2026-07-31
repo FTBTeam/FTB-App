@@ -1,6 +1,8 @@
 package dev.ftb.app.minecraft.jsons;
 
 import com.google.common.hash.HashCode;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.JsonAdapter;
 import dev.ftb.app.Constants;
@@ -27,7 +29,11 @@ import static dev.ftb.app.util.StreamUtils.onlyOrDefault;
  */
 public class VersionListManifest {
     private static final Logger LOGGER = LogManager.getLogger();
-
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping()
+        .registerTypeAdapter(VersionManifest.OS.class, new VersionManifest.OsDeserializer())
+        .registerTypeAdapter(HashCode.class, new HashCodeAdapter())
+        .create();
+    
     @Nullable
     public Latest latest;
     public List<Version> versions = new ArrayList<>();
@@ -62,7 +68,7 @@ public class VersionListManifest {
                 }
             }
         }
-        return GsonUtils.loadJson(versionsFile, VersionListManifest.class);
+        return GsonUtils.loadJson(GSON, versionsFile, VersionListManifest.class);
     }
 
     /**
