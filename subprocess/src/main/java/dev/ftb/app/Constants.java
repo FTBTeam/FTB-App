@@ -1,5 +1,6 @@
 package dev.ftb.app;
 
+import com.google.common.base.Suppliers;
 import dev.ftb.app.os.OS;
 import dev.ftb.app.storage.settings.Settings;
 import dev.ftb.app.util.FetchLoggerInterceptor;
@@ -20,6 +21,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 public class Constants {
     // Don't put a Logger in this class, it is called before log4j can be initialized.
@@ -48,7 +50,7 @@ public class Constants {
     public static final String BRANCH = "@BRANCH@";
     public static final String COMMIT = "@COMMIT@";
     
-    public static final String USER_AGENT = "ftb-app/" + APPVERSION + " OS/"+ OS.CURRENT.name() + " Platform/" + PLATFORM + " Branch/" + BRANCH + " Commit/" + COMMIT;
+    public static final Supplier<String> USER_AGENT = Suppliers.memoize(() -> "ftb-app/" + APPVERSION + " OS/"+ OS.CURRENT.name() + " Platform/" + PLATFORM + " Branch/" + BRANCH + " Commit/" + COMMIT);
     private static final Throttler GLOBAL_THROTTLER = new Throttler();
 
     public static final String WEBSOCKET_SECRET = UUID.randomUUID().toString();
@@ -87,7 +89,7 @@ public class Constants {
                 .addInterceptor(new MultiHasherInterceptor())
                 .addInterceptor(chain -> chain.proceed(chain.request().newBuilder().tag(Throttler.class, getGlobalThrottler()).build()))
                 .addInterceptor(new ThrottlerInterceptor())
-                .addInterceptor(chain -> chain.proceed(chain.request().newBuilder().header("User-Agent", USER_AGENT).build()));
+                .addInterceptor(chain -> chain.proceed(chain.request().newBuilder().header("User-Agent", USER_AGENT.get()).build()));
 
         SSLUtils.inject(builder);
         ProxyUtils.inject(builder);

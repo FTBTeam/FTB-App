@@ -133,7 +133,7 @@ public class ModpackVersionManifest {
         StringWriter sw = new StringWriter();
         DownloadAction action = new OkHttpDownloadAction()
                 .setClient(Constants.httpClient())
-                .setUserAgent(Constants.USER_AGENT)
+                .setUserAgent(Constants.USER_AGENT.get())
                 .setUrl(url)
                 .setDest(sw);
         
