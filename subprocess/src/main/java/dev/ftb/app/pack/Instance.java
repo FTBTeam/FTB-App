@@ -849,7 +849,7 @@ public class Instance {
             return computedName + "-" + UUID.randomUUID().toString().substring(0, 8).trim();
         }
         
-        return computedName + " (" + count + ")".trim();
+        return computedName + (" (" + count + ")").trim();
     }
 
     @Nullable
