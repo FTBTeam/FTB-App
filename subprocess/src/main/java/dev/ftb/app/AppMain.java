@@ -132,8 +132,12 @@ public class AppMain {
         if (Files.exists(paths().processMarkerFile())) {
             try {
                 var data = Files.readString(paths().processMarkerFile());
-                var pid = Long.parseLong(data);
+                var pid = Long.parseLong(data.trim());
                 ProcessHandle.of(pid).ifPresent((handle) -> {
+                    if (!isOwnExecutable(handle)) {
+                        LOGGER.warn("Pid {} from app.pid file does not appear to belong to a previous instance of this app (likely reused by an unrelated process). Not terminating it.", pid);
+                        return;
+                    }
                     // SHUT IT DOWN!
                     LOGGER.info("Found running process with pid {}", pid);
                     handle.destroy();
@@ -150,6 +154,19 @@ public class AppMain {
         } catch (IOException ex) {
             LOGGER.error("Failed to write app.pid file", ex);
         }
+    }
+
+    /**
+     * Checks that a process handle belongs to the same executable as this app. This is to avoid killing unrelated processes that happen to have the same pid.
+     */
+    private static boolean isOwnExecutable(ProcessHandle handle) {
+        Optional<String> ourCommand = ProcessHandle.current().info().command();
+        Optional<String> theirCommand = handle.info().command();
+        if (ourCommand.isEmpty() || theirCommand.isEmpty()) {
+            return false;
+        }
+        
+        return ourCommand.get().equals(theirCommand.get());
     }
 
     private static void mainImpl(ImmutableMap<String, String> args) {        
