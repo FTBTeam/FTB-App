@@ -758,7 +758,8 @@ public class Instance {
         }
 
         // Override is null, this is a distributed mod, generate override for current state.
-        if (override == null) {
+        boolean isNewOverride = override == null;
+        if (isNewOverride) {
             // Could indicate a bug with listing instance mods. But, likely just broken call.
             if (fileId == -1) throw new IllegalArgumentException("Did not find an existing ModOverride for the given name. File ID required.");
             ModpackVersionManifest.ModpackFile file = versionManifest.getFiles().stream()
@@ -770,7 +771,6 @@ public class Instance {
             boolean isEnabled = !fileName.endsWith(".disabled");
             ModOverrideState state = isEnabled ? ModOverrideState.ENABLED : ModOverrideState.DISABLED;
             override = ModOverride.fromApi(state, file);
-            modifications.getOverrides().add(override);
         }
 
         try {
@@ -781,10 +781,15 @@ public class Instance {
                 // We should probably provide a 'restore' endpoint for this.
                 case REMOVED -> throw new IllegalArgumentException("Unable to toggle removed mod.");
             }
-            
-            override.setState(override.getState().toggle());
         } catch (IOException ex) {
             throw new IllegalStateException("Failed to toggle mod.", ex);
+        }
+
+        // Only commit the override once the move has actually succeeded, otherwise persisted
+        // state would claim the toggle happened while the filesystem disagrees.
+        override.setState(override.getState().toggle());
+        if (isNewOverride) {
+            modifications.getOverrides().add(override);
         }
         saveModifications();
     }
