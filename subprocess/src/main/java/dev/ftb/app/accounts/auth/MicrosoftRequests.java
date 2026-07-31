@@ -23,13 +23,19 @@ public class MicrosoftRequests {
     private static final Logger LOGGER = LoggerFactory.getLogger(MicrosoftRequests.class);
     private static final Gson GSON = new Gson();
 
-    private static final Request.Builder STANDARD_REQ = new Request.Builder()
-            .header("Content-Type", "application/json")
-            .header("Accept", "application/json");
+    /**
+     * Builds a fresh request builder pre-populated with the standard headers. Avoid sharing the header instance
+     * between requests.
+     */
+    private static Request.Builder newStandardRequest() {
+        return new Request.Builder()
+                .header("Content-Type", "application/json")
+                .header("Accept", "application/json");
+    }
 
     public static Result<JsonObject, ErrorWithCode> refreshWithXbox(String refreshToken) {
         return standardJsonReq(
-            STANDARD_REQ
+            newStandardRequest()
                 .url("https://login.microsoftonline.com/consumers/oauth2/v2.0/token")
                 .post(RequestBody.create(
                     "client_id=f23e8ba8-f46b-41ed-b5c0-7994f2ebbbf8" +
@@ -47,7 +53,7 @@ public class MicrosoftRequests {
      */
     public static Result<JsonObject, ErrorWithCode> authenticateWithXbox(String accessToken) {
         return standardJsonReq(
-            STANDARD_REQ
+            newStandardRequest()
                 .url("https://user.auth.xboxlive.com/user/authenticate")
                 .post(mapToJsonBody(Map.of(
                     "Properties", Map.of(
@@ -67,7 +73,7 @@ public class MicrosoftRequests {
      */
     public static Result<JsonObject, ErrorWithCode> authenticateWithXSTS(String token) {
         var res = standardJsonReq(
-            STANDARD_REQ
+            newStandardRequest()
                 .url("https://xsts.auth.xboxlive.com/xsts/authorize")
                 .post(mapToJsonBody(Map.of(
                     "Properties", Map.of(
@@ -81,6 +87,10 @@ public class MicrosoftRequests {
             true
         );
         
+        if (res.isErr()) {
+            return res;
+        }
+
         var json = res.unwrap();
         if (json.has("XErr")) {
             // Parse the error code and return it
@@ -93,7 +103,7 @@ public class MicrosoftRequests {
 
     public static Result<JsonObject, ErrorWithCode> authenticateWithMinecraft(String token, String userHash) {
         var firstLoginAttempt = standardJsonReq(
-            STANDARD_REQ
+            newStandardRequest()
                 .url("https://api.minecraftservices.com/launcher/login")
                 .post(mapToJsonBody(Map.of(
                     "platform", "PC_LAUNCHER",
@@ -108,7 +118,7 @@ public class MicrosoftRequests {
         
         // Try the other known good login endpoint
         return standardJsonReq(
-            STANDARD_REQ
+            newStandardRequest()
                 .url("https://api.minecraftservices.com/authentication/login_with_xbox")
                 .post(mapToJsonBody(Map.of(
                     "identityToken", "XBL3.0 x=" + userHash + ";" + token
@@ -119,7 +129,7 @@ public class MicrosoftRequests {
 
     public static Result<JsonObject, ErrorWithCode> queryEntitlements(String accessToken) {
         var firstEndpoint = standardJsonReq(
-            STANDARD_REQ
+            newStandardRequest()
                 .url("https://api.minecraftservices.com/entitlements/license?requestId=" + UUID.randomUUID())
                 .header("Authorization", "Bearer " + accessToken).get(),
             json -> json.has("items")
@@ -131,7 +141,7 @@ public class MicrosoftRequests {
         
         // Try the other known good endpoint
         return standardJsonReq(
-            STANDARD_REQ
+            newStandardRequest()
                 .url("https://api.minecraftservices.com/entitlements/mcstore?requestId=" + UUID.randomUUID())
                 .header("Authorization", "Bearer " + accessToken).get(),
             json -> json.has("items"));
@@ -139,7 +149,7 @@ public class MicrosoftRequests {
     
     public static Result<JsonObject, ErrorWithCode> queryProfile(String accessToken) {
         return standardJsonReq(
-            STANDARD_REQ
+            newStandardRequest()
                 .url("https://api.minecraftservices.com/minecraft/profile")
                 .header("Authorization", "Bearer " + accessToken)
                 .get(),
