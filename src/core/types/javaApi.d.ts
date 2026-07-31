@@ -388,33 +388,6 @@ export interface PinInstanceHandlerReply extends BaseData {
     instance: SugaredInstanceJson;
 }
 
-export interface InstanceDeleteBackupHandlerReply extends InstanceDeleteBackupHandlerRequest {
-    message: string;
-    success: boolean;
-}
-
-export interface InstanceDeleteBackupHandlerRequest extends BaseData {
-    backupLocation: string;
-}
-
-export interface InstanceGetBackupsHandlerReply extends InstanceGetBackupsHandlerRequest {
-    backups: Backup[];
-}
-
-export interface InstanceGetBackupsHandlerRequest extends BaseData {
-    uuid: string;
-}
-
-export interface InstanceRestoreBackupHandlerReply extends InstanceRestoreBackupHandlerRequest {
-    message: string;
-    success: boolean;
-}
-
-export interface InstanceRestoreBackupHandlerRequest extends BaseData {
-    uuid: string;
-    backupLocation: string;
-}
-
 export interface AppInitHandlerData extends BaseData {
 }
 
@@ -697,17 +670,6 @@ export interface Specs {
     recommended: number;
 }
 
-export interface Backup {
-    worldName: string;
-    createTime: number;
-    backupLocation: string;
-    size: number;
-    ratio: number;
-    sha1: string;
-    preview: string;
-    snapshot: boolean;
-}
-
 export interface Target {
     id: number;
     version: string;
@@ -732,6 +694,7 @@ export interface ModpackFile {
     hashes: FileHashes;
     tags: any;
     updated: number;
+    curseforge: CurseForgeIds;
 }
 
 export interface FileHashes {
@@ -740,6 +703,11 @@ export interface FileHashes {
     sha512: any;
     murmur: number;
     cfMurmur: number;
+}
+
+export interface CurseForgeIds {
+    project: string;
+    file: string;
 }
 
 export type Action = "GET" | "CREATE" | "DELETE" | "RENAME";
