@@ -4,6 +4,7 @@ import com.electronwill.nightconfig.core.UnmodifiableConfig;
 import com.electronwill.nightconfig.core.file.FileConfig;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -46,7 +47,7 @@ public class InstanceScanner {
 
     private final Set<Path> invalidSizedMods = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final Set<Path> invalidSizedScripts = Collections.newSetFromMap(new ConcurrentHashMap<>());
-    private final Multimap<String, Path> foundMods = HashMultimap.create();
+    private final Multimap<String, Path> foundMods = Multimaps.synchronizedMultimap(HashMultimap.create());
 
     private boolean hasLegacyJavaFixer;
 
