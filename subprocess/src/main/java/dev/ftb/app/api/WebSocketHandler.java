@@ -143,6 +143,10 @@ public class WebSocketHandler {
 
         String type = jsonObject.get("type").getAsString();
         Pair<Class<? extends BaseData>, IMessageHandler<? extends BaseData>> entry = register.get(type);
+        if (entry == null) {
+            LOGGER.error("No handler for message type '{}'", type);
+            return;
+        }
         IMessageHandler<? extends BaseData> iMessageHandler = entry.getRight();
         if (iMessageHandler == null) {
             LOGGER.error("No handler for message type '{}'", type);
