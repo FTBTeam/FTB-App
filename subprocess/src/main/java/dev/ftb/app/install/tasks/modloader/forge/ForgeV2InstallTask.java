@@ -132,7 +132,10 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
             } else if (surroundedBy(value, '\'', '\'')) { // Literal
                 value = topAndTail(value);
             } else {
-                Path extracted = tempDir.resolve(StringUtils.removeStart(value, "/"));
+                Path extracted = tempDir.resolve(StringUtils.removeStart(value, "/")).normalize();
+                if (!extracted.startsWith(tempDir)) {
+                    throw new IOException("Installer data entry '" + value + "' resolves outside of temp directory.");
+                }
                 Files.copy(installerRoot.resolve(value), IOUtils.makeParents(extracted), StandardCopyOption.REPLACE_EXISTING);
                 value = extracted.toAbsolutePath().toString();
             }
