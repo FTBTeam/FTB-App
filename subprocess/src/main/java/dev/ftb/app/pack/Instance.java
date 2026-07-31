@@ -2,7 +2,6 @@ package dev.ftb.app.pack;
 
 import com.google.gson.JsonParseException;
 import dev.ftb.app.Analytics;
-import dev.ftb.app.AppMain;
 import dev.ftb.app.Constants;
 import dev.ftb.app.Instances;
 import dev.ftb.app.data.InstanceJson;
@@ -19,12 +18,8 @@ import dev.ftb.app.install.tasks.DownloadTask;
 import dev.ftb.app.instance.InstanceCategory;
 import dev.ftb.app.minecraft.modloader.forge.ForgeJarModLoader;
 import dev.ftb.app.storage.settings.Settings;
-import dev.ftb.app.util.CurseMetadataCache;
+import dev.ftb.app.util.*;
 import dev.ftb.app.util.CurseMetadataCache.FileMetadata;
-import dev.ftb.app.util.DialogUtil;
-import dev.ftb.app.util.FileUtils;
-import dev.ftb.app.util.HashingUtils;
-import dev.ftb.app.util.MiscUtils;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.platform.OperatingSystem;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -37,17 +32,11 @@ import org.jspecify.annotations.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.BindException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
@@ -79,7 +68,6 @@ public class Instance {
     public CompletableFuture<?> prepareFuture;
     @Nullable
     public CancellationToken prepareToken;
-    private int loadingModPort;
     public ModpackVersionManifest versionManifest;
 
     private long startTime;
@@ -415,37 +403,6 @@ public class Instance {
             InstanceSupportMeta supportMeta = InstanceSupportMeta.update();
             if (supportMeta == null) return; // Should be _incredibly_ rare. But just incase...
 
-            List<InstanceSupportMeta.SupportFile> loadingMods = supportMeta.getSupportMods("loading");
-            
-            // Only inject custom mods if we have any, and we're not a "custom" instance.
-            if (!loadingMods.isEmpty() && !this.isCustom() && !this.props.preventMetaModInjection) {
-                for (InstanceSupportMeta.SupportFile file : loadingMods) {
-                    if (!file.canApply(props.modLoader, os)) continue;
-                    file.createTask(path.resolve("mods")).execute(null, null);
-                }
-
-                AppMain.closeOldClient();
-                loadingModPort = MiscUtils.getRandomEphemeralPort();
-                if (loadingModPort != -1) {
-                    CompletableFuture.runAsync(() -> {
-                        try {
-                            AppMain.listenForClient(loadingModPort);
-                        } catch (BindException err) {
-                            LOGGER.error("Error whilst starting mod socket on port '{}'...", loadingModPort, err);
-                        } catch (Exception err) {
-                            if (!AppMain.opened) {
-                                LOGGER.warn("Error whilst handling message from mod socket - probably nothing!", err);
-                                AppMain.opened = false;
-                            }
-                        }
-                    });
-                    ctx.extraJVMArgs.add("-Dchtray.port=" + loadingModPort);
-                    ctx.extraJVMArgs.add("-Dchtray.instance=" + props.uuid.toString());
-                } else {
-                    LOGGER.warn("Failed to find free Ephemeral port.");
-                }
-            }
-            
             if (!this.props.preventMetaAgentInjection) {
                 for (InstanceSupportMeta.SupportEntry agent : supportMeta.getSupportAgents()) {
                     for (InstanceSupportMeta.SupportFile file : agent.getFiles()) {

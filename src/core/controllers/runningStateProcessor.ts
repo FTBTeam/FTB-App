@@ -1,6 +1,6 @@
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
 import {alertController} from '@/core/controllers/alertController';
-import {ClientLaunchDataReply, LaunchInstanceDataReply, Logs, Status, Stopped} from '@/core/types/javaApi';
+import {LaunchInstanceDataReply, Logs, Status, Stopped} from '@/core/types/javaApi';
 import {createLogger} from '@/core/logger';
 import { InstanceMessageData, useRunningInstancesStore } from '@/store/runningInstancesStore.ts';
 import { useAppStore } from '@/store/appStore.ts';
@@ -45,26 +45,6 @@ async function onLaunchData(data: any) {
       progress: typedData.stepProgress,
       progressHuman: typedData.stepProgressHuman,
     })
-  }
-
-  if (data.type === 'clientLaunchData') {
-    const typedData = data as ClientLaunchDataReply;
-    const instance = typedData.instance;
-    
-    const currentInstance = runningInstancesStore.instances.find(e => e.uuid == instance)
-    if (!currentInstance) {
-      return;
-    }
-    
-    logger.info("Client launch data", typedData)
-    if (typedData.messageType === 'message') {
-      runningInstancesStore.updateBars(instance, typedData.message === 'init' ? [] : undefined)
-    } else if (typedData.messageType === 'progress') {
-      runningInstancesStore.updateBars(instance, typedData.clientData.bars)
-    } else if (typedData.messageType === 'clientDisconnect' || (typedData.messageType === 'message' && typedData.message === 'done')) {
-      logger.log("Disconnecting client", instance)
-      runningInstancesStore.finishedLoading(instance)
-    }
   }
 
   if (

@@ -68,7 +68,6 @@ public class WebSocketHandler {
         register("getJavas", GetJavasData.class, new GetJavasHandler());
         register("instanceMods", InstanceModsData.class, new InstanceModsHandler());
         register("pong", PongLauncherData.class, new PongLauncherHandler());
-        register("messageClient", MessageClientData.class, new MessageClientHandler()); // not really used but referenced
         register("instanceInstallMod", InstanceInstallModData.class, new InstanceInstallModHandler());
         register("setInstanceArt", SetInstanceArtData.class, new SetInstanceArtHandler());
         register("instanceVersionInfo", InstanceVersionInfoData.class, new InstanceVersionInfoHandler());

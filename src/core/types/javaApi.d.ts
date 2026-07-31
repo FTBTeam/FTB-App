@@ -195,11 +195,6 @@ export interface Stopped extends BaseData {
     exitCode: number;
 }
 
-export interface MessageClientData extends BaseData {
-    uuid: string;
-    message: string;
-}
-
 export interface OperationProgressUpdateData extends BaseData {
     operation: string;
     metadata: { [index: string]: string };
@@ -232,16 +227,6 @@ export interface UninstallInstanceDataReply extends BaseData {
 }
 
 export interface UpdateInstanceData extends InstallInstanceData {
-}
-
-export interface ClientLaunchData extends BaseData {
-}
-
-export interface ClientLaunchDataReply extends BaseData {
-    messageType: string;
-    message: string;
-    instance: string;
-    clientData: any;
 }
 
 export interface CloseModalData extends BaseData {

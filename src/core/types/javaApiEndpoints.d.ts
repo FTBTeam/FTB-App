@@ -22,7 +22,6 @@ export type ApiEndpoints = 	"installedInstances" |
 	"instanceInstallMod" |
 	"profiles.setActiveProfile" |
 	"instanceOverrideModLoader" |
-	"messageClient" |
 	"instanceConfigure" |
 	"instanceMods" |
 	"profiles.is-valid" |
