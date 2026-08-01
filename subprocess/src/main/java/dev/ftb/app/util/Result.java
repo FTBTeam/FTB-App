@@ -59,22 +59,24 @@ public abstract sealed class Result<R, E> {
     }
 
     /**
-     * The success value, or empty on {@link Err}. Note that this may contain {@code null} if the {@code Ok} value was {@code null}.
+     * The success value, or empty on {@link Err}. Note that this is also empty if the {@code Ok} value was
+     * {@code null}, since {@link Optional} can't distinguish "no value" from "null value".
      */
     public Optional<R> ok() {
         return switch (this) {
-            case Ok<R, E> ok -> Optional.of(ok.value());
+            case Ok<R, E> ok -> Optional.ofNullable(ok.value());
             case Err<R, E> _ -> Optional.empty();
         };
     }
 
     /**
-     * The error value, or empty on {@link Ok}. Note that this may contain {@code null} if the {@code Err} value was {@code null}.
+     * The error value, or empty on {@link Ok}. Note that this is also empty if the {@code Err} value was
+     * {@code null}, since {@link Optional} can't distinguish "no value" from "null value".
      */
     public Optional<E> err() {
         return switch (this) {
             case Ok<R, E> _ -> Optional.empty();
-            case Err<R, E> err -> Optional.of(err.error());
+            case Err<R, E> err -> Optional.ofNullable(err.error());
         };
     }
 
