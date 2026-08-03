@@ -12,7 +12,7 @@ jobs:
   stale:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/stale@v8
+      - uses: actions/stale@v11
         with:
           stale-issue-message: 'This issue has been marked as stale. Please reply to the issue or the issue will be automatically closed in 3 days.'
           close-issue-message: 'This issue has been closed as there has been no recent activity after being marked as stale.'
