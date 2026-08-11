@@ -151,6 +151,9 @@ jobs:
           AZURE_KEY_VAULT_CLIENT_SECRET: ${{ secrets.AZURE_KEY_VAULT_CLIENT_SECRET }}
           AZURE_KEY_VAULT_CERTIFICATE_NAME: ${{ secrets.AZURE_KEY_VAULT_CERTIFICATE_NAME }}
           AZURE_KEY_VAULT_TENANT_ID: ${{ secrets.AZURE_KEY_VAULT_TENANT_ID }}
+          OW_CLI_API_KEY: ${{ secrets.OW_CLI_API_KEY }}
+          OW_CLI_EMAIL: ${{ secrets.OW_CLI_EMAIL }}
+          OW_BUILD_KEY: ${{ secrets.OW_BUILD_KEY }}
         run: |
           npm run build -- --publish always -w --x64
 
@@ -163,6 +166,9 @@ jobs:
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           APPLE_API_KEY: "./apple_api_key.p8"
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          OW_CLI_API_KEY: ${{ secrets.OW_CLI_API_KEY }}
+          OW_CLI_EMAIL: ${{ secrets.OW_CLI_EMAIL }}
+          OW_BUILD_KEY: ${{ secrets.OW_BUILD_KEY }}
         run: |
           node ./tooling/release/patchBuilderYaml.js
           npm run build -- --publish always -m --x64 --arm64
@@ -170,6 +176,10 @@ jobs:
       # Linux build
       - name: Build frontend (Linux)
         if: ${{ matrix.os == 'ubuntu-latest' }}
+        env:
+          OW_CLI_API_KEY: ${{ secrets.OW_CLI_API_KEY }}
+          OW_CLI_EMAIL: ${{ secrets.OW_CLI_EMAIL }}
+          OW_BUILD_KEY: ${{ secrets.OW_BUILD_KEY }}
         run: |
           npm run build -- --publish always -l --x64 --arm64
 

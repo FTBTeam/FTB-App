@@ -55,7 +55,7 @@
     "@fortawesome/vue-fontawesome": "^3.3.3",
     "@overwolf/ow-cli": "0.1.8",
     "@overwolf/ow-electron": "^39.8.12",
-    "@overwolf/ow-electron-builder": "^26.9.0",
+    "@overwolf/ow-electron-builder": "^26.9.2",
     "@overwolf/types": "^3.24.11",
     "@tailwindcss/vite": "^4.2.2",
     "@types/adm-zip": "^0.5.8",
