@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {ProgressBar, UiButton} from '@/components/ui';
+import {UiButton} from '@/components/ui';
 import {RouterNames} from '@/router';
 import {alertController} from '@/core/controllers/alertController';
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
@@ -27,13 +27,6 @@ import {artworkFileOrElse} from '@/utils/helpers/packHelpers.ts';
 import {AppContextController} from '@/core/context/contextController';
 import {ContextMenus} from "@/core/context/contextMenus.ts";
 import {InstanceController} from "@/core/controllers/InstanceController.ts";
-
-export interface Bar {
-  title: string;
-  steps: number;
-  step: number;
-  message: string;
-}
 
 const logger = createLogger("LaunchingPage.vue");
 
@@ -64,7 +57,6 @@ const currentStep = ref<InstanceRunningData['startup']['step']>(emptyStep);
 const finishedLoading = ref(false);
 const preInitMessages = ref<Set<string>>(new Set());
 const messages = ref<InstanceMessageData[]>([]);
-const launchProgress = ref<Bar[] | null | undefined>(null);
 const scrollIntervalRef = ref<any>(null);
 
 const instance = computed(() => instanceStore.instances.find(e => e.uuid === router.currentRoute.value.params.uuid) ?? null);
@@ -122,7 +114,6 @@ function syncDataFromRunningData() {
   const data = runningInstance.value;
   hasCrashed.value = data.status.crashed;
   finishedLoading.value = data.status.finishedLoading;
-  launchProgress.value = data.startup.bars;
   messages.value = data.messages;
   preInitMessages.value = data.preInitMessages;
   currentStep.value = data.startup.step;
@@ -168,18 +159,6 @@ function openFolder() {
     await platform.io.openFinder(`${instance.value?.path ?? ""}`)
   })
 }
-
-const bars = computed(() => {
-  if (launchProgress.value === null) {
-    return [];
-  }
-
-  return launchProgress.value?.filter((b) => b.steps !== 1).slice(0, 5);
-});
-
-const progressMessage = computed(() => {
-  return launchProgress.value?.map((e) => e.message).join(' // ') ?? 'Loading...';
-});
 
 const instanceName = computed(() => {
   if (!instance.value) {
@@ -275,7 +254,6 @@ function resetPageState(firstTime = false) {
   finishedLoading.value = false;
   preInitMessages.value = new Set();
   messages.value = [];
-  launchProgress.value = null;
   if (firstTime) {
     return;
   }
@@ -308,7 +286,6 @@ function resetPageState(firstTime = false) {
                 :aria-label="`Starting ${instanceName}... this might take a few minutes`"
                 data-balloon-pos="up"
               >
-                <progress-bar class="mt-6 mb-4" :progress="bars && bars[0] ? bars[0].step / bars[0].steps : 0" />
               </div>
               <div class="mb-2 flex items-center text-sm">
                 <div
@@ -318,7 +295,7 @@ function resetPageState(firstTime = false) {
                 >
                   <FontAwesomeIcon spin :icon="faCircleNotch" class="mr-4" />
                 </div>
-                {{ progressMessage }}
+                Loading...
               </div>
             </div>
           </template>

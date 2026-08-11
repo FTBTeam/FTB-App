@@ -14,6 +14,9 @@ public class CancelInstallInstanceHandler implements IMessageHandler<CancelInsta
         if (op != null) {
             op.cancel();
             WebSocketHandler.sendMessage(new CancelInstallInstanceData.Reply(data, "success", "Triggered cancellation.", op.getInstance().getUuid().toString()));
+            return;
         }
+
+        WebSocketHandler.sendMessage(new CancelInstallInstanceData.Reply(data, "error", "No installation operation is currently running.", null));
     }
 }

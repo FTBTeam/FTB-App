@@ -11,13 +11,6 @@ export type InstanceMessageData = {
   v: string;
 }
 
-export type Bar = {
-  title: string;
-  steps: number;
-  step: number;
-  message: string;
-}
-
 export type InstanceRunningData = {
   uuid: string;
   messages: InstanceMessageData[];
@@ -42,7 +35,6 @@ export type InstanceRunningData = {
       progressHuman: string;
       stepProgressHuman?: string;
     },
-    bars?: Bar[] | null;
   }
 }
 
@@ -76,7 +68,6 @@ const emptyStateData: InstanceRunningData = {
       progress: 0,
       progressHuman: '',
     },
-    bars: null,
   }
 }
 
@@ -149,13 +140,6 @@ export const useRunningInstancesStore = defineStore("runningInstances", {
         this.instances.push(data);
         return data;
       }).status.finishedLoading = true;
-    },
-    
-    updateBars(uuid: string, bars: Bar[] | undefined) {
-      getInstanceData(this.instances, uuid, (data) => {
-        this.instances.push(data);
-        return data;
-      }).startup.bars = bars;
     },
     
     crashed(uuid: string) {

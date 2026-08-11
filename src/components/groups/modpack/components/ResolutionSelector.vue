@@ -14,11 +14,11 @@ export type ResolutionValue = {
   height: number;
 }
 
-const model = defineModel<ResolutionValue>({default: {
+const model = defineModel<ResolutionValue>({default: () => ({
   fullScreen: false,
   width: 1080,
   height: 720
-}});
+})});
 
 const screenDimension = ref({
   width: 1080,

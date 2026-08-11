@@ -1,13 +1,18 @@
 package dev.ftb.app;
 
+import com.google.common.hash.HashCode;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import dev.ftb.app.data.modpack.ModpackVersionManifest;
 import dev.ftb.app.instance.InstanceCategory;
+import dev.ftb.app.minecraft.jsons.VersionManifest;
 import dev.ftb.app.pack.Instance;
 import dev.ftb.app.storage.settings.Settings;
 import dev.ftb.app.util.ElapsedTimer;
 import dev.ftb.app.util.FileUtils;
 import dev.ftb.app.util.GsonUtils;
+import net.covers1624.quack.gson.HashCodeAdapter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.Nullable;
@@ -17,12 +22,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
-import java.util.regex.Pattern;
 
 public class Instances {
 
     private static final Logger LOGGER = LogManager.getLogger();
-
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping()
+        .registerTypeAdapter(VersionManifest.OS.class, new VersionManifest.OsDeserializer())
+        .registerTypeAdapter(HashCode.class, new HashCodeAdapter())
+        .create();
+    
     private static Map<UUID, Instance> instances = new HashMap<>();
     private static LinkedList<InstanceCategory> categories = new LinkedList<>();
     
@@ -141,7 +149,7 @@ public class Instances {
         
         // Load the categories from the file.
         try {
-            LinkedList<InstanceCategory> loadedCategories = GsonUtils.loadJson(categoriesFile, CATEGORIES_TYPE.getType());
+            LinkedList<InstanceCategory> loadedCategories = GSON.fromJson(Files.newBufferedReader(categoriesFile), CATEGORIES_TYPE.getType());
             if (loadedCategories == null) {
                 LOGGER.warn("Failed to load instance categories from file: {}", categoriesFile);
                 return;
@@ -159,7 +167,7 @@ public class Instances {
             if (Files.notExists(categoriesFile.getParent())) {
                 Files.createDirectories(categoriesFile.getParent());
             }
-            GsonUtils.saveJson(categoriesFile, categories, CATEGORIES_TYPE.getType());
+            GsonUtils.saveJson(GSON, categoriesFile, categories, CATEGORIES_TYPE.getType());
         } catch (IOException e) {
             LOGGER.error("Failed to save instance categories to file: {}", categoriesFile, e);
         }
@@ -276,7 +284,7 @@ public class Instances {
                 Files.createDirectories(categoriesFile.getParent());
             }
             
-            GsonUtils.saveJson(categoriesFile, newCategories, CATEGORIES_TYPE.getType());
+            GsonUtils.saveJson(GSON, categoriesFile, newCategories, CATEGORIES_TYPE.getType());
         } catch (IOException e) {
             LOGGER.error("Failed to save migrated categories.", e);
         }

@@ -249,7 +249,7 @@ public class SettingsData {
         }
         
         public boolean preventMetaAgentInjection() {
-            return preventMetaModInjection;
+            return preventMetaAgentInjection;
         }
 
         public String shellArgs() {

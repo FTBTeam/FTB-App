@@ -21,9 +21,7 @@ const {
   multiple?: boolean;
 }>();
 
-const value = defineModel<string | string[]>({
-  default: null
-});
+const value = defineModel<string | string[] | undefined>();
 
 const detailedValue = computed(() => {
   const modelValue = value.value;

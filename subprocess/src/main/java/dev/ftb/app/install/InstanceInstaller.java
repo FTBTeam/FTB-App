@@ -286,8 +286,11 @@ public class InstanceInstaller extends InstanceOperation {
                         
                         if (entry.isDirectory()) continue; // Skip directories
                         if (!entry.getName().startsWith("overrides/")) continue; // Only process overrides
-                        
-                        Path path = instance.getDir().resolve(FileUtils.stripInvalidChars(entry.getName()).replace("overrides/", ""));
+
+                        Path path = instance.getDir().resolve(FileUtils.stripInvalidChars(entry.getName()).replace("overrides/", "")).normalize();
+                        if (!path.startsWith(instance.getDir())) {
+                            throw new InstallationFailureException("CurseForge overrides entry '" + entry.getName() + "' resolves outside of the instance directory.");
+                        }
 
                         Files.createDirectories(path.getParent());
                         try (var inputStream = zipFile.getInputStream(entry)) {

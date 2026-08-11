@@ -1,10 +1,10 @@
 package dev.ftb.app.migration;
 
+import com.google.gson.Gson;
 import dev.ftb.app.AppMain;
 import dev.ftb.app.migration.migrations.MigrateInstanceFilesToMetaFolder;
 import dev.ftb.app.migration.migrations.MigrateJVMDefaultsToInstances;
 import dev.ftb.app.migration.migrations.MigrateRemoveLegacyInjectedMods;
-import dev.ftb.app.util.GsonUtils;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +18,10 @@ public enum MigrationsManager {
     INSTANCE;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MigrationsManager.class);
-
+    private static final Gson GSON = new Gson().newBuilder()
+        .setPrettyPrinting()
+        .create();
+    
     private static final List<Migration> migrations = List.of(
         new MigrateJVMDefaultsToInstances(),
         new MigrateInstanceFilesToMetaFolder(),
@@ -61,7 +64,7 @@ public enum MigrationsManager {
         // Save the successful migrations to the memory file
         try {
             existingMigrations.addAll(successfulMigrations.stream().map(Migration::id).toList());
-            var json = GsonUtils.GSON.toJson(existingMigrations);
+            var json = GSON.toJson(existingMigrations);
             Files.writeString(this.memoryFile(), json);
             existingMigrations.clear();
         } catch (Exception exception) {
@@ -106,7 +109,7 @@ public enum MigrationsManager {
         // Load the string list from the migrations.json
         try {
             String json = Files.readString(this.memoryFile());
-            var migrationIds = GsonUtils.GSON.<List<String>>fromJson(json, List.class);
+            var migrationIds = GSON.<List<String>>fromJson(json, List.class);
             existingMigrations = migrationIds;
             
             // Diff the migration ids

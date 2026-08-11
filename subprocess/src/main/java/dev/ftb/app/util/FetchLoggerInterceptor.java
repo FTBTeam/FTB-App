@@ -46,7 +46,11 @@ public class FetchLoggerInterceptor implements Interceptor {
             // Peek the body and log it.
             try {
                 // Check if the body has already been closed
-                String bodyString = response.peekBody(Long.MAX_VALUE).string();
+                var maxBodySize = response.body().contentLength();
+                if (maxBodySize == -1) {
+                    maxBodySize = 1024 * 1024 * 10; // Default to 10MB if content length is unknown
+                }
+                String bodyString = response.peekBody(maxBodySize).string();
                 String filteredBody = LogZipper.JWT_REMOVAL.matcher(bodyString).replaceAll("REDACTED");
                 LOGGER.error("Response body: {}", filteredBody);
             } catch (IOException e) {
@@ -66,11 +70,11 @@ public class FetchLoggerInterceptor implements Interceptor {
         
         for (var header : headers) {
             var key = header.getFirst();
-            if (IGNORED_HEADERS.contains(key.toLowerCase()) || key.startsWith("access-control-")) {
+            if (IGNORED_HEADERS.contains(key.toLowerCase()) || key.toLowerCase().startsWith("access-control-")) {
                 continue; // Skip logging ignored headers
             }
             
-            if (key.startsWith("Authorization") || key.startsWith("Cookie")) {
+            if (key.toLowerCase().startsWith("authorization") || key.toLowerCase().startsWith("cookie")) {
                 // Redact sensitive information like Authorization tokens or Cookies
                 LOGGER.info("-- {}: REDACTED", key);
                 continue;

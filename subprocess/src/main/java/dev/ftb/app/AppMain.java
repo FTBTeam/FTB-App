@@ -2,11 +2,9 @@ package dev.ftb.app;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.google.gson.JsonObject;
 import dev.ftb.app.api.DebugTools;
 import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.WebsocketServer;
-import dev.ftb.app.api.data.other.ClientLaunchData;
 import dev.ftb.app.api.data.other.CloseModalData;
 import dev.ftb.app.api.data.other.OpenModalData;
 import dev.ftb.app.api.data.other.PingLauncherData;
@@ -25,13 +23,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.lang.management.ManagementFactory;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -44,10 +37,6 @@ public class AppMain {
     private static final Object DIE_LOCK = new Object();
 
     public static List<Pair<String, String>> javaVersions = List.of();
-    public static ServerSocket serverSocket = null;
-    public static Socket socket = null;
-    public static OutputStream socketWrite = null;
-    public static boolean opened = false;
     public static Executor taskExecutor = Executors.newWorkStealingPool();
     
     public static int screenWidth = 1080;
@@ -132,8 +121,12 @@ public class AppMain {
         if (Files.exists(paths().processMarkerFile())) {
             try {
                 var data = Files.readString(paths().processMarkerFile());
-                var pid = Long.parseLong(data);
+                var pid = Long.parseLong(data.trim());
                 ProcessHandle.of(pid).ifPresent((handle) -> {
+                    if (!isOwnExecutable(handle)) {
+                        LOGGER.warn("Pid {} from app.pid file does not appear to belong to a previous instance of this app (likely reused by an unrelated process). Not terminating it.", pid);
+                        return;
+                    }
                     // SHUT IT DOWN!
                     LOGGER.info("Found running process with pid {}", pid);
                     handle.destroy();
@@ -150,6 +143,19 @@ public class AppMain {
         } catch (IOException ex) {
             LOGGER.error("Failed to write app.pid file", ex);
         }
+    }
+
+    /**
+     * Checks that a process handle belongs to the same executable as this app. This is to avoid killing unrelated processes that happen to have the same pid.
+     */
+    private static boolean isOwnExecutable(ProcessHandle handle) {
+        Optional<String> ourCommand = ProcessHandle.current().info().command();
+        Optional<String> theirCommand = handle.info().command();
+        if (ourCommand.isEmpty() || theirCommand.isEmpty()) {
+            return false;
+        }
+        
+        return ourCommand.get().equals(theirCommand.get());
     }
 
     private static void mainImpl(ImmutableMap<String, String> args) {        
@@ -298,109 +304,9 @@ public class AppMain {
         }, 0, 3, TimeUnit.SECONDS);
     }
 
-    public static void listenForClient(int port) throws IOException {
-        LOGGER.info("Starting mod socket on port {}", port);
-        serverSocket = new ServerSocket(port);
-        opened = true;
-        socket = serverSocket.accept();
-        socketWrite = socket.getOutputStream();
-        LOGGER.info("Connection received");
-        Runtime.getRuntime().addShutdownHook(new Thread(AppMain::closeOldClient));
-        String lastInstance = "";
-        ClientLaunchData.Reply reply;
-        BufferedReader in = null;
-        try {
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            long lastMessageTime = 0;
-            boolean hasStarted = false;
-            while (socket.isConnected()) {
-                String bufferText = "";
-                bufferText = in.readLine();
-                if (bufferText.length() == 0) continue;
-                JsonObject object = GsonUtils.GSON.fromJson(bufferText, JsonObject.class);
-                Object data = new Object();
-                if (!hasStarted)
-                    hasStarted = (object.has("message") && object.get("message").getAsString().equals("init"));
-                if (hasStarted) {
-                    if (object.has("data") && object.get("data") != null) {
-                        data = object.get("data");
-                    }
-                    if (object.has("instance") && object.get("instance").getAsString() != null && object.get("instance").getAsString().length() > 0) {
-                        lastInstance = object.get("instance").getAsString();
-                    }
-                    boolean isDone = (object.has("message") && object.get("message").getAsString().equals("done"));
-                    if (System.currentTimeMillis() > (lastMessageTime + 200) || isDone) {
-                        String type = (object.has("type") && object.get("type").getAsString() != null) ? object.get("type").getAsString() : "";
-                        String message = (object.has("message") && object.get("message").getAsString() != null) ? object.get("message").getAsString() : "";
-                        reply = new ClientLaunchData.Reply(lastInstance, type, message, data);
-                        lastMessageTime = System.currentTimeMillis();
-                        try {
-                            WebSocketHandler.sendMessage(reply);
-                        } catch (Throwable t) {
-                            LOGGER.warn("Unable to send MC client loading update to frontend!", t);
-                        }
-                    }
-                    if (isDone) {
-                        closeSockets();
-                    }
-                }
-            }
-            closeSockets();
-        } catch (Throwable e) {
-            if (lastInstance.length() > 0) {
-                reply = new ClientLaunchData.Reply(lastInstance, "clientDisconnect", new Object());
-                WebSocketHandler.sendMessage(reply);
-            }
-
-            closeSockets();
-
-            throw e;
-        } finally {
-            if (in != null) in.close();
-        }
-    }
-
-    private static void closeSockets() {
-        try {
-            if (socket != null) socket.close();
-        } catch (IOException ignored) {
-            LOGGER.error("Failed to close socket");
-        }
-
-        try {
-            if (serverSocket != null) serverSocket.close();
-        } catch (IOException ignored) {
-            LOGGER.error("Failed to close server socket");
-        }
-
-        try {
-            if (socketWrite != null) socketWrite.close();
-        } catch (IOException ignored) {
-            LOGGER.error("Failed to close socket writer");
-        }
-
-        socket = null;
-        serverSocket = null;
-        socketWrite = null;
-    }
-
-    public static void closeOldClient() {
-        if (socket != null && socket.isConnected()) {
-            try {
-                JsonObject jsonObject = new JsonObject();
-                jsonObject.addProperty("message", "show");
-                socket.getOutputStream().write((jsonObject.toString() + "\n").getBytes());
-                closeSockets();
-            } catch (IOException ignored) {
-                LOGGER.error("Failed to close old client");
-            }
-        }
-    }
-    
     public static void cleanUpBeforeExit() {
         LOGGER.info("Cleaning up for shutdown");
         WebSocketHandler.stopWebsocket();
-        closeSockets();
 
         Settings.saveSettings();
     }

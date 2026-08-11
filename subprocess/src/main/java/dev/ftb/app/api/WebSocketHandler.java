@@ -12,9 +12,6 @@ import dev.ftb.app.api.data.instances.*;
 import dev.ftb.app.api.data.other.*;
 import dev.ftb.app.api.handlers.IMessageHandler;
 import dev.ftb.app.api.handlers.instances.*;
-import dev.ftb.app.api.handlers.instances.backups.InstanceDeleteBackupHandler;
-import dev.ftb.app.api.handlers.instances.backups.InstanceGetBackupsHandler;
-import dev.ftb.app.api.handlers.instances.backups.InstanceRestoreBackupHandler;
 import dev.ftb.app.api.handlers.other.*;
 import dev.ftb.app.api.handlers.profiles.*;
 import dev.ftb.app.api.handlers.purge.PurgeHandler;
@@ -68,15 +65,10 @@ public class WebSocketHandler {
         register("getJavas", GetJavasData.class, new GetJavasHandler());
         register("instanceMods", InstanceModsData.class, new InstanceModsHandler());
         register("pong", PongLauncherData.class, new PongLauncherHandler());
-        register("messageClient", MessageClientData.class, new MessageClientHandler()); // not really used but referenced
         register("instanceInstallMod", InstanceInstallModData.class, new InstanceInstallModHandler());
         register("setInstanceArt", SetInstanceArtData.class, new SetInstanceArtHandler());
         register("instanceVersionInfo", InstanceVersionInfoData.class, new InstanceVersionInfoHandler());
-
-        register("instanceGetBackups", InstanceGetBackupsHandler.Request.class, new InstanceGetBackupsHandler());
-        register("instanceRestoreBackup", InstanceRestoreBackupHandler.Request.class, new InstanceRestoreBackupHandler());
-        register("instanceDeleteBackup", InstanceDeleteBackupHandler.Request.class, new InstanceDeleteBackupHandler());
-
+        
         register("profiles.get", BaseData.class, new GetProfilesHandler());
         register("profiles.remove", RemoveProfileHandler.Data.class, new RemoveProfileHandler());
         register("profiles.setActiveProfile", SetActiveProfileHandler.Data.class, new SetActiveProfileHandler());
@@ -143,6 +135,10 @@ public class WebSocketHandler {
 
         String type = jsonObject.get("type").getAsString();
         Pair<Class<? extends BaseData>, IMessageHandler<? extends BaseData>> entry = register.get(type);
+        if (entry == null) {
+            LOGGER.error("No handler for message type '{}'", type);
+            return;
+        }
         IMessageHandler<? extends BaseData> iMessageHandler = entry.getRight();
         if (iMessageHandler == null) {
             LOGGER.error("No handler for message type '{}'", type);

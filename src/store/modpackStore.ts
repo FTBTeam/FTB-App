@@ -112,7 +112,10 @@ async function getModpackIds(type: "featured" | "latest", existing: number[], li
       return [];
     }
 
-    let featuredPacks = req.packs.sort((a: number, b: number) => b - a)
+    let featuredPacks = req.packs;
+    if (type !== "featured") {
+      featuredPacks = featuredPacks.sort((a: number, b: number) => b - a)
+    }
     if (!ignoreBlacklist) {
       featuredPacks = featuredPacks.filter((e: number) => !packBlacklist.includes(e));
     }

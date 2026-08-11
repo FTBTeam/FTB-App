@@ -6,8 +6,6 @@
 export type ApiEndpoints = 	"installedInstances" |
 	"getSettings" |
 	"webRequest" |
-	"instanceGetBackups" |
-	"instanceDeleteBackup" |
 	"storage.put" |
 	"installInstance" |
 	"fileHash" |
@@ -18,11 +16,9 @@ export type ApiEndpoints = 	"installedInstances" |
 	"pong" |
 	"ping" |
 	"moveInstances" |
-	"instanceRestoreBackup" |
 	"instanceInstallMod" |
 	"profiles.setActiveProfile" |
 	"instanceOverrideModLoader" |
-	"messageClient" |
 	"instanceConfigure" |
 	"instanceMods" |
 	"profiles.is-valid" |

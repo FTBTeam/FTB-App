@@ -1,6 +1,8 @@
 package dev.ftb.app.minecraft.jsons;
 
 import com.google.common.hash.HashCode;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
@@ -24,7 +26,11 @@ import static java.util.Objects.requireNonNull;
  * <p>
  */
 public class AssetIndexManifest {
-
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping()
+        .registerTypeAdapter(VersionManifest.OS.class, new VersionManifest.OsDeserializer())
+        .registerTypeAdapter(HashCode.class, new HashCodeAdapter())
+        .create();
+    
     private static final Logger LOGGER = LogManager.getLogger();
     public Map<String, AssetObject> objects = new HashMap<>();
     public boolean virtual;
@@ -64,7 +70,7 @@ public class AssetIndexManifest {
                 }
             }
         }
-        return GsonUtils.loadJson(assetIndexFile, AssetIndexManifest.class);
+        return GsonUtils.loadJson(GSON, assetIndexFile, AssetIndexManifest.class);
     }
 
     public static class AssetObject {

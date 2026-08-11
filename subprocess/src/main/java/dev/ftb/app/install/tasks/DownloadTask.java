@@ -216,7 +216,7 @@ public class DownloadTask implements Task {
             LOGGER.info("  Downloading url: {}", url);
             Request.Builder builder = new Request.Builder()
                     .url(url)
-                    .addHeader("User-Agent", Constants.USER_AGENT);
+                    .addHeader("User-Agent", Constants.USER_AGENT.get());
 
             if (url.startsWith("https://edge.forgecdn.net/files")) {
                 builder.addHeader("x-api-key", Constants.curseForgeApiKey());
@@ -424,7 +424,7 @@ public class DownloadTask implements Task {
                 ResponseBody body = response.body();
                 if (body != null) return body.contentLength();
 
-                return NumberUtils.toInt(response.header("Content-Length"));
+                return NumberUtils.toLong(response.header("Content-Length"));
             }
         } catch (Throwable ex) {
             LOGGER.error("Could not perform a HEAD request to '{}'", url, ex);

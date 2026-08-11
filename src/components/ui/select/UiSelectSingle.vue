@@ -14,7 +14,7 @@ const {
 } = defineProps<UiSelectProps<T>>();
 
 const value = defineModel<string>({
-  default: null
+  default: ""
 });
 </script>
 

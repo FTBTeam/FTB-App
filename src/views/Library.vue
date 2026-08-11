@@ -12,8 +12,7 @@ import { useModpackStore } from '@/store/modpackStore.ts';
 import { toggleBeforeAndAfter } from '@/utils/helpers/asyncHelpers.ts';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import {
-  faArrowDownAZ,
-  faArrowDownZA,
+  faArrowDown, faArrowUp,
   faChevronDown,
   faFolder, faPlus,
   faSearch,
@@ -30,23 +29,28 @@ import {RouterNames} from "@/router";
 import UiSelectSingle from "@/components/ui/select/UiSelectSingle.vue";
 
 const groupOptions = [
-  ['Category', 'category'],
-  ['Mod Loader', 'modloader'],
-  ['Minecraft Version', 'mcversion'],
+  ['Category (A-Z)', 'category'],
+  ['Category (Z-A)', '-category'],
+  ['Mod Loader (A-Z)', 'modloader'],
+  ['Mod Loader (Z-A)', '-modloader'],
+  ['Minecraft Version (Newest-Oldest)', 'mcversion'],
+  ['Minecraft Version (Oldest-Newest)', '-mcversion'],
 ]
 
 const sortOptions = [
-  ['Name', 'name'],
+  ['Name (A-Z)', 'name'],
+  ['Name (Z-A)', '-name'],
   ['Last Played', 'lastPlayed'],
+  ['Least Played', '-lastPlayed'],
   ['Total Playtime', 'totalPlaytime'],
+  ['Least Playtime', '-totalPlaytime']
 ]
 
 function createOrderedOptions(options: string[][]): UiSelectOption<{ sort: string, icon: IconDefinition }>[] {
   return options.flatMap(([label, value]) => [
-    [`${label}`, value, 'Asc'],
-    [`${label}`, `-${value}`, 'Des']
+    [`${label}`, value, value.startsWith("-") ? "Desc" : "Asc"],
   ])
-    .map(([label, value, dir]) => ({key: value, value: label, sort: dir, icon: dir === "Asc" ? faArrowDownAZ : faArrowDownZA}))
+    .map(([label, value, dir]) => ({key: value, value: label, sort: dir, icon: dir === "Asc" ? faArrowDown : faArrowUp}))
 }
 
 const sortByOptions = createOrderedOptions(sortOptions)

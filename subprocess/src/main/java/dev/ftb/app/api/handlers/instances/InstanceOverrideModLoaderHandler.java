@@ -78,6 +78,7 @@ public class InstanceOverrideModLoaderHandler implements IMessageHandler<Instanc
             instance.saveModifications();
             WebSocketHandler.sendMessage(new InstanceOverrideModLoaderData.Reply(data, "success", "ModLoader Switched!"));
         } catch (Throwable ex) {
+            LOGGER.error("Error installing ModLoader version.", ex);
             WebSocketHandler.sendMessage(new InstanceOverrideModLoaderData.Reply(data, "error", "Error installing ModLoader version."));
         }
 
