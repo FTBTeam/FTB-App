@@ -21,7 +21,7 @@ export const supportedLoaders: {key: string, value: string}[] = [
     value: "Fabric"
   },
   {
-    key: "Forge",
+    key: "forge",
     value: "Forge"
   }
 ] as const

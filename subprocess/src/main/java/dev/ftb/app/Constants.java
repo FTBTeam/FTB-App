@@ -17,13 +17,19 @@ import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okio.Throttler;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 public class Constants {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Constants.class);
     // Don't put a Logger in this class, it is called before log4j can be initialized.
     // Adding a logger will break sentry!
 
@@ -112,19 +118,36 @@ public class Constants {
         return OK_HTTP_1_CLIENT;
     }
 
+    /**
+     * Returns the JDK installation manager, if something goes wrong during initialization, we'll purge its index of installed
+     * JDKs and try again.
+     * 
+     * This is likely not ideal but it also should rarely happen so it's probably fine.
+     */
     public static JdkInstallationManager getJdkManager() {
         if (JDK_INSTALL_MANAGER == null) {
-            JDK_INSTALL_MANAGER = new JdkInstallationManager(
-                    AppMain.paths().binDir().resolve("runtime").toAbsolutePath(),
-                    new AdoptiumProvisioner(new OkHttpEngine() {
-                        @Override
-                        protected OkHttpClient getClient() {
-                            return httpClient();
-                        }
-                    })
-            );
+            Path runtimeDir = AppMain.paths().binDir().resolve("runtime").toAbsolutePath();
+            try {
+                JDK_INSTALL_MANAGER = new JdkInstallationManager(runtimeDir, jdkProvisioner());
+            } catch (Throwable e) {
+                LOGGER.error("Failed to initialise JdkInstallationManager, purging cached installs and retrying: {}", String.valueOf(e));
+                try {
+                    Files.deleteIfExists(runtimeDir.resolve("installations.json"));
+                } catch (IOException ignored) {
+                }
+                JDK_INSTALL_MANAGER = new JdkInstallationManager(runtimeDir, jdkProvisioner());
+            }
         }
         return JDK_INSTALL_MANAGER;
+    }
+
+    private static AdoptiumProvisioner jdkProvisioner() {
+        return new AdoptiumProvisioner(new OkHttpEngine() {
+            @Override
+            protected OkHttpClient getClient() {
+                return httpClient();
+            }
+        });
     }
 
     private static Throttler getGlobalThrottler() {
