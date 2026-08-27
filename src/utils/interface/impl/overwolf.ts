@@ -330,45 +330,6 @@ const Overwolf: ElectronOverwolfInterface = {
   setupApp() {
     owLogger.info('Setting up app for overwolf')
     // setup websockets and the actual window
-
-    new Promise(resolve => {
-      overwolf.utils.getMonitorsList(async (result: any) => {
-        // Get the window scaling
-        const scale = window.devicePixelRatio;
-
-        // Work out the smallest monitor and use that as the max height we can work within
-        if (!result.displays) {
-          owLogger.debug("No displays found")
-          return;
-        }
-
-        let maxHeight = Infinity;
-        result.displays.forEach((display: any) => {
-          const windowHeight = Math.floor(display.height / scale);
-          maxHeight = Math.min(maxHeight, windowHeight);
-        });
-
-        owLogger.info("Max height found", maxHeight)
-        
-        resolve(maxHeight)
-      });
-    })
-      .then(async (height: any) => {
-        const manifestData: any = await new Promise(resolve => overwolf.extensions.current.getManifest((manifest: any) => resolve(manifest)));
-        const indexWindow = manifestData.data.windows.index;
-  
-        owLogger.info("Index window", indexWindow)
-        
-        if (height < 880) {
-          owLogger.info("Setting min size for index window")
-          overwolf.windows.setMinSize("index", indexWindow.min_size.width, 700, (e: any) => owLogger.debug("Set min size error", e));
-          if (!(window as any).ftbFlags) {
-            (window as any).ftbFlags = {};
-          }
-  
-          (window as any).ftbFlags.smallMonitor = true;
-        }
-      })
     
     //@ts-ignore
     overwolf.extensions.onAppLaunchTriggered.addListener(function (event) {

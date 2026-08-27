@@ -18,6 +18,9 @@ import okhttp3.Protocol;
 import okio.Throttler;
 import org.jspecify.annotations.Nullable;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -114,17 +117,28 @@ public class Constants {
 
     public static JdkInstallationManager getJdkManager() {
         if (JDK_INSTALL_MANAGER == null) {
-            JDK_INSTALL_MANAGER = new JdkInstallationManager(
-                    AppMain.paths().binDir().resolve("runtime").toAbsolutePath(),
-                    new AdoptiumProvisioner(new OkHttpEngine() {
-                        @Override
-                        protected OkHttpClient getClient() {
-                            return httpClient();
-                        }
-                    })
-            );
+            Path runtimeDir = AppMain.paths().binDir().resolve("runtime").toAbsolutePath();
+            try {
+                JDK_INSTALL_MANAGER = new JdkInstallationManager(runtimeDir, jdkProvisioner());
+            } catch (Throwable e) {
+                System.err.println("Failed to initialise JdkInstallationManager, purging cached installs and retrying: " + e);
+                try {
+                    Files.deleteIfExists(runtimeDir.resolve("installations.json"));
+                } catch (IOException ignored) {
+                }
+                JDK_INSTALL_MANAGER = new JdkInstallationManager(runtimeDir, jdkProvisioner());
+            }
         }
         return JDK_INSTALL_MANAGER;
+    }
+
+    private static AdoptiumProvisioner jdkProvisioner() {
+        return new AdoptiumProvisioner(new OkHttpEngine() {
+            @Override
+            protected OkHttpClient getClient() {
+                return httpClient();
+            }
+        });
     }
 
     private static Throttler getGlobalThrottler() {

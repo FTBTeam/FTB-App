@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import appPlatform from '@platform';
 import {createLogger} from '@/core/logger';
-import {onMounted, useTemplateRef, ref, computed, nextTick} from 'vue';
+import {onMounted, useTemplateRef, ref, nextTick} from 'vue';
 import { useAttachDomEvent } from '@/composables';
 import { useAds } from '@/composables/useAds.ts';
 import OwAdViewWrapper from '@/components/layout/OwAdViewWrapper.vue';
@@ -21,7 +21,7 @@ const adOneRef = useTemplateRef('adRef');
 const adTwoRef = useTemplateRef('adRefSecond');
 
 const isElectron = appPlatform.isElectron;
-const isSmallDisplay = computed(() => (window as any)?.ftbFlags?.smallMonitor);
+const isSmallDisplay = ref(false);
 
 useAttachDomEvent<UIEvent>('resize', onResize);
 
@@ -35,11 +35,11 @@ onMounted(() => {
 
   setTimeout(() => {
     loadAds("ad-1", adOneRef.value, {size: [{ width: 400, height: 600 }, { width: 400, height: 300 }], enableHighImpact: true});
-    if (!(window as any)?.ftbFlags?.smallMonitor) {
+    if (!isSmallDisplay.value) {
       loadAds("ad-2", adTwoRef.value, {
         size: {
-          width: 300,
-          height: 250
+          width: 400,
+          height: 300
         }
       });
     }
@@ -54,6 +54,10 @@ function onResize() {
   if (window.outerHeight > 890 && disableSmallerAd.value) {
     disableSmallerAd.value = false;
   }
+
+  // Mirrors the "smallMonitor" threshold used by the main process when
+  // sizing the window (see createWindow)
+  isSmallDisplay.value = window.outerHeight < 950;
 }
 
 async function loadAds(id: string, elm: any, options?: any) {
@@ -124,8 +128,8 @@ function highImpactAdStateChanged(state: 'loaded' | 'removed') {
       // Reload the ad when high impact ad is removed
       loadAds("ad-2", adTwoRef.value, {
         size: {
-          width: 300,
-          height: 250
+          width: 400,
+          height: 300
         }
       });
     })
@@ -140,7 +144,7 @@ function highImpactAdStateChanged(state: 'loaded' | 'removed') {
         <div
           id="ow-ad-second"
           ref="adRefSecond"
-          style="width: 300px; height: 250px;"
+          style="width: 400px; height: 300px;"
         />
       </div>
 
@@ -160,7 +164,7 @@ function highImpactAdStateChanged(state: 'loaded' | 'removed') {
     </div>
 
     <div class="ad-container ads" v-else key="adside-ad-type">
-      <OwAdViewWrapper width="300px" height="250px" v-if="!disableSmallerAd && !highImpactAdLoaded" />
+      <OwAdViewWrapper width="400px" height="300px" v-if="!disableSmallerAd && !highImpactAdLoaded" />
       <OwAdViewWrapper :width="highImpactAdLoaded ? '440px' : '400px'" :height="highImpactAdLoaded ? undefined : '600px'" enableHighImpact @highImpactAdStateChanged="highImpactAdStateChanged" />
     </div>
   </div>

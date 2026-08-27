@@ -143,6 +143,16 @@ const setup = async () => {
   const windowRet = await p(overwolf.windows.obtainDeclaredWindow, 'index');
   await p(overwolf.windows.restore, windowRet.window.id);
   
+  // If the screens height is less than 950, we should adjust our "recommended" minSize (which is actually enforced by the manifest)
+  // to resolve this issue, we will set the minSize to 900x690... If something is smaller than that, I give up. 
+  if (screenSize.height < 950) {
+    console.log(`Screen height is less than 950, adjusting minSize to 900x690`);
+    await p(overwolf.windows.setMinSize, windowRet.window.id, 900, 690);
+    
+    // We should set the window to the max size of the screen if we've adjusted the minSize
+    await p(overwolf.windows.changeSize, windowRet.window.id, screenSize.width, screenSize.height);
+  }
+  
   console.log('Showing window');
   overwolf.windows.onStateChanged.addListener(async state => {
     console.log('State changed');
