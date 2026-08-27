@@ -229,7 +229,7 @@ async function createWindow() {
     titleBarStyle: "hidden",
     minWidth: screenSize.height < 950 ? 900 : 1350,
     minHeight: screenSize.height < 950 ? 690 : 950,
-    width: screenSize.height < 950 ? 900 : 1500,
+    width: screenSize.height < 950 ? 1200 : 1500,
     height: screenSize.height < 950 ? 690 : 950,
     frame: false,
     backgroundColor: '#2a2a2a',
