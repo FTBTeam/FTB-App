@@ -106,7 +106,10 @@ public class VersionListManifest {
 
         LOGGER.info("Version {} not found on remote list, trying locally.", id);
         Path versionJson = versionsFolder.resolve(id).resolve(id + ".json");
-        if (Files.notExists(versionJson)) return null;
+        if (!Files.exists(versionJson)) {
+            return null;
+        }
+        
         return JsonUtils.parse(VersionManifest.GSON, versionJson, VersionManifest.class);
     }
 

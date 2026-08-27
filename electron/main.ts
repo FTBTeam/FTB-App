@@ -2,7 +2,7 @@ import path from 'node:path'
 import os from 'node:os';
 import { fileURLToPath } from 'node:url'
 
-import {app, BrowserWindow, ipcMain, shell} from 'electron';
+import {app, BrowserWindow, ipcMain, shell, screen} from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log/main';
 
@@ -211,6 +211,11 @@ ipcMain.on("prelaunch/im-ready", async () => {
 });
 
 async function createWindow() {
+  // We need to compute the window size of the users screen. If the screens height is less than 950, we'll just default to 900x690, if their screen is smaller than 
+  // that I give up.
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const screenSize = primaryDisplay.workAreaSize;
+  
   log.log("Creating main window")
   const newWindow = new BrowserWindow({
     title: 'FTB App',
@@ -222,10 +227,10 @@ async function createWindow() {
     },
     autoHideMenuBar: true,
     titleBarStyle: "hidden",
-    minWidth: 1220,
-    minHeight: 895,
-    width: 1545,
-    height: 900,
+    minWidth: screenSize.height < 950 ? 900 : 1350,
+    minHeight: screenSize.height < 950 ? 690 : 950,
+    width: screenSize.height < 950 ? 900 : 1500,
+    height: screenSize.height < 950 ? 690 : 950,
     frame: false,
     backgroundColor: '#2a2a2a',
     ...(appData.options.startInFullscreen ? {
