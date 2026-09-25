@@ -222,6 +222,7 @@ async function createWindow() {
     },
     autoHideMenuBar: true,
     titleBarStyle: "hidden",
+    trafficLightPosition: { x: 15, y: 12 },
     minWidth: 1220,
     minHeight: 905,
     width: 1545,
