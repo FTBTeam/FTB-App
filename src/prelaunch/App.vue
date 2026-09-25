@@ -29,6 +29,12 @@ const totalFailure = ref(false);
 onMounted(() => {
   log.log('Prelauncher mounted');
 
+  if (!import.meta.env.PROD) {
+    log.info("Skipping update and java check in dev mode");
+    startApp();
+    return;
+  }
+  
   if (window.nodeUtils.os.isFlatPak()) {
     log.info("Flatpak detected, skipping update check");
     progressToJavaCheck({});

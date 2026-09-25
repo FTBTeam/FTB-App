@@ -223,9 +223,9 @@ async function createWindow() {
     autoHideMenuBar: true,
     titleBarStyle: "hidden",
     minWidth: 1220,
-    minHeight: 895,
+    minHeight: 905,
     width: 1545,
-    height: 900,
+    height: 905,
     frame: false,
     backgroundColor: '#2a2a2a',
     ...(appData.options.startInFullscreen ? {

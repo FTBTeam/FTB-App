@@ -22,7 +22,7 @@ const { title = 'Loading', subTitle = 'Shouldn\'t be a moment' } = defineProps<{
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 2.5rem 0 2rem 0;
+  margin: 3rem 0 2rem 0;
 
   .loading-element {
     position: relative;

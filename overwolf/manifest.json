@@ -44,11 +44,11 @@
         "desktop_only": true,
         "size": {
           "width": 1545,
-          "height": 900
+          "height": 905
         },
         "min_size": {
           "width": 1220,
-          "height": 895
+          "height": 905
         },
         "block_top_window_navigation": true,
         "popup_blocker": true

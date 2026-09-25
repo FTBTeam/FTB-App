@@ -5,6 +5,7 @@ import {RouterNames} from '@/router';
 import { useAttachDomEvent } from '@/composables';
 import { onMounted, ref, computed } from 'vue';
 import { toTitleCase } from '@/utils/helpers/stringHelpers.ts';
+import SidebarProfile from "@/components/layout/sidebar/SidebarProfile.vue";
 
 const blurred = ref(false);
 const isMac = ref(false);
@@ -59,16 +60,23 @@ const isUnix = computed(async () => await appPlatform.utils.getOsType() !== "win
 
 <template>
   <div class="titlebar" :class="{ isMac, isUnix }" @mousedown="startDragging" @dblclick="minMax">
-    <div class="spacer" v-if="isMac"></div>
+    <div class="macos-buttons" v-if="isMac"></div>
+    
     <div class="meta-title">
       <span>FTB App</span>
     </div>
+    
     <div class="branch-container flex gap-2">
       <div @click="goToSettings" class="branch" v-if="branch && branch.toLowerCase() !== 'release'" aria-label="App channel" :data-balloon-pos="isMac ? 'down-right' : 'down-left'">{{ toTitleCase(branch) }}</div>
       <div v-if="appPlatform.isOverwolf" class="branch" aria-label="Overwolf Edition" :data-balloon-pos="isMac ? 'down-right' : 'down-left'">Overwolf</div>
     </div>
-    <div class="action-buttons" v-if="!isMac">
-      <div class="icons">
+    
+    <div class="profile">
+      <SidebarProfile />
+    </div>
+
+    <div class="windows-buttons">
+      <div class="icons" v-if="!isMac">
         <div class="title-action close" @click="close">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -97,28 +105,24 @@ const isUnix = computed(async () => await appPlatform.utils.getOsType() !== "win
             <line y1="0.5" x2="11" y2="0.5" stroke-width="2" />
           </svg>
         </div>
-      </div>
+      </div >
     </div>
   </div>
 </template>
 
 <style scoped lang="scss">
 .titlebar {
-  height: 2.5rem;
+  height: 3rem;
   background-color: #1d1c1c;
   display: grid;
-  grid-template: 'left center right';
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-areas: 'branch title profile aside';
+  grid-template-columns: auto 1fr auto 440px;
   width: 100%;
   align-items: center;
   justify-content: space-between;
   z-index: 50001;
   position: relative;
   transition: background-color 0.3s ease-in-out;
-
-  .system-frame & {
-    display: none;
-  }
   
   &.blurred {
     background-color: var(--color-navbar);
@@ -130,11 +134,8 @@ const isUnix = computed(async () => await appPlatform.utils.getOsType() !== "win
   
   &.isMac {
     text-align: center;
-
-    .spacer {
-      grid-area: left;
-      width: 50px;
-    }
+    grid-template: 'icons title branch profile aside';
+    grid-template-columns: 80px 1fr auto auto 440px;
     
     .meta-title {
       width: 100%;
@@ -147,7 +148,6 @@ const isUnix = computed(async () => await appPlatform.utils.getOsType() !== "win
     }
     
     .branch-container {
-      grid-area: right;
       margin-right: .4rem;
       margin-left: 0;
       justify-content: flex-end;
@@ -155,7 +155,7 @@ const isUnix = computed(async () => await appPlatform.utils.getOsType() !== "win
   }
 
   .meta-title {
-    grid-area: center;
+    grid-area: title;
     padding: 0 0.5rem;
     font-size: 1.1rem;
     color: rgba(white, .5);
@@ -179,6 +179,23 @@ const isUnix = computed(async () => await appPlatform.utils.getOsType() !== "win
   user-select: none;
 }
 
+.macos-buttons {
+  grid-area: icons;
+}
+
+.profile {
+  grid-area: profile;
+  height: 100%;
+  -webkit-app-region: none;
+}
+
+.windows-buttons {
+  grid-area: aside;
+  background: black;
+  width: 100%;
+  height: 100%;
+}
+
 .branch {
   font-size: 10px;
   background-color: rgba(white, .2);
@@ -191,7 +208,7 @@ const isUnix = computed(async () => await appPlatform.utils.getOsType() !== "win
 }
 
 .branch-container {
-  grid-area: left;
+  grid-area: branch;
   display: flex;
   align-items: center;
   justify-content: flex-start;

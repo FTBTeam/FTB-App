@@ -37,6 +37,14 @@ const navigation = [
     icon: faSearch,
   },
   {
+    name: 'Settings',
+    to: RouterNames.SETTINGS_APP,
+    icon: faCog,
+  },
+];
+
+const bottomNavigation = [
+  {
     name: 'Blog',
     to: RouterNames.ROOT_BLOG,
     icon: faNewspaper,
@@ -46,12 +54,7 @@ const navigation = [
     to: RouterNames.SUPPORT,
     icon: faInfoCircle,
   },
-  {
-    name: 'Settings',
-    to: RouterNames.SETTINGS_APP,
-    icon: faCog,
-  },
-];
+]
 
 if (constants.isDevelopment) {
   navigation.push({
@@ -92,23 +95,33 @@ function navItemRightClick(event: MouseEvent, item: typeof navigation[0]): void 
             </div>
           </RouterLink>
         </Popover>
-
-        <Popover v-if="item.name === 'Blog'" text="Shop FTB Merch">
-          <a href="https://shop.feed-the-beast.com/?utm_source=ftb-app&utm_medium=navigation&utm_campaign=app&utm_content=store-link" target="_blank" rel="noopener" class="mt-8">
-            <div class="nav-item">
-              <div class="icon">
-                <FontAwesomeIcon :fixed-width="true" :icon="faTshirt" class="mr-3"/>
-              </div>
-            </div>
-          </a>
-        </Popover>
       </template>
 
       <SidebarRunningInstances/>
     </div>
 
-    <div class="nav-items">      
-      <SidebarProfile class="block"/>
+    <div class="nav-items">
+      <Popover text="Shop FTB Merch">
+        <a href="https://shop.feed-the-beast.com/?utm_source=ftb-app&utm_medium=navigation&utm_campaign=app&utm_content=store-link" target="_blank" rel="noopener" class="mt-8">
+          <div class="nav-item">
+            <div class="icon">
+              <FontAwesomeIcon :fixed-width="true" :icon="faTshirt" class="mr-3"/>
+            </div>
+          </div>
+        </a>
+      </Popover>
+      
+      <template v-for="(item, index) in bottomNavigation" :key="index">
+        <Popover :text="item.name">
+          <RouterLink :to="{ name: item.to }" :draggable="false">
+            <div class="nav-item" @click.right="(e) => navItemRightClick(e, item)">
+              <div class="icon">
+                <FontAwesomeIcon :fixed-width="true" :icon="item.icon" class="mr-3"/>
+              </div>
+            </div>
+          </RouterLink>
+        </Popover>
+      </template>
     </div>
 
     <Popover text="Setup a server with BisectHosting" class="w-full">
@@ -172,7 +185,7 @@ function navItemRightClick(event: MouseEvent, item: typeof navigation[0]): void 
   
   .router-link-exact-active, .router-link-active {
     .nav-item {
-      background: var(--color-green-600) !important;
+      background: rgba(white, .2) !important;
     }
   }
 

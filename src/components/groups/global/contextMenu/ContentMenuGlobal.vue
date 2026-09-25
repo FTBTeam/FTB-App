@@ -126,7 +126,7 @@ function calculateWidth() {
 
 <style lang="scss" scoped>
 .context-menu {
-  $titleBarHeight: 2.5rem;
+  $titleBarHeight: 3rem;
 
   position: fixed;
   z-index: 10000;

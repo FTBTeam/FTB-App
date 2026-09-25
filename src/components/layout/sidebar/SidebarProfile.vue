@@ -6,7 +6,7 @@ import {ref, useTemplateRef} from 'vue';
 import { useAccountsStore } from '@/store/accountsStore.ts';
 import { AuthProfile } from '@/core/types/appTypes.ts';
 import {faExternalLink, faPlus} from '@fortawesome/free-solid-svg-icons';
-import {Popover, UiButton} from "@/components/ui";
+import {UiButton} from "@/components/ui";
 import {useAttachDomEvent} from "@/composables";
 import SidebarProfileItem from "@/components/layout/sidebar/SidebarProfileItem.vue";
 import {dialogsController} from "@/core/controllers/dialogsController.ts";
@@ -20,7 +20,6 @@ const { disabled = false } = defineProps<{
 const loading = ref(false);
 const open = ref(false);
 const awaitingConfirm = ref(false);
-const specialOpen = ref(false);
 
 const sidebarRef = useTemplateRef<HTMLDivElement>("sidebarRef");
 
@@ -107,37 +106,33 @@ async function confirm() {
   return result
 }
 
-function openMenu(event: MouseEvent) {
+function openMenu() {
   if (open.value) {
     closeMenu()
     return;
   }
   
   open.value = true;
-  if (event.shiftKey) {
-    specialOpen.value = true;
-  }
 }
 
 function closeMenu() {
   open.value = false;
-  specialOpen.value = false;
 }
 </script>
 
 <template>
   <div class="profile-area" :class="{ disabled }" ref="sidebarRef">
     <div class="profile">
-      <div class="avatar cursor-pointer" @click="openMenu($event)">
-        <Popover :text="!open ? 'Sign in or manage your accounts' : undefined">
-            <img
-              :src="getMinecraftHead(accountsStore.mcActiveProfile?.uuid ?? null)"
-              alt="Profile"
-              class="rounded"
-              width="35"
-              height="35"
-            />
-        </Popover>
+      <div class="avatar cursor-pointer flex gap-4" @click="openMenu()">
+          <img
+            :src="getMinecraftHead(accountsStore.mcActiveProfile?.uuid ?? null)"
+            alt="Profile"
+            class="rounded"
+            width="20"
+            height="20"
+          />
+        
+        <p v-if="accountsStore.mcActiveProfile">{{ accountsStore.mcActiveProfile.username }}</p>
       </div>
 
       <div class="profile-switch" :class="{open}" v-show="!disabled">
@@ -161,7 +156,7 @@ function closeMenu() {
           <UiButton size="small" type="primary" :icon="faPlus" @click="() => openSignIn()">Add Minecraft Account</UiButton>
         </section>
 
-        <section v-if="specialOpen">
+        <section>
           <p class="font-bold mb-4">FTB Account</p>
 
           <div class="accounts" v-if="accountsStore.ftbAccount">
@@ -193,7 +188,6 @@ function closeMenu() {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 1rem 0;
   cursor: pointer;
 
   &:hover .fake-avatar svg {
@@ -204,9 +198,9 @@ function closeMenu() {
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
     background-color: #161313;
     border: 2px solid rgba(white, 0.3);
 
@@ -217,8 +211,33 @@ function closeMenu() {
 }
 
 .profile-area {
-  margin-top: 0.5rem;
-
+  position: relative;
+  display: flex;
+  padding: 0 1rem;
+  height: 100%;
+  align-items: center;
+  transition: background-color 0.2s ease-in-out;
+  
+  &:hover {
+    background: rgba(white, .1);
+    
+    &::before {
+      opacity: 0;
+    }
+  }
+  
+  &::before {
+    content: '';
+    position: absolute;
+    height: 50%;
+    width: 1px;
+    background-color: rgba(white, .1);
+    left: -0.5rem;
+    top: 25%;
+    
+    transition: opacity 0.2s ease-in-out;
+  }
+  
   &.disable {
     opacity: 0.5;
   }
@@ -226,7 +245,6 @@ function closeMenu() {
   .profile {
     display: flex;
     align-items: center;
-    padding: 1rem 0;
 
     > .avatar {
       margin: 0 auto;
@@ -238,25 +256,27 @@ function closeMenu() {
   }
 
   .profile-switch {
+    text-align: left;
     position: absolute;
-    left: 100%;
-    top: 0;
+    right: 1rem;
+    top: 100%;
     width: 360px;
-    height: calc(100% - 1px);
-    z-index: 1000;
-    opacity: 0;
+    max-height: 400px;
+    overflow-y: auto;
+    z-index: 50;
     background-color: #363636;
-    border-left: 1px solid rgba(white, .1);
-    border-right: 1px solid rgba(white, .1);
+    border: 1px solid rgba(white, .1);
+    border-radius: 10px;
     padding: 1rem;
     
     transition: transform 0.2s ease-in-out, opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
-    transform: translateX(1rem);
+    opacity: 0;
+    transform: translateY(1rem);
     visibility: hidden;
     
     &.open {
       visibility: visible;
-      transform: translateX(0);
+      transform: translateY(0);
       opacity: 1;
     }
 
@@ -265,7 +285,10 @@ function closeMenu() {
     }
     
     .accounts {
-      margin-bottom: 1rem;
+      &:not(:last-child) {
+        margin-bottom: 1rem;
+      }
+      
       position: relative;
       z-index: 1;
       display: flex;

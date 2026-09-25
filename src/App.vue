@@ -215,7 +215,7 @@ const showSidebar = computed(() => !router.currentRoute.value.path.startsWith('/
 
 <style lang="scss" scoped>
 .app-container {
-  height: calc(100% - 2.5rem);
+  height: calc(100% - 3rem);
   position: relative;
 
   .system-frame & {

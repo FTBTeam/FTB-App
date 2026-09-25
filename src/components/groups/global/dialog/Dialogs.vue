@@ -43,12 +43,12 @@ function closeTopDialog() {
 <style lang="scss" scoped>
 .dialog-container {
   position: absolute;
-  z-index: 200;
+  z-index: 50002; // above the title bar
   backdrop-filter: blur(3px);
-  top: 0;
+  top: 3rem;
   left: 0;
   width: 100%;
-  height: 100%;
+  height: calc(100% - 3rem);
   overflow: hidden;
   background: rgba(black, 0.75);
   
