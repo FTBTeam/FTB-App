@@ -59,8 +59,14 @@ const domain = constants.ftbDomain;
 
 <template>
   <div class="px-6 py-4" v-if="!loading">
+    <div class="heading-image absolute left-0 top-0 w-full h-[200px]" :style="`background-image: url(https://cdn.feed-the-beast.com/assets/website/headers/autumn-26.webp)`"></div>
+    <div class="h-[150px] flex flex-col items-center justify-center z-10 relative">
+        <h1 class="text-4xl font-black mb-2">Blog</h1>
+        <p class="text-lg">Get the latest updates from the FTB Team</p>
+    </div>
+    
+    
     <template v-if="news.length">
-      <h2 class="text-lg font-bold mb-6">Get the latest news from FTB</h2>
       <div class="grid xl:grid-cols-2 gap-6">
         <div class="news-item" v-for="(newsItem, index) in news" :key="index">
           <a :href="`${domain}/blog/p/${newsItem.slug}`" @click="safeLinkOpen" class="feature-image mb-4 block" :style="`background-image: url(${newsItem.feature_image ?? 'https://cdn.feed-the-beast.com/assets/blog/headers/placeholder-1.png'})`"></a>
@@ -98,6 +104,18 @@ const domain = constants.ftbDomain;
 </template>
 
 <style scoped lang="scss">
+.heading-image {
+  background-size: cover;
+  background-position: center center;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, #2a2a2a, transparent);
+  }
+}
+
 .news-item {
   .feature-image {
     width: 100%;
