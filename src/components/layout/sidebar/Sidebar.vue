@@ -183,7 +183,7 @@ function navItemRightClick(event: MouseEvent, item: typeof navigation[0]): void 
     align-items: center;
     justify-content: center;
     padding: .4rem .6rem;
-    border-radius: 6px;
+    border-radius: var(--border-radius);
 
     .icon {
       width: auto !important;

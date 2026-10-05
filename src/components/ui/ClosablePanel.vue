@@ -95,7 +95,7 @@ function onEsc(event: any) {
     
     display: flex;
     flex-direction: column;
-    border-radius: 8px;
+    border-radius: var(--border-radius);
 
     > .heading {
       display: flex;
@@ -140,27 +140,6 @@ function onEsc(event: any) {
       margin: 0 .5rem;
     }
   }
-  
-  //position: fixed;
-  //top: 1.5rem;
-  //left: 1.5rem;
-  //padding-top: 1.5rem;
-  //width: calc((100% - 300px - (2.5rem)) - 3rem);
-  //height: calc(100vh - 4rem);
-  //border-radius: 10px;
-  //z-index: 10000;
-  //display: flex;
-  //flex-direction: column;
-  //background-color: #343434;
-  //box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-  //
-  //&.overwolf {
-  //  width: calc(100% - 400px);
-  //}
-  //
-  //&.is-mac {
-  //  top: calc(1.8rem + 1rem);
-  //}
 }
 
 .slide-in-out-enter-active,

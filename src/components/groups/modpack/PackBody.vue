@@ -427,7 +427,7 @@ const curseWebsite = computed(() => packInstance?.provider === "curseforge" && p
     align-items: center;
     background-color: #1d1d1d;
     padding: .8rem 1rem .8rem 3rem;
-    border-radius: 5px;
+    border-radius: var(--border-radius);
     margin-bottom: 0.5rem;
     border: 1px solid rgba(255, 255, 255, 0.2);
     transition: border-color 0.25s ease-in-out, background-color 0.25s ease-in-out, color 0.25s ease-in-out;
@@ -502,7 +502,7 @@ const curseWebsite = computed(() => packInstance?.provider === "curseforge" && p
       -webkit-user-drag: none;
       
       background-color: rgba(black, .4);
-      border-radius: 5px;
+      border-radius: var(--border-radius);
       
       transition: background-color .25s ease-in-out;
       

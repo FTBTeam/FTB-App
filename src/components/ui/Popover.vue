@@ -43,7 +43,7 @@ const {
     background: black;
     white-space: nowrap;
     padding: 0.5em 1em;
-    border-radius: 2px;
+    border-radius: var(--border-radius-inner);
     transition: 0.15s ease-in-out left, 0.15s ease-in-out visibility, 0.15s ease-in-out opacity;
     visibility: hidden;
     opacity: 0 !important;

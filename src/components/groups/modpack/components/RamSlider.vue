@@ -117,7 +117,7 @@ const valueAsPercentage = computed(() => {
   transform: translateX(-50%);
   padding: .2rem .5rem;
   background-color: black;
-  border-radius: 5px;
+  border-radius: var(--border-radius);
   white-space: nowrap;
   transition: .2s opacity ease-in-out, .2s visibility ease-in-out;
   opacity: 0;

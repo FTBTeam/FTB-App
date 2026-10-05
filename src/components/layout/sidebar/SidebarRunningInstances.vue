@@ -79,7 +79,7 @@ function navigateToOrOpen() {
   opacity: 0;
   visibility: hidden;
   bottom: -2rem;
-  border-radius: .5rem;
+  border-radius: var(--border-radius);
   border: 1px solid rgba(white, .2);
   overflow-y: auto;
   

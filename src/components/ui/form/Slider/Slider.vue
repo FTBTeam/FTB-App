@@ -116,7 +116,7 @@ function formatValue(value: number, dontShowThreads = false) {
   .slider-area {
     background-color: var(--color-background);
     padding: 0.8rem 1.3rem 1rem 1.3rem;
-    border-radius: 5px;
+    border-radius: var(--border-radius);
     position: relative;
     z-index: 1;
 
@@ -130,7 +130,7 @@ function formatValue(value: number, dontShowThreads = false) {
       .middle {
         padding: 0.2rem 0.6rem;
         background-color: rgba(black, 0.4);
-        border-radius: 4px;
+        border-radius: var(--border-radius);
       }
 
       span {

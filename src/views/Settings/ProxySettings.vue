@@ -145,7 +145,7 @@ function save(remove = false) {
   display: flex;
   align-items: center;
   background-color: rgba(white, .05);
-  border-radius: 5px;
+  border-radius: var(--border-radius);
   overflow: hidden;
   
   label {

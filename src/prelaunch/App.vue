@@ -222,7 +222,7 @@ async function attemptCheckJava() {
   color: white;
   padding: 3rem;
   text-align: center;
-  border-radius: 5px;
+  border-radius: .5rem;
   line-height: 1.7em;
   position: relative;
   z-index: 2;
@@ -274,7 +274,7 @@ async function attemptCheckJava() {
   cursor: pointer;
   transition: background-color .2s;
   margin-top: 2rem;
-  border-radius: 8px;
+  border-radius: .5rem;
   font-weight: bold;
 }
 

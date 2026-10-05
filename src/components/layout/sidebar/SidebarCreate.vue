@@ -108,7 +108,7 @@ function close(event: any) {
   .action-icon {
     padding: .7rem 1rem;
     background-color: black;
-    border-radius: 8px;
+    border-radius: var(--border-radius);
     cursor: pointer;
     font-size: 1.1rem;
     font-weight: bolder;
@@ -130,7 +130,7 @@ function close(event: any) {
     left: calc(100% + 1.5rem);
     width: 365px;
     background-color: var(--color-navbar);
-    border-radius: 8px;
+    border-radius: var(--border-radius);
     border: 1px solid rgba(white, .2);
     padding: .25rem 0;
     z-index: 200;
@@ -168,7 +168,7 @@ function close(event: any) {
         padding: .75rem;
         margin: 0 .25rem;
         cursor: pointer;
-        border-radius: 6px;
+        border-radius: var(--border-radius);
         
         transition: background-color .25s ease-in-out;
 
@@ -183,7 +183,7 @@ function close(event: any) {
           
           grid-area: icon;
           background-color: black;
-          border-radius: 8px;
+          border-radius: var(--border-radius);
           display: flex;
           align-items: center;
           justify-content: center;

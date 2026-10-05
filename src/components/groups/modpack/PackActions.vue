@@ -43,7 +43,7 @@ function openMenu(e: MouseEvent) {
   position: relative;
   align-items: center;
   margin-left: -5px;
-  border-radius: 5px;
+  border-radius: var(--border-radius);
   background-color: rgba(black, 0.5);
   cursor: pointer;
 

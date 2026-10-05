@@ -50,7 +50,7 @@ watch(() => progress, (newValue, oldValue) => {
   width: 100%;
   height: 10px;
   background: #151515;
-  border-radius: 10px;
+  border-radius: var(--border-radius);
   overflow: hidden;
   position: relative;
 

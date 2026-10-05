@@ -122,6 +122,6 @@ const headingImage = computed(() => {
 .heading-image {
   display: block;
   margin-bottom: 1rem;
-  border-radius: 5px;
+  border-radius: var(--border-radius);
 }
 </style>

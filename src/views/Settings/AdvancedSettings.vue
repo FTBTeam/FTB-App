@@ -160,6 +160,6 @@ function transformToElectronChannel(channel: ReleaseChannel) {
 .app-info-section {
   background-color: var(--color-background);
   padding: 1rem;
-  border-radius: 5px;
+  border-radius: var(--border-radius);
 }
 </style>
