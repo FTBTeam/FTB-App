@@ -1,5 +1,5 @@
 import {ContextMenu, MenuItem, MenuOptions} from '@/core/context/menus/contextMenu';
-import {faCog, faCopy, faFolder, faLocationPin, faPlay, faTrash} from '@fortawesome/free-solid-svg-icons';
+import {faCode, faCog, faCopy, faFolder, faLocationPin, faPlay, faTrash} from '@fortawesome/free-solid-svg-icons';
 import appPlatform from '@platform';
 import {SugaredInstanceJson} from '@/core/types/javaApi';
 import {InstanceActions} from '@/core/actions/instanceActions';
@@ -153,6 +153,17 @@ export class InstanceMenu extends ContextMenu<InstanceMenuContext> {
                 .deleteInstance()
                 .catch(console.error)
             })
+        }
+      },
+      {
+        separator: true,
+      },
+      {
+        title: 'Copy ID',
+        icon: faCode,
+        async action(context) {
+          appPlatform.cb.copy(context.instance.uuid);
+          alertController.success(`Copied instance ID`);
         }
       }
     ];
