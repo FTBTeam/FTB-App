@@ -1,8 +1,7 @@
 <script lang="ts" setup>
-import { Loader, Message } from '@/components/ui';
+import {Loader, Message, UiBadge} from '@/components/ui';
 import {BlogPost} from '@/core/types/external/metaApi.types';
-import dayjs from 'dayjs';
-import {standardDateTime} from '@/utils/helpers/dateHelpers';
+import {standardDate} from '@/utils/helpers/dateHelpers';
 import {constants} from '@/core/constants';
 import {createLogger} from '@/core/logger';
 import { onMounted, ref } from 'vue';
@@ -62,26 +61,25 @@ const domain = constants.ftbDomain;
   <div class="px-6 py-4" v-if="!loading">
     <template v-if="news.length">
       <h2 class="text-lg font-bold mb-6">Get the latest news from FTB</h2>
-      <div class="news-item" v-for="(newsItem, index) in news" :key="index">
-        <a :href="`${domain}/blog/p/${newsItem.slug}`" @click="safeLinkOpen" v-if="newsItem.feature_image" class="feature-image mb-4 block">
-          <img class="rounded shadow-xl" :src="newsItem.feature_image" alt="Feature image">
-        </a>
-        
-        <div class="about">
-          <a :href="`${domain}/blog/p/${newsItem.slug}`" @click="safeLinkOpen" class="title block mb-2 font-bold text-lg">{{ newsItem.title }}</a>
-          <p class="mb-4 max-lines-4">{{ newsItem.custom_excerpt ? newsItem.custom_excerpt : newsItem.excerpt }}</p>
-        </div>
-        
-        <div class="author-and-info flex items-center gap-4">
-          <img class="avatar rounded shadow-xl" crossorigin="anonymous" width="50" :src="newsItem.primary_author.profile_image" alt="Avatar" />  
-          <div class="info">
-            <b class="opacity-75">{{ newsItem.primary_author.name }}</b>
-            <div class="info opacity-75 text-sm" :title="standardDateTime(newsItem.published_at)">
-              {{ dayjs(newsItem.published_at).fromNow() }}
-            </div>
+      <div class="grid xl:grid-cols-2 gap-6">
+        <div class="news-item" v-for="(newsItem, index) in news" :key="index">
+          <a :href="`${domain}/blog/p/${newsItem.slug}`" @click="safeLinkOpen" class="feature-image mb-4 block" :style="`background-image: url(${newsItem.feature_image ?? 'https://cdn.feed-the-beast.com/assets/blog/headers/placeholder-1.png'})`"></a>
+          <div class="flex flex-wrap gap-2 mb-4">
+            <a v-for="(tag, index) in newsItem.tags" :key="index" :href="`${domain}/blog/t/${tag.slug}`" @click="safeLinkOpen">
+              <UiBadge>
+                {{ tag.name }}
+              </UiBadge>
+            </a>
+            <UiBadge v-if="newsItem.published_at">
+              {{ standardDate(newsItem.published_at) }}
+            </UiBadge>
+          </div>
+          
+          <div class="about">
+            <a :href="`${domain}/blog/p/${newsItem.slug}`" @click="safeLinkOpen" class="title block mb-2 font-bold text-2xl">{{ newsItem.title }}</a>
+            <p class="mb-4 max-lines-4">{{ newsItem.custom_excerpt ? newsItem.custom_excerpt : newsItem.excerpt }}</p>
           </div>
         </div>
-        <hr class="my-8 border-white/10"/>
       </div>
     </template>
     <div v-else>
@@ -101,6 +99,17 @@ const domain = constants.ftbDomain;
 
 <style scoped lang="scss">
 .news-item {
+  .feature-image {
+    width: 100%;
+    height: 190px;
+    margin-bottom: 1rem;
+    display: block;
+    position: relative;
+    background-size: cover;
+    background-position: center center;
+    border-radius: var(--border-radius);
+  }
+  
   img {
     transition: transform 0.25s ease-in-out;
   }
