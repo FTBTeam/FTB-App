@@ -1,70 +1,52 @@
 <script lang="ts" setup>
 import {Loader, Message, UiBadge} from '@/components/ui';
-import {BlogPost} from '@/core/types/external/metaApi.types';
+import {BlogPost, Pagination as BlogPagination} from '@/core/types/external/metaApi.types';
 import {standardDate} from '@/utils/helpers/dateHelpers';
 import {constants} from '@/core/constants';
-import {createLogger} from '@/core/logger';
-import { onMounted, ref } from 'vue';
-import { JavaFetch } from '@/core/javaFetch.ts';
+import {onMounted, ref, watch} from 'vue';
 import { toggleBeforeAndAfter } from '@/utils/helpers/asyncHelpers.ts';
 import { safeLinkOpen } from '@/utils';
+import {blogController} from "@/core/controllers/blogController.ts";
+import Pagination from "@/components/ui/Pagination.vue"
 
-const logger = createLogger("blog.vue");
 const loading = ref(false);
 const news = ref<BlogPost[]>([]);
+const page = ref(1);
+const pagination = ref<BlogPagination | null>(null);
 
 onMounted(async () => {
-  const storeKey = "news";
-
-  if (localStorage.getItem(storeKey)) {
-    const data = JSON.parse(localStorage.getItem(storeKey) || "{}");
-    if (data.posts) {
-      // Check if the data we hold is up-to-date enough
-      if (Date.now() - data.storedAt < 1000 * 60 * 10) { // 10 minutes
-        news.value = data.posts;
-        return;
-      }
-    }
-  }
-  
-  // Otherwise, fetch the news
-  const newsRes = await toggleBeforeAndAfter(async () => {
-    try {
-      const newsReq = await JavaFetch.create(`${constants.metaApi}/blog/posts`)
-        .execute();
-
-      if (!newsReq) {
-        return null;
-      }
-
-      return newsReq.json<{posts: BlogPost[]}>();
-    } catch (e) {
-      logger.error("Failed to load news", e);
-      return null;
-    }
-  }, v => loading.value = v);
-  
-  if (newsRes) {
-    localStorage.setItem(storeKey, JSON.stringify({
-      posts: newsRes.posts,
-      storedAt: Date.now()
-    }));
-    
-    news.value = newsRes.posts;
-  }
+  loadPage(page.value)
+    .catch(() => {});
 })
+
+async function loadPage(pageNumber: number) {
+  await toggleBeforeAndAfter(async () => {
+    const posts = await blogController.getPosts(pageNumber);
+    if (!posts) {
+      return;
+    }
+    
+    news.value = posts.posts;
+    pagination.value = posts.pagination;
+  }, v => loading.value = v);
+}
+
+watch(page, (newPage) => {
+  document.querySelector(".app-content")?.scrollTo(0, 0);
+  loadPage(newPage)
+    .catch(() => {});
+});
 
 const domain = constants.ftbDomain;
 </script>
 
 <template>
-  <div class="px-6 py-4" v-if="!loading">
-    <div class="heading-image absolute left-0 top-0 w-full h-[200px]" :style="`background-image: url(https://cdn.feed-the-beast.com/assets/website/headers/autumn-26.webp)`"></div>
+  <div class="px-6 py-4">
+    <div class="heading-image absolute left-0 top-0 w-full h-50" :style="`background-image: url(https://cdn.feed-the-beast.com/assets/website/headers/autumn-26.webp)`"></div>
     <div class="h-[150px] flex flex-col items-center justify-center z-10 relative">
         <h1 class="text-4xl font-black mb-2">Blog</h1>
         <p class="text-lg">Get the latest updates from the FTB Team</p>
     </div>
-    
     
     <template v-if="news.length">
       <div class="grid xl:grid-cols-2 gap-6">
@@ -87,8 +69,15 @@ const domain = constants.ftbDomain;
           </div>
         </div>
       </div>
+      
+      <div class="mt-6 flex justify-center">
+        <Pagination v-if="pagination" v-model="page" :per-page="pagination.limit" :total="pagination.total" />
+      </div>
     </template>
-    <div v-else>
+
+    <loader v-if="loading" />
+    
+    <div v-else-if="!news.length">
       <h2 class="text-lg font-bold mb-6">Oh no... 🔥 Something's not right!</h2>
       <Message type="warning">
         <p>Something went wrong while loading the news.</p>
@@ -97,9 +86,6 @@ const domain = constants.ftbDomain;
         <b>You can find our latest blog posts on our <a :href="`${domain}/blog`" @click="safeLinkOpen">website</a></b>
       </Message>
     </div>
-  </div>
-  <div class="flex flex-1 flex-col lg:p-10 sm:p-5 h-full" v-else>
-    <loader />
   </div>
 </template>
 
