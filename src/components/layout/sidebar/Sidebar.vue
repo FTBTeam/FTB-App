@@ -172,7 +172,7 @@ function navItemRightClick(event: MouseEvent, item: typeof navigation[0]): void 
   
   .router-link-exact-active, .router-link-active {
     .nav-item {
-      background: var(--color-green-600) !important;
+      background: rgba(white, .2) !important;
     }
   }
 

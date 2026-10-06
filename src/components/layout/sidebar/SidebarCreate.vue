@@ -106,8 +106,8 @@ function close(event: any) {
   margin-bottom: .5rem;
   
   .action-icon {
-    padding: .7rem 1rem;
-    background-color: black;
+    padding: .6rem .7rem;
+    background-color: var(--color-green-600);
     border-radius: var(--border-radius);
     cursor: pointer;
     font-size: 1.1rem;
@@ -121,7 +121,7 @@ function close(event: any) {
     }
     
     &:hover {
-      background-color: var(--color-green-600);
+      background-color: var(--color-green-500);
     }
   }
   
