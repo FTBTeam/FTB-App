@@ -42,6 +42,7 @@
             <AppenderRef ref="Latest" level="info"/>
             <AppenderRef ref="Debug" level="trace" />
         </Root>
+        <Logger name="org.eclipse.jetty" level="info"/>
         <Logger name="httplogger" level="info" additivity="false">
             <AppenderRef ref="HttpLog"/>
         </Logger>

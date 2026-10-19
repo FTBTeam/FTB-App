@@ -95,7 +95,7 @@ class WebSocketController {
     
     this.connectingLock = true;
     try {
-      this.ws = new WebSocket(`ws://localhost:${this.port}`);
+      this.ws = new WebSocket(`ws://127.0.0.1:${this.port}`);
       this.attachEvents(this.ws);
     } catch (e) {
       logger.error(e);

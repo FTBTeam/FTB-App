@@ -19,8 +19,10 @@ import net.covers1624.jdkutils.locator.JavaLocator;
 import net.covers1624.quack.logging.log4j2.Log4jUtils;
 import net.covers1624.quack.platform.Architecture;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 
 import java.io.IOException;
@@ -83,6 +85,11 @@ public class AppMain {
         Constants.PLATFORM = parsedArgs.containsKey("overwolf") ? "overwolf" : "electron";
         isDevMode = parsedArgs.containsKey("dev");
         Constants.IS_DEV_MODE = isDevMode;
+
+        if (parsedArgs.containsKey("jetty-verbose")) {
+            Configurator.setLevel("org.eclipse.jetty", Level.DEBUG);
+            LOGGER.info("Jetty verbose logging enabled");
+        }
 
         if (parsedArgs.containsKey("screenWidth") && parsedArgs.containsKey("screenHeight")) {
             try {

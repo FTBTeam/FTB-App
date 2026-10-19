@@ -99,16 +99,9 @@ public class WebSocketHandler {
             case DYNAMIC -> MiscUtils.getRandomEphemeralPort();
             case STATIC -> Constants.WEBSOCKET_PORT;
         };
-        server = new NanoHttpdWebsocketServer(port, portMode);
+        server = new JettyWebsocketServer(port);
         server.startServer();
         return port;
-    }
-
-    public static void restartOnPort(int newPort) {
-        assert server != null;
-        server.stopServer();
-        server = new NanoHttpdWebsocketServer(newPort, PortMode.STATIC);
-        server.startServer();
     }
 
     public static void stopWebsocket() {
