@@ -1,7 +1,6 @@
 import cz.habarta.typescript.generator.gradle.GenerateTask
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
-import org.apache.tools.ant.filters.ReplaceTokens
 
 import java.time.Instant
 
@@ -119,17 +118,38 @@ test {
     useJUnitPlatform()
 }
 
-tasks.register('processSource', Sync) {
-    from sourceSets.main.java
-    inputs.property 'version', version
-    filter(ReplaceTokens, tokens: [APPVERSION: version, BRANCH: branch, COMMIT: details.gitHash, CFAPIKEY: cfApiKey])
-    into "$buildDir/src"
+// Generates dev.ftb.app.BuildInfo with values only known at build time.
+def generateBuildInfo = tasks.register('generateBuildInfo') {
+    def outDir = layout.buildDirectory.dir('generated/sources/buildInfo/java/main')
+    def values = [APPVERSION: version, BRANCH: branch, COMMIT: details.gitHash, CF_API_KEY: cfApiKey]
+    inputs.properties(values)
+    outputs.dir(outDir)
+    doLast {
+        def fields = values.collect { name, value ->
+            def escaped = value.toString().replace('\\', '\\\\').replace('"', '\\"')
+            "    public static final String $name = \"$escaped\";"
+        }.join('\n')
+
+        def file = outDir.get().file('dev/ftb/app/BuildInfo.java').asFile
+        file.parentFile.mkdirs()
+        file.text = """\
+package dev.ftb.app;
+
+public final class BuildInfo {
+$fields
+
+    private BuildInfo() {
+    }
 }
+"""
+    }
+}
+
+// Passing the task provider registers its output as a source dir and wires up the task dependency.
+sourceSets.main.java.srcDir(generateBuildInfo)
 
 compileJava {
     options.encoding = "UTF-8"
-    dependsOn processSource
-    source = processSource.outputs
 }
 
 jar.enabled = false
@@ -250,6 +270,10 @@ wrapper {
 }
 
 idea.project.settings {
+    // IDE builds don't go through Gradle, so make sure BuildInfo exists after a sync.
+    taskTriggers {
+        afterSync generateBuildInfo
+    }
     delegateActions {
         // Gradle runners are garbage and break frequently.
         delegateBuildRunToGradle = false

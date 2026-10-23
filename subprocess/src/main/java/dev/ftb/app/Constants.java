@@ -50,11 +50,11 @@ public class Constants {
     //Other
     public static final int WEBSOCKET_PORT = 13377;
 
-    public static final String CF_API_KEY = "@CFAPIKEY@";
-    
-    public static final String APPVERSION = "@APPVERSION@";
-    public static final String BRANCH = "@BRANCH@";
-    public static final String COMMIT = "@COMMIT@";
+    public static final String CF_API_KEY = BuildInfo.CF_API_KEY;
+
+    public static final String APPVERSION = BuildInfo.APPVERSION;
+    public static final String BRANCH = BuildInfo.BRANCH;
+    public static final String COMMIT = BuildInfo.COMMIT;
     
     public static final Supplier<String> USER_AGENT = Suppliers.memoize(() -> "ftb-app/" + APPVERSION + " OS/"+ OS.CURRENT.name() + " Platform/" + PLATFORM + " Branch/" + BRANCH + " Commit/" + COMMIT);
     private static final Throttler GLOBAL_THROTTLER = new Throttler();
