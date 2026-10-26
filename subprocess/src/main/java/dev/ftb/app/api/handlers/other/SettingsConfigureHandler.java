@@ -17,7 +17,7 @@ public class SettingsConfigureHandler implements IMessageHandler<SettingsConfigu
     public void handle(SettingsConfigureData data) {
         // Is this a waste to parse the obj to json just to compare it to the data provided?
         try {
-            var originalSettings = Settings.getSettings().toString();
+            var originalSettings = Settings.get().settings().toString();
             var newSettings = data.settings.toString();
 
             if (originalSettings.equals(newSettings)) {
@@ -29,11 +29,11 @@ public class SettingsConfigureHandler implements IMessageHandler<SettingsConfigu
                 CredentialStorage.getInstance().set("proxyPassword", data.settings.proxy().password());
                 data.settings.proxy().setPassword("");
             }
+
+            Settings.get().store().set(data.settings);
             
-            // Actually handle the settings change
-            Settings.updateSettings(data.settings);
             // Dispatch the event
-            SettingsChangeUtil.onSettingsChanged(Settings.getSettings());
+            SettingsChangeUtil.onSettingsChanged(Settings.get().settings());
             
             WebSocketHandler.sendMessage(new SettingsConfigureData.Reply(data, "success", data.settings));
         } catch (Exception e) {

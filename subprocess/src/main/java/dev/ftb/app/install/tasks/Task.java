@@ -13,10 +13,9 @@ import java.util.concurrent.TimeUnit;
  * A Task.
  */
 public interface Task {
-
     ExecutorService TASK_POOL = new ThreadPoolExecutor(
-            Settings.getThreadLimit(),
-            Settings.getThreadLimit(),
+            Settings.get().getThreadLimit(),
+            Settings.get().getThreadLimit(),
             60L, TimeUnit.SECONDS,
             new LinkedBlockingQueue<>()
     );

@@ -170,9 +170,9 @@ public class LogZipper {
 
     private String getFilteredSettings() {
         try {
-            SettingsData settings = Settings.getSettings();
+            SettingsData settings = Settings.get().settings();
+            // Null out the proxy so we don't log it in the export.
             var proxySettingsOld = settings.proxy();
-            // References...
             settings.setProxy(null);
             var output = GSON.toJson(settings);
             settings.setProxy(proxySettingsOld);

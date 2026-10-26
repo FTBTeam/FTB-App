@@ -152,7 +152,7 @@ public class Constants {
 
     private static Throttler getGlobalThrottler() {
         // TODO, double-check this logic.
-        long maxSpeed = Settings.getSpeedLimit() * 1000L;
+        long maxSpeed = Settings.get().getSpeedLimit() * 1000L;
         if (maxSpeed > 0) {
             GLOBAL_THROTTLER.bytesPerSecond((maxSpeed / 8) * 2); //Some reason it always limits to 50% for me, so we multiply!
         } else {

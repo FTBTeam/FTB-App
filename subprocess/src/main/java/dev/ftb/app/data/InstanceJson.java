@@ -33,20 +33,20 @@ public class InstanceJson {
     public int minMemory = 2048;
     @Deprecated  // May not be required, it's mirrored from the version manifest.
     public int recMemory = 4096;
-    public int memory = Settings.getSettings().instanceDefaults().memory();
+    public int memory = Settings.get().settings().instanceDefaults().memory();
 
     public String jvmArgs = "";
-    public String shellArgs = Settings.getSettings().instanceDefaults().shellArgs();
+    public String shellArgs = Settings.get().settings().instanceDefaults().shellArgs();
     
     @Nullable
-    public String programArgs = Settings.getSettings().instanceDefaults().getProgramArgs(); 
+    public String programArgs = Settings.get().settings().instanceDefaults().getProgramArgs(); 
     
     public boolean embeddedJre = true;
     @Nullable
     @JsonAdapter (PathTypeAdapter.class)
     public Path jrePath = null;
-    public int width = Settings.getSettings().instanceDefaults().width();
-    public int height = Settings.getSettings().instanceDefaults().height();
+    public int width = Settings.get().settings().instanceDefaults().width();
+    public int height = Settings.get().settings().instanceDefaults().height();
     public boolean fullscreen = false;
     public String modLoader = "";
 
@@ -70,8 +70,8 @@ public class InstanceJson {
      * When enabled, the app will not inject mods from the meta system. Sometimes these can 
      * cause issues, so it's good to let the user have the option to turn them off
      */
-    public boolean preventMetaModInjection = Settings.getSettings().instanceDefaults().preventMetaModInjection();
-    public boolean preventMetaAgentInjection = Settings.getSettings().instanceDefaults().preventMetaAgentInjection();
+    public boolean preventMetaModInjection = Settings.get().settings().instanceDefaults().preventMetaModInjection();
+    public boolean preventMetaAgentInjection = Settings.get().settings().instanceDefaults().preventMetaAgentInjection();
     
     public byte packType;
     // TODO migrate this to `isPrivate`
@@ -152,7 +152,7 @@ public class InstanceJson {
 
         minMemory = versionManifest.getMinimumSpec();
         recMemory = versionManifest.getRecommendedSpec();
-        memory = Settings.getSettings().instanceDefaults().memory();
+        memory = Settings.get().settings().instanceDefaults().memory();
 
         this._private = isPrivate;
         this.packType = packType;

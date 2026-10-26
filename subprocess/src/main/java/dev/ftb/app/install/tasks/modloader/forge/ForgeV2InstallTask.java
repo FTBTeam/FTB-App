@@ -327,7 +327,7 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
                     LOGGER.warn("Output '{}' failed to validate.", output);
                     LOGGER.warn(" Expected: {}", value);
                     LOGGER.warn(" Got     : {}", hash);
-                    if (Settings.ignoreForgeProcessorOutputHashes()) {
+                    if (Settings.get().ignoreForgeProcessorOutputHashes()) {
                         LOGGER.warn("Ignoring invalid hash. Workaround active.");
                     } else {
                         validated = false;

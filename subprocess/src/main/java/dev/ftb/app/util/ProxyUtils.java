@@ -36,17 +36,20 @@ public class ProxyUtils {
     private static String proxyPassword;
 
     public static void loadProxy() {
-        String settingsProxyType = Settings.getSettings().proxy().type();
-        String settingsProxyHost = Settings.getSettings().proxy().host();
-        int settingsProxyPort = Settings.getSettings().proxy().port();
-        String settingsProxyUser = Settings.getSettings().proxy().username();
+        String settingsProxyType = Settings.get().settings().proxy().type();
+        String settingsProxyHost = Settings.get().settings().proxy().host();
+        int settingsProxyPort = Settings.get().settings().proxy().port();
+        String settingsProxyUser = Settings.get().settings().proxy().username();
         
         // TODO: Remove: Migration, won't be needed for much longer
-        if (!Settings.getSettings().proxy().password().isEmpty()) {
+        if (!Settings.get().settings().proxy().password().isEmpty()) {
             // Move it to the credential storage.
-            CredentialStorage.getInstance().set("proxyPassword", Settings.getSettings().proxy().password());
-            Settings.getSettings().proxy().setPassword("");
-            Settings.saveSettings();
+            CredentialStorage.getInstance().set("proxyPassword", Settings.get().settings().proxy().password());
+            try {
+                Settings.get().store().update(settings -> settings.proxy().setPassword(""));
+            } catch (IOException e) {
+                LOGGER.error("Failed to clear proxy password from settings after migrating to credential storage.", e);
+            }
         }
         
         String settingsProxyPassword = CredentialStorage.getInstance().get("proxyPassword");

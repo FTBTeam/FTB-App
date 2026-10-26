@@ -45,7 +45,9 @@ public final class JsonStore<T> {
     /// Provides a thread-safe lock around IO operations.
     private final ReentrantLock lock = new ReentrantLock();
 
-    private volatile T data;
+    /// Null until first loaded, set or read. The defaults are created lazily so that constructing a store never
+    /// runs the supplier, which may itself depend on whatever owns this store.
+    private volatile @Nullable T data;
 
     /// @see #JsonStore(Path, Gson, Type, Supplier, UnaryOperator)
     public JsonStore(Path path, Gson gson, Type type, Supplier<T> defaults) {
@@ -65,7 +67,6 @@ public final class JsonStore<T> {
         this.type = type;
         this.defaults = defaults;
         this.migrator = migrator;
-        this.data = defaults.get();
     }
 
     public Path path() {
@@ -74,7 +75,20 @@ public final class JsonStore<T> {
 
     /// The current data. Holds the defaults until {@link #load()} has been called.
     public T get() {
-        return data;
+        T current = data;
+        if (current != null) {
+            return current;
+        }
+
+        lock.lock();
+        try {
+            if (data == null) {
+                data = defaults.get();
+            }
+            return data;
+        } finally {
+            lock.unlock();
+        }
     }
 
     /// Replaces the data and saves it.
@@ -93,7 +107,7 @@ public final class JsonStore<T> {
     public void update(Consumer<T> mutator) throws IOException {
         lock.lock();
         try {
-            mutator.accept(data);
+            mutator.accept(get());
             saveLocked();
         } finally {
             lock.unlock();
@@ -172,7 +186,7 @@ public final class JsonStore<T> {
 
     private void saveLocked() throws IOException {
         // Serialize first so a serialization failure never touches the files on disk
-        byte[] bytes = gson.toJson(data, type).getBytes(StandardCharsets.UTF_8);
+        byte[] bytes = gson.toJson(get(), type).getBytes(StandardCharsets.UTF_8);
 
         Path parent = path.toAbsolutePath().getParent();
         if (parent != null) {

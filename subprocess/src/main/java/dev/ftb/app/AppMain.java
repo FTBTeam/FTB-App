@@ -70,8 +70,7 @@ public class AppMain {
     }
 
     public static void initSettingsAndCache() {
-        Settings.loadSettings();
-        localCache = new LocalCache(Settings.getInstancesDir().resolve(".localCache"));
+        localCache = new LocalCache(Settings.get().getInstancesDir().resolve(".localCache"));
     }
 
     public static void main(String[] args) {
@@ -168,8 +167,7 @@ public class AppMain {
     private static void mainImpl(ImmutableMap<String, String> args) {        
         // Cleanup before shutdown
         Runtime.getRuntime().addShutdownHook(new Thread(AppMain::cleanUpBeforeExit));
-
-        Settings.loadSettings();
+        
         Instances.refreshInstances();
 
         boolean isOverwolf = args.containsKey("overwolf");
@@ -315,7 +313,7 @@ public class AppMain {
         LOGGER.info("Cleaning up for shutdown");
         WebSocketHandler.stopWebsocket();
 
-        Settings.saveSettings();
+        Settings.get().save();
     }
 
     public static void exit() {

@@ -18,7 +18,7 @@ public class FileHashHandler implements IMessageHandler<FileHashData> {
 
     @Override
     public void handle(FileHashData data) {
-        Path file = Settings.getInstancesDir().resolve(data.uuid).resolve(data.filePath);
+        Path file = Settings.get().getInstancesDir().resolve(data.uuid).resolve(data.filePath);
         WebSocketHandler.sendMessage(new FileHashData.Reply(data, safeHash(Hashing.md5(), file), safeHash(Hashing.sha256(), file)));
     }
 

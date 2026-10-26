@@ -19,7 +19,8 @@ import java.nio.file.Path;
  */
 public class SettingsData {
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    
+    public static final String DEFAULT_SPEC = "1.0.0";
+
     private String spec;
     @JsonAdapter(PathTypeAdapter.class)
     private Path instanceLocation;
@@ -85,7 +86,7 @@ public class SettingsData {
     
     public static SettingsData createDefault() {
         return new SettingsData(
-            Settings.DEFAULT_SPEC,
+            SettingsData.DEFAULT_SPEC,
             AppMain.paths().instancesDir(),
             false, // Feral Game Mode is disabled by default
             new GeneralSettings(

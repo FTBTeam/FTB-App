@@ -9,6 +9,6 @@ public class SettingsInfoHandler implements IMessageHandler<SettingsInfoData>
 {
     @Override
     public void handle(SettingsInfoData data) {
-        WebSocketHandler.sendMessage(new SettingsInfoData.Reply(data, Settings.getSettings()));
+        WebSocketHandler.sendMessage(new SettingsInfoData.Reply(data, Settings.get().settings()));
     }
 }

@@ -83,7 +83,7 @@ public class Instance {
 
         props.categoryId = categoryId == null ? InstanceCategory.DEFAULT.uuid() : categoryId;
 
-        path = Settings.getInstancesDir().resolve(folderNameFor(props));
+        path = Settings.get().getInstancesDir().resolve(folderNameFor(props));
         metaPath = path.resolve(META_FOLDER_NAME);
         
         FileUtils.createDirectories(path);
@@ -511,7 +511,7 @@ public class Instance {
         json.potentiallyBrokenDismissed = false;
         json.categoryId = category != null ? category : props.categoryId;
 
-        Path newDir = Settings.getInstancesDir().resolve(folderNameFor(json));
+        Path newDir = Settings.get().getInstancesDir().resolve(folderNameFor(json));
         Path newJson = newDir.resolve("instance.json");
 
         Files.createDirectories(newDir);
@@ -792,7 +792,7 @@ public class Instance {
         computedName = computedName.substring(0, Math.min(computedName.length(), 64));
         computedName = computedName.trim();
         
-        Path instancesDir = Settings.getInstancesDir();
+        Path instancesDir = Settings.get().getInstancesDir();
         if (!Files.exists(instancesDir.resolve(computedName))) {
             return computedName;
         }

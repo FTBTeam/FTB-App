@@ -55,7 +55,7 @@ public class Instances {
 
     public static void refreshInstances() {
         ElapsedTimer totalTimer = new ElapsedTimer();
-        Path instancesDir = Settings.getInstancesDir();
+        Path instancesDir = Settings.get().getInstancesDir();
 
         LOGGER.info("Reloading instances..");
         instances.clear();
@@ -140,7 +140,7 @@ public class Instances {
     private static void loadCategories() {
         categories.clear();
         
-        var categoriesFile = Settings.getInstancesDir().resolve("categories.json");
+        var categoriesFile = Settings.get().getInstancesDir().resolve("categories.json");
         if (Files.notExists(categoriesFile)) {
             // Try and migrate
             migrateCategories();
@@ -162,7 +162,7 @@ public class Instances {
     }
     
     public static void saveCategories() {
-        var categoriesFile = Settings.getInstancesDir().resolve("categories.json");
+        var categoriesFile = Settings.get().getInstancesDir().resolve("categories.json");
         try {
             if (Files.notExists(categoriesFile.getParent())) {
                 Files.createDirectories(categoriesFile.getParent());
@@ -279,7 +279,7 @@ public class Instances {
         
         // Save the categories to the file.
         try {
-            Path categoriesFile = Settings.getInstancesDir().resolve("categories.json");
+            Path categoriesFile = Settings.get().getInstancesDir().resolve("categories.json");
             if (Files.notExists(categoriesFile.getParent())) {
                 Files.createDirectories(categoriesFile.getParent());
             }
