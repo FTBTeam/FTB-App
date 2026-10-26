@@ -22,8 +22,6 @@ import static net.covers1624.quack.util.SneakyUtils.sneak;
 
 public class FileUtils {
     private static final Logger LOGGER = LogManager.getLogger();
-    private static final int MOVE_ATTEMPTS = 5;
-    private static final long MOVE_RETRY_DELAY_MS = 50; // Potentially holds the main thread. Not ideal but likely important.
 
     public static void deletePath(Path path) {
         if (Files.notExists(path)) return;
@@ -286,34 +284,6 @@ public class FileUtils {
                     Files.move(from, to, REPLACE_EXISTING);
                 } else {
                     Files.move(from, to);
-                }
-            }
-        }
-    }
-
-    /// Retrying logic for moving a file on the system, this allows us to bypass anything that might have a temporary
-    /// hold/lock on the file. Maybe an anti-virus, windows indexing, etc.
-    ///
-    /// TODO: Maybe move this to a utility class so others can use a "safe" move operation for important files.
-    public static void moveWithRetry(Path from, Path to) throws IOException {
-        for (int attempt = 1; ; attempt++) {
-            try {
-                try {
-                    Files.move(from, to, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-                } catch (AtomicMoveNotSupportedException ex) {
-                    Files.move(from, to, StandardCopyOption.REPLACE_EXISTING);
-                }
-                return;
-            } catch (AccessDeniedException ex) {
-                if (attempt >= MOVE_ATTEMPTS) {
-                    throw ex;
-                }
-                LOGGER.warn("Access denied moving {} to {}, retrying ({}/{})", from, to, attempt, MOVE_ATTEMPTS);
-                try {
-                    Thread.sleep(MOVE_RETRY_DELAY_MS * attempt);
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                    throw ex;
                 }
             }
         }

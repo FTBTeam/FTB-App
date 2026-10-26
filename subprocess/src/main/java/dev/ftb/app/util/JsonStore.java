@@ -10,8 +10,6 @@ import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.time.LocalDateTime;
@@ -61,7 +59,7 @@ public final class JsonStore<T> {
     /// @param migrator applied to the raw JSON before it is converted to `T`, used to upgrade older formats
     public JsonStore(Path path, Gson gson, Type type, Supplier<T> defaults, UnaryOperator<JsonElement> migrator) {
         this.path = path;
-        this.tmpPath = siblingWithSuffix(".tmp");
+        this.tmpPath = SafeFiles.tempPathFor(path);
         this.backupPath = siblingWithSuffix(".bak");
         this.gson = gson;
         this.type = type;
@@ -188,26 +186,8 @@ public final class JsonStore<T> {
         // Serialize first so a serialization failure never touches the files on disk
         byte[] bytes = gson.toJson(get(), type).getBytes(StandardCharsets.UTF_8);
 
-        Path parent = path.toAbsolutePath().getParent();
-        if (parent != null) {
-            Files.createDirectories(parent);
-        }
-
-        // Meat of the safe logic, hold a temp file and only move on once it's fully written and flushed to disk.
-        try (FileChannel channel = FileChannel.open(tmpPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING)) {
-            ByteBuffer buffer = ByteBuffer.wrap(bytes);
-            while (buffer.hasRemaining()) {
-                channel.write(buffer);
-            }
-
-            channel.force(true); // Force the data to disk before we move it into place. This is important for crash-safety.
-        } catch (AccessDeniedException ex) {
-            LOGGER.warn("Failed to write {}, access denied. ACL: {}", tmpPath, FileUtils.getAcl(tmpPath.getParent()));
-            throw ex;
-        }
-        
         if (Files.exists(path)) {
-            // Backup the existing one.
+            // Backup the existing one. Copied rather than moved, so the real file exists at every point during the save.
             try {
                 Files.copy(path, backupPath, StandardCopyOption.REPLACE_EXISTING);
             } catch (IOException ex) {
@@ -215,7 +195,7 @@ public final class JsonStore<T> {
             }
         }
 
-        FileUtils.moveWithRetry(tmpPath, path);
+        SafeFiles.writeAtomically(path, bytes);
     }
 
     private @Nullable T read(Path file) throws IOException {

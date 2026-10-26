@@ -10,8 +10,6 @@ import org.jspecify.annotations.Nullable;
 import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
@@ -42,33 +40,6 @@ public class SettingsData {
         this.proxy = proxy;
         this.download = download;
         this.workaround = workaround;
-    }
-
-    // Writer
-    public void write() {
-        var jsonData = gson.toJson(this);
-        try {
-            if (Files.notExists(AppMain.paths().settingsFile().getParent())) {
-                Files.createDirectories(AppMain.paths().settingsFile().getParent());
-            }
-            
-            Files.writeString(AppMain.paths().settingsFile(), jsonData);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    // Reader
-    public static SettingsData read() {
-        try {
-            var jsonData = Files.readString(AppMain.paths().settingsFile());
-            if (jsonData.isBlank()) {
-                throw new IOException("Settings file is empty.");
-            }
-            return gson.fromJson(jsonData, SettingsData.class);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     public static SettingsData fromString(String json) {
