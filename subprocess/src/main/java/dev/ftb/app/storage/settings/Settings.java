@@ -3,6 +3,7 @@ package dev.ftb.app.storage.settings;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import dev.ftb.app.AppMain;
+import dev.ftb.app.AppPaths;
 import dev.ftb.app.util.JsonStore;
 import dev.ftb.app.util.ProxyUtils;
 import org.jspecify.annotations.Nullable;
@@ -17,20 +18,7 @@ import java.util.HashMap;
 
 public class Settings {
     private static final Logger LOGGER = LoggerFactory.getLogger(Settings.class);
-    private static final Type LEGACY_SETTINGS_TOKEN = new TypeToken<HashMap<String, String>>(){}.getType();    
-    
-    @Nullable
-    private static Settings INSTANCE = null;
-    
-    public static synchronized Settings get() {
-        if (INSTANCE == null) {
-            // Assign before init, as migration and proxy loading call back into Settings.get()
-            INSTANCE = new Settings();
-            INSTANCE.init();
-        }
-
-        return INSTANCE;
-    }
+    private static final Type LEGACY_SETTINGS_TOKEN = new TypeToken<HashMap<String, String>>(){}.getType();
     
     private static final Gson GSON = new Gson().newBuilder()
         .setPrettyPrinting()
@@ -38,16 +26,14 @@ public class Settings {
     
     private final JsonStore<SettingsData> store;
 
-    private Settings() {
+    public Settings(AppPaths paths) {
         this.store = new JsonStore<>(
-            AppMain.paths().settingsFile(),
+            paths.settingsFile(),
             GSON,
             SettingsData.class,
             SettingsData::createDefault
         );
-    }
 
-    private void init() {
         attemptMigration();
         this.load();
     }

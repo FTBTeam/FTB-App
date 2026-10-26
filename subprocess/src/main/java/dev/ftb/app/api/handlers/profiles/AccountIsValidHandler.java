@@ -1,6 +1,6 @@
 package dev.ftb.app.api.handlers.profiles;
 
-import dev.ftb.app.accounts.AccountManager;
+import dev.ftb.app.AppMain;
 import dev.ftb.app.accounts.MicrosoftProfile;
 import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.data.BaseData;
@@ -15,7 +15,7 @@ public class AccountIsValidHandler implements IMessageHandler<AccountIsValidHand
             return;
         }
 
-        MicrosoftProfile profile = AccountManager.get().getProfileFromUuid(data.profileUuid);
+        MicrosoftProfile profile = AppMain.instance().services().accounts().getProfileFromUuid(data.profileUuid);
         if (profile == null) {
             WebSocketHandler.sendMessage(new Reply(data, MicrosoftProfile.ValidCheckResult.TOTAL_FAILURE, "Profile not found"));
             return;

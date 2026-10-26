@@ -5,7 +5,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import dev.ftb.app.AppMain;
+import dev.ftb.app.AppPaths;
 import dev.ftb.app.Constants;
 import dev.ftb.app.Instances;
 import dev.ftb.app.accounts.AccountManager;
@@ -70,17 +70,21 @@ public class LogZipper {
 
     private final Supplier<List<String>> ipAddresses = Suppliers.memoize(this::getUserIpAddresses);
 
+    private final AccountManager accounts;
+    private final AppPaths paths;
+    private final Settings settings;
+    
     private final long startTime;
 
-    private LogZipper() {
+    public LogZipper(AppPaths paths, Settings settings, AccountManager accounts) {
+        this.accounts = accounts;
+        this.paths = paths;
+        this.settings = settings;
+        
         this.startTime = System.currentTimeMillis();
     }
-
-    public static LogZipper create() {
-        return new LogZipper();
-    }
     
-    public Path generate() {
+    public Path generate() {        
         var obj = new JsonObject();
 
         obj.addProperty("version", VERSION);
@@ -90,8 +94,8 @@ public class LogZipper {
         metaDetails.addProperty("today", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE));
         metaDetails.addProperty("time", System.currentTimeMillis());
         metaDetails.addProperty("timeTaken", System.currentTimeMillis() - startTime);
-        metaDetails.addProperty("addedAccounts", AccountManager.get().getProfiles().size());
-        metaDetails.addProperty("hasActiveAccount", AccountManager.get().getActiveProfile() != null);
+        metaDetails.addProperty("addedAccounts", accounts.getProfiles().size());
+        metaDetails.addProperty("hasActiveAccount", accounts.getActiveProfile() != null);
         obj.add("metaDetails", metaDetails);
 
         var appDetails = new JsonObject();
@@ -170,7 +174,7 @@ public class LogZipper {
 
     private String getFilteredSettings() {
         try {
-            SettingsData settings = Settings.get().settings();
+            SettingsData settings = this.settings.settings();
             // Null out the proxy so we don't log it in the export.
             var proxySettingsOld = settings.proxy();
             settings.setProxy(null);
@@ -285,7 +289,7 @@ public class LogZipper {
         } catch (Throwable ignored) {
         }
 
-        Path debugLogFile = AppMain.paths().workingDir().resolve("logs/debug.log");
+        Path debugLogFile = this.paths.workingDir().resolve("logs/debug.log");
 
         if (Files.exists(debugLogFile)) {
             try {
@@ -299,7 +303,7 @@ public class LogZipper {
     }
     
     public String getHttpLogs() {
-        Path httpLogFile = AppMain.paths().workingDir().resolve("logs/http-requests.log");
+        Path httpLogFile = this.paths.workingDir().resolve("logs/http-requests.log");
 
         if (Files.exists(httpLogFile)) {
             try {
@@ -314,7 +318,7 @@ public class LogZipper {
 
     public void includeHistoricLogs(ZipOutputStream writer, List<String> files) {
         var existingFiles = files.stream()
-            .map(AppMain.paths().workingDir().resolve("logs")::resolve)
+            .map(this.paths.workingDir().resolve("logs")::resolve)
             .filter(Files::exists)
             .toList();
 
@@ -340,7 +344,7 @@ public class LogZipper {
 
         if (!OperatingSystem.current().isWindows()) {
             // Electron logs
-            appLogs.add(AppMain.paths().workingDir().resolve("logs/electron-main.log"));
+            appLogs.add(this.paths.workingDir().resolve("logs/electron-main.log"));
         } else {
             // Get AppData/Local
             var appData = System.getenv("LOCALAPPDATA");
@@ -359,7 +363,7 @@ public class LogZipper {
     }
 
     private String getRuntimes() {
-        var runtimesPath = AppMain.paths().binDir().resolve("runtime/installations.json");
+        var runtimesPath = this.paths.binDir().resolve("runtime/installations.json");
         if (Files.notExists(runtimesPath)) {
             return "";
         }
@@ -374,11 +378,11 @@ public class LogZipper {
     }
 
     private String getVersions() {
-        return getTopLevelDirectoriesAsString(AppMain.paths().mcVersionsDir());
+        return getTopLevelDirectoriesAsString(this.paths.mcVersionsDir());
     }
 
     private String getInstances() {
-        return getTopLevelDirectoriesAsString(AppMain.paths().instancesDir());
+        return getTopLevelDirectoriesAsString(this.paths.instancesDir());
     }
 
     private String getInstancesFromMemory() {
@@ -505,13 +509,13 @@ public class LogZipper {
         return ipAddresses;
     }
     
-    private static Path locateOutputPath() {
-        var outputPath = AppMain.paths().workingDir().resolve("log-exports");
+    private Path locateOutputPath() {
+        var outputPath = this.paths.workingDir().resolve("log-exports");
         if (Files.notExists(outputPath)) {
             try {
                 Files.createDirectories(outputPath);
             } catch (IOException e) {
-                return AppMain.paths().workingDir();
+                return this.paths.workingDir();
             }
         }
         

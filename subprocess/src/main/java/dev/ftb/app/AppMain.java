@@ -2,7 +2,7 @@ package dev.ftb.app;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import dev.ftb.app.api.DebugTools;
+import dev.ftb.app.accounts.AccountManager;
 import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.WebsocketServer;
 import dev.ftb.app.api.data.other.CloseModalData;
@@ -43,16 +43,12 @@ public class AppMain {
     
     public static int screenWidth = 1080;
     public static int screenHeight = 720;
-    
-    private static final AppPaths APP_PATHS = new AppPaths();
 
     static {
         Log4jUtils.redirectStreams();
         SSLUtils.inject();
         System.setProperty("apple.awt.UIElement", "true");
     }
-    
-    public static boolean isDevMode = false;
     
     // He a wide boi
     public static LongRunningTaskManager LONG_TASK_MANAGER = new LongRunningTaskManager();
@@ -64,119 +60,103 @@ public class AppMain {
     public static boolean websocketDisconnect = false;
     public static AtomicBoolean isSyncing = new AtomicBoolean(false);
     
-    public static DebugTools DEBUG_TOOLS = DebugTools.NONE;
-
-    public AppMain() {
-    }
-
-    public static void initSettingsAndCache() {
-        localCache = new LocalCache(Settings.get().getInstancesDir().resolve(".localCache"));
-    }
-
+    private static AppMain INSTANCE = null;
+    
     public static void main(String[] args) {
         ImmutableMap<String, String> parsedArgs = ImmutableMap.of();
         try {
-             parsedArgs = StartArgParser.parse(args).getArgs();
+            parsedArgs = StartArgParser.parse(args).getArgs();
         } catch (Throwable ex) {
             LOGGER.error("Failed to parse args, continuing with empty args", ex);
         }
         
-        Constants.PLATFORM = parsedArgs.containsKey("overwolf") ? "overwolf" : "electron";
-        isDevMode = parsedArgs.containsKey("dev");
-        Constants.IS_DEV_MODE = isDevMode;
+        var app = new AppMain(parsedArgs);
+        INSTANCE = app;
+        
+        try {
+            app.startApp();
+        } catch (Throwable ex) {
+            LOGGER.error("Failed to start app", ex);
+        }
+    }
+    
+    private final ImmutableMap<String, String> startArgs;
+    
+    private final AppFlags flags;
+    private final AppPaths paths;
+    private final AccountManager accounts;
+    private final Settings settings;
+    
+    public AppMain(ImmutableMap<String, String> args) {
+        this.startArgs = args;
+        
+        this.flags = new AppFlags(
+            args.containsKey("dev"),
+            args.containsKey("overwolf") ? AppFlags.FrontendPlatform.OVERWOLF : AppFlags.FrontendPlatform.ELECTRON
+        );
+        
+        this.paths = new AppPaths();
+        this.settings = new Settings(this.paths);
+        this.accounts = new AccountManager(this.paths);
+    }
+    
+    public static AppMain instance() {
+        return INSTANCE;
+    }
 
-        if (parsedArgs.containsKey("jetty-verbose")) {
+    public AccountManager accounts() {
+        return accounts;
+    }
+    
+    public AppPaths paths() {
+        return paths;
+    }
+
+    public void initSettingsAndCache() {
+        localCache = new LocalCache(this.settings.getInstancesDir().resolve(".localCache"));
+    }
+
+    public void startApp() {        
+        Constants.PLATFORM = this.startArgs.containsKey("overwolf") ? "overwolf" : "electron";
+        
+        if (this.startArgs.containsKey("jetty-verbose")) {
             Configurator.setLevel("org.eclipse.jetty", Level.DEBUG);
             LOGGER.info("Jetty verbose logging enabled");
         }
 
-        if (parsedArgs.containsKey("screenWidth") && parsedArgs.containsKey("screenHeight")) {
+        if (this.startArgs.containsKey("screenWidth") && this.startArgs.containsKey("screenHeight")) {
             try {
-                screenWidth = Integer.parseInt(parsedArgs.getOrDefault("screenWidth", "1080"));
-                screenHeight = Integer.parseInt(parsedArgs.getOrDefault("screenHeight", "720"));
+                screenWidth = Integer.parseInt(this.startArgs.getOrDefault("screenWidth", "1080"));
+                screenHeight = Integer.parseInt(this.startArgs.getOrDefault("screenHeight", "720"));
             } catch (Exception ex) {
                 LOGGER.error("Failed to parse screen dimensions, using defaults", ex);
             }
         }
         
-        logAppDetails(args);
+        this.logAppDetails();
 
         try {
-            prelaunchChecks(parsedArgs);
+            this.prelaunchChecks();
         } catch (Throwable ex) {
             LOGGER.error("Prelaunch checks failed but are not fatal", ex);
         }
         
-        try {
-            mainImpl(parsedArgs);
-        } catch (Throwable ex) {
-            LOGGER.error("Main method threw exception:", ex);
-        }
+        // If this fails, we're fucked.
+        this.mainImpl();
     }
     
-    /**
-     * Only allow the app to run one instance at a time. Otherwise things get messy!
-     */
-    private static void prelaunchChecks(ImmutableMap<String, String> args) {
-        if (args.containsKey("ignore-pid-checks")) {
-            LOGGER.info("Ignoring PID checks as requested");
-            return;
-        }
-        
-        // Read the pid and check if the process is still running
-        if (Files.exists(paths().processMarkerFile())) {
-            try {
-                var data = Files.readString(paths().processMarkerFile());
-                var pid = Long.parseLong(data.trim());
-                ProcessHandle.of(pid).ifPresent((handle) -> {
-                    if (!isOwnExecutable(handle)) {
-                        LOGGER.warn("Pid {} from app.pid file does not appear to belong to a previous instance of this app (likely reused by an unrelated process). Not terminating it.", pid);
-                        return;
-                    }
-                    // SHUT IT DOWN!
-                    LOGGER.info("Found running process with pid {}", pid);
-                    handle.destroy();
-                });
-            } catch (Throwable ex) {
-                LOGGER.warn("Failed to read app.pid file", ex);
-            }
-        }
-        
-        // Write the current pid to the file
-        var currentPid = ProcessHandle.current().pid();
-        try {
-            Files.writeString(paths().processMarkerFile(), String.valueOf(currentPid));
-        } catch (IOException ex) {
-            LOGGER.error("Failed to write app.pid file", ex);
-        }
-    }
-
-    /**
-     * Checks that a process handle belongs to the same executable as this app. This is to avoid killing unrelated processes that happen to have the same pid.
-     */
-    private static boolean isOwnExecutable(ProcessHandle handle) {
-        Optional<String> ourCommand = ProcessHandle.current().info().command();
-        Optional<String> theirCommand = handle.info().command();
-        if (ourCommand.isEmpty() || theirCommand.isEmpty()) {
-            return false;
-        }
-        
-        return ourCommand.get().equals(theirCommand.get());
-    }
-
-    private static void mainImpl(ImmutableMap<String, String> args) {        
+    private void mainImpl() {        
         // Cleanup before shutdown
-        Runtime.getRuntime().addShutdownHook(new Thread(AppMain::cleanUpBeforeExit));
+        Runtime.getRuntime().addShutdownHook(new Thread(this::cleanUpBeforeExit));
         
         Instances.refreshInstances();
 
-        boolean isOverwolf = args.containsKey("overwolf");
-        LOGGER.info((isOverwolf ? "Overwolf" : "Electron") + " integration mode");
+        LOGGER.info("{} integration mode", this.flags.isOverwolf() ? "Overwolf" : "Electron");
 
         // Hook the pid so we can shutdown the frontend when it's closed
-        if (args.containsKey("pid") && !isDevMode) {
+        if (startArgs.containsKey("pid") && !this.flags.isDev()) {
             try {
-                long pid = Long.parseLong(args.get("pid"));
+                long pid = Long.parseLong(startArgs.get("pid"));
                 Optional<ProcessHandle> frontendProcess = ProcessHandle.of(pid);
                 if (frontendProcess.isPresent()) {
                     ProcessHandle handle = frontendProcess.get();
@@ -188,22 +168,22 @@ public class AppMain {
                                 e.printStackTrace();
                             }
                         }
-                        AppMain.exit();
+                        this.exit();
                     });
-                    if (!isOverwolf) Runtime.getRuntime().addShutdownHook(new Thread(handle::destroy));
+                    if (!this.flags.isOverwolf()) Runtime.getRuntime().addShutdownHook(new Thread(handle::destroy));
                 }
             } catch (Exception exception) {
                 LOGGER.error("Error connecting to process", exception);
             }
         } else {
-            LOGGER.info(isDevMode ? "Development mode" : "No PID args specified");
+            LOGGER.info(this.flags.isDev() ? "Development mode" : "No PID args specified");
         }
         
         ModpackApiUtils.loadPrivateToken();
 
         try {
             WebsocketServer.PortMode portMode;
-            if (isDevMode) {
+            if (this.flags.isDev()) {
                 portMode = WebsocketServer.PortMode.STATIC;
             } else {
                 portMode = WebsocketServer.PortMode.DYNAMIC;
@@ -220,7 +200,7 @@ public class AppMain {
         
         // Reload in case settings changed. Ideally we want the front end to wait until the back end says "Ok we ready
         // bois" before the front end requests any information but that's a further issue, not for this release
-        initSettingsAndCache();
+        this.initSettingsAndCache();
 
         FileUtils.listDir(paths().workingDir()).stream()
             .filter(e -> e.getFileName().toString().endsWith(".jar") && !e.getFileName().toString().contains(Constants.APPVERSION))
@@ -236,9 +216,9 @@ public class AppMain {
 
         CompletableFuture.runAsync(localCache::clean);
 
-        if (!Files.isWritable(AppMain.paths().workingDir())) {
+        if (!Files.isWritable(this.paths().workingDir())) {
             OpenModalData.openModal("Critical Error", "The FTBApp is unable to write to your selected data directory, this can be caused by file permission errors, anti-virus or any number of other configuration issues.<br />If you continue, the app will not work as intended and you may be unable to install or run any modpacks.", List.of(
-                new OpenModalData.ModalButton("Exit", "success", AppMain::exit),
+                new OpenModalData.ModalButton("Exit", "success", this::exit),
                 new OpenModalData.ModalButton("Continue", "danger", () -> {
                     WebSocketHandler.sendMessage(new CloseModalData());
                 }))
@@ -246,10 +226,6 @@ public class AppMain {
         }
 
         updateJavaVersions();
-
-        if (Boolean.getBoolean("Debugger.onStartup")) {
-            openDebugTools();
-        }
         
         // Lastly, run any needed migrations after the app is ready
         MigrationsManager.INSTANCE.runMigrations();
@@ -263,7 +239,7 @@ public class AppMain {
         }
     }
 
-    public static void updateJavaVersions() {
+    public void updateJavaVersions() {
         try {
             JavaLocator locator = JavaLocator.builder()
                 .findIntellijJdks()
@@ -294,11 +270,11 @@ public class AppMain {
         }
     }
 
-    private static void registerSettingsListeners() {
+    private void registerSettingsListeners() {
         SettingsChangeUtil.addChangeListener(oldSettings -> ProxyUtils.loadProxy());
     }
 
-    private static void pingPong() {
+    private void pingPong() {
         ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
         executor.scheduleAtFixedRate(() -> {
             try {
@@ -309,37 +285,68 @@ public class AppMain {
         }, 0, 3, TimeUnit.SECONDS);
     }
 
-    public static void cleanUpBeforeExit() {
+    public void cleanUpBeforeExit() {
         LOGGER.info("Cleaning up for shutdown");
         WebSocketHandler.stopWebsocket();
-
-        Settings.get().save();
+        this.settings.save();
     }
 
-    public static void exit() {
+    public void exit() {
         cleanUpBeforeExit();
         System.exit(0);
     }
 
-    public static synchronized void openDebugTools() {
-        if (!DebugTools.IS_AVAILABLE || DEBUG_TOOLS != DebugTools.NONE) return;
-        LOGGER.info("Trying to open Debug Tools.");
-        DEBUG_TOOLS = DebugTools.load();
-    }
+    /**
+     * Only allow the app to run one instance at a time. Otherwise things get messy!
+     */
+    private void prelaunchChecks() {
+        if (this.startArgs.containsKey("ignore-pid-checks")) {
+            LOGGER.info("Ignoring PID checks as requested");
+            return;
+        }
 
-    public static void closeDebugTools() {
-        if (DEBUG_TOOLS != DebugTools.NONE) {
-            LOGGER.info("Closing Debug Tools.");
-            DEBUG_TOOLS.close();
-            DEBUG_TOOLS = DebugTools.NONE;
+        // Read the pid and check if the process is still running
+        if (Files.exists(paths().processMarkerFile())) {
+            try {
+                var data = Files.readString(paths().processMarkerFile());
+                var pid = Long.parseLong(data.trim());
+                ProcessHandle.of(pid).ifPresent((handle) -> {
+                    if (!isOwnExecutable(handle)) {
+                        LOGGER.warn("Pid {} from app.pid file does not appear to belong to a previous instance of this app (likely reused by an unrelated process). Not terminating it.", pid);
+                        return;
+                    }
+                    // SHUT IT DOWN!
+                    LOGGER.info("Found running process with pid {}", pid);
+                    handle.destroy();
+                });
+            } catch (Throwable ex) {
+                LOGGER.warn("Failed to read app.pid file", ex);
+            }
+        }
+
+        // Write the current pid to the file
+        var currentPid = ProcessHandle.current().pid();
+        try {
+            Files.writeString(paths().processMarkerFile(), String.valueOf(currentPid));
+        } catch (IOException ex) {
+            LOGGER.error("Failed to write app.pid file", ex);
         }
     }
 
-    public static AppPaths paths() {
-        return APP_PATHS;
+    /**
+     * Checks that a process handle belongs to the same executable as this app. This is to avoid killing unrelated processes that happen to have the same pid.
+     */
+    private boolean isOwnExecutable(ProcessHandle handle) {
+        Optional<String> ourCommand = ProcessHandle.current().info().command();
+        Optional<String> theirCommand = handle.info().command();
+        if (ourCommand.isEmpty() || theirCommand.isEmpty()) {
+            return false;
+        }
+
+        return ourCommand.get().equals(theirCommand.get());
     }
     
-    private static void logAppDetails(String[] args) {
+    private void logAppDetails() {
         List<String> jvmArgs = new ArrayList<>();
         try {
             jvmArgs = ManagementFactory.getRuntimeMXBean().getInputArguments();
@@ -370,7 +377,7 @@ FTB App Subprocess startup;
             System.getProperty("os.version"),
             Architecture.current().name(),
             paths().workingDir().toAbsolutePath(),
-            String.join(" ", args),
+            String.join(" ", startArgs.values()),
             jvmArgs
         );
     }
