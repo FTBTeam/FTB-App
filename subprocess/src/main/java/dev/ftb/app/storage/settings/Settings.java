@@ -2,11 +2,9 @@ package dev.ftb.app.storage.settings;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import dev.ftb.app.AppMain;
 import dev.ftb.app.AppPaths;
 import dev.ftb.app.util.JsonStore;
 import dev.ftb.app.util.ProxyUtils;
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,14 +22,18 @@ public class Settings {
         .setPrettyPrinting()
         .create();
     
+    private final AppPaths appPaths;
+    
     private final JsonStore<SettingsData> store;
 
-    public Settings(AppPaths paths) {
+    public Settings(AppPaths appPaths) {
+        this.appPaths = appPaths;
+        
         this.store = new JsonStore<>(
-            paths.settingsFile(),
+            appPaths.settingsFile(),
             GSON,
             SettingsData.class,
-            SettingsData::createDefault
+            () -> SettingsData.createDefault(this.appPaths)
         );
 
         attemptMigration();
@@ -57,8 +59,8 @@ public class Settings {
 
     private void attemptMigration() {
         // Don't migrate if the new settings file exists or the old one doesn't
-        Path legacySettingsFile = AppMain.paths().legacySettingsFile();
-        if (Files.notExists(legacySettingsFile) || Files.exists(AppMain.paths().settingsFile())) {
+        Path legacySettingsFile = this.appPaths.legacySettingsFile();
+        if (Files.notExists(legacySettingsFile) || Files.exists(this.appPaths.settingsFile())) {
             return;
         }
         
@@ -66,7 +68,7 @@ public class Settings {
         try {
             var originalSettingsRaw = Files.readString(legacySettingsFile);
             var originalSettings = new Gson().<HashMap<String, String>>fromJson(originalSettingsRaw, LEGACY_SETTINGS_TOKEN);
-            var migrator = new SettingsMigrator(originalSettings);
+            var migrator = new SettingsMigrator(this.appPaths, originalSettings);
             var newSettings = migrator.migrate();
             
             // Save the new settings

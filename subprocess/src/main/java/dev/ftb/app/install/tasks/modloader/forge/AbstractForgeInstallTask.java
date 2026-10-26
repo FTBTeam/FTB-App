@@ -2,7 +2,7 @@ package dev.ftb.app.install.tasks.modloader.forge;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import dev.ftb.app.AppMain;
+import dev.ftb.app.AppPaths;
 import dev.ftb.app.Constants;
 import dev.ftb.app.data.forge.VersionOverrides;
 import dev.ftb.app.data.forge.installerv1.InstallProfile;
@@ -12,6 +12,7 @@ import dev.ftb.app.install.tasks.modloader.ModLoaderInstallTask;
 import dev.ftb.app.minecraft.jsons.VersionManifest;
 import dev.ftb.app.pack.CancellationToken;
 import dev.ftb.app.pack.Instance;
+import dev.ftb.app.storage.settings.Settings;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.maven.MavenNotation;
@@ -31,7 +32,9 @@ import java.util.Objects;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 
-import static dev.ftb.app.install.tasks.DownloadTask.*;
+import static dev.ftb.app.install.tasks.DownloadTask.DownloadValidation;
+import static dev.ftb.app.install.tasks.DownloadTask.LocalFileLocator;
+import static dev.ftb.app.install.tasks.DownloadTask.builder;
 import static org.apache.commons.lang3.StringUtils.appendIfMissing;
 
 public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
@@ -51,7 +54,7 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
         return Objects.requireNonNull(versionName);
     }
 
-    public static AbstractForgeInstallTask createInstallTask(Instance instance, String mcVersion, String forgeVersion) throws IOException {
+    public static AbstractForgeInstallTask createInstallTask(Instance instance, String mcVersion, String forgeVersion, AppPaths appPaths, Settings settings) throws IOException {
         if (FORGE_LEGACY_INSTALL.containsVersion(new DefaultArtifactVersion(mcVersion))) {
             String finalForgeVersion = forgeVersion;
             if (forgeVersion.contains("recommended") || forgeVersion.contains("latest")) {
@@ -68,7 +71,7 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
                 finalForgeVersion = resolvedVersion; // This is the version
             }
             
-            return new LegacyForgeInstallTask(instance, mcVersion, finalForgeVersion);
+            return new LegacyForgeInstallTask(appPaths, instance, mcVersion, finalForgeVersion);
         }
         
         MavenNotation notation = getForgeNotation(mcVersion, forgeVersion);
@@ -82,16 +85,16 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
         //       what needs to be done for an installation.
         DownloadTask task = builder()
                 .url(appendIfMissing("https://maven.minecraftforge.net/", notation.toPath()))
-                .dest(notation.toPath(AppMain.paths().mcLibrariesDir()))
+                .dest(notation.toPath(appPaths.mcLibrariesDir()))
                 .withValidation(DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true))
                 .tryCompanionHashes()
                 .build();
 
         task.execute(null, null);
-        return detectInstallerVersion(instance, task.getDest());
+        return detectInstallerVersion(appPaths, settings, instance, task.getDest());
     }
 
-    public static AbstractForgeInstallTask createNeoForgeInstallTask(Instance instance, String mcVersion, String neoForgeVersion) throws IOException {
+    public static AbstractForgeInstallTask createNeoForgeInstallTask(Instance instance, String mcVersion, String neoForgeVersion, AppPaths appPaths, Settings settings) throws IOException {
         MavenNotation versionSpecificNotation = NEO_FORGE_1_20_2_PLUS_NOTATION.withVersion(neoForgeVersion);
 
         if (mcVersion.equals("1.20.1")) {
@@ -104,16 +107,16 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
         // TODO, this is a common path with above.
         DownloadTask task = builder()
                 .url(appendIfMissing("https://maven.neoforged.net/releases/", notation.toPath()))
-                .dest(notation.toPath(AppMain.paths().mcLibrariesDir()))
+                .dest(notation.toPath(appPaths.mcLibrariesDir()))
                 .withValidation(DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true))
                 .tryCompanionHashes()
                 .build();
 
         task.execute(null, null);
-        return new ForgeV2InstallTask(instance, task.getDest());
+        return new ForgeV2InstallTask(appPaths, settings, instance, task.getDest());
     }
 
-    private static AbstractForgeInstallTask detectInstallerVersion(Instance instance, Path installer) throws IOException {
+    private static AbstractForgeInstallTask detectInstallerVersion(AppPaths appPaths, Settings settings, Instance instance, Path installer) throws IOException {
         try (FileSystem fs = IOUtils.getJarFileSystem(installer, true)) {
             Path installProfile = fs.getPath("/install_profile.json");
 
@@ -122,9 +125,9 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
 
             JsonObject json = JsonUtils.parse(InstallProfile.GSON, installProfile, JsonObject.class);
             if (json.has("spec")) {
-                return new ForgeV2InstallTask(instance, installer);
+                return new ForgeV2InstallTask(appPaths, settings, instance, installer);
             }
-            return new ForgeV1InstallTask(instance, installer);
+            return new ForgeV1InstallTask(appPaths, instance, installer);
         }
     }
 

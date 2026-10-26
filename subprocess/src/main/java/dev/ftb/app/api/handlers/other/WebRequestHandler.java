@@ -1,9 +1,10 @@
 package dev.ftb.app.api.handlers.other;
 
 import dev.ftb.app.Constants;
-import dev.ftb.app.api.WebSocketHandler;
+import dev.ftb.app.api.RcpApi;
 import dev.ftb.app.api.data.other.WebRequestData;
 import dev.ftb.app.api.handlers.IMessageHandler;
+import dev.ftb.app.api.handlers.MessageContext;
 import okhttp3.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,7 +18,7 @@ public class WebRequestHandler implements IMessageHandler<WebRequestData> {
     private static final Logger LOGGER = LogManager.getLogger();
         
     @Override
-    public void handle(WebRequestData data) {
+    public void handle(MessageContext context, WebRequestData data) {
         Request.Builder builder = new Request.Builder()
                 .url(data.url)
                 .method(data.method, buildRequestBody(data.body));
@@ -45,9 +46,9 @@ public class WebRequestHandler implements IMessageHandler<WebRequestData> {
                 resp.body.bytes = body.bytes();
             }
 
-            WebSocketHandler.sendMessage(resp);
+            context.reply(resp);
         } catch (IOException ex) {
-            WebSocketHandler.sendMessage(new WebRequestData.WebRequestDataResponse(data, "error", ex.getMessage()));
+            context.reply(new WebRequestData.WebRequestDataResponse(data, "error", ex.getMessage()));
             LOGGER.warn("Failed to make web request to {}.", data.url, ex);
         }
     }

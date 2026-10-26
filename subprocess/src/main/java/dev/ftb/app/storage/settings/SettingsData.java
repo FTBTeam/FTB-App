@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.JsonAdapter;
 import dev.ftb.app.AppMain;
+import dev.ftb.app.AppPaths;
 import net.covers1624.quack.gson.PathTypeAdapter;
 import org.jspecify.annotations.Nullable;
 import oshi.SystemInfo;
@@ -55,10 +56,10 @@ public class SettingsData {
         return gson.toJsonTree(this).getAsJsonObject();
     }
     
-    public static SettingsData createDefault() {
+    public static SettingsData createDefault(AppPaths paths) {
         return new SettingsData(
             SettingsData.DEFAULT_SPEC,
-            AppMain.paths().instancesDir(),
+            paths.instancesDir(),
             false, // Feral Game Mode is disabled by default
             new GeneralSettings(
                 "release",

@@ -69,15 +69,15 @@ public class MicrosoftProfile {
     /**
      * Refreshes the account if needed
      */
-    public boolean refreshAccount(boolean forceRefresh) {
+    public boolean refreshAccount(AccountManager accounts, boolean forceRefresh) {
         try {
             LOGGER.info("Refreshing account for {}", this.minecraftName);
-            boolean result = this.unsafeRefreshAccount(forceRefresh);
+            boolean result = this.unsafeRefreshAccount(accounts, forceRefresh);
             if (!result) {
                 LOGGER.error("Failed to refresh account for {}", this.minecraftName);
                 
                 this.notLoggedIn = true;
-                AccountManager.get().saveProfiles();
+                accounts.saveProfiles();
             }
             
             LOGGER.info("Finished refreshing account for {}", this.minecraftName);
@@ -85,20 +85,20 @@ public class MicrosoftProfile {
         } catch (Exception e) {
             LOGGER.error("Failed to refresh account", e);
             this.notLoggedIn = true;
-            AccountManager.get().saveProfiles();
+            accounts.saveProfiles();
             return false;
         }
     }
     
-    public boolean refreshAccount() {
-        return this.refreshAccount(false);
+    public boolean refreshAccount(AccountManager accounts) {
+        return this.refreshAccount(accounts, false);
     }
 
     /**
      * Big thanks to ATLauncher for the rough implementation of this method
      * <a href="https://github.com/ATLauncher/ATLauncher/blob/master/src/main/java/com/atlauncher/data/MicrosoftAccount.java#L159">...</a>
      */
-    private boolean unsafeRefreshAccount(boolean forceRefresh) {
+    private boolean unsafeRefreshAccount(AccountManager accounts, boolean forceRefresh) {
         var now = Instant.now();
         
         if (forceRefresh || now.getEpochSecond() >= this.microsoftAccessExpiresAt) {
@@ -114,7 +114,7 @@ public class MicrosoftProfile {
             this.microsoftAccessToken = jsonData.get("access_token").getAsString();
             this.microsoftRefreshToken = jsonData.get("refresh_token").getAsString();
             this.microsoftAccessExpiresAt = now.plus(Duration.ofSeconds(jsonData.get("expires_in").getAsLong())).getEpochSecond();
-            AccountManager.get().saveProfiles();
+            accounts.saveProfiles();
         }
         
         if (forceRefresh || now.getEpochSecond() >= this.xstsNotAfter) {
@@ -154,8 +154,7 @@ public class MicrosoftProfile {
             this.xstsToken = xstsTokenData.get("Token").getAsString();
             this.xstsUserHash = displayClaims.unwrap();
             this.xstsNotAfter = Instant.parse(xstsTokenData.get("NotAfter").getAsString()).getEpochSecond();
-            
-            AccountManager.get().saveProfiles();
+            accounts.saveProfiles();
         }
         
         if (forceRefresh || now.getEpochSecond() >= this.minecraftAccessExpiresAt) {
@@ -185,7 +184,7 @@ public class MicrosoftProfile {
         }
 
         this.notLoggedIn = false;
-        AccountManager.get().saveProfiles();
+        accounts.saveProfiles();
         
         return true;
     }

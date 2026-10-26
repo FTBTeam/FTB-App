@@ -1,30 +1,29 @@
 package dev.ftb.app.api.handlers.instances;
 
-import dev.ftb.app.Instances;
-import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.api.handlers.IMessageHandler;
+import dev.ftb.app.api.handlers.MessageContext;
 
 import java.io.IOException;
 import java.util.UUID;
 
 public class PinInstanceHandler implements IMessageHandler<PinInstanceHandler.Data> {
     @Override
-    public void handle(Data data) {
+    public void handle(MessageContext context, Data data) {
         var instanceUuid = UUID.fromString(data.instance);
-        var instance = Instances.getInstance(instanceUuid);
+        var instance = context.services().instances().getInstance(instanceUuid);
         
         if (instance == null) {
-            WebSocketHandler.sendMessage(new Reply(data, false, null));
+            context.reply(new Reply(data, false, null));
             return;
         }
         
         instance.props.pinned = data.pin;
         try {
             instance.saveJson();
-            WebSocketHandler.sendMessage(new Reply(data, true, new InstalledInstancesHandler.SugaredInstanceJson(instance)));
+            context.reply(new Reply(data, true, new InstalledInstancesHandler.SugaredInstanceJson(instance)));
         } catch (IOException e) {
-            WebSocketHandler.sendMessage(new Reply(data, false, null));
+            context.reply(new Reply(data, false, null));
         }
     }
 

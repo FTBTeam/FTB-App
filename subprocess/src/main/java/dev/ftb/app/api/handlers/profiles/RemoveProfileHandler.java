@@ -1,17 +1,30 @@
 package dev.ftb.app.api.handlers.profiles;
 
 import dev.ftb.app.accounts.AccountManager;
-import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.api.handlers.IMessageHandler;
-
+import dev.ftb.app.api.handlers.MessageContext;
 
 import java.util.UUID;
 
 public class RemoveProfileHandler implements IMessageHandler<RemoveProfileHandler.Data> {
     @Override
-    public void handle(Data data) {
-        WebSocketHandler.sendMessage(new Reply(data, AccountManager.get().removeProfile(data.uuid)));
+    public void handle(MessageContext context, Data data) {
+        boolean removed = false;
+        
+        // TODO: this could be much more graceful.
+        AccountManager accounts = context.services().accounts();
+        accounts.removeProfile(data.uuid);
+        
+        var foundProfile = accounts.getProfiles().stream()
+            .filter(p -> p.getUuid().equals(data.uuid))
+            .findFirst();
+        
+        if (foundProfile.isEmpty()) {
+            removed = true;
+        }
+            
+        context.reply(new Reply(data, removed));
     }
 
     public static class Data extends BaseData {

@@ -2,13 +2,11 @@ package dev.ftb.app.api.handlers.instances;
 
 import com.google.gson.annotations.JsonAdapter;
 import dev.ftb.app.AppMain;
-import dev.ftb.app.Instances;
-import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.api.handlers.IMessageHandler;
+import dev.ftb.app.api.handlers.MessageContext;
 import dev.ftb.app.install.OperationProgressTracker;
-import dev.ftb.app.install.tasks.LocalCache;
-import dev.ftb.app.storage.settings.Settings;
+import dev.ftb.app.services.cache.LocalCache;
 import net.covers1624.quack.gson.PathTypeAdapter;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -30,11 +28,11 @@ public class MoveInstancesHandler implements IMessageHandler<MoveInstancesHandle
     private static final Logger LOGGER = LoggerFactory.getLogger(MoveInstancesHandler.class);
     
     @Override
-    public void handle(Data data) {
-        var currentLocation = Settings.get().settings().instanceLocation();
+    public void handle(MessageContext context, Data data) {
+        var currentLocation = context.services().settings().settings().instanceLocation();
         if (currentLocation.toString().isEmpty()) {
             // Something is borked, just assume the default location is the right one
-            currentLocation = AppMain.paths().instancesDir();
+            currentLocation = context.services().paths().instancesDir();
         }
         
         var newLocation = data.newLocation;
@@ -44,31 +42,31 @@ public class MoveInstancesHandler implements IMessageHandler<MoveInstancesHandle
         // Very defensive checks
         if (newLocation == null) {
             LOGGER.warn("New location is null");
-            WebSocketHandler.sendMessage(new Reply(data, "New location can not be unset"));
+            context.reply(new Reply(data, "New location can not be unset"));
             return;
         }
         
         if (newLocation.equals(currentLocation)) {
             LOGGER.warn("New location is the same as the current location");
-            WebSocketHandler.sendMessage(new Reply(data, "New location can not be the same as the current location"));
+            context.reply(new Reply(data, "New location can not be the same as the current location"));
             return;
         }
         
         if (Files.notExists(newLocation)) {
             LOGGER.warn("New location {} does not exist", newLocation);
-            WebSocketHandler.sendMessage(new Reply(data, "New location does not exist"));
+            context.reply(new Reply(data, "New location does not exist"));
             return;
         }
         
         if (!Files.isDirectory(newLocation)) {
             LOGGER.warn("New location {} is not a directory", newLocation);
-            WebSocketHandler.sendMessage(new Reply(data, "New location is not a directory"));
+            context.reply(new Reply(data, "New location is not a directory"));
             return;
         }
         
         if (!Files.isWritable(newLocation)) {
             LOGGER.warn("New location {} is not writable", newLocation);
-            WebSocketHandler.sendMessage(new Reply(data, "New location is not writable"));
+            context.reply(new Reply(data, "New location is not writable"));
             return;
         }
         
@@ -76,7 +74,7 @@ public class MoveInstancesHandler implements IMessageHandler<MoveInstancesHandle
         // This is super overkill, but it's better to be safe than sorry
         if (!dev.ftb.app.util.FileUtils.pathWritableByApp(newLocation)) {
             LOGGER.warn("New location {} is not writable by the app", newLocation);
-            WebSocketHandler.sendMessage(new Reply(data, "New location is not writable by the FTB App"));
+            context.reply(new Reply(data, "New location is not writable by the FTB App"));
             return;
         }
 
@@ -87,44 +85,44 @@ public class MoveInstancesHandler implements IMessageHandler<MoveInstancesHandle
             LOGGER.warn("Current location {} does not exist, bypassing migration", currentLocation);
 
             try {
-                Settings.get().store().update(existing -> existing.setInstanceLocation(newLocation.toAbsolutePath()));
+                context.services().settings().store().update(existing -> existing.setInstanceLocation(newLocation.toAbsolutePath()));
             } catch (IOException e) {
                 LOGGER.error("Failed to update settings with new instance location", e);
-                WebSocketHandler.sendMessage(new Reply(data, "Failed to update settings with new instance location: " + e.getMessage()));
+                context.reply(new Reply(data, "Failed to update settings with new instance location: " + e.getMessage()));
                 return;
             }
 
             AppMain.localCache = new LocalCache(newLocation.resolve(".localCache"));
-            Instances.refreshInstances();
+            context.services().instances().refreshInstances();
             
             // Simulate a successful move
-            WebSocketHandler.sendMessage(new Reply(data, "processing", ""));
-            var tracker = new OperationProgressTracker("instance-move", Map.of(
+            context.reply(new Reply(data, "processing", ""));
+            var tracker = new OperationProgressTracker(context.services().rcpApi(), "instance-move", Map.of(
                 "currentLocation", currentLocation.toString(),
                 "newLocation", newLocation.toString()
             ));
             
             tracker.finished();
-            WebSocketHandler.sendMessage(new Reply(data, "success", ""));
+            context.reply(new Reply(data, "success", ""));
             return;
         }
         
         // We're good to go
-        this.moveInstances(data, currentLocation, newLocation);
+        this.moveInstances(context, data, currentLocation, newLocation);
         
         // Send a reply to say we're processing
-        WebSocketHandler.sendMessage(new Reply(data, "processing", ""));
+        context.reply(new Reply(data, "processing", ""));
     }
 
     /**
      * TODO: markers should allow us to resume a move if the app crashes or something
      */
-    private void moveInstances(Data data, Path currentLocation, Path newLocation) {
+    private void moveInstances(MessageContext context, Data data, Path currentLocation, Path newLocation) {
         var metadata = new HashMap<String, String>();
         metadata.put("currentLocation", currentLocation.toString());
         metadata.put("newLocation", newLocation.toString());
         
-        var tracker = new OperationProgressTracker("instance-move", metadata);
+        var tracker = new OperationProgressTracker(context.services().rcpApi(), "instance-move", metadata);
         
         CompletableFuture.runAsync(() -> {
             LOGGER.info("Progressing: moving instances from {} to {}", currentLocation, newLocation);
@@ -162,7 +160,7 @@ public class MoveInstancesHandler implements IMessageHandler<MoveInstancesHandle
             List<Path> successfulFiles = new ArrayList<>();
             
             // Get all the instances from the instance store
-            var instancesPaths = Instances.allInstances()
+            var instancesPaths = context.services().instances().allInstances()
                 .stream()
                 .map(e -> e.path)
                 .toList();
@@ -237,30 +235,30 @@ public class MoveInstancesHandler implements IMessageHandler<MoveInstancesHandle
             // Not really a fatal error, but we should probably let the user know
             if (!failedRemovals.isEmpty()) {
                 LOGGER.warn("Failed to remove some instance directories, please remove them manually. {}", failedRemovals);
-                WebSocketHandler.sendMessage(new Reply(data, "Failed to remove some instance directories, please remove them manually. " + failedRemovals));
+                context.reply(new Reply(data, "Failed to remove some instance directories, please remove them manually. " + failedRemovals));
             }
         }).whenComplete((aVoid, throwable) -> {
             tracker.finished();
             
             if (throwable != null) {
                 LOGGER.error("Failed to move instances from {} to {}", currentLocation, newLocation, throwable);
-                WebSocketHandler.sendMessage(new Reply(data, throwable.getMessage()));
+                context.reply(new Reply(data, throwable.getMessage()));
             } else {
                 LOGGER.info("Successfully completed moving instances from {} to {}", currentLocation, newLocation);
                 
                 try {
-                    Settings.get().store().update(existing -> existing.setInstanceLocation(newLocation.toAbsolutePath()));
+                    context.services().settings().store().update(existing -> existing.setInstanceLocation(newLocation.toAbsolutePath()));
                 } catch (IOException e) {
                     LOGGER.error("Failed to update settings with new instance location", e);
-                    WebSocketHandler.sendMessage(new Reply(data, "Failed to update settings with new instance location: " + e.getMessage()));
+                    context.reply(new Reply(data, "Failed to update settings with new instance location: " + e.getMessage()));
                     return;
                 }
                 
                 AppMain.localCache = new LocalCache(newLocation.resolve(".localCache"));
-                Instances.refreshInstances();
+                context.services().instances().refreshInstances();
                 Path oldCache = currentLocation.resolve(".localCache");
                 oldCache.toFile().deleteOnExit();
-                WebSocketHandler.sendMessage(new Reply(data, "success", ""));
+                context.reply(new Reply(data, "success", ""));
             }
         });
     }

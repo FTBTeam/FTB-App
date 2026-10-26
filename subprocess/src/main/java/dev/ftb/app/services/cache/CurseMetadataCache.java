@@ -1,13 +1,14 @@
-package dev.ftb.app.util;
+package dev.ftb.app.services.cache;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
-import dev.ftb.app.AppMain;
+import dev.ftb.app.AppPaths;
 import dev.ftb.app.Constants;
 import dev.ftb.app.data.mod.CurseMetadata;
 import dev.ftb.app.data.mod.ModManifest;
 import dev.ftb.app.data.modpack.ModpackVersionModsManifest;
+import dev.ftb.app.util.ModpackApiUtils;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.net.DownloadAction;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
@@ -31,26 +32,19 @@ public class CurseMetadataCache {
     private static final Gson GSON = new Gson();
     private static final Logger LOGGER = LogManager.getLogger();
     private static final Type TYPE = new TypeToken<Map<String, FileMetadata>>() { }.getType();
-
-    @Nullable
-    private static CurseMetadataCache instance;
-    
-    public static CurseMetadataCache get() {
-        if (instance == null) {
-            instance = new CurseMetadataCache(AppMain.paths().workingDir().resolve(".curse_meta.json"));
-        }
-        
-        return instance;
-    }
     
     private final Path file;
     private final Map<String, FileMetadata> metadata;
 
     // Cache per-run of failed requests to make things a tiny bit snappier.
     private final Set<String> failedCache = ConcurrentHashMap.newKeySet();
+    
+    private final ModVersionCache modVersionCache;
 
-    private CurseMetadataCache(Path file) {
-        this.file = file;
+    public CurseMetadataCache(AppPaths appPaths, ModVersionCache modVersionCache) {
+        this.file = appPaths.workingDir().resolve(".curse_meta.json");
+        this.modVersionCache = modVersionCache;
+        
         Map<String, FileMetadata> metadata = null;
         if (Files.exists(file)) {
             try {
@@ -83,7 +77,7 @@ public class CurseMetadataCache {
     public @Nullable CurseMetadata getCurseMeta(long curseProject, long curseFile) {
         ModManifest mod = null;
         try {
-            mod = ModVersionCache.get().queryMod(curseProject).get();
+            mod = this.modVersionCache.queryMod(curseProject).get();
         } catch (InterruptedException | ExecutionException ex) {
             LOGGER.warn("Failed to query mod version.", ex);
         }

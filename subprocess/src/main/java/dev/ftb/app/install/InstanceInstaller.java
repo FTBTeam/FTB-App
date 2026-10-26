@@ -1,7 +1,7 @@
 package dev.ftb.app.install;
 
 import com.google.common.hash.HashCode;
-import dev.ftb.app.AppMain;
+import dev.ftb.app.AppPaths;
 import dev.ftb.app.data.InstanceModifications;
 import dev.ftb.app.data.InstanceModifications.ModOverride;
 import dev.ftb.app.data.InstanceModifications.ModOverrideState;
@@ -13,7 +13,10 @@ import dev.ftb.app.install.tasks.*;
 import dev.ftb.app.install.tasks.modloader.ModLoaderInstallTask;
 import dev.ftb.app.instance.InstanceOperation;
 import dev.ftb.app.pack.CancellationToken;
-import dev.ftb.app.pack.Instance; 
+import dev.ftb.app.pack.Instance;
+import dev.ftb.app.services.AppThreads;
+import dev.ftb.app.services.cache.AppCache;
+import dev.ftb.app.storage.settings.Settings;
 import dev.ftb.app.util.FileUtils;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.io.IOUtils;
@@ -118,9 +121,23 @@ public class InstanceInstaller extends InstanceOperation {
 
     @Nullable
     private Map<String, IndexedFile> knownFiles;
+    
+    private final AppPaths appPaths;
+    private final Settings settings;
+    private final AppThreads appThreads;
+    private final AppCache appCache;
 
-    public InstanceInstaller(Instance instance, ModpackVersionManifest manifest, CancellationToken cancelToken, OperationProgressTracker tracker) throws IOException {
+    public InstanceInstaller(AppPaths appPaths, Settings settings, AppThreads appThreads, AppCache appCache, Instance instance,
+        ModpackVersionManifest manifest,
+        CancellationToken cancelToken,
+        OperationProgressTracker tracker
+    ) throws IOException {
         super(instance, manifest);
+        this.appPaths = appPaths;
+        this.settings = settings;
+        this.appThreads = appThreads;
+        this.appCache = appCache;
+        
         this.cancelToken = cancelToken;
         this.tracker = tracker;
 
@@ -269,7 +286,7 @@ public class InstanceInstaller extends InstanceOperation {
             rootListener.start(totalSize);
             TaskProgressAggregator progressAggregator = new ParallelTaskProgressAggregator(rootListener);
 
-            ParallelTaskHelper.executeInParallel(cancelToken, Task.TASK_POOL, tasks, progressAggregator);
+            ParallelTaskHelper.executeInParallel(cancelToken, appThreads.taskPool(), tasks, progressAggregator);
 
             rootListener.finish(progressAggregator.getProcessed());
 
@@ -449,7 +466,9 @@ public class InstanceInstaller extends InstanceOperation {
                         instance,
                         instance.getMcVersion(),
                         modLoaderTarget.getName(),
-                        modLoaderTarget.getVersion()
+                        modLoaderTarget.getVersion(),
+                        this.appPaths,
+                        this.settings
                 );
             } catch (IOException ex) {
                 throw new IllegalStateException("Failed to prepare ModLoader install task.", ex);
@@ -485,7 +504,7 @@ public class InstanceInstaller extends InstanceOperation {
                     .withMirrors(file.getMirror())
                     .dest(filePath)
                     .withValidation(file.createValidation().asDownloadValidation())
-                    .withFileLocator(AppMain.localCache)
+                    .withFileLocator(this.appCache.local())
                     .build();
             if (!task.isRedundant()) {
                 long size = file.getSize();

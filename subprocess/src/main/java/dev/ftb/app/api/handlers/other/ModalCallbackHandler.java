@@ -2,10 +2,11 @@ package dev.ftb.app.api.handlers.other;
 
 import dev.ftb.app.api.data.other.OpenModalData;
 import dev.ftb.app.api.handlers.IMessageHandler;
+import dev.ftb.app.api.handlers.MessageContext;
 
 public class ModalCallbackHandler implements IMessageHandler<OpenModalData.ModalCallbackData> {
     @Override
-    public void handle(OpenModalData.ModalCallbackData data) {
+    public void handle(MessageContext context, OpenModalData.ModalCallbackData data) {
         String id = data.id;
         String message = data.message;
         if (OpenModalData.currentlyOpenModal != null && OpenModalData.currentlyOpenModal.id.equals(id))

@@ -3,7 +3,7 @@ package dev.ftb.app.data.modpack;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import dev.ftb.app.Constants;
-import dev.ftb.app.util.CurseMetadataCache;
+import dev.ftb.app.services.cache.CurseMetadataCache;
 import dev.ftb.app.util.ModpackApiUtils;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.io.IOUtils;

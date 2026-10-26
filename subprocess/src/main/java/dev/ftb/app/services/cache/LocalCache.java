@@ -1,10 +1,11 @@
-package dev.ftb.app.install.tasks;
+package dev.ftb.app.services.cache;
 
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import dev.ftb.app.install.tasks.DownloadTask;
 import net.covers1624.quack.gson.HashCodeAdapter;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.util.HashUtils;
@@ -43,9 +44,13 @@ public class LocalCache implements DownloadTask.LocalFileLocator {
     private final Path cacheIndexFile;
     private final Set<HashCode> files = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private boolean isDirty = false;
+    
+    private final Settings settings;
 
-    public LocalCache(Path cacheLocation) {
-        this.cacheLocation = cacheLocation;
+    public LocalCache(Settings settings) {
+        this.settings = settings;
+        
+        this.cacheLocation = settings.getInstancesDir().resolve(".localCache");
         if (FileUtils.createDirectories(cacheLocation) == null || !Files.exists(cacheLocation)) {
             LOGGER.error("Unable to create instance directory");
         }
@@ -177,7 +182,7 @@ public class LocalCache implements DownloadTask.LocalFileLocator {
      * Removes any files that are too old from the cache.
      */
     public void clean() {
-        long cacheLife = Settings.get().settings().general().cacheLife();
+        long cacheLife = settings.settings().general().cacheLife();
         if (cacheLife < 0) cacheLife = 900L;
         synchronized (files) {
             Instant now = Instant.now();

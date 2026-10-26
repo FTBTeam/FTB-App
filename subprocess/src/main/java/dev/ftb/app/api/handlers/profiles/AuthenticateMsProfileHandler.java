@@ -1,20 +1,18 @@
 package dev.ftb.app.api.handlers.profiles;
 
-import dev.ftb.app.accounts.AccountManager;
 import dev.ftb.app.accounts.MicrosoftProfile;
 import dev.ftb.app.accounts.auth.MicrosoftOAuthProcess;
 import dev.ftb.app.accounts.data.OAuthTokenHolder;
-import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.api.data.PrivateBaseData;
 import dev.ftb.app.api.handlers.IMessageHandler;
+import dev.ftb.app.api.handlers.MessageContext;
 import dev.ftb.app.util.MiscUtils;
-
 import org.jspecify.annotations.Nullable;
 
 public class AuthenticateMsProfileHandler implements IMessageHandler<AuthenticateMsProfileHandler.Data> {
     @Override
-    public void handle(Data data) {
+    public void handle(MessageContext context, Data data) {
         var result = MicrosoftOAuthProcess.authWithMinecraft(new OAuthTokenHolder(
                 data.liveAccessToken,
                 data.liveRefreshToken,
@@ -23,7 +21,7 @@ public class AuthenticateMsProfileHandler implements IMessageHandler<Authenticat
         
         if (result.isErr()) {
             var error = result.unwrapErr();
-            WebSocketHandler.sendMessage(new Reply(data, false, error.code(), error.message()));
+            context.reply(new Reply(data, false, error.code(), error.message()));
             return;
         }
         
@@ -43,9 +41,9 @@ public class AuthenticateMsProfileHandler implements IMessageHandler<Authenticat
             accountData.profileData().getActiveSkinUrl()
         );
         
-        AccountManager.get().addProfile(newAccount);
+        context.services().accounts().addProfile(newAccount);
 
-        WebSocketHandler.sendMessage(new Reply(data));
+        context.reply(new Reply(data));
     }
 
     private static class Reply extends PrivateBaseData {

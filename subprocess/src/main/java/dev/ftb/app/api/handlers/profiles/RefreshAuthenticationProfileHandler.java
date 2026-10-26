@@ -2,39 +2,39 @@ package dev.ftb.app.api.handlers.profiles;
 
 import dev.ftb.app.AppMain;
 import dev.ftb.app.accounts.MicrosoftProfile;
-import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.api.data.PrivateBaseData;
 import dev.ftb.app.api.handlers.IMessageHandler;
+import dev.ftb.app.api.handlers.MessageContext;
 
 public class RefreshAuthenticationProfileHandler implements IMessageHandler<RefreshAuthenticationProfileHandler.Data> {
     @Override
-    public void handle(Data data) {
+    public void handle(MessageContext context, Data data) {
         if (data.profileUuid == null) {
-            WebSocketHandler.sendMessage(new Reply(data, false, "Profile not found"));
+            context.reply(new Reply(data, false, "Profile not found"));
             return;
         }
 
         MicrosoftProfile profile = AppMain.instance().services().accounts().getProfileFromUuid(data.profileUuid);
         if (profile == null) {
-            WebSocketHandler.sendMessage(new Reply(data, false, "Profile not found"));
+            context.reply(new Reply(data, false, "Profile not found"));
             return;
         }
         
-        refreshMicrosoft(data, profile);
+        refreshMicrosoft(context, data, profile);
     }
 
     /**
      * Refresh using Microsoft flow
      */
-    private void refreshMicrosoft(Data data, MicrosoftProfile profile) {
-        var result = profile.refreshAccount();
+    private void refreshMicrosoft(MessageContext context, Data data, MicrosoftProfile profile) {
+        var result = profile.refreshAccount(context.services().accounts());
         if (!result) {
-            WebSocketHandler.sendMessage(new Reply(data, false, "Failed to refresh account"));
+            context.reply(new Reply(data, false, "Failed to refresh account"));
             return;
         }
         
-        WebSocketHandler.sendMessage(new Reply(data, true, ""));
+        context.reply(new Reply(data, true, ""));
     }
 
     private static class Reply extends PrivateBaseData {

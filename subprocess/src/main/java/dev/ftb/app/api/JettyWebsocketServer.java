@@ -5,11 +5,7 @@ import dev.ftb.app.AppMain;
 import dev.ftb.app.api.data.BaseData;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.Response;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.websocket.api.Callback;
 import org.eclipse.jetty.websocket.api.Session;
@@ -19,6 +15,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class JettyWebsocketServer implements WebsocketServer {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -31,8 +28,11 @@ public class JettyWebsocketServer implements WebsocketServer {
     private final Server server;
     private final List<Connection> connections = Collections.synchronizedList(new ArrayList<>());
     private final List<String> buffer = Collections.synchronizedList(new ArrayList<>());
-
-    public JettyWebsocketServer(int port) {
+    
+    private final Consumer<String> onMessage;
+    
+    public JettyWebsocketServer(int port, Consumer<String> onMessage) {
+        this.onMessage = onMessage;
         this.port = port;
 
         QueuedThreadPool threadPool = new QueuedThreadPool(16, 2);
@@ -145,7 +145,7 @@ public class JettyWebsocketServer implements WebsocketServer {
             if (DEBUG) {
                 LOGGER.info("WS <: {}", msg);
             }
-            WebSocketHandler.handleMessage(msg);
+            onMessage.accept(msg);
         }
 
         @Override

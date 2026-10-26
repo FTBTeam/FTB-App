@@ -1,10 +1,10 @@
 package dev.ftb.app.migration;
 
 import com.google.gson.Gson;
-import dev.ftb.app.AppMain;
 import dev.ftb.app.migration.migrations.MigrateInstanceFilesToMetaFolder;
 import dev.ftb.app.migration.migrations.MigrateJVMDefaultsToInstances;
 import dev.ftb.app.migration.migrations.MigrateRemoveLegacyInjectedMods;
+import dev.ftb.app.services.Services;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,9 +14,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-public enum MigrationsManager {
-    INSTANCE;
-
+public class MigrationsManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(MigrationsManager.class);
     private static final Gson GSON = new Gson().newBuilder()
         .setPrettyPrinting()
@@ -29,6 +27,12 @@ public enum MigrationsManager {
     );
     
     private List<String> existingMigrations = new ArrayList<>();
+
+    private final Services services;
+
+    public MigrationsManager(Services services) {
+        this.services = services;
+    }
 
     /**
      * Safely try and run migrations
@@ -79,10 +83,10 @@ public enum MigrationsManager {
      */
     private boolean migrate(Migration migration) {
         try {
-            var result = migration.migrate();
+            var result = migration.migrate(services);
             if (result) {
                 try {
-                    migration.cleanup();
+                    migration.cleanup(services);
                 } catch (Exception exception) {
                     LOGGER.error("Failed to cleanup migration {}", migration.id(), exception);
                 }
@@ -127,6 +131,6 @@ public enum MigrationsManager {
     }
     
     private Path memoryFile() {
-        return AppMain.paths().storageDir().resolve("migrations.json");
+        return this.services.paths().storageDir().resolve("migrations.json");
     }
 }

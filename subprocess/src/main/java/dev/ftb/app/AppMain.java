@@ -1,18 +1,13 @@
 package dev.ftb.app;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import dev.ftb.app.accounts.AccountManager;
-import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.WebsocketServer;
 import dev.ftb.app.api.data.other.CloseModalData;
 import dev.ftb.app.api.data.other.OpenModalData;
 import dev.ftb.app.api.data.other.PingLauncherData;
-import dev.ftb.app.install.tasks.LocalCache;
 import dev.ftb.app.migration.MigrationsManager;
 import dev.ftb.app.os.OS;
-import dev.ftb.app.storage.settings.Settings;
-import dev.ftb.app.task.LongRunningTaskManager;
+import dev.ftb.app.services.AppServices;
 import dev.ftb.app.util.*;
 import net.covers1624.jdkutils.JavaInstall;
 import net.covers1624.jdkutils.locator.JavaLocator;
@@ -30,7 +25,8 @@ import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AppMain {
@@ -39,7 +35,6 @@ public class AppMain {
     private static final Object DIE_LOCK = new Object();
 
     public static List<Pair<String, String>> javaVersions = List.of();
-    public static Executor taskExecutor = Executors.newWorkStealingPool();
     
     public static int screenWidth = 1080;
     public static int screenHeight = 720;
@@ -50,13 +45,6 @@ public class AppMain {
         System.setProperty("apple.awt.UIElement", "true");
     }
     
-    // He a wide boi
-    public static LongRunningTaskManager LONG_TASK_MANAGER = new LongRunningTaskManager();
-
-    public static ExecutorService INSTANCE_LAUNCHER_POOL = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("Instance Launcher %d").setDaemon(true).build());
-
-    public static LocalCache localCache;
-
     public static boolean websocketDisconnect = false;
     public static AtomicBoolean isSyncing = new AtomicBoolean(false);
     
@@ -81,40 +69,26 @@ public class AppMain {
     }
     
     private final ImmutableMap<String, String> startArgs;
-    
-    private final AppFlags flags;
-    private final AppPaths paths;
-    private final AccountManager accounts;
-    private final Settings settings;
+    private final MigrationsManager migrations;
+    private final AppServices services;
     
     public AppMain(ImmutableMap<String, String> args) {
         this.startArgs = args;
-        
-        this.flags = new AppFlags(
-            args.containsKey("dev"),
-            args.containsKey("overwolf") ? AppFlags.FrontendPlatform.OVERWOLF : AppFlags.FrontendPlatform.ELECTRON
-        );
-        
-        this.paths = new AppPaths();
-        this.settings = new Settings(this.paths);
-        this.accounts = new AccountManager(this.paths);
+        this.services = new AppServices(args);
+        this.migrations = new MigrationsManager(this.services);
     }
     
     public static AppMain instance() {
         return INSTANCE;
     }
 
-    public AccountManager accounts() {
-        return accounts;
-    }
-    
-    public AppPaths paths() {
-        return paths;
+    public AppServices services() {
+        return services;
     }
 
-    public void initSettingsAndCache() {
-        localCache = new LocalCache(this.settings.getInstancesDir().resolve(".localCache"));
-    }
+//    public void initSettingsAndCache() {
+//        localCache = new LocalCache(this.services().settings().getInstancesDir().resolve(".localCache"));
+//    }
 
     public void startApp() {        
         Constants.PLATFORM = this.startArgs.containsKey("overwolf") ? "overwolf" : "electron";
@@ -149,12 +123,13 @@ public class AppMain {
         // Cleanup before shutdown
         Runtime.getRuntime().addShutdownHook(new Thread(this::cleanUpBeforeExit));
         
-        Instances.refreshInstances();
+        this.services().instances().refreshInstances();
+        var flags = this.services().flags();
 
-        LOGGER.info("{} integration mode", this.flags.isOverwolf() ? "Overwolf" : "Electron");
+        LOGGER.info("{} integration mode", flags.isOverwolf() ? "Overwolf" : "Electron");
 
         // Hook the pid so we can shutdown the frontend when it's closed
-        if (startArgs.containsKey("pid") && !this.flags.isDev()) {
+        if (startArgs.containsKey("pid") && !flags.isDev()) {
             try {
                 long pid = Long.parseLong(startArgs.get("pid"));
                 Optional<ProcessHandle> frontendProcess = ProcessHandle.of(pid);
@@ -170,26 +145,26 @@ public class AppMain {
                         }
                         this.exit();
                     });
-                    if (!this.flags.isOverwolf()) Runtime.getRuntime().addShutdownHook(new Thread(handle::destroy));
+                    if (!flags.isOverwolf()) Runtime.getRuntime().addShutdownHook(new Thread(handle::destroy));
                 }
             } catch (Exception exception) {
                 LOGGER.error("Error connecting to process", exception);
             }
         } else {
-            LOGGER.info(this.flags.isDev() ? "Development mode" : "No PID args specified");
+            LOGGER.info(flags.isDev() ? "Development mode" : "No PID args specified");
         }
         
         ModpackApiUtils.loadPrivateToken();
 
         try {
             WebsocketServer.PortMode portMode;
-            if (this.flags.isDev()) {
+            if (flags.isDev()) {
                 portMode = WebsocketServer.PortMode.STATIC;
             } else {
                 portMode = WebsocketServer.PortMode.DYNAMIC;
             }
             
-            var port = WebSocketHandler.startWebsocket(portMode);
+            var port = this.services().rcpApi().start(portMode);
             // Common format both electron and overwolf can understand
             LOGGER.info("Backend Ready! Port=%s OneTimeToken=%s".formatted(port, Constants.WEBSOCKET_SECRET), port);
             if (OS.CURRENT == OS.WIN) pingPong();
@@ -200,27 +175,27 @@ public class AppMain {
         
         // Reload in case settings changed. Ideally we want the front end to wait until the back end says "Ok we ready
         // bois" before the front end requests any information but that's a further issue, not for this release
-        this.initSettingsAndCache();
+//        this.initSettingsAndCache();
 
-        FileUtils.listDir(paths().workingDir()).stream()
+        FileUtils.listDir(this.services().paths().workingDir()).stream()
             .filter(e -> e.getFileName().toString().endsWith(".jar") && !e.getFileName().toString().contains(Constants.APPVERSION))
             .forEach(e -> {
                 try {
                     Files.deleteIfExists(e);
                 } catch (IOException ignored) {
-                    LOGGER.error("Failed to remove {} from {}", e.toString(), paths().workingDir());
+                    LOGGER.error("Failed to remove {} from {}", e.toString(), this.services().paths().workingDir());
                 }
             });
 
         registerSettingsListeners();
 
-        CompletableFuture.runAsync(localCache::clean);
+        CompletableFuture.runAsync(this.services.cache().local()::clean);
 
-        if (!Files.isWritable(this.paths().workingDir())) {
+        if (!Files.isWritable(this.services().paths().workingDir())) {
             OpenModalData.openModal("Critical Error", "The FTBApp is unable to write to your selected data directory, this can be caused by file permission errors, anti-virus or any number of other configuration issues.<br />If you continue, the app will not work as intended and you may be unable to install or run any modpacks.", List.of(
                 new OpenModalData.ModalButton("Exit", "success", this::exit),
                 new OpenModalData.ModalButton("Continue", "danger", () -> {
-                    WebSocketHandler.sendMessage(new CloseModalData());
+                    this.services().rcpApi().sendMessage(new CloseModalData());
                 }))
             );
         }
@@ -228,7 +203,7 @@ public class AppMain {
         updateJavaVersions();
         
         // Lastly, run any needed migrations after the app is ready
-        MigrationsManager.INSTANCE.runMigrations();
+        this.migrations.runMigrations();
 
         //Hang indefinitely until this lock is interrupted.
         try {
@@ -275,10 +250,9 @@ public class AppMain {
     }
 
     private void pingPong() {
-        ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-        executor.scheduleAtFixedRate(() -> {
+        this.services.threads().pingPongPool().scheduleAtFixedRate(() -> {
             try {
-                WebSocketHandler.sendMessage(new PingLauncherData());
+                this.services().rcpApi().sendMessage(new PingLauncherData());
             } catch (Exception ignored) {
                 LOGGER.warn("Failed to send ping");
             }
@@ -287,8 +261,9 @@ public class AppMain {
 
     public void cleanUpBeforeExit() {
         LOGGER.info("Cleaning up for shutdown");
-        WebSocketHandler.stopWebsocket();
-        this.settings.save();
+        this.services.rcpApi().stop();
+        this.services.settings().save();
+        this.services.threads().close();
     }
 
     public void exit() {
@@ -305,10 +280,12 @@ public class AppMain {
             return;
         }
 
+        var paths = this.services().paths();
+        
         // Read the pid and check if the process is still running
-        if (Files.exists(paths().processMarkerFile())) {
+        if (Files.exists(paths.processMarkerFile())) {
             try {
-                var data = Files.readString(paths().processMarkerFile());
+                var data = Files.readString(paths.processMarkerFile());
                 var pid = Long.parseLong(data.trim());
                 ProcessHandle.of(pid).ifPresent((handle) -> {
                     if (!isOwnExecutable(handle)) {
@@ -327,7 +304,7 @@ public class AppMain {
         // Write the current pid to the file
         var currentPid = ProcessHandle.current().pid();
         try {
-            Files.writeString(paths().processMarkerFile(), String.valueOf(currentPid));
+            Files.writeString(paths.processMarkerFile(), String.valueOf(currentPid));
         } catch (IOException ex) {
             LOGGER.error("Failed to write app.pid file", ex);
         }
@@ -376,7 +353,7 @@ FTB App Subprocess startup;
             System.getProperty("os.name"),
             System.getProperty("os.version"),
             Architecture.current().name(),
-            paths().workingDir().toAbsolutePath(),
+            this.services.paths().workingDir().toAbsolutePath(),
             String.join(" ", startArgs.values()),
             jvmArgs
         );

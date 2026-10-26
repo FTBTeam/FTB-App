@@ -30,10 +30,12 @@ import java.util.function.Supplier;
 
 public class Constants {
     private static final Logger LOGGER = LoggerFactory.getLogger(Constants.class);
-    // Don't put a Logger in this class, it is called before log4j can be initialized.
-    // Adding a logger will break sentry!
-
-    public static boolean IS_DEV_MODE = false;
+    
+    public static final String CF_API_KEY = BuildInfo.CF_API_KEY;
+    public static final String APPVERSION = BuildInfo.APPVERSION;
+    public static final String BRANCH = BuildInfo.BRANCH;
+    public static final String COMMIT = BuildInfo.COMMIT;
+    
     public static String PLATFORM = "unset";
     
     //Mojang
@@ -44,19 +46,13 @@ public class Constants {
     //API
     public static final String FTB_MODPACKS_API = "https://api.feed-the-beast.com/v1/modpacks";
     public static final String META_JSON = FTB_MODPACKS_API + "/public/helpers/meta";
-
     public static final String MC_JSONS = FTB_MODPACKS_API + "/public/helpers/versions/minecraftjsons/";
     
     //Other
     public static final int WEBSOCKET_PORT = 13377;
-
-    public static final String CF_API_KEY = BuildInfo.CF_API_KEY;
-
-    public static final String APPVERSION = BuildInfo.APPVERSION;
-    public static final String BRANCH = BuildInfo.BRANCH;
-    public static final String COMMIT = BuildInfo.COMMIT;
     
     public static final Supplier<String> USER_AGENT = Suppliers.memoize(() -> "ftb-app/" + APPVERSION + " OS/"+ OS.CURRENT.name() + " Platform/" + PLATFORM + " Branch/" + BRANCH + " Commit/" + COMMIT);
+    
     private static final Throttler GLOBAL_THROTTLER = new Throttler();
 
     public static final String WEBSOCKET_SECRET = UUID.randomUUID().toString();

@@ -1,12 +1,10 @@
 package dev.ftb.app.api.handlers.instances;
 
-import dev.ftb.app.Instances;
-import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.data.instances.InstanceInstallModData;
 import dev.ftb.app.api.data.instances.InstanceInstallModData.PendingInstall;
 import dev.ftb.app.api.handlers.IMessageHandler;
+import dev.ftb.app.api.handlers.MessageContext;
 import dev.ftb.app.data.InstanceModifications;
-import dev.ftb.app.data.modpack.ModpackVersionManifest;
 import dev.ftb.app.install.ModInstaller;
 import dev.ftb.app.pack.Instance;
 import org.apache.logging.log4j.LogManager;
@@ -19,16 +17,16 @@ public class InstanceInstallModHandler implements IMessageHandler<InstanceInstal
     private static final Logger LOGGER = LogManager.getLogger();
 
     @Override
-    public void handle(InstanceInstallModData data) {
-        Instance instance = Instances.getInstance(data.uuid);
+    public void handle(MessageContext context, InstanceInstallModData data) {
+        Instance instance = context.services().instances().getInstance(data.uuid);
         if (instance == null) {
-            WebSocketHandler.sendMessage(new InstanceInstallModData.Reply(data, "error", "Instance does not exist."));
+            context.reply(new InstanceInstallModData.Reply(data, "error", "Instance does not exist."));
             return;
         }
 
         String mcVersion = instance.getMcVersion();
         if (mcVersion == null) {
-            WebSocketHandler.sendMessage(new InstanceInstallModData.Reply(data, "error", "Instance does not have a game version??"));
+            context.reply(new InstanceInstallModData.Reply(data, "error", "Instance does not have a game version??"));
             return;
         }
 
@@ -42,17 +40,17 @@ public class InstanceInstallModHandler implements IMessageHandler<InstanceInstal
         }
 
         if (modloaderName == null || modloaderName.isEmpty()) {
-            WebSocketHandler.sendMessage(new InstanceInstallModData.Reply(data, "error", "Instance does not have a ModLoader installed."));
+            context.reply(new InstanceInstallModData.Reply(data, "error", "Instance does not have a ModLoader installed."));
             return;
         }
 
-        ModInstaller modInstaller = new ModInstaller(instance, mcVersion, modloaderName, data.modId, data.versionId);
+        ModInstaller modInstaller = new ModInstaller(context.services().rcpApi(), context.services().threads(), instance, context.services().cache(), mcVersion, modloaderName, data.modId, data.versionId);
 
         try {
             modInstaller.resolve();
         } catch (ModInstaller.ModInstallerException ex) {
             LOGGER.warn("Error whilst preparing Mod install.", ex);
-            WebSocketHandler.sendMessage(new InstanceInstallModData.Reply(data, "error", ex.getMessage()));
+            context.reply(new InstanceInstallModData.Reply(data, "error", ex.getMessage()));
             return;
         }
 
@@ -61,14 +59,14 @@ public class InstanceInstallModHandler implements IMessageHandler<InstanceInstal
         List<PendingInstall> pending = modInstaller.getToInstall().stream()
                 .map(e -> new PendingInstall(e.getKey().getId(), e.getValue().getId()))
                 .toList();
-        WebSocketHandler.sendMessage(new InstanceInstallModData.Reply(data, "processing", "Processing install.", pending));
+        context.reply(new InstanceInstallModData.Reply(data, "processing", "Processing install.", pending));
 
         try {
             modInstaller.install();
-            WebSocketHandler.sendMessage(new InstanceInstallModData.Reply(data, "success", "Install successful."));
+            context.reply(new InstanceInstallModData.Reply(data, "success", "Install successful."));
         } catch (ModInstaller.ModInstallerException ex) {
             LOGGER.warn("Error whilst installing mods.", ex);
-            WebSocketHandler.sendMessage(new InstanceInstallModData.Reply(data, "error", ex.getMessage()));
+            context.reply(new InstanceInstallModData.Reply(data, "error", ex.getMessage()));
         }
     }
 }

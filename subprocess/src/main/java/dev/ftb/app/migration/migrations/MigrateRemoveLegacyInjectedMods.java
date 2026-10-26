@@ -1,7 +1,7 @@
 package dev.ftb.app.migration.migrations;
 
-import dev.ftb.app.Instances;
 import dev.ftb.app.migration.Migration;
+import dev.ftb.app.services.Services;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,8 +17,8 @@ public class MigrateRemoveLegacyInjectedMods implements Migration {
     }
 
     @Override
-    public boolean migrate() {
-        var instances = Instances.allInstances();
+    public boolean migrate(Services services) {
+        var instances = services.instances().allInstances();
         if (instances.isEmpty()) {
             return true; // Nothing to migrate
         }

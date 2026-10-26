@@ -4,11 +4,12 @@ import com.google.common.hash.HashCode;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import dev.ftb.app.data.InstanceSupportMeta;
 import dev.ftb.app.data.modpack.ModpackVersionManifest;
 import dev.ftb.app.instance.InstanceCategory;
 import dev.ftb.app.minecraft.jsons.VersionManifest;
 import dev.ftb.app.pack.Instance;
-import dev.ftb.app.storage.settings.Settings;
+import dev.ftb.app.services.Services;
 import dev.ftb.app.util.ElapsedTimer;
 import dev.ftb.app.util.FileUtils;
 import dev.ftb.app.util.GsonUtils;
@@ -24,38 +25,47 @@ import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 public class Instances {
-
     private static final Logger LOGGER = LogManager.getLogger();
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping()
         .registerTypeAdapter(VersionManifest.OS.class, new VersionManifest.OsDeserializer())
         .registerTypeAdapter(HashCode.class, new HashCodeAdapter())
         .create();
     
-    private static Map<UUID, Instance> instances = new HashMap<>();
-    private static LinkedList<InstanceCategory> categories = new LinkedList<>();
+    private final TypeToken<LinkedList<InstanceCategory>> CATEGORIES_TYPE = new TypeToken<>() {};
     
-    private static final TypeToken<LinkedList<InstanceCategory>> CATEGORIES_TYPE = new TypeToken<>() {};
+    private Map<UUID, Instance> instances = new HashMap<>();
+    
+    /// TODO: Replace with JsonStore. 
+    private LinkedList<InstanceCategory> categories = new LinkedList<>();
+    private final InstanceSupportMeta supportMeta;
 
-    @Nullable
-    public static Instance getInstance(UUID uuid) {
-        return Instances.instances.get(uuid);
+    private final Services services;
+    
+    public Instances(Services services) {
+        this.services = services;
+        this.supportMeta = new InstanceSupportMeta(services.paths());
     }
 
-    public static void addInstance(Instance instance) {
+    @Nullable
+    public Instance getInstance(UUID uuid) {
+        return instances.get(uuid);
+    }
+
+    public void addInstance(Instance instance) {
         instances.put(instance.getUuid(), instance);
     }
 
-    public static Collection<Instance> allInstances() {
-        return Collections.unmodifiableCollection(Instances.instances.values());
+    public Collection<Instance> allInstances() {
+        return Collections.unmodifiableCollection(instances.values());
     }
     
-    public static LinkedList<InstanceCategory> categories() {
+    public LinkedList<InstanceCategory> categories() {
         return categories;
     }
 
-    public static void refreshInstances() {
+    public void refreshInstances() {
         ElapsedTimer totalTimer = new ElapsedTimer();
-        Path instancesDir = Settings.get().getInstancesDir();
+        Path instancesDir = services.settings().getInstancesDir();
 
         LOGGER.info("Reloading instances..");
         instances.clear();
@@ -67,7 +77,7 @@ public class Instances {
             List<Instance> loadedInstances = FileUtils.listDir(instancesDir)
                     .parallelStream()
                     .filter(e -> Files.isDirectory(e) && !e.getFileName().toString().startsWith("."))
-                    .map(Instances::loadInstance)
+                    .map(this::loadInstance)
                     .filter(Objects::nonNull)
                     .toList();
             instances = new HashMap<>();
@@ -86,7 +96,7 @@ public class Instances {
         LOGGER.info("Finished instance reload in {}", totalTimer.elapsedStr());
     }
 
-    private static Instance loadInstance(Path path) {
+    private Instance loadInstance(Path path) {
         Path realJson = path.resolve("instance.json");
         Path backupJson = path.resolve("instance.json.bak");
         if (Files.notExists(realJson) && Files.notExists(backupJson)) {
@@ -121,8 +131,8 @@ public class Instances {
         }
     }
 
-    private static Instance tryLoadInstance(Path path, Path json) throws IOException {
-        Instance localInstance = new Instance(path, json);
+    private Instance tryLoadInstance(Path path, Path json) throws IOException {
+        Instance localInstance = new Instance(this.services, path, json);
         if (!localInstance.props.installComplete) {
             // TODO we should provide a cleanup function somewhere to remove these old installs, probably next to our cache flush button.
             LOGGER.warn("Instance install never completed, Ignoring. {}", json.toAbsolutePath());
@@ -137,10 +147,10 @@ public class Instances {
         return localInstance;
     }
 
-    private static void loadCategories() {
+    private void loadCategories() {
         categories.clear();
         
-        var categoriesFile = Settings.get().getInstancesDir().resolve("categories.json");
+        var categoriesFile = services.settings().getInstancesDir().resolve("categories.json");
         if (Files.notExists(categoriesFile)) {
             // Try and migrate
             migrateCategories();
@@ -161,8 +171,8 @@ public class Instances {
         }
     }
     
-    public static void saveCategories() {
-        var categoriesFile = Settings.get().getInstancesDir().resolve("categories.json");
+    public void saveCategories() {
+        var categoriesFile = services.settings().getInstancesDir().resolve("categories.json");
         try {
             if (Files.notExists(categoriesFile.getParent())) {
                 Files.createDirectories(categoriesFile.getParent());
@@ -174,7 +184,7 @@ public class Instances {
     }
     
     @Nullable
-    public static InstanceCategory addCategory(String categoryName) {
+    public InstanceCategory addCategory(String categoryName) {
         if (categories.stream().anyMatch(e -> e.name().equalsIgnoreCase(categoryName))) {
             LOGGER.warn("Tried to add existing category: {}", categoryName);
             return null;
@@ -187,7 +197,7 @@ public class Instances {
         return newCategory;
     }
     
-    public static InstanceCategory updateCategory(UUID category, String newName) {
+    public InstanceCategory updateCategory(UUID category, String newName) {
         var foundCategory = categories.stream()
             .filter(e -> e.uuid().equals(category))
             .findFirst();
@@ -211,7 +221,7 @@ public class Instances {
         return foundCategory.get();
     }
     
-    public static void removeCategory(UUID category) {
+    public void removeCategory(UUID category) {
         var foundCategory = categories.stream()
             .filter(e -> e.uuid().equals(category))
             .findFirst();
@@ -241,7 +251,7 @@ public class Instances {
     }
     
     // TODO: Should this be a migration as part of the migration process?
-    private static void migrateCategories() {
+    private void migrateCategories() {
         LinkedList<InstanceCategory> newCategories = new LinkedList<>();
         LOGGER.info("Migrating old instance categories to new format..");
 
@@ -279,7 +289,7 @@ public class Instances {
         
         // Save the categories to the file.
         try {
-            Path categoriesFile = Settings.get().getInstancesDir().resolve("categories.json");
+            Path categoriesFile = this.services.settings().getInstancesDir().resolve("categories.json");
             if (Files.notExists(categoriesFile.getParent())) {
                 Files.createDirectories(categoriesFile.getParent());
             }
@@ -290,5 +300,9 @@ public class Instances {
         }
         
         categories.addAll(newCategories);
+    }
+
+    public InstanceSupportMeta supportMeta() {
+        return supportMeta;
     }
 }

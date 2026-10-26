@@ -1,16 +1,16 @@
-package dev.ftb.app.util;
+package dev.ftb.app.services.cache;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.ExecutionError;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
-import dev.ftb.app.AppMain;
+import dev.ftb.app.AppPaths;
 import dev.ftb.app.data.mod.ModManifest;
+import dev.ftb.app.services.AppThreads;
 import net.covers1624.quack.gson.JsonUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,21 +24,24 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
 
 public class ModVersionCache {
-
     private static final Gson GSON = new Gson();
     private static final Logger LOGGER = LogManager.getLogger();
     private static final Type TYPE = new TypeToken<Map<String, CacheEntry>>() { }.getType();
 
+    private final AppThreads appThreads;
+    
     private final Path file;
     private final Map<String, CacheEntry> modVersionCache;
-
-    private final ExecutorService executor = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("ModVersionCache %d").setDaemon(true).build());
+    
     private final Set<Long> modNegativeCache = ConcurrentHashMap.newKeySet();
     private final Set<String> versionNegativeCache = ConcurrentHashMap.newKeySet();
     private final LoadingCache<Long, ModManifest> modCache = CacheBuilder.newBuilder()
@@ -53,20 +56,11 @@ public class ModVersionCache {
                     }
                 }
             });
-
-    @Nullable
-    private static ModVersionCache instance;
     
-    public static ModVersionCache get() {
-        if (instance == null) {
-            instance = new ModVersionCache(AppMain.paths().workingDir().resolve(".mod_meta.json"));
-        }
+    public ModVersionCache(AppPaths appPaths, AppThreads appThreads) {
+        this.appThreads = appThreads;
+        this.file = appPaths.workingDir().resolve(".mod_meta.json");
         
-        return instance;
-    }
-    
-    private ModVersionCache(Path file) {
-        this.file = file;
         Map<String, CacheEntry> modVersionCache = null;
         if (Files.exists(file)) {
             try {
@@ -128,7 +122,7 @@ public class ModVersionCache {
                 modNegativeCache.add(modId);
                 return null;
             }
-        }, executor);
+        }, this.appThreads.modVersionCachePool());
     }
 
     /**
@@ -177,7 +171,7 @@ public class ModVersionCache {
                 save();
                 return cachedMod;
             }
-        }, executor);
+        }, this.appThreads.modVersionCachePool());
     }
 
     private synchronized void save() {

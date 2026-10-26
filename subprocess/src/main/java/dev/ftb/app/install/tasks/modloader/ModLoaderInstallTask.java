@@ -1,11 +1,13 @@
 package dev.ftb.app.install.tasks.modloader;
 
+import dev.ftb.app.AppPaths;
 import dev.ftb.app.install.tasks.DownloadTask;
 import dev.ftb.app.install.tasks.Task;
 import dev.ftb.app.install.tasks.modloader.forge.AbstractForgeInstallTask;
 import dev.ftb.app.minecraft.jsons.VersionListManifest;
 import dev.ftb.app.minecraft.jsons.VersionManifest;
 import dev.ftb.app.pack.Instance;
+import dev.ftb.app.storage.settings.Settings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.maven.artifact.versioning.InvalidVersionSpecificationException;
@@ -42,11 +44,11 @@ public abstract class ModLoaderInstallTask implements Task {
 
     public abstract String getModLoaderTarget();
 
-    public static ModLoaderInstallTask createInstallTask(Instance instance, String mcVersion, String mlName, String mlVersion) throws IOException {
+    public static ModLoaderInstallTask createInstallTask(Instance instance, String mcVersion, String mlName, String mlVersion, AppPaths paths, Settings settings) throws IOException {
         return switch (mlName) {
-            case "neoforge" -> AbstractForgeInstallTask.createNeoForgeInstallTask(instance, mcVersion, mlVersion);
-            case "forge" -> AbstractForgeInstallTask.createInstallTask(instance, mcVersion, mlVersion);
-            case "fabric" -> FabricInstallTask.fabric(mcVersion, mlVersion);
+            case "neoforge" -> AbstractForgeInstallTask.createNeoForgeInstallTask(instance, mcVersion, mlVersion, paths, settings);
+            case "forge" -> AbstractForgeInstallTask.createInstallTask(instance, mcVersion, mlVersion, paths, settings);
+            case "fabric" -> FabricInstallTask.fabric(paths, mcVersion, mlVersion);
             default -> throw new IllegalArgumentException("Unknown ModLoader name: " + mlName);
         };
     }

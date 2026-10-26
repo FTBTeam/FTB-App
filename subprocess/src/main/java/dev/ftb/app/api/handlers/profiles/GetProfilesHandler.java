@@ -1,23 +1,22 @@
 package dev.ftb.app.api.handlers.profiles;
 
-import dev.ftb.app.accounts.AccountManager;
 import dev.ftb.app.accounts.MicrosoftProfile;
-import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.api.data.PrivateBaseData;
 import dev.ftb.app.api.handlers.IMessageHandler;
-
+import dev.ftb.app.api.handlers.MessageContext;
 import org.jspecify.annotations.Nullable;
+
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class GetProfilesHandler implements IMessageHandler<BaseData> {
     @Override
-    public void handle(BaseData data) {
-        WebSocketHandler.sendMessage(new Reply(
+    public void handle(MessageContext context, BaseData data) {
+        context.reply(new Reply(
                 data,
-                AccountManager.get().getProfiles().stream().map(MicrosoftProfile::toSharableData).collect(Collectors.toSet()),
-                AccountManager.get().getActiveProfile()
+                context.services().accounts().getProfiles().stream().map(MicrosoftProfile::toSharableData).collect(Collectors.toSet()),
+                context.services().accounts().getActiveProfile()
         ));
     }
 

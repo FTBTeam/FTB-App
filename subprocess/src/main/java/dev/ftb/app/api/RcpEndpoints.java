@@ -1,12 +1,5 @@
 package dev.ftb.app.api;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import dev.ftb.app.AppMain;
-import dev.ftb.app.Constants;
-import dev.ftb.app.api.WebsocketServer.PortMode;
 import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.api.data.instances.*;
 import dev.ftb.app.api.data.other.*;
@@ -18,29 +11,18 @@ import dev.ftb.app.api.handlers.purge.PurgeHandler;
 import dev.ftb.app.api.handlers.storage.StorageGetAllHandler;
 import dev.ftb.app.api.handlers.storage.StorageGetHandler;
 import dev.ftb.app.api.handlers.storage.StoragePutHandler;
-import dev.ftb.app.util.MiscUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
-public class WebSocketHandler {
-
-    private static final Logger LOGGER = LogManager.getLogger();
-    private static final Gson GSON = new Gson();
-
+public class RcpEndpoints {
     private static final Map<String, Pair<Class<? extends BaseData>, IMessageHandler<? extends BaseData>>> register = new HashMap<>();
 
-    private static @Nullable WebsocketServer server;
-
-    static {
+    public RcpEndpoints() {
         register("appInit", AppInitHandler.Data.class, new AppInitHandler());
         register("moveInstances", MoveInstancesHandler.Data.class, new MoveInstancesHandler());
         register("installedInstances", InstalledInstancesData.class, new InstalledInstancesHandler());
@@ -68,99 +50,45 @@ public class WebSocketHandler {
         register("instanceInstallMod", InstanceInstallModData.class, new InstanceInstallModHandler());
         register("setInstanceArt", SetInstanceArtData.class, new SetInstanceArtHandler());
         register("instanceVersionInfo", InstanceVersionInfoData.class, new InstanceVersionInfoHandler());
-        
+
         register("profiles.get", BaseData.class, new GetProfilesHandler());
         register("profiles.remove", RemoveProfileHandler.Data.class, new RemoveProfileHandler());
         register("profiles.setActiveProfile", SetActiveProfileHandler.Data.class, new SetActiveProfileHandler());
         register("profiles.ms.authenticate", AuthenticateMsProfileHandler.Data.class, new AuthenticateMsProfileHandler());
         register("profiles.refresh", RefreshAuthenticationProfileHandler.Data.class, new RefreshAuthenticationProfileHandler());
         register("profiles.is-valid", AccountIsValidHandler.Data.class, new AccountIsValidHandler());
-        
+
         register("accounts.store-oauth", StoreFtbAccountHandler.Data.class, new StoreFtbAccountHandler());
         register("accounts.get-oauth", BaseData.class, new GetFtbAccountHandler());
         register("accounts.sign-out", BaseData.class, new SignOutFTBAccountHandler());
-        
+
         register("storage.put", StoragePutHandler.Data.class, new StoragePutHandler());
         register("storage.get", StorageGetHandler.Data.class, new StorageGetHandler());
         register("storage.get-all", BaseData.class, new StorageGetAllHandler());
 
         register("webRequest", WebRequestData.class, new WebRequestHandler());
-        register("openDebugTools", BaseData.class, new OpenDebugToolsHandler());
-        
+
         register("purge", PurgeHandler.Data.class, new PurgeHandler());
     }
 
-    private static void register(String name, Class<? extends BaseData> clazz, IMessageHandler<? extends BaseData> handler) {
+    private void register(String name, Class<? extends BaseData> clazz, IMessageHandler<? extends BaseData> handler) {
         register.put(name, Pair.of(clazz, handler));
     }
-
-    public static int startWebsocket(PortMode portMode) {
-        int port = switch (portMode) {
-            case DYNAMIC -> MiscUtils.getRandomEphemeralPort();
-            case STATIC -> Constants.WEBSOCKET_PORT;
-        };
-        server = new JettyWebsocketServer(port);
-        server.startServer();
-        return port;
-    }
-
-    public static void stopWebsocket() {
-        if (server == null) return;
-        server.stopServer();
-    }
-
-    public static void sendMessage(BaseData data) {
-        if (server == null) return;
-        server.sendMessage(data);
-    }
-
-    public static int getPort() {
-        assert server != null : "Websocket not configured yet.";
-        return server.getPort();
-    }
-
-    public static void handleMessage(String data) {
-        JsonElement parse = JsonParser.parseString(data);
-        if (!parse.isJsonObject()) return;
-
-        JsonObject jsonObject = parse.getAsJsonObject();
-        if (!jsonObject.has("type")) return;
-
-        String type = jsonObject.get("type").getAsString();
-        Pair<Class<? extends BaseData>, IMessageHandler<? extends BaseData>> entry = register.get(type);
-        if (entry == null) {
-            LOGGER.error("No handler for message type '{}'", type);
-            return;
-        }
-        IMessageHandler<? extends BaseData> iMessageHandler = entry.getRight();
-        if (iMessageHandler == null) {
-            LOGGER.error("No handler for message type '{}'", type);
-            return;
-        }
-
-        try {
-            BaseData parsedData = GSON.fromJson(data, entry.getLeft());
-            if (AppMain.isDevMode || (parsedData.secret != null && parsedData.secret.equals(Constants.WEBSOCKET_SECRET))) {
-                CompletableFuture.runAsync(() -> iMessageHandler.handle(parsedData), AppMain.taskExecutor).exceptionally((t) -> {
-                    LOGGER.error("Error handling message", t);
-                    return null;
-                });
-            }
-        } catch (Exception e) {
-            LOGGER.error("Failed to parse message.", e);
-        }
+    
+    public Pair<Class<? extends BaseData>, IMessageHandler<? extends BaseData>> fromName(String name) {
+        return register.get(name);
     }
 
     // TODO: Make this less hacky and ideally via a gradle task?
     public static void main(String[] args) throws IOException {
-        LOGGER.info("Generating endpoints...");
+        System.out.println("Generating endpoints...");
         writeEndpointsToTypeFile();
     }
-    
+
     private static void writeEndpointsToTypeFile() throws IOException {
         var runningDir = System.getProperty("user.dir");
         var outputFile = Path.of(runningDir, "..", "src", "core", "types", "javaApiEndpoints.d.ts");
-        
+
         StringBuilder output = new StringBuilder("""
             /**
              * This file is generated by the WebSocketHandler class.
@@ -168,7 +96,7 @@ public class WebSocketHandler {
              */
             
             """);
-        
+
         output.append("export type ApiEndpoints = ");
         for (Map.Entry<String, Pair<Class<? extends BaseData>, IMessageHandler<? extends BaseData>>> entry : register.entrySet()) {
             output.append("\t").append("\"").append(entry.getKey()).append("\" |\n");

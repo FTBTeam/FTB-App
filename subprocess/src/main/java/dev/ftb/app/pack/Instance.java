@@ -3,7 +3,6 @@ package dev.ftb.app.pack;
 import com.google.gson.JsonParseException;
 import dev.ftb.app.Analytics;
 import dev.ftb.app.Constants;
-import dev.ftb.app.Instances;
 import dev.ftb.app.data.InstanceJson;
 import dev.ftb.app.data.InstanceModifications;
 import dev.ftb.app.data.InstanceModifications.ModOverride;
@@ -17,9 +16,10 @@ import dev.ftb.app.data.modpack.ModpackVersionModsManifest;
 import dev.ftb.app.install.tasks.DownloadTask;
 import dev.ftb.app.instance.InstanceCategory;
 import dev.ftb.app.minecraft.modloader.forge.ForgeJarModLoader;
-import dev.ftb.app.storage.settings.Settings;
+import dev.ftb.app.services.Services;
+import dev.ftb.app.services.cache.CurseMetadataCache;
 import dev.ftb.app.util.*;
-import dev.ftb.app.util.CurseMetadataCache.FileMetadata;
+import dev.ftb.app.services.cache.CurseMetadataCache.FileMetadata;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.platform.OperatingSystem;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -38,7 +38,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 
 public class Instance {
     private static final Set<Long> SPECIAL_LOADER_PACK_IDS = Set.of(
@@ -63,7 +62,8 @@ public class Instance {
     public InstanceJson props;
     private @Nullable InstanceModifications modifications;
 
-    private final InstanceLauncher launcher = new InstanceLauncher(this);
+    private final InstanceLauncher launcher;
+    
     @Nullable
     public CompletableFuture<?> prepareFuture;
     @Nullable
@@ -71,19 +71,24 @@ public class Instance {
     public ModpackVersionManifest versionManifest;
 
     private long startTime;
+    
+    private final Services services;
 
     // Brand-new instance.
-    public Instance(@Nullable String name, @Nullable String artPath, @Nullable UUID categoryId, ModpackManifest modpack, ModpackVersionManifest versionManifest, String mcVersion, boolean isPrivate, byte packType) {
+    public Instance(Services services, @Nullable String name, @Nullable String artPath, @Nullable UUID categoryId, ModpackManifest modpack, ModpackVersionManifest versionManifest, String mcVersion, boolean isPrivate, byte packType) {
+        this.services = services;
+        this.launcher = new InstanceLauncher(services, this);
+        
         String[] jvmArgs = Constants.jvmArsFromMcVersion(mcVersion); 
         
-        props = new InstanceJson(modpack, versionManifest, mcVersion, isPrivate, packType, jvmArgs);
+        props = new InstanceJson(services.settings(), modpack, versionManifest, mcVersion, isPrivate, packType, jvmArgs);
         if (name != null) {
             props.name = name;
         }
 
         props.categoryId = categoryId == null ? InstanceCategory.DEFAULT.uuid() : categoryId;
 
-        path = Settings.get().getInstancesDir().resolve(folderNameFor(props));
+        path = services.settings().getInstancesDir().resolve(folderNameFor(props));
         metaPath = path.resolve(META_FOLDER_NAME);
         
         FileUtils.createDirectories(path);
@@ -101,7 +106,10 @@ public class Instance {
     }
 
     // Loading an existing instance.
-    public Instance(Path path, Path json) throws IOException {
+    public Instance(Services services, Path path, Path json) throws IOException {
+        this.services = services;
+        this.launcher = new InstanceLauncher(services, this);
+        
         this.path = path;
         this.metaPath = path.resolve(META_FOLDER_NAME);
         this.logoArtwork = new InstanceArtwork("logo", metaPath);
@@ -400,8 +408,8 @@ public class Instance {
 
         OperatingSystem os = OperatingSystem.current();
         launcher.withStartTask(ctx -> {
-            InstanceSupportMeta supportMeta = InstanceSupportMeta.update();
-            if (supportMeta == null) return; // Should be _incredibly_ rare. But just incase...
+            InstanceSupportMeta supportMeta = this.services.instances().supportMeta();
+            supportMeta.update();
 
             if (!this.props.preventMetaAgentInjection) {
                 for (InstanceSupportMeta.SupportEntry agent : supportMeta.getSupportAgents()) {
@@ -453,7 +461,7 @@ public class Instance {
             }
         }
         
-        Instances.refreshInstances();
+        this.services.instances().refreshInstances();
         return true;
     }
 
@@ -504,14 +512,14 @@ public class Instance {
     }
 
     @Nullable
-    public Instance duplicate(String instanceName, @Nullable UUID category) throws IOException {
+    public Instance duplicate(Services services, String instanceName, @Nullable UUID category) throws IOException {
         InstanceJson json = new InstanceJson(props, UUID.randomUUID(), !instanceName.isEmpty() ? instanceName : props.name);
         json.totalPlayTime = 0;
         json.lastPlayed = 0;
         json.potentiallyBrokenDismissed = false;
         json.categoryId = category != null ? category : props.categoryId;
 
-        Path newDir = Settings.get().getInstancesDir().resolve(folderNameFor(json));
+        Path newDir = services.settings().getInstancesDir().resolve(folderNameFor(json));
         Path newJson = newDir.resolve("instance.json");
 
         Files.createDirectories(newDir);
@@ -519,7 +527,7 @@ public class Instance {
         org.apache.commons.io.FileUtils.copyDirectory(path.toFile(), newDir.toFile());
         InstanceJson.save(newJson, json);
 
-        return new Instance(newDir, newJson);
+        return new Instance(services, newDir, newJson);
     }
 
     /**
@@ -580,7 +588,7 @@ public class Instance {
                     file.getSize(),
                     sha1,
                     murmur,
-                    rich ? CurseMetadataCache.get().getCurseMeta(mod, String.valueOf(murmur)) : null
+                    rich ? this.services.cache().curseMetadata().getCurseMeta(mod, String.valueOf(murmur)) : null
             ));
         }
         
@@ -602,7 +610,7 @@ public class Instance {
                 
                 CurseMetadata ids;
                 if (rich) {
-                    ids = CurseMetadataCache.get().getCurseMeta(override.getCurseProject(), override.getCurseFile());
+                    ids = this.services.cache().curseMetadata().getCurseMeta(override.getCurseProject(), override.getCurseFile());
                 } else {
                     ids = CurseMetadata.basic(override.getCurseProject(), override.getCurseFile());
                 }
@@ -655,7 +663,7 @@ public class Instance {
 
             long curseProject = -1;
             long curseFile = -1;
-            FileMetadata metadata = CurseMetadataCache.get().queryMetadata(String.valueOf(murmurHash));
+            FileMetadata metadata = this.services.cache().curseMetadata().queryMetadata(String.valueOf(murmurHash));
             if (metadata != null) {
                 LOGGER.info(" Identified as {} {} {}", metadata.name(), metadata.curseProject(), metadata.curseFile());
                 curseProject = metadata.curseProject();
@@ -764,13 +772,6 @@ public class Instance {
         }
     }
 
-    public InstanceSnapshot withSnapshot(Consumer<Instance> action) {
-        return InstanceSnapshot.create(
-                this,
-                action
-        );
-    }
-
     /**
      * Checks if this instance is a loader instance. Aka: The instance is a vanilla, forge, fabric, or neo instance.
      */
@@ -785,14 +786,14 @@ public class Instance {
     /**
      * Creates a safe pack name from the instance name
      */
-    private static String folderNameFor(InstanceJson props) {
+    private String folderNameFor(InstanceJson props) {
         var computedName = props.name.replaceAll("[^a-zA-Z0-9\\s-]", "").toLowerCase();
         
         // Trim the computed name to 64 characters.
         computedName = computedName.substring(0, Math.min(computedName.length(), 64));
         computedName = computedName.trim();
         
-        Path instancesDir = Settings.get().getInstancesDir();
+        Path instancesDir = this.services.settings().getInstancesDir();
         if (!Files.exists(instancesDir.resolve(computedName))) {
             return computedName;
         }

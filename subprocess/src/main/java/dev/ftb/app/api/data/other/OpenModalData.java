@@ -1,6 +1,6 @@
 package dev.ftb.app.api.data.other;
 
-import dev.ftb.app.api.WebSocketHandler;
+import dev.ftb.app.AppMain;
 import dev.ftb.app.api.data.BaseData;
 
 import java.util.List;
@@ -24,7 +24,7 @@ public class OpenModalData extends BaseData
 
     public static void openModal(String title, String message, List<ModalButton> modalButtons) {
         currentlyOpenModal = new OpenModalData(title, message, modalButtons);
-        WebSocketHandler.sendMessage(currentlyOpenModal);
+        AppMain.instance().services().rcpApi().sendMessage(currentlyOpenModal);
     }
 
     public static class ModalButton

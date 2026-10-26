@@ -33,20 +33,20 @@ public class InstanceJson {
     public int minMemory = 2048;
     @Deprecated  // May not be required, it's mirrored from the version manifest.
     public int recMemory = 4096;
-    public int memory = Settings.get().settings().instanceDefaults().memory();
+    public int memory;
 
     public String jvmArgs = "";
-    public String shellArgs = Settings.get().settings().instanceDefaults().shellArgs();
+    public String shellArgs;
     
     @Nullable
-    public String programArgs = Settings.get().settings().instanceDefaults().getProgramArgs(); 
+    public String programArgs; 
     
     public boolean embeddedJre = true;
     @Nullable
     @JsonAdapter (PathTypeAdapter.class)
     public Path jrePath = null;
-    public int width = Settings.get().settings().instanceDefaults().width();
-    public int height = Settings.get().settings().instanceDefaults().height();
+    public int width;
+    public int height;
     public boolean fullscreen = false;
     public String modLoader = "";
 
@@ -70,8 +70,8 @@ public class InstanceJson {
      * When enabled, the app will not inject mods from the meta system. Sometimes these can 
      * cause issues, so it's good to let the user have the option to turn them off
      */
-    public boolean preventMetaModInjection = Settings.get().settings().instanceDefaults().preventMetaModInjection();
-    public boolean preventMetaAgentInjection = Settings.get().settings().instanceDefaults().preventMetaAgentInjection();
+    public boolean preventMetaModInjection;
+    public boolean preventMetaAgentInjection;
     
     public byte packType;
     // TODO migrate this to `isPrivate`
@@ -139,7 +139,7 @@ public class InstanceJson {
     }
 
     // New instance.
-    public InstanceJson(ModpackManifest modpack, ModpackVersionManifest versionManifest, String mcVersion, boolean isPrivate, byte packType, String[] jvmArgs) {
+    public InstanceJson(Settings settings, ModpackManifest modpack, ModpackVersionManifest versionManifest, String mcVersion, boolean isPrivate, byte packType, String[] jvmArgs) {
         uuid = UUID.randomUUID();
 
         versionId = versionManifest.getId();
@@ -152,8 +152,15 @@ public class InstanceJson {
 
         minMemory = versionManifest.getMinimumSpec();
         recMemory = versionManifest.getRecommendedSpec();
-        memory = Settings.get().settings().instanceDefaults().memory();
-
+        
+        memory = settings.settings().instanceDefaults().memory();
+        shellArgs = settings.settings().instanceDefaults().shellArgs();
+        programArgs = settings.settings().instanceDefaults().getProgramArgs();
+        width = settings.settings().instanceDefaults().width();
+        height = settings.settings().instanceDefaults().height();
+        preventMetaModInjection = settings.settings().instanceDefaults().preventMetaModInjection();
+        preventMetaAgentInjection = settings.settings().instanceDefaults().preventMetaAgentInjection();
+        
         this._private = isPrivate;
         this.packType = packType;
         this.jvmArgs = Strings.join(jvmArgs, " ");

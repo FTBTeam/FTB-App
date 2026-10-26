@@ -2,7 +2,7 @@ package dev.ftb.app.install.tasks.modloader.forge;
 
 import com.google.common.hash.Hashing;
 import com.google.gson.JsonObject;
-import dev.ftb.app.AppMain;
+import dev.ftb.app.AppPaths;
 import dev.ftb.app.data.forge.installerv1.InstallProfile;
 import dev.ftb.app.install.tasks.TaskProgressListener;
 import dev.ftb.app.minecraft.jsons.VersionManifest;
@@ -37,16 +37,18 @@ public class ForgeV1InstallTask extends AbstractForgeInstallTask {
 
     private final Instance instance;
     private final Path installerJar;
+    private final AppPaths appPaths;
 
-    public ForgeV1InstallTask(Instance instance, Path installerJar) {
+    public ForgeV1InstallTask(AppPaths appPaths, Instance instance, Path installerJar) {
         this.instance = instance;
         this.installerJar = installerJar;
+        this.appPaths = appPaths;
     }
 
     @Override
     public void execute(@Nullable CancellationToken cancelToken, @Nullable TaskProgressListener listener) throws Throwable {
-        Path versionsDir = AppMain.paths().mcVersionsDir();
-        Path librariesDir = AppMain.paths().mcLibrariesDir();
+        Path versionsDir = this.appPaths.mcVersionsDir();
+        Path librariesDir = this.appPaths.mcLibrariesDir();
 
         try (FileSystem fs = IOUtils.getJarFileSystem(installerJar, true)) {
             Path installerRoot = fs.getPath("/");

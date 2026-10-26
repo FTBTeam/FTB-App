@@ -1,8 +1,8 @@
 package dev.ftb.app.api.handlers.other;
 
-import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.data.other.SettingsConfigureData;
 import dev.ftb.app.api.handlers.IMessageHandler;
+import dev.ftb.app.api.handlers.MessageContext;
 import dev.ftb.app.storage.CredentialStorage;
 import dev.ftb.app.storage.settings.Settings;
 import dev.ftb.app.util.SettingsChangeUtil;
@@ -14,14 +14,16 @@ public class SettingsConfigureHandler implements IMessageHandler<SettingsConfigu
     private static final Logger LOGGER = LogManager.getLogger();
 
     @Override
-    public void handle(SettingsConfigureData data) {
+    public void handle(MessageContext context, SettingsConfigureData data) {
         // Is this a waste to parse the obj to json just to compare it to the data provided?
+        Settings settings = context.services().settings();
+        
         try {
-            var originalSettings = Settings.get().settings().toString();
+            var originalSettings = settings.settings().toString();
             var newSettings = data.settings.toString();
 
             if (originalSettings.equals(newSettings)) {
-                WebSocketHandler.sendMessage(new SettingsConfigureData.Reply(data, "success", data.settings));
+                context.reply(new SettingsConfigureData.Reply(data, "success", data.settings));
                 return;
             }
 
@@ -30,15 +32,15 @@ public class SettingsConfigureHandler implements IMessageHandler<SettingsConfigu
                 data.settings.proxy().setPassword("");
             }
 
-            Settings.get().store().set(data.settings);
+            settings.store().set(data.settings);
             
             // Dispatch the event
-            SettingsChangeUtil.onSettingsChanged(Settings.get().settings());
+            SettingsChangeUtil.onSettingsChanged(settings.settings());
             
-            WebSocketHandler.sendMessage(new SettingsConfigureData.Reply(data, "success", data.settings));
+            context.reply(new SettingsConfigureData.Reply(data, "success", data.settings));
         } catch (Exception e) {
             LOGGER.error("Failed to handle settings change event.", e);
-            WebSocketHandler.sendMessage(new SettingsConfigureData.Reply(data, "failed", null));
+            context.reply(new SettingsConfigureData.Reply(data, "failed", null));
         }
     }
 }

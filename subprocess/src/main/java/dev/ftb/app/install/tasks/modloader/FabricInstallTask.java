@@ -1,6 +1,6 @@
 package dev.ftb.app.install.tasks.modloader;
 
-import dev.ftb.app.AppMain;
+import dev.ftb.app.AppPaths;
 import dev.ftb.app.install.tasks.DownloadTask;
 import dev.ftb.app.install.tasks.TaskProgressListener;
 import dev.ftb.app.minecraft.jsons.VersionManifest;
@@ -19,16 +19,18 @@ public abstract class FabricInstallTask extends ModLoaderInstallTask {
     private final String loaderVersion;
 
     private final String versionName;
+    private final AppPaths paths;
 
-    private FabricInstallTask(String loaderName, String mcVersion, String loaderVersion) {
+    private FabricInstallTask(AppPaths paths, String loaderName, String mcVersion, String loaderVersion) {
+        this.paths = paths;
         this.mcVersion = mcVersion;
         this.loaderVersion = loaderVersion;
 
         versionName = loaderName + "-" + mcVersion + "-" + loaderVersion;
     }
 
-    public static FabricInstallTask fabric(String mcVersion, String loaderVersion) {
-        return new FabricInstallTask("fabric-loader", mcVersion, loaderVersion) {
+    public static FabricInstallTask fabric(AppPaths paths, String mcVersion, String loaderVersion) {
+        return new FabricInstallTask(paths, "fabric-loader", mcVersion, loaderVersion) {
             @Override
             protected DownloadTask getProfileDownload(Path dest) {
                 return DownloadTask.builder()
@@ -41,8 +43,8 @@ public abstract class FabricInstallTask extends ModLoaderInstallTask {
 
     @Override
     public void execute(@Nullable CancellationToken cancelToken, @Nullable TaskProgressListener listener) throws Throwable {
-        Path versionsDir = AppMain.paths().mcVersionsDir();
-        Path librariesDir = AppMain.paths().mcLibrariesDir();
+        Path versionsDir = this.paths.mcVersionsDir();
+        Path librariesDir = this.paths.mcLibrariesDir();
 
         Path versionJson = versionsDir.resolve(versionName).resolve(versionName + ".json");
 

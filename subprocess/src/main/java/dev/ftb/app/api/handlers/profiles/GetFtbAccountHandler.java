@@ -1,31 +1,32 @@
 package dev.ftb.app.api.handlers.profiles;
 
 import com.google.gson.Gson;
-import dev.ftb.app.api.WebSocketHandler;
+import dev.ftb.app.api.RcpApi;
 import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.api.data.PrivateBaseData;
 import dev.ftb.app.api.handlers.IMessageHandler;
+import dev.ftb.app.api.handlers.MessageContext;
 import dev.ftb.app.storage.CredentialStorage;
 import org.jspecify.annotations.Nullable;
 
 public class GetFtbAccountHandler implements IMessageHandler<BaseData> {
     @Override
-    public void handle(BaseData data) {
+    public void handle(MessageContext context, BaseData data) {
         CredentialStorage instance = CredentialStorage.getInstance();
         var accountData = instance.get("ftbAccount");
         if (accountData == null) {
-            WebSocketHandler.sendMessage(new Reply(data, null));
+            context.reply(new Reply(data, null));
             return;
         }
         
         // Deserialize the account data
         StoreFtbAccountHandler.CompleteTokenData authData = new Gson().fromJson(accountData, StoreFtbAccountHandler.CompleteTokenData.class);
         if (authData == null) {
-            WebSocketHandler.sendMessage(new Reply(data, null));
+            context.reply(new Reply(data, null));
             return;
         }
         
-        WebSocketHandler.sendMessage(new Reply(data, authData));
+        context.reply(new Reply(data, authData));
     }
     
     public static class Reply extends PrivateBaseData {

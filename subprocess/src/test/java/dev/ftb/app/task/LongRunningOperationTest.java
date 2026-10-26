@@ -4,6 +4,8 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -12,10 +14,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @Disabled // Disabled as we don't need to actively test this functionality. It is pretty flaky and timing sensitive.
 public class LongRunningOperationTest {
-
     @Test
     public void testSuccess() {
-        LongRunningTaskManager taskManager = new LongRunningTaskManager();
+        LongRunningTaskManager taskManager = new LongRunningTaskManager(this.createTestExecutor());
         AtomicReference<CompletionReason> completion = new AtomicReference<>();
         AtomicReference<Throwable> exception = new AtomicReference<>();
         AtomicBoolean didOperation = new AtomicBoolean();
@@ -69,9 +70,13 @@ public class LongRunningOperationTest {
         assertFalse(taskManager.anyTasksRunning(LongRunningOperation.class));
     }
 
+    private ExecutorService createTestExecutor() {
+        return Executors.newSingleThreadExecutor();
+    }
+
     @Test
     public void testCancellation() {
-        LongRunningTaskManager taskManager = new LongRunningTaskManager();
+        LongRunningTaskManager taskManager = new LongRunningTaskManager(this.createTestExecutor());
         AtomicReference<CompletionReason> completion = new AtomicReference<>();
         AtomicReference<Throwable> exception = new AtomicReference<>();
         AtomicBoolean didOperation = new AtomicBoolean();
@@ -136,7 +141,7 @@ public class LongRunningOperationTest {
 
     @Test
     public void testFailure() {
-        LongRunningTaskManager taskManager = new LongRunningTaskManager();
+        LongRunningTaskManager taskManager = new LongRunningTaskManager(this.createTestExecutor());
         AtomicReference<CompletionReason> completion = new AtomicReference<>();
         AtomicReference<Throwable> exception = new AtomicReference<>();
         AtomicBoolean didOperation = new AtomicBoolean();

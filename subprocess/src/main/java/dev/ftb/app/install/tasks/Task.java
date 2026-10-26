@@ -1,25 +1,12 @@
 package dev.ftb.app.install.tasks;
 
 import dev.ftb.app.pack.CancellationToken;
-import dev.ftb.app.storage.settings.Settings;
 import org.jspecify.annotations.Nullable;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 /**
  * A Task.
  */
 public interface Task {
-    ExecutorService TASK_POOL = new ThreadPoolExecutor(
-            Settings.get().getThreadLimit(),
-            Settings.get().getThreadLimit(),
-            60L, TimeUnit.SECONDS,
-            new LinkedBlockingQueue<>()
-    );
-
     /**
      * Execute this task.
      *

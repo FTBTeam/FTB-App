@@ -2,11 +2,10 @@ package dev.ftb.app.api.handlers.other;
 
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
-import net.covers1624.quack.util.HashUtils;
-import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.data.other.FileHashData;
 import dev.ftb.app.api.handlers.IMessageHandler;
-import dev.ftb.app.storage.settings.Settings;
+import dev.ftb.app.api.handlers.MessageContext;
+import net.covers1624.quack.util.HashUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -17,9 +16,9 @@ public class FileHashHandler implements IMessageHandler<FileHashData> {
     private static final Logger LOGGER = LogManager.getLogger();
 
     @Override
-    public void handle(FileHashData data) {
-        Path file = Settings.get().getInstancesDir().resolve(data.uuid).resolve(data.filePath);
-        WebSocketHandler.sendMessage(new FileHashData.Reply(data, safeHash(Hashing.md5(), file), safeHash(Hashing.sha256(), file)));
+    public void handle(MessageContext context, FileHashData data) {
+        Path file = context.services().settings().getInstancesDir().resolve(data.uuid).resolve(data.filePath);
+        context.reply(new FileHashData.Reply(data, safeHash(Hashing.md5(), file), safeHash(Hashing.sha256(), file)));
     }
 
     private static String safeHash(HashFunction func, Path file) {

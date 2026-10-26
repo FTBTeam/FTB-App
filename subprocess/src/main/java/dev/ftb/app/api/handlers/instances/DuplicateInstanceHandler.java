@@ -1,9 +1,8 @@
 package dev.ftb.app.api.handlers.instances;
 
-import dev.ftb.app.Instances;
-import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.api.handlers.IMessageHandler;
+import dev.ftb.app.api.handlers.MessageContext;
 import dev.ftb.app.pack.Instance;
 import dev.ftb.app.util.MiscUtils;
 import org.apache.logging.log4j.LogManager;
@@ -18,25 +17,25 @@ public class DuplicateInstanceHandler implements IMessageHandler<DuplicateInstan
     private static final Logger LOGGER = LogManager.getLogger();
 
     @Override
-    public void handle(Request data) {
-        Instance instance = Instances.getInstance(UUID.fromString(data.uuid));
+    public void handle(MessageContext context, Request data) {
+        Instance instance = context.services().instances().getInstance(UUID.fromString(data.uuid));
         if (instance == null) {
-            WebSocketHandler.sendMessage(new Reply(data, false, "Unable to locate instance", null));
+            context.reply(new Reply(data, false, "Unable to locate instance", null));
             return;
         }
 
         try {
-            Instance newInstance = instance.duplicate(data.newName, MiscUtils.tryParseUuid(data.category));
+            Instance newInstance = instance.duplicate(context.services(), data.newName, MiscUtils.tryParseUuid(data.category));
             if (newInstance == null) {
-                WebSocketHandler.sendMessage(new Reply(data, false, "Failed to duplicate instance...", null));
+                context.reply(new Reply(data, false, "Failed to duplicate instance...", null));
                 return;
             }
 
-            Instances.refreshInstances();
-            WebSocketHandler.sendMessage(new Reply(data, true, "Duplicated instance!", new InstalledInstancesHandler.SugaredInstanceJson(newInstance)));
+            context.services().instances().refreshInstances();
+            context.reply(new Reply(data, true, "Duplicated instance!", new InstalledInstancesHandler.SugaredInstanceJson(newInstance)));
         } catch (IOException e) {
             LOGGER.error("Unable to duplicate instance because of", e);
-            WebSocketHandler.sendMessage(new Reply(data, false, "Failed to duplicate instance...", null));
+            context.reply(new Reply(data, false, "Failed to duplicate instance...", null));
         }
     }
     

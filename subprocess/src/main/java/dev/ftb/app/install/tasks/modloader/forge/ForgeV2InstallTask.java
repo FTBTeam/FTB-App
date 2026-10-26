@@ -5,7 +5,7 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import dev.ftb.app.AppMain;
+import dev.ftb.app.AppPaths;
 import dev.ftb.app.Constants;
 import dev.ftb.app.data.forge.installerv2.InstallManifest;
 import dev.ftb.app.install.tasks.DownloadTask;
@@ -52,16 +52,20 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
 
     private final Instance instance;
     private final Path installerJar;
+    private final AppPaths appPaths;
+    private final Settings settings;
 
-    public ForgeV2InstallTask(Instance instance, Path installerJar) {
+    public ForgeV2InstallTask(AppPaths appPaths, Settings settings, Instance instance, Path installerJar) {
+        this.appPaths = appPaths;
+        this.settings = settings;
         this.instance = instance;
         this.installerJar = installerJar;
     }
 
     @Override
     public void execute(@Nullable CancellationToken cancelToken, @Nullable TaskProgressListener listener) throws Throwable {
-        Path versionsDir = AppMain.paths().mcVersionsDir();
-        Path librariesDir = AppMain.paths().mcLibrariesDir();
+        Path versionsDir = appPaths.mcVersionsDir();
+        Path librariesDir = appPaths.mcLibrariesDir();
 
         try (FileSystem fs = IOUtils.getJarFileSystem(installerJar, true)) {
             Path installerRoot = fs.getPath("/");
@@ -157,7 +161,7 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
         data.put("SIDE", "client");
         data.put("MINECRAFT_JAR", versionsDir.resolve(vanillaManifest.id).resolve(vanillaManifest.id + ".jar").toAbsolutePath().toString());
         data.put("MINECRAFT_VERSION", vanillaManifest.id);
-        data.put("ROOT", AppMain.paths().binDir().toAbsolutePath().toString());
+        data.put("ROOT", this.appPaths.binDir().toAbsolutePath().toString());
         data.put("INSTALLER", installerJar.toAbsolutePath().toString());
         data.put("LIBRARY_DIR", librariesDir.toAbsolutePath().toString());
 
@@ -280,7 +284,7 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
         command.addAll(args);
 
         ProcessBuilder builder = new ProcessBuilder()
-                .directory(AppMain.paths().binDir().toFile())
+                .directory(this.appPaths.binDir().toFile())
                 .command(command);
         LOGGER.info("Starting processor with command '{}'", String.join(" ", builder.command()));
         try {
@@ -327,7 +331,7 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
                     LOGGER.warn("Output '{}' failed to validate.", output);
                     LOGGER.warn(" Expected: {}", value);
                     LOGGER.warn(" Got     : {}", hash);
-                    if (Settings.get().ignoreForgeProcessorOutputHashes()) {
+                    if (this.settings.ignoreForgeProcessorOutputHashes()) {
                         LOGGER.warn("Ignoring invalid hash. Workaround active.");
                     } else {
                         validated = false;
