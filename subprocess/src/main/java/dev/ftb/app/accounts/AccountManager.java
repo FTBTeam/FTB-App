@@ -2,19 +2,16 @@ package dev.ftb.app.accounts;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonSyntaxException;
-import dev.ftb.app.AppMain;
+import dev.ftb.app.AppPaths;
+import dev.ftb.app.util.JsonStore;
 import dev.ftb.app.util.MiscUtils;
-import net.covers1624.quack.gson.JsonUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import org.jspecify.annotations.Nullable;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -24,60 +21,84 @@ public class AccountManager {
 
     public static final String SPEC_VERSION = "1.0.0";
 
-    private final Path storeFile;
     private final Path oldStoreFile;
     
-    private static final AccountManager ACCOUNT_MANAGER = new AccountManager();
-
-    private Set<MicrosoftProfile> profiles = new HashSet<>();
-
+    private final JsonStore<AccountStore> store;
+    
     @Nullable
     private MicrosoftProfile activeProfile = null;
 
-    private AccountManager() {
-        this.storeFile = AppMain.paths().storageDir().resolve("mc-accounts.json");
-        this.oldStoreFile = AppMain.paths().workingDir().resolve("profiles.json");
+    public AccountManager(AppPaths appPaths) {
+        this.oldStoreFile = appPaths.workingDir().resolve("profiles.json");
+        
+        this.store = new JsonStore<>(
+            appPaths.storageDir().resolve("mc-accounts.json"),
+            GSON,
+            AccountStore.class,
+            () -> AccountStore.EMPTY
+        );
         
         loadProfiles();
     }
-
-    public static AccountManager get() {
-        return ACCOUNT_MANAGER;
-    }
-
-    public boolean removeProfile(UUID uuid) {
-        boolean removed = this.profiles.stream().filter(p -> p.getUuid().equals(uuid)).findFirst()
-                .map(e -> this.profiles.remove(e))
-                .orElse(false);
-
-        if (this.activeProfile != null && this.activeProfile.getUuid().equals(uuid)) {
-            this.activeProfile = this.profiles.stream().findFirst().orElse(null);
+    
+    public void removeProfile(UUID uuid) {
+        try {
+            this.store.update(existing -> {
+                existing.profiles.removeIf(p -> p.getUuid().equals(uuid));
+                
+                if (existing.activeProfile != null && existing.activeProfile.equals(uuid)) {
+                    existing.activeProfile = existing.profiles.stream().findFirst().map(MicrosoftProfile::getUuid).orElse(null);
+                }
+            });
+        } catch (IOException e) {
+            LOGGER.error("Failed to remove profile", e);
         }
-
-        if (removed) {
-            this.saveProfiles();
-        }
-
-        return removed;
     }
 
     public void setActiveProfile(UUID uuid) {
-        this.activeProfile = this.profiles.stream().filter(p -> p.getUuid().equals(uuid)).findFirst().orElse(null);
-        this.saveProfiles();
+        try {
+            this.store.update(existing -> {
+                // Update but ensure the profile exists first, otherwise set to null
+                existing.activeProfile = existing.profiles.stream().filter(p -> p.getUuid().equals(uuid)).findFirst()
+                    .map(MicrosoftProfile::getUuid)
+                    .orElse(null);
+            });
+        } catch (IOException e) {
+            LOGGER.error("Failed to set active profile", e);
+        }
     }
 
     public void addProfile(MicrosoftProfile profile) {
         // Remove the profile if it already exists.
         this.removeProfile(profile.getUuid());
 
-        // Now add the profile
-        this.profiles.add(profile);
-        this.activeProfile = profile;
-        this.saveProfiles();
+        try {
+            this.store.update(existing -> {
+                existing.profiles.add(profile);
+                existing.activeProfile = profile.getUuid();
+            });
+        } catch (IOException e) {
+            LOGGER.error("Failed to add profile", e);
+        }
     }
 
-    // Load profiles from json structure
+    /// Load profiles from json structure
     public void loadProfiles() {
+        this.cleanupOldFile();
+        try {
+            this.store.load();
+            this.activeProfile = store.get().profiles
+                    .stream()
+                    .filter(e -> e.getUuid().equals(store.get().activeProfile))
+                    .findFirst()
+                    .orElse(null);
+        } catch (IOException e) {
+            LOGGER.error("Failed to load profiles.", e);
+        }
+    }
+
+    private void cleanupOldFile() {
+        // Just drop the old data it's not worth trying to migrate it.
         if (Files.exists(oldStoreFile)) {
             try {
                 Files.deleteIfExists(oldStoreFile);
@@ -85,52 +106,24 @@ public class AccountManager {
                 LOGGER.error("Failed to move old profiles file.", e);
             }
         }
-        
-        if (!Files.exists(storeFile)) {
-            return;
-        }
-
-        try {
-            // Get the profile data from the json file.
-            AccountStore store = JsonUtils.parse(GSON, storeFile, AccountStore.class);
-            if (store == null) {
-                return;
-            }
-            
-            // TODO: create a migration system if this ever gets changed again.
-            //       For this implementation, we actually want it to drop the old data as it's likely fucked anyway.
-            if (!Objects.equals(store.version, SPEC_VERSION)) {
-                // Allow the system to create a new one
-                return;
-            }
-
-            this.profiles = store.profiles;
-            this.activeProfile = store.profiles.stream()
-                    .filter(e -> e.getUuid().equals(store.activeProfile))
-                    .findFirst()
-                    .orElse(null);
-        } catch (IOException | JsonSyntaxException e) {
-            LOGGER.error("Failed to read Profiles.", e);
-        }
     }
 
     // Save profiles to json structure
     public void saveProfiles() {
         try {
-            AccountStore store = new AccountStore(profiles, activeProfile != null ? activeProfile.getUuid() : null);
-            JsonUtils.write(GSON, storeFile, store);
+            this.store.save();
         } catch (IOException e) {
-            LOGGER.error("Failed to write profiles.", e);
+            LOGGER.error("Failed to save profiles.", e);
         }
     }
 
     public Set<MicrosoftProfile> getProfiles() {
-        return profiles;
+        return this.store.get().profiles;
     }
 
     @Nullable
     public MicrosoftProfile getProfileFromUuid(String uuid) {
-        return profiles.stream()
+        return this.store.get().profiles.stream()
             .filter(p -> p.getUuid().equals(MiscUtils.createUuidFromStringWithoutDashes(uuid)))
             .findFirst()
             .orElse(null);
