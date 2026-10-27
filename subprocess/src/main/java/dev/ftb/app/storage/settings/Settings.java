@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import dev.ftb.app.AppPaths;
 import dev.ftb.app.util.JsonStore;
-import dev.ftb.app.util.ProxyUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,6 +12,8 @@ import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 
 public class Settings {
     private static final Logger LOGGER = LoggerFactory.getLogger(Settings.class);
@@ -22,8 +23,9 @@ public class Settings {
         .setPrettyPrinting()
         .create();
     
-    private final AppPaths appPaths;
+    private final List<OnChangeCallback> onChange = new LinkedList<>();
     
+    private final AppPaths appPaths;
     private final JsonStore<SettingsData> store;
 
     public Settings(AppPaths appPaths) {
@@ -36,10 +38,27 @@ public class Settings {
             () -> SettingsData.createDefault(this.appPaths)
         );
 
+        this.store.onChange(newSettings -> {
+            for (OnChangeCallback callback : onChange) {
+                try {
+                    callback.onChange(newSettings);
+                } catch (Throwable ex) {
+                    LOGGER.error("Failed to notify listener of change to settings", ex);
+                }
+            }
+        });
+
         attemptMigration();
         this.load();
     }
+
+    @Deprecated
+    public void onChange(OnChangeCallback callback) {
+        this.onChange.add(callback);
+    }
     
+    // TODO: remove this method and use store().get() directly
+    @Deprecated
     public void save() {
         try {
             this.store.save();
@@ -47,11 +66,12 @@ public class Settings {
             LOGGER.error("Failed to save settings file.", e);
         }
     }
-    
+
+    // TODO: remove this method and use store().get() directly
+    @Deprecated
     public void load() {
         try {
             this.store.load();
-            ProxyUtils.loadProxy(); // Push update to proxy settings after loading
         } catch (IOException e) {
             LOGGER.error("Failed to load settings file. Falling back to default.", e);
         }
@@ -119,5 +139,10 @@ public class Settings {
 
     public boolean ignoreForgeProcessorOutputHashes() {
         return settings().workaround().ignoreForgeProcessorOutputHashes();
+    }
+    
+    @FunctionalInterface
+    public interface OnChangeCallback {
+        void onChange(SettingsData newSettings);
     }
 }

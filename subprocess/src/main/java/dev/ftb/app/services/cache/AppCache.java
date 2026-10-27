@@ -32,8 +32,4 @@ public class AppCache {
     public ModVersionCache modVersionCache() {
         return modVersionCache;
     }
-    
-    public void relocateCache() {
-        this.local = new LocalCache(this.settings);
-    }
 }

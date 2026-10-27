@@ -41,7 +41,6 @@ public class RcpEndpoints {
         register("duplicateInstance", DuplicateInstanceHandler.Request.class, new DuplicateInstanceHandler());
         register("getSettings", SettingsInfoData.class, new SettingsInfoHandler());
         register("saveSettings", SettingsConfigureData.class, new SettingsConfigureHandler());
-        register("modalCallback", OpenModalData.ModalCallbackData.class, new ModalCallbackHandler());
         register("fileHash", FileHashData.class, new FileHashHandler()); // Not used
         register("uploadLogs", UploadLogsData.class, new UploadLogsHandler());
         register("getJavas", GetJavasData.class, new GetJavasHandler());

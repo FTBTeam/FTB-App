@@ -2,13 +2,14 @@ package dev.ftb.app;
 
 import com.google.common.collect.ImmutableMap;
 import dev.ftb.app.api.WebsocketServer;
-import dev.ftb.app.api.data.other.CloseModalData;
-import dev.ftb.app.api.data.other.OpenModalData;
 import dev.ftb.app.api.data.other.PingLauncherData;
 import dev.ftb.app.migration.MigrationsManager;
 import dev.ftb.app.os.OS;
 import dev.ftb.app.services.AppServices;
-import dev.ftb.app.util.*;
+import dev.ftb.app.util.FileUtils;
+import dev.ftb.app.util.ModpackApiUtils;
+import dev.ftb.app.util.SSLUtils;
+import dev.ftb.app.util.StartArgParser;
 import net.covers1624.jdkutils.JavaInstall;
 import net.covers1624.jdkutils.locator.JavaLocator;
 import net.covers1624.quack.logging.log4j2.Log4jUtils;
@@ -78,21 +79,11 @@ public class AppMain {
         this.migrations = new MigrationsManager(this.services);
     }
     
-    public static AppMain instance() {
-        return INSTANCE;
-    }
-
     public AppServices services() {
         return services;
     }
 
-//    public void initSettingsAndCache() {
-//        localCache = new LocalCache(this.services().settings().getInstancesDir().resolve(".localCache"));
-//    }
-
-    public void startApp() {        
-        Constants.PLATFORM = this.startArgs.containsKey("overwolf") ? "overwolf" : "electron";
-        
+    public void startApp() {
         if (this.startArgs.containsKey("jetty-verbose")) {
             Configurator.setLevel("org.eclipse.jetty", Level.DEBUG);
             LOGGER.info("Jetty verbose logging enabled");
@@ -187,17 +178,17 @@ public class AppMain {
                 }
             });
 
-        registerSettingsListeners();
-
         CompletableFuture.runAsync(this.services.cache().local()::clean);
 
+        // TODO: This should return an exit code and a message. The frontend can then display this without needing to go around the houses.
         if (!Files.isWritable(this.services().paths().workingDir())) {
-            OpenModalData.openModal("Critical Error", "The FTBApp is unable to write to your selected data directory, this can be caused by file permission errors, anti-virus or any number of other configuration issues.<br />If you continue, the app will not work as intended and you may be unable to install or run any modpacks.", List.of(
-                new OpenModalData.ModalButton("Exit", "success", this::exit),
-                new OpenModalData.ModalButton("Continue", "danger", () -> {
-                    this.services().rcpApi().sendMessage(new CloseModalData());
-                }))
-            );
+            
+//            OpenModalData.openModal("Critical Error", "The FTBApp is unable to write to your selected data directory, this can be caused by file permission errors, anti-virus or any number of other configuration issues.<br />If you continue, the app will not work as intended and you may be unable to install or run any modpacks.", List.of(
+//                new OpenModalData.ModalButton("Exit", "success", this::exit),
+//                new OpenModalData.ModalButton("Continue", "danger", () -> {
+//                    this.services().rcpApi().sendMessage(new CloseModalData());
+//                }))
+//            );
         }
 
         updateJavaVersions();
@@ -243,10 +234,6 @@ public class AppMain {
         } catch (IOException ex) {
             LOGGER.error("Failed to poll available Java versions.", ex);
         }
-    }
-
-    private void registerSettingsListeners() {
-        SettingsChangeUtil.addChangeListener(oldSettings -> ProxyUtils.loadProxy());
     }
 
     private void pingPong() {
@@ -349,7 +336,7 @@ FTB App Subprocess startup;
         """,
             Constants.APPVERSION,
             Constants.BRANCH,
-            Constants.PLATFORM,
+            this.services.flags().platform(),
             System.getProperty("os.name"),
             System.getProperty("os.version"),
             Architecture.current().name(),

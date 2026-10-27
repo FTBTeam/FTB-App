@@ -1,6 +1,5 @@
 package dev.ftb.app.api.handlers.profiles;
 
-import dev.ftb.app.AppMain;
 import dev.ftb.app.accounts.MicrosoftProfile;
 import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.api.data.PrivateBaseData;
@@ -15,7 +14,7 @@ public class RefreshAuthenticationProfileHandler implements IMessageHandler<Refr
             return;
         }
 
-        MicrosoftProfile profile = AppMain.instance().services().accounts().getProfileFromUuid(data.profileUuid);
+        MicrosoftProfile profile = context.services().accounts().getProfileFromUuid(data.profileUuid);
         if (profile == null) {
             context.reply(new Reply(data, false, "Profile not found"));
             return;

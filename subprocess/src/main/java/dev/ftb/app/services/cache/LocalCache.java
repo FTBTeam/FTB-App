@@ -40,8 +40,8 @@ public class LocalCache implements DownloadTask.LocalFileLocator {
             .create();
     private static final Type SET_TYPE = new TypeToken<Set<HashCode>>() { }.getType();
 
-    private final Path cacheLocation;
-    private final Path cacheIndexFile;
+    private Path cacheLocation;
+    private Path cacheIndexFile;
     private final Set<HashCode> files = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private boolean isDirty = false;
     
@@ -241,6 +241,18 @@ public class LocalCache implements DownloadTask.LocalFileLocator {
         return !age.isNegative() && (age.toMillis() / 1000) > cacheLife;
     }
 
+    public void updateLocationIfNeeded() {
+        var newLocation = settings.getInstancesDir().resolve(".localCache");
+        if (newLocation.equals(cacheLocation)) {
+            return;
+        }
+        
+        this.cacheLocation = newLocation;
+        this.cacheIndexFile = cacheLocation.resolve("index.json");
+        this.files.clear();
+        this.isDirty = false;
+    }
+    
     /**
      * Generates the path for a given {@link HashCode}.
      * <p>

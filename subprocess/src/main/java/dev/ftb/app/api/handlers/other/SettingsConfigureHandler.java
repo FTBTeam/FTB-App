@@ -5,7 +5,6 @@ import dev.ftb.app.api.handlers.IMessageHandler;
 import dev.ftb.app.api.handlers.MessageContext;
 import dev.ftb.app.storage.CredentialStorage;
 import dev.ftb.app.storage.settings.Settings;
-import dev.ftb.app.util.SettingsChangeUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -32,11 +31,7 @@ public class SettingsConfigureHandler implements IMessageHandler<SettingsConfigu
                 data.settings.proxy().setPassword("");
             }
 
-            settings.store().set(data.settings);
-            
-            // Dispatch the event
-            SettingsChangeUtil.onSettingsChanged(settings.settings());
-            
+            settings.store().set(data.settings);            
             context.reply(new SettingsConfigureData.Reply(data, "success", data.settings));
         } catch (Exception e) {
             LOGGER.error("Failed to handle settings change event.", e);

@@ -91,7 +91,7 @@ public class LogZipper {
 
         var appDetails = new JsonObject();
         appDetails.addProperty("version", Constants.APPVERSION);
-        appDetails.addProperty("platform", Constants.PLATFORM);
+        appDetails.addProperty("platform", this.services.flags().platform().toString());
         obj.add("appDetails", appDetails);
 
         var systemDetails = new JsonObject();
@@ -131,7 +131,8 @@ public class LogZipper {
             addFileToZip(writer, "manifest.json", jsonData, true);
             
             // Add a blank file with the name of the platform for easy identification
-            addFileToZip(writer, Constants.PLATFORM, Constants.PLATFORM, true);
+            var platform = this.services.flags().platform().toString();
+            addFileToZip(writer, platform, platform, true);
             addFileToZip(writer, "version-" + Constants.APPVERSION, Constants.APPVERSION, true);
 
             // Put all the logs into the zip as well

@@ -1,12 +1,10 @@
 package dev.ftb.app.api.handlers.instances;
 
 import com.google.gson.annotations.JsonAdapter;
-import dev.ftb.app.AppMain;
 import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.api.handlers.IMessageHandler;
 import dev.ftb.app.api.handlers.MessageContext;
 import dev.ftb.app.install.OperationProgressTracker;
-import dev.ftb.app.services.cache.LocalCache;
 import net.covers1624.quack.gson.PathTypeAdapter;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -80,6 +78,7 @@ public class MoveInstancesHandler implements IMessageHandler<MoveInstancesHandle
 
         LOGGER.info("New location {} is valid, move started", newLocation);
         
+        // TODO: This code looks identical to the code in MoveInstancesHandler.moveInstances, we should refactor this to avoid duplication
         if (Files.notExists(currentLocation)) {
             // Bypass the migration completely and just change the setting
             LOGGER.warn("Current location {} does not exist, bypassing migration", currentLocation);
@@ -92,7 +91,7 @@ public class MoveInstancesHandler implements IMessageHandler<MoveInstancesHandle
                 return;
             }
 
-            AppMain.localCache = new LocalCache(newLocation.resolve(".localCache"));
+            // At this point, the config should have been updated so we'll tell our local cache to relocate
             context.services().instances().refreshInstances();
             
             // Simulate a successful move
@@ -254,7 +253,6 @@ public class MoveInstancesHandler implements IMessageHandler<MoveInstancesHandle
                     return;
                 }
                 
-                AppMain.localCache = new LocalCache(newLocation.resolve(".localCache"));
                 context.services().instances().refreshInstances();
                 Path oldCache = currentLocation.resolve(".localCache");
                 oldCache.toFile().deleteOnExit();

@@ -8,6 +8,7 @@ import dev.ftb.app.accounts.AccountManager;
 import dev.ftb.app.api.RcpApi;
 import dev.ftb.app.services.cache.AppCache;
 import dev.ftb.app.storage.settings.Settings;
+import dev.ftb.app.util.ProxyUtils;
 
 public class AppServices implements Services {
     private final AppFlags flags;
@@ -32,6 +33,10 @@ public class AppServices implements Services {
         
         this.accounts = new AccountManager(this.paths);
         this.cache = new AppCache(this.paths, this.settings, this.threads);
+        this.settings.onChange((newSettings) -> {
+            this.cache.local().updateLocationIfNeeded();
+            ProxyUtils.loadProxy(this.settings);
+        });
         
         this.instances = new Instances(this);
         this.rcpApi = new RcpApi(this);

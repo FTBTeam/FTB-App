@@ -11,9 +11,13 @@ import org.jspecify.annotations.Nullable;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -39,6 +43,7 @@ public final class JsonStore<T> {
     
     private final Supplier<T> defaults;
     private final UnaryOperator<JsonElement> migrator;
+    private final List<Consumer<T>> onChange = new LinkedList<>();
     
     /// Provides a thread-safe lock around IO operations.
     private final ReentrantLock lock = new ReentrantLock();
@@ -112,6 +117,11 @@ public final class JsonStore<T> {
         }
     }
 
+    /// Adds a listener that is called whenever the data is changed and saved. The listener is called after the save is complete.
+    public void onChange(Consumer<T> listener) {
+        onChange.add(listener);
+    }
+    
     /// Loads the data from disk doing it's best to recover from corruption or missing files. If the file is unreadable, 
     /// it will be moved to a quarantined location and the defaults will be used.
     /// 
@@ -196,6 +206,15 @@ public final class JsonStore<T> {
         }
 
         SafeFiles.writeAtomically(path, bytes);
+        
+        // Assuming the save was successful, we can now notify any listeners
+        for (Consumer<T> listener : onChange) {
+            try {
+                listener.accept(get());
+            } catch (Throwable ex) {
+                LOGGER.error("Failed to notify listener of change to {}", path, ex);
+            }
+        }
     }
 
     private @Nullable T read(Path file) throws IOException {
