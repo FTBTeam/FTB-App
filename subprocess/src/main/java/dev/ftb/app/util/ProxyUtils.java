@@ -1,6 +1,6 @@
 package dev.ftb.app.util;
 
-import dev.ftb.app.storage.CredentialStorage;
+import dev.ftb.app.services.AppStorage;
 import dev.ftb.app.storage.settings.Settings;
 import okhttp3.OkHttpClient;
 import org.apache.commons.lang3.StringUtils;
@@ -34,7 +34,7 @@ public class ProxyUtils {
     @Nullable
     private static String proxyPassword;
 
-    public static void loadProxy(Settings settings, Runnable onChange) {
+    public static void loadProxy(AppStorage storage, Settings settings, Runnable onChange) {
         String settingsProxyType = settings.settings().proxy().type();
         String settingsProxyHost = settings.settings().proxy().host();
         int settingsProxyPort = settings.settings().proxy().port();
@@ -43,7 +43,7 @@ public class ProxyUtils {
         // TODO: Remove: Migration, won't be needed for much longer
         if (!settings.settings().proxy().password().isEmpty()) {
             // Move it to the credential storage.
-            CredentialStorage.getInstance().set("proxyPassword", settings.settings().proxy().password());
+            storage.legacyCredentialStorage().set("proxyPassword", settings.settings().proxy().password());
             try {
                 settings.store().update(existing -> existing.proxy().setPassword(""));
             } catch (IOException e) {
@@ -51,7 +51,7 @@ public class ProxyUtils {
             }
         }
         
-        String settingsProxyPassword = CredentialStorage.getInstance().get("proxyPassword");
+        String settingsProxyPassword = storage.legacyCredentialStorage().get("proxyPassword");
         boolean requiresReset;
         requiresReset = !Objects.equals(proxyType, settingsProxyType);
         requiresReset |= !Objects.equals(proxyHost, settingsProxyHost);

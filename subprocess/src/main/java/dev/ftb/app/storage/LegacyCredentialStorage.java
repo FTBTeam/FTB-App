@@ -1,7 +1,7 @@
 package dev.ftb.app.storage;
 
 import com.google.gson.Gson;
-import dev.ftb.app.AppMain;
+import dev.ftb.app.AppPaths;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,15 +26,17 @@ import java.util.*;
  * simple grab and dump style attacks. Ultimately, this information should be store on the users systems
  * keychain, windows credential manager, or equivalent but this is a decent stop gap.
  */
-public class CredentialStorage {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CredentialStorage.class);
-    private static CredentialStorage INSTANCE;
-    
+@Deprecated
+public class LegacyCredentialStorage {
+    private static final Logger LOGGER = LoggerFactory.getLogger(LegacyCredentialStorage.class);
+
+    private final AppPaths appPaths;
     private final String encryptionKey;
     
     private HashMap<String, String> credentials = new HashMap<>();
     
-    private CredentialStorage() {
+    public LegacyCredentialStorage(AppPaths appPaths) {
+        this.appPaths = appPaths;
         encryptionKey = generateEncryptionKey();
         LOGGER.info("Loading credentials for user");
         try {
@@ -49,7 +51,7 @@ public class CredentialStorage {
             if (e instanceof BadPaddingException) {
                 LOGGER.warn("Failed to load credentials, deleting credentials file to reset", e);
                 try {
-                    Files.deleteIfExists(AppMain.paths().credentialsFiles());
+                    Files.deleteIfExists(appPaths.credentialsFiles());
                 } catch (IOException ioException) {
                     // RIP.
                     LOGGER.error("Failed to delete credentials file", ioException);
@@ -58,14 +60,6 @@ public class CredentialStorage {
                 LOGGER.error("Failed to load credentials", e);
             }
         }
-    }
-    
-    public static CredentialStorage getInstance() {
-        if (CredentialStorage.INSTANCE == null) {
-            CredentialStorage.INSTANCE = new CredentialStorage();
-        }
-        
-        return CredentialStorage.INSTANCE;
     }
     
     public @Nullable String get(String key) {
@@ -124,7 +118,7 @@ public class CredentialStorage {
             String encryptedCredentials = Base64.getEncoder().encodeToString(encryptedBytes);
             
             // Save the data to the file system
-            Files.writeString(AppMain.paths().credentialsFiles(), encryptedCredentials);
+            Files.writeString(appPaths.credentialsFiles(), encryptedCredentials);
         } catch (Exception e) {
             LOGGER.error("Failed to encrypt credentials", e);
         }
@@ -132,7 +126,7 @@ public class CredentialStorage {
     
     private void load() throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, IOException {        
         // Load the encrypted credentials from the file system
-        Path credentials = AppMain.paths().credentialsFiles();
+        Path credentials = appPaths.credentialsFiles();
         if (!Files.exists(credentials)) {
             LOGGER.warn("Failed to load credentials, credentials file does not exist");
             return;

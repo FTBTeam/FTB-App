@@ -1,12 +1,11 @@
 package dev.ftb.app.api.handlers.profiles;
 
 import com.google.gson.Gson;
-import dev.ftb.app.api.RcpApi;
 import dev.ftb.app.api.data.PrivateBaseData;
 import dev.ftb.app.api.data.other.RequestInstanceRefresh;
 import dev.ftb.app.api.handlers.IMessageHandler;
 import dev.ftb.app.api.handlers.MessageContext;
-import dev.ftb.app.storage.CredentialStorage;
+import dev.ftb.app.storage.LegacyCredentialStorage;
 import dev.ftb.app.util.ModpackApiUtils;
 
 import java.time.Instant;
@@ -14,7 +13,7 @@ import java.time.Instant;
 public class StoreFtbAccountHandler implements IMessageHandler<StoreFtbAccountHandler.Data> {
     @Override
     public void handle(MessageContext context, Data data) {
-        CredentialStorage instance = CredentialStorage.getInstance();
+        LegacyCredentialStorage instance = context.services().storage().legacyCredentialStorage();
         
         CompleteTokenData completeToken = new CompleteTokenData();
         

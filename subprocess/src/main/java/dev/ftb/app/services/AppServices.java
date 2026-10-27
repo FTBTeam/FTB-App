@@ -56,7 +56,7 @@ public class AppServices implements Services {
         this.settings.onChange((newSettings) -> {
             this.cache.local().updateLocationIfNeeded();
             // If something changed, recreate the http clients.
-            ProxyUtils.loadProxy(this.settings, this.appHttp::createClients);
+            ProxyUtils.loadProxy(this.appStorage, this.settings, this.appHttp::createClients);
         });
         
         this.rcpApi = new RcpApi(this);

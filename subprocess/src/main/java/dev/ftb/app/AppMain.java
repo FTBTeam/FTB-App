@@ -142,7 +142,7 @@ public class AppMain {
             LOGGER.info(flags.isDev() ? "Development mode" : "No PID args specified");
         }
         
-        ModpackApiUtils.loadPrivateToken();
+        ModpackApiUtils.loadPrivateToken(this.services.storage());
 
         try {
             WebsocketServer.PortMode portMode;

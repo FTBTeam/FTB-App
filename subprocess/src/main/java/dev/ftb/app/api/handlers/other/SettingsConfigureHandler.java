@@ -3,7 +3,6 @@ package dev.ftb.app.api.handlers.other;
 import dev.ftb.app.api.data.other.SettingsConfigureData;
 import dev.ftb.app.api.handlers.IMessageHandler;
 import dev.ftb.app.api.handlers.MessageContext;
-import dev.ftb.app.storage.CredentialStorage;
 import dev.ftb.app.storage.settings.Settings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,7 +26,7 @@ public class SettingsConfigureHandler implements IMessageHandler<SettingsConfigu
             }
 
             if (!data.settings.proxy().password().isEmpty()) {
-                CredentialStorage.getInstance().set("proxyPassword", data.settings.proxy().password());
+                context.services().storage().legacyCredentialStorage().set("proxyPassword", data.settings.proxy().password());
                 data.settings.proxy().setPassword("");
             }
 

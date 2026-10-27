@@ -10,6 +10,17 @@ public interface Vault {
     
     static Vault factory(AppPaths paths) {
         // TODO: Implement a vault factory that switches the backing store depending on the OS.
-        throw new UnsupportedOperationException("Vault is not yet implemented.");
+//        throw new UnsupportedOperationException("Vault is not yet implemented.");
+        return new Vault() {
+            @Override
+            public String get(String key) {
+                return "";
+            }
+
+            @Override
+            public boolean put(String key, String value) {
+                return false;
+            }
+        };
     }
 }

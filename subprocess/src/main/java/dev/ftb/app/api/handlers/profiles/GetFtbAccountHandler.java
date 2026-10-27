@@ -1,18 +1,17 @@
 package dev.ftb.app.api.handlers.profiles;
 
 import com.google.gson.Gson;
-import dev.ftb.app.api.RcpApi;
 import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.api.data.PrivateBaseData;
 import dev.ftb.app.api.handlers.IMessageHandler;
 import dev.ftb.app.api.handlers.MessageContext;
-import dev.ftb.app.storage.CredentialStorage;
+import dev.ftb.app.storage.LegacyCredentialStorage;
 import org.jspecify.annotations.Nullable;
 
 public class GetFtbAccountHandler implements IMessageHandler<BaseData> {
     @Override
     public void handle(MessageContext context, BaseData data) {
-        CredentialStorage instance = CredentialStorage.getInstance();
+        LegacyCredentialStorage instance = context.services().storage().legacyCredentialStorage();
         var accountData = instance.get("ftbAccount");
         if (accountData == null) {
             context.reply(new Reply(data, null));

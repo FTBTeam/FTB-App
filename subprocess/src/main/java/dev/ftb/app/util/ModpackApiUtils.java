@@ -1,10 +1,10 @@
 package dev.ftb.app.util;
 
 import com.google.gson.Gson;
-import dev.ftb.app.api.handlers.profiles.StoreFtbAccountHandler;
-import dev.ftb.app.storage.CredentialStorage;
-import net.covers1624.quack.net.DownloadAction;
 import dev.ftb.app.Constants;
+import dev.ftb.app.api.handlers.profiles.StoreFtbAccountHandler;
+import dev.ftb.app.services.AppStorage;
+import net.covers1624.quack.net.DownloadAction;
 import okhttp3.Request;
 
 public class ModpackApiUtils {
@@ -40,9 +40,10 @@ public class ModpackApiUtils {
         }
     }
     
-    public static void loadPrivateToken() {
+    @ReleaseBlocking(reason = "This whole class needs to move into a service.")
+    public static void loadPrivateToken(AppStorage storage) {
         // Set the API key if we have it
-        String accountData = CredentialStorage.getInstance().get("ftbAccount");
+        String accountData = storage.legacyCredentialStorage().get("ftbAccount");
         if (accountData != null) {
             // Parse it
             try {
