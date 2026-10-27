@@ -7,6 +7,9 @@ import dev.ftb.app.accounts.AccountManager;
 import dev.ftb.app.api.RcpApi;
 import dev.ftb.app.services.cache.AppCache;
 import dev.ftb.app.storage.settings.Settings;
+import net.covers1624.jdkutils.JdkInstallationManager;
+import okhttp3.OkHttpClient;
+import okhttp3.Protocol;
 
 public interface Services {
     AppCache cache();
@@ -17,4 +20,7 @@ public interface Services {
     RcpApi rcpApi();
     Instances instances();
     AppThreads threads();
+    JdkInstallationManager jdkInstallationManager();
+    OkHttpClient httpClient();
+    OkHttpClient httpClient(Protocol protocol);
 }

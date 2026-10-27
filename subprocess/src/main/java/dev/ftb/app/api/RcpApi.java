@@ -25,6 +25,8 @@ public class RcpApi {
     private @Nullable WebsocketServer server;
     private final RcpEndpoints endpoints;
     
+    // This is about the only place this is allowed to be used like this. The RcpApi won't be subject to the same level
+    // of testing as the rest of the app.
     private final Services services;
     
     public RcpApi(Services services) {

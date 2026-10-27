@@ -40,6 +40,20 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+      - name: Check for release blockers
+        # We only run this on main + v tags, dev is considered alpha and can have release blockers
+        if: |
+          startsWith(github.ref, 'refs/tags/v') || 
+          github.ref == 'refs/heads/main'
+        # Attempt to find any @ReleaseBlocking annotations in the codebase. If any are found, fail the build and print the file and line number of each occurrence.
+        run: |
+          matches=$(grep -rn --include='*.java' '@ReleaseBlocking' subprocess/src/main/java || true)
+          if [ -n "$matches" ]; then
+            echo "$matches" | while IFS=: read -r file line rest; do
+              echo "::error file=$file,line=$line::$rest"
+            done
+            exit 1
+          fi
       - name: Cache
         uses: actions/cache@v5
         with:

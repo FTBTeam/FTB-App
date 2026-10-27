@@ -1,7 +1,5 @@
 package dev.ftb.app.api.handlers.other;
 
-import dev.ftb.app.Constants;
-import dev.ftb.app.api.RcpApi;
 import dev.ftb.app.api.data.other.WebRequestData;
 import dev.ftb.app.api.handlers.IMessageHandler;
 import dev.ftb.app.api.handlers.MessageContext;
@@ -28,7 +26,7 @@ public class WebRequestHandler implements IMessageHandler<WebRequestData> {
             }
         }
         
-        try (Response response = Constants.httpClient().newCall(builder.build()).execute()) {
+        try (Response response = context.services().httpClient().newCall(builder.build()).execute()) {
             WebRequestData.WebRequestDataResponse resp = new WebRequestData.WebRequestDataResponse(data, "success");
             resp.statusCode = response.code();
             resp.statusLine = response.message();

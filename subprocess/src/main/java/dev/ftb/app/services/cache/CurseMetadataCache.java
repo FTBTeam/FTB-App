@@ -13,6 +13,7 @@ import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.net.DownloadAction;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import org.apache.logging.log4j.LogManager;
@@ -40,9 +41,11 @@ public class CurseMetadataCache {
     private final Set<String> failedCache = ConcurrentHashMap.newKeySet();
     
     private final ModVersionCache modVersionCache;
+    private final OkHttpClient httpClient;
 
-    public CurseMetadataCache(AppPaths appPaths, ModVersionCache modVersionCache) {
+    public CurseMetadataCache(AppPaths appPaths, OkHttpClient httpClient, ModVersionCache modVersionCache) {
         this.file = appPaths.workingDir().resolve(".curse_meta.json");
+        this.httpClient = httpClient;
         this.modVersionCache = modVersionCache;
         
         Map<String, FileMetadata> metadata = null;
@@ -158,8 +161,7 @@ public class CurseMetadataCache {
             return queryManifestData;
         }
 
-        var client = Constants.httpClient();
-        var request = client.newCall(new Request.Builder()
+        var request = this.httpClient.newCall(new Request.Builder()
             .url(Constants.FTB_MODPACKS_API + "/mod/lookup/hashes")
             .post(RequestBody.create(new Gson().toJson(Map.of("hashes", toQuery)), MediaType.parse("application/json")))
             .build());
@@ -211,7 +213,7 @@ public class CurseMetadataCache {
         }
     }
 
-    private static @Nullable FileMetadata query(String murmur) {
+    private @Nullable FileMetadata query(String murmur) {
         if (murmur.equals("-1")) {
             return null;
         }
@@ -220,7 +222,7 @@ public class CurseMetadataCache {
         try {
             LOGGER.info("Querying metadata for {}", murmur);
             DownloadAction action = new OkHttpDownloadAction()
-                    .setClient(Constants.httpClient())
+                    .setClient(this.httpClient)
                     .setUrl(ModpackApiUtils.getModpacksApi() + "/mod/lookup/" + murmur)
                     .setDest(sw);
             

@@ -116,7 +116,11 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
             mcVersion = data.mcVersion;
         }
         
-        Instance instance = new Instance(context.services(), data.name, data.artPath, MiscUtils.tryParseUuid(data.categoryId), modpackManifest, versionManifest, mcVersion, isPrivate, packType);
+        // Side-effect of having to hold all the services as part of the instance. The instance shouldn't be in charge of this amount of stuff.
+        Instance instance = new Instance(
+            context.services().instances(), context.services().settings(), context.services().paths(), context.services().rcpApi(), context.services().accounts(), context.services().threads(), context.services().cache()
+            , data.name, data.artPath, MiscUtils.tryParseUuid(data.categoryId), modpackManifest, versionManifest, mcVersion, isPrivate, packType);
+        
         instance.props.isImport = isImport;
         if (isImport) {
             instance.props.locked = false;

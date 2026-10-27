@@ -1,6 +1,5 @@
 package dev.ftb.app.util;
 
-import dev.ftb.app.Constants;
 import dev.ftb.app.storage.CredentialStorage;
 import dev.ftb.app.storage.settings.Settings;
 import okhttp3.OkHttpClient;
@@ -35,7 +34,7 @@ public class ProxyUtils {
     @Nullable
     private static String proxyPassword;
 
-    public static void loadProxy(Settings settings) {
+    public static void loadProxy(Settings settings, Runnable onChange) {
         String settingsProxyType = settings.settings().proxy().type();
         String settingsProxyHost = settings.settings().proxy().host();
         int settingsProxyPort = settings.settings().proxy().port();
@@ -77,7 +76,7 @@ public class ProxyUtils {
             }
             injectProxy(proxy);
             // Refresh http client to reset the connection pools.
-            Constants.refreshHttpClient();
+            onChange.run();
         }
     }
 

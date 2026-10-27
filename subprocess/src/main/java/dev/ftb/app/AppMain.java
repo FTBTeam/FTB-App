@@ -6,10 +6,7 @@ import dev.ftb.app.api.data.other.PingLauncherData;
 import dev.ftb.app.migration.MigrationsManager;
 import dev.ftb.app.os.OS;
 import dev.ftb.app.services.AppServices;
-import dev.ftb.app.util.FileUtils;
-import dev.ftb.app.util.ModpackApiUtils;
-import dev.ftb.app.util.SSLUtils;
-import dev.ftb.app.util.StartArgParser;
+import dev.ftb.app.util.*;
 import net.covers1624.jdkutils.JavaInstall;
 import net.covers1624.jdkutils.locator.JavaLocator;
 import net.covers1624.quack.logging.log4j2.Log4jUtils;
@@ -181,8 +178,9 @@ public class AppMain {
         CompletableFuture.runAsync(this.services.cache().local()::clean);
 
         // TODO: This should return an exit code and a message. The frontend can then display this without needing to go around the houses.
-        if (!Files.isWritable(this.services().paths().workingDir())) {
-            
+        @ReleaseBlocking(reason = "This should have a real feedback loop to the front end", resolvedBy = "Frontend handling the exit code and displaying a message to the user")
+        boolean isWritable = Files.isWritable(this.services().paths().workingDir());
+        if (!isWritable) {
 //            OpenModalData.openModal("Critical Error", "The FTBApp is unable to write to your selected data directory, this can be caused by file permission errors, anti-virus or any number of other configuration issues.<br />If you continue, the app will not work as intended and you may be unable to install or run any modpacks.", List.of(
 //                new OpenModalData.ModalButton("Exit", "success", this::exit),
 //                new OpenModalData.ModalButton("Continue", "danger", () -> {

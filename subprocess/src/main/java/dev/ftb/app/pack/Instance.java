@@ -2,7 +2,11 @@ package dev.ftb.app.pack;
 
 import com.google.gson.JsonParseException;
 import dev.ftb.app.Analytics;
+import dev.ftb.app.AppPaths;
 import dev.ftb.app.Constants;
+import dev.ftb.app.Instances;
+import dev.ftb.app.accounts.AccountManager;
+import dev.ftb.app.api.RcpApi;
 import dev.ftb.app.data.InstanceJson;
 import dev.ftb.app.data.InstanceModifications;
 import dev.ftb.app.data.InstanceModifications.ModOverride;
@@ -16,10 +20,14 @@ import dev.ftb.app.data.modpack.ModpackVersionModsManifest;
 import dev.ftb.app.install.tasks.DownloadTask;
 import dev.ftb.app.instance.InstanceCategory;
 import dev.ftb.app.minecraft.modloader.forge.ForgeJarModLoader;
-import dev.ftb.app.services.Services;
-import dev.ftb.app.services.cache.CurseMetadataCache;
-import dev.ftb.app.util.*;
+import dev.ftb.app.services.AppThreads;
+import dev.ftb.app.services.cache.AppCache;
 import dev.ftb.app.services.cache.CurseMetadataCache.FileMetadata;
+import dev.ftb.app.storage.settings.Settings;
+import dev.ftb.app.util.FileUtils;
+import dev.ftb.app.util.HashingUtils;
+import dev.ftb.app.util.MiscUtils;
+import dev.ftb.app.util.ReleaseBlocking;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.platform.OperatingSystem;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -71,24 +79,37 @@ public class Instance {
     public ModpackVersionManifest versionManifest;
 
     private long startTime;
-    
-    private final Services services;
 
+    // As to nobody's surprise, the instance requires quite a lot of services as it does EVERYTHING here... Not great.
+    private final Instances instances;
+    private final Settings settings;
+    private final AppPaths appPaths;
+    private final RcpApi rcpApi;
+    private final AccountManager accounts;
+    private final AppThreads appThreads;
+    private final AppCache appCache;
+    
     // Brand-new instance.
-    public Instance(Services services, @Nullable String name, @Nullable String artPath, @Nullable UUID categoryId, ModpackManifest modpack, ModpackVersionManifest versionManifest, String mcVersion, boolean isPrivate, byte packType) {
-        this.services = services;
-        this.launcher = new InstanceLauncher(services, this);
+    public Instance(Instances instances, Settings settings, AppPaths appPaths, RcpApi rcpApi, AccountManager accounts, AppThreads appThreads, AppCache appCache, @Nullable String name, @Nullable String artPath, @Nullable UUID categoryId, ModpackManifest modpack, ModpackVersionManifest versionManifest, String mcVersion, boolean isPrivate, byte packType) {
+        this.instances = instances;
+        this.settings = settings;
+        this.appPaths = appPaths;
+        this.rcpApi = rcpApi;
+        this.accounts = accounts;
+        this.appCache = appCache;
+        this.appThreads = appThreads;
+        this.launcher = new InstanceLauncher(settings, appPaths, rcpApi, accounts, appThreads, this);
         
         String[] jvmArgs = Constants.jvmArsFromMcVersion(mcVersion); 
         
-        props = new InstanceJson(services.settings(), modpack, versionManifest, mcVersion, isPrivate, packType, jvmArgs);
+        props = new InstanceJson(settings, modpack, versionManifest, mcVersion, isPrivate, packType, jvmArgs);
         if (name != null) {
             props.name = name;
         }
 
         props.categoryId = categoryId == null ? InstanceCategory.DEFAULT.uuid() : categoryId;
 
-        path = services.settings().getInstancesDir().resolve(folderNameFor(props));
+        path = settings.getInstancesDir().resolve(folderNameFor(props));
         metaPath = path.resolve(META_FOLDER_NAME);
         
         FileUtils.createDirectories(path);
@@ -106,9 +127,15 @@ public class Instance {
     }
 
     // Loading an existing instance.
-    public Instance(Services services, Path path, Path json) throws IOException {
-        this.services = services;
-        this.launcher = new InstanceLauncher(services, this);
+    public Instance(Instances instances, Settings settings, AppPaths appPaths, RcpApi rcpApi, AccountManager accounts, AppThreads appThreads, AppCache appCache, Path path, Path json) throws IOException {
+        this.instances = instances;
+        this.settings = settings;
+        this.appPaths = appPaths;
+        this.rcpApi = rcpApi;
+        this.accounts = accounts;
+        this.appThreads = appThreads;
+        this.appCache = appCache;
+        this.launcher = new InstanceLauncher(settings, appPaths, rcpApi, accounts, appThreads, this);
         
         this.path = path;
         this.metaPath = path.resolve(META_FOLDER_NAME);
@@ -348,28 +375,33 @@ public class Instance {
         pollVersionManifest();
 
         LOGGER.info("Scanning instance.");
+        @ReleaseBlocking(
+            reason = "DialogUtil was removed. This should simply return back to the Frontend with the reason, then the Frontend can display a dialog to the user and the user can decide what to do.",
+            resolvedBy = "Instance launcher supporting a bypass flag for potentially invalid instances, and the Frontend handling the dialog and user choice."
+        )
         InstanceScanner scanner = new InstanceScanner(path, versionManifest, this);
         if (scanner.shouldScan()) {
             scanner.scan();
             if (scanner.isPotentiallyInvalid()) {
-                DialogUtil.ConfirmationState abort = DialogUtil.confirmOrIgnore(
-                    "Potentially invalid instance", 
-                    "Abort", 
-                    "Launch",
-                    "Don't show again",
-                    "Your instance appears to have duplicate mods or invalid scripts.\nIt is highly recommended that you re-install your instance.\nDo you want to abort launching?"
-                );
-                
-                if (abort == DialogUtil.ConfirmationState.CONFIRM) {
-                    throw new InstanceLaunchException.Abort("Aborted.");
-                } else if (abort == DialogUtil.ConfirmationState.IGNORE) {
-                    props.potentiallyBrokenDismissed = true;
-                    try {
-                        saveJson();
-                    } catch (IOException ex) {
-                        LOGGER.error("Failed to save instance.", ex);
-                    }
-                }
+                System.out.println("Instance is potentially invalid. This may be due to duplicate mods or invalid scripts. It is highly recommended that you re-install your instance.");
+//                DialogUtil.ConfirmationState abort = DialogUtil.confirmOrIgnore(
+//                    "Potentially invalid instance", 
+//                    "Abort", 
+//                    "Launch",
+//                    "Don't show again",
+//                    "Your instance appears to have duplicate mods or invalid scripts.\nIt is highly recommended that you re-install your instance.\nDo you want to abort launching?"
+//                );
+//                
+//                if (abort == DialogUtil.ConfirmationState.CONFIRM) {
+//                    throw new InstanceLaunchException.Abort("Aborted.");
+//                } else if (abort == DialogUtil.ConfirmationState.IGNORE) {
+//                    props.potentiallyBrokenDismissed = true;
+//                    try {
+//                        saveJson();
+//                    } catch (IOException ex) {
+//                        LOGGER.error("Failed to save instance.", ex);
+//                    }
+//                }
             }
         }
 
@@ -408,7 +440,7 @@ public class Instance {
 
         OperatingSystem os = OperatingSystem.current();
         launcher.withStartTask(ctx -> {
-            InstanceSupportMeta supportMeta = this.services.instances().supportMeta();
+            InstanceSupportMeta supportMeta = this.instances.supportMeta();
             supportMeta.update();
 
             if (!this.props.preventMetaAgentInjection) {
@@ -461,7 +493,7 @@ public class Instance {
             }
         }
         
-        this.services.instances().refreshInstances();
+        this.instances.refreshInstances();
         return true;
     }
 
@@ -512,14 +544,14 @@ public class Instance {
     }
 
     @Nullable
-    public Instance duplicate(Services services, String instanceName, @Nullable UUID category) throws IOException {
+    public Instance duplicate(String instanceName, @Nullable UUID category) throws IOException {
         InstanceJson json = new InstanceJson(props, UUID.randomUUID(), !instanceName.isEmpty() ? instanceName : props.name);
         json.totalPlayTime = 0;
         json.lastPlayed = 0;
         json.potentiallyBrokenDismissed = false;
         json.categoryId = category != null ? category : props.categoryId;
 
-        Path newDir = services.settings().getInstancesDir().resolve(folderNameFor(json));
+        Path newDir = this.settings.getInstancesDir().resolve(folderNameFor(json));
         Path newJson = newDir.resolve("instance.json");
 
         Files.createDirectories(newDir);
@@ -527,7 +559,7 @@ public class Instance {
         org.apache.commons.io.FileUtils.copyDirectory(path.toFile(), newDir.toFile());
         InstanceJson.save(newJson, json);
 
-        return new Instance(services, newDir, newJson);
+        return new Instance(this.instances, this.settings, this.appPaths, this.rcpApi, this.accounts, this.appThreads, this.appCache, newDir, newJson);
     }
 
     /**
@@ -588,7 +620,7 @@ public class Instance {
                     file.getSize(),
                     sha1,
                     murmur,
-                    rich ? this.services.cache().curseMetadata().getCurseMeta(mod, String.valueOf(murmur)) : null
+                    rich ? this.appCache.curseMetadata().getCurseMeta(mod, String.valueOf(murmur)) : null
             ));
         }
         
@@ -610,7 +642,7 @@ public class Instance {
                 
                 CurseMetadata ids;
                 if (rich) {
-                    ids = this.services.cache().curseMetadata().getCurseMeta(override.getCurseProject(), override.getCurseFile());
+                    ids = this.appCache.curseMetadata().getCurseMeta(override.getCurseProject(), override.getCurseFile());
                 } else {
                     ids = CurseMetadata.basic(override.getCurseProject(), override.getCurseFile());
                 }
@@ -663,7 +695,7 @@ public class Instance {
 
             long curseProject = -1;
             long curseFile = -1;
-            FileMetadata metadata = this.services.cache().curseMetadata().queryMetadata(String.valueOf(murmurHash));
+            FileMetadata metadata = this.appCache.curseMetadata().queryMetadata(String.valueOf(murmurHash));
             if (metadata != null) {
                 LOGGER.info(" Identified as {} {} {}", metadata.name(), metadata.curseProject(), metadata.curseFile());
                 curseProject = metadata.curseProject();
@@ -793,7 +825,7 @@ public class Instance {
         computedName = computedName.substring(0, Math.min(computedName.length(), 64));
         computedName = computedName.trim();
         
-        Path instancesDir = this.services.settings().getInstancesDir();
+        Path instancesDir = this.settings.getInstancesDir();
         if (!Files.exists(instancesDir.resolve(computedName))) {
             return computedName;
         }

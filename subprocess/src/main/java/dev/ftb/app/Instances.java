@@ -4,12 +4,16 @@ import com.google.common.hash.HashCode;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import dev.ftb.app.accounts.AccountManager;
+import dev.ftb.app.api.RcpApi;
 import dev.ftb.app.data.InstanceSupportMeta;
 import dev.ftb.app.data.modpack.ModpackVersionManifest;
 import dev.ftb.app.instance.InstanceCategory;
 import dev.ftb.app.minecraft.jsons.VersionManifest;
 import dev.ftb.app.pack.Instance;
-import dev.ftb.app.services.Services;
+import dev.ftb.app.services.AppThreads;
+import dev.ftb.app.services.cache.AppCache;
+import dev.ftb.app.storage.settings.Settings;
 import dev.ftb.app.util.ElapsedTimer;
 import dev.ftb.app.util.FileUtils;
 import dev.ftb.app.util.GsonUtils;
@@ -38,12 +42,30 @@ public class Instances {
     /// TODO: Replace with JsonStore. 
     private LinkedList<InstanceCategory> categories = new LinkedList<>();
     private final InstanceSupportMeta supportMeta;
-
-    private final Services services;
     
-    public Instances(Services services) {
-        this.services = services;
-        this.supportMeta = new InstanceSupportMeta(services.paths());
+    private final Settings settings;
+    private final AppPaths appPaths;
+    private final RcpApi rcpApi;
+    private final AccountManager accounts;
+    private final AppThreads appThreads;
+    private final AppCache appCache;
+    
+    public Instances(
+        AppPaths appPaths,
+        Settings settings,
+        RcpApi rcpApi,
+        AccountManager accounts,
+        AppThreads appThreads,
+        AppCache appCache
+    ) {
+        this.appPaths = appPaths;
+        this.settings = settings;
+        this.rcpApi = rcpApi;
+        this.accounts = accounts;
+        this.appCache = appCache;
+        this.appThreads = appThreads;
+        
+        this.supportMeta = new InstanceSupportMeta(appPaths);
     }
 
     @Nullable
@@ -65,7 +87,7 @@ public class Instances {
 
     public void refreshInstances() {
         ElapsedTimer totalTimer = new ElapsedTimer();
-        Path instancesDir = services.settings().getInstancesDir();
+        Path instancesDir = this.settings.getInstancesDir();
 
         LOGGER.info("Reloading instances..");
         instances.clear();
@@ -96,6 +118,7 @@ public class Instances {
         LOGGER.info("Finished instance reload in {}", totalTimer.elapsedStr());
     }
 
+    @Nullable
     private Instance loadInstance(Path path) {
         Path realJson = path.resolve("instance.json");
         Path backupJson = path.resolve("instance.json.bak");
@@ -131,8 +154,9 @@ public class Instances {
         }
     }
 
+    @Nullable
     private Instance tryLoadInstance(Path path, Path json) throws IOException {
-        Instance localInstance = new Instance(this.services, path, json);
+        Instance localInstance = new Instance(this, this.settings, this.appPaths, this.rcpApi, this.accounts, this.appThreads, this.appCache, path, json);
         if (!localInstance.props.installComplete) {
             // TODO we should provide a cleanup function somewhere to remove these old installs, probably next to our cache flush button.
             LOGGER.warn("Instance install never completed, Ignoring. {}", json.toAbsolutePath());
@@ -150,7 +174,7 @@ public class Instances {
     private void loadCategories() {
         categories.clear();
         
-        var categoriesFile = services.settings().getInstancesDir().resolve("categories.json");
+        var categoriesFile = this.settings.getInstancesDir().resolve("categories.json");
         if (Files.notExists(categoriesFile)) {
             // Try and migrate
             migrateCategories();
@@ -172,7 +196,7 @@ public class Instances {
     }
     
     public void saveCategories() {
-        var categoriesFile = services.settings().getInstancesDir().resolve("categories.json");
+        var categoriesFile = this.settings.getInstancesDir().resolve("categories.json");
         try {
             if (Files.notExists(categoriesFile.getParent())) {
                 Files.createDirectories(categoriesFile.getParent());
@@ -289,7 +313,7 @@ public class Instances {
         
         // Save the categories to the file.
         try {
-            Path categoriesFile = this.services.settings().getInstancesDir().resolve("categories.json");
+            Path categoriesFile = this.settings.getInstancesDir().resolve("categories.json");
             if (Files.notExists(categoriesFile.getParent())) {
                 Files.createDirectories(categoriesFile.getParent());
             }

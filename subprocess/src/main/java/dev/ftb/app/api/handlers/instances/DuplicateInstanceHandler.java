@@ -25,7 +25,7 @@ public class DuplicateInstanceHandler implements IMessageHandler<DuplicateInstan
         }
 
         try {
-            Instance newInstance = instance.duplicate(context.services(), data.newName, MiscUtils.tryParseUuid(data.category));
+            Instance newInstance = instance.duplicate(data.newName, MiscUtils.tryParseUuid(data.category));
             if (newInstance == null) {
                 context.reply(new Reply(data, false, "Failed to duplicate instance...", null));
                 return;
