@@ -1,15 +1,13 @@
 package dev.ftb.app.api.handlers.storage;
 
-import dev.ftb.app.api.RcpApi;
 import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.api.handlers.IMessageHandler;
 import dev.ftb.app.api.handlers.MessageContext;
-import dev.ftb.app.storage.KVStorage;
 
 public class StorageGetAllHandler implements IMessageHandler<BaseData> {
     @Override
     public void handle(MessageContext context, BaseData data) {
-        context.reply(new Reply(data, KVStorage.getInstance().getAllAsJson()));
+        context.reply(new Reply(data, context.services().storage().keyValue().getAllAsJson()));
     }
 
     static class Reply extends BaseData {

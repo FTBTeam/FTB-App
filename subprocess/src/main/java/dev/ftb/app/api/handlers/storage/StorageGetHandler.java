@@ -1,11 +1,8 @@
 package dev.ftb.app.api.handlers.storage;
 
-import dev.ftb.app.api.RcpApi;
 import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.api.handlers.IMessageHandler;
 import dev.ftb.app.api.handlers.MessageContext;
-import dev.ftb.app.storage.KVStorage;
-
 import org.jspecify.annotations.Nullable;
 
 public class StorageGetHandler implements IMessageHandler<StorageGetHandler.Data> {
@@ -16,7 +13,7 @@ public class StorageGetHandler implements IMessageHandler<StorageGetHandler.Data
             return;
         }
 
-        context.reply(new Reply(data, KVStorage.getInstance().getValue(data.key)));
+        context.reply(new Reply(data, context.services().storage().keyValue().get(data.key)));
     }
 
     public static class Data extends BaseData {

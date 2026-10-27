@@ -3,7 +3,6 @@ package dev.ftb.app.api.handlers.storage;
 import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.api.handlers.IMessageHandler;
 import dev.ftb.app.api.handlers.MessageContext;
-import dev.ftb.app.storage.KVStorage;
 import org.jspecify.annotations.Nullable;
 
 public class StoragePutHandler implements IMessageHandler<StoragePutHandler.Data> {
@@ -14,7 +13,7 @@ public class StoragePutHandler implements IMessageHandler<StoragePutHandler.Data
             return;
         }
 
-        var success = KVStorage.getInstance().put(data.key, data.value);
+        var success = context.services().storage().keyValue().put(data.key, data.value);
         context.reply(new Reply(data, success));
     }
 

@@ -34,6 +34,7 @@ public class AppServices implements Services {
     private final AppThreads threads;
     private final JdkInstallationManager jdkInstallationManager;
     private final AppHttp appHttp;
+    private final AppStorage appStorage;
     
     public AppServices(ImmutableMap<String, String> args) {
         this.flags = new AppFlags(
@@ -48,6 +49,7 @@ public class AppServices implements Services {
         
         this.appHttp = new AppHttp(this.flags, this.settings);
         this.jdkInstallationManager = this.createJdkManager(this.appHttp);
+        this.appStorage = new AppStorage(this.paths);
 
         this.cache = new AppCache(this.paths, this.settings, this.threads, this.http());
         
@@ -137,7 +139,14 @@ public class AppServices implements Services {
     }
 
     @Override
+    public AppStorage storage() {
+        return this.appStorage;
+    }
+
+    @Override
     public AppCache cache() {
         return this.cache;
     }
+    
+    
 }

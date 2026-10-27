@@ -29,7 +29,7 @@ public class AppPaths {
     
     private final Path settingsFile;
     private final Path legacySettingsFile;
-    private final Path storageFile;
+    private final Path keyValueFile;
     private final Path credentialsFiles;
     private final Path processMarkerFile;
     
@@ -47,7 +47,7 @@ public class AppPaths {
         
         this.legacySettingsFile = this.binDir.resolve("settings.json");
         this.settingsFile = this.storageDir.resolve("settings.json");
-        this.storageFile = this.storageDir.resolve("storage.json");
+        this.keyValueFile = this.storageDir.resolve("storage.json");
         this.credentialsFiles = this.storageDir.resolve("credentials.encr");
         this.processMarkerFile = this.workingDir.resolve("app.pid");
         
@@ -121,8 +121,8 @@ public class AppPaths {
         return legacySettingsFile;
     }
 
-    public Path storageFile() {
-        return storageFile;
+    public Path keyValueFile() {
+        return keyValueFile;
     }
 
     public Path credentialsFiles() {

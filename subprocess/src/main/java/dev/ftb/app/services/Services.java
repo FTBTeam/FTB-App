@@ -20,4 +20,5 @@ public interface Services {
     AppThreads threads();
     JdkInstallationManager jdkInstallationManager();
     AppHttp http();
+    AppStorage storage();
 }
