@@ -7,6 +7,7 @@ import dev.ftb.app.api.handlers.MessageContext;
 import dev.ftb.app.data.modpack.ModpackManifest;
 import dev.ftb.app.data.modpack.ModpackVersionManifest;
 import dev.ftb.app.pack.Instance;
+import dev.ftb.app.pack.InstanceFactory;
 import dev.ftb.app.task.InstallationOperation;
 import dev.ftb.app.task.LongRunningTaskManager;
 import dev.ftb.app.util.MiscUtils;
@@ -58,6 +59,7 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
         }
 
         Pair<ModpackManifest, ModpackVersionManifest> manifests = ModpackVersionManifest.queryManifests(
+                context.services().http(),
                 data.id,
                 data.version,
                 data._private,
@@ -80,7 +82,7 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
             abort(context, data, "Modpack import file is not a file.");
             return;
         }
-        Pair<ModpackManifest, ModpackVersionManifest> manifests = prepareCurseImport(path);
+        Pair<ModpackManifest, ModpackVersionManifest> manifests = prepareCurseImport(context, path);
         if (manifests == null) {
             abort(context, data, "Failed to import curse pack.");
             return;
@@ -91,6 +93,7 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
 
     public static void handleNewInstall(MessageContext context, InstallInstanceData data) throws IOException {
         Pair<ModpackManifest, ModpackVersionManifest> manifests = ModpackVersionManifest.queryManifests(
+                context.services().http(),
                 data.id,
                 data.version,
                 data._private,
@@ -116,10 +119,8 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
             mcVersion = data.mcVersion;
         }
         
-        // Side-effect of having to hold all the services as part of the instance. The instance shouldn't be in charge of this amount of stuff.
-        Instance instance = new Instance(
-            context.services().instances(), context.services().settings(), context.services().paths(), context.services().rcpApi(), context.services().accounts(), context.services().threads(), context.services().cache()
-            , data.name, data.artPath, MiscUtils.tryParseUuid(data.categoryId), modpackManifest, versionManifest, mcVersion, isPrivate, packType);
+        var factory = InstanceFactory.fromServices(context.services());
+        Instance instance = factory.create(data.name, data.artPath, MiscUtils.tryParseUuid(data.categoryId), modpackManifest, versionManifest, mcVersion, isPrivate, packType);
         
         instance.props.isImport = isImport;
         if (isImport) {
@@ -137,7 +138,7 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
         if (data.screenHeight != -1) instance.props.height = data.screenHeight;
         
         if (instance.getId() != -1 && instance.getVersionId() != -1) {
-            Analytics.sendInstallRequest(instance.getId(), instance.getVersionId(), instance.props.packType);
+            Analytics.sendInstallRequest(context.services().http(), instance.getId(), instance.getVersionId(), instance.props.packType);
         }
         beginInstallTask(context, data, instance, versionManifest);
     }
@@ -155,7 +156,7 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
     }
 
     @Nullable
-    public static Pair<ModpackManifest, ModpackVersionManifest> prepareCurseImport(Path curseZip) throws IOException {
+    public static Pair<ModpackManifest, ModpackVersionManifest> prepareCurseImport(MessageContext context, Path curseZip) throws IOException {
         ModpackVersionManifest versionManifest;
 
         String inputData = null;
@@ -180,7 +181,7 @@ public class InstallInstanceHandler implements IMessageHandler<InstallInstanceDa
             return null;
         }
 
-        versionManifest = ModpackVersionManifest.convert(inputData);
+        versionManifest = ModpackVersionManifest.convert(context.services().http(), inputData);
         if (versionManifest == null) {
             LOGGER.error("Failed to parse manifest.json from CurseForge zip: {}", curseZip);
             return null;

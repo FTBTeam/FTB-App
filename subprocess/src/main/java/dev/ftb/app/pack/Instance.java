@@ -2,11 +2,7 @@ package dev.ftb.app.pack;
 
 import com.google.gson.JsonParseException;
 import dev.ftb.app.Analytics;
-import dev.ftb.app.AppPaths;
 import dev.ftb.app.Constants;
-import dev.ftb.app.Instances;
-import dev.ftb.app.accounts.AccountManager;
-import dev.ftb.app.api.RcpApi;
 import dev.ftb.app.data.InstanceJson;
 import dev.ftb.app.data.InstanceModifications;
 import dev.ftb.app.data.InstanceModifications.ModOverride;
@@ -20,10 +16,7 @@ import dev.ftb.app.data.modpack.ModpackVersionModsManifest;
 import dev.ftb.app.install.tasks.DownloadTask;
 import dev.ftb.app.instance.InstanceCategory;
 import dev.ftb.app.minecraft.modloader.forge.ForgeJarModLoader;
-import dev.ftb.app.services.AppThreads;
-import dev.ftb.app.services.cache.AppCache;
 import dev.ftb.app.services.cache.CurseMetadataCache.FileMetadata;
-import dev.ftb.app.storage.settings.Settings;
 import dev.ftb.app.util.FileUtils;
 import dev.ftb.app.util.HashingUtils;
 import dev.ftb.app.util.MiscUtils;
@@ -54,24 +47,24 @@ public class Instance {
         105L, // Fabric
         116L  // NeoForge
     );
-    
+
     private static final Logger LOGGER = LogManager.getLogger();
     private static final String META_FOLDER_NAME = ".ftbapp";
-    
+
     public static final String MODIFICATIONS_FILE_NAME = "modifications.json";
     public static final String VERSION_MODS_FILE_NAME = "version_mods.json";
     public static final String VERSION_FILE_NAME = "version.json";
-    
+
     public final InstanceArtwork logoArtwork;
-    
+
     public final Path path;
     public final Path metaPath;
-    
+
     public InstanceJson props;
     private @Nullable InstanceModifications modifications;
 
     private final InstanceLauncher launcher;
-    
+
     @Nullable
     public CompletableFuture<?> prepareFuture;
     @Nullable
@@ -79,39 +72,25 @@ public class Instance {
     public ModpackVersionManifest versionManifest;
 
     private long startTime;
+    private InstanceFactory factory;
 
-    // As to nobody's surprise, the instance requires quite a lot of services as it does EVERYTHING here... Not great.
-    private final Instances instances;
-    private final Settings settings;
-    private final AppPaths appPaths;
-    private final RcpApi rcpApi;
-    private final AccountManager accounts;
-    private final AppThreads appThreads;
-    private final AppCache appCache;
-    
     // Brand-new instance.
-    public Instance(Instances instances, Settings settings, AppPaths appPaths, RcpApi rcpApi, AccountManager accounts, AppThreads appThreads, AppCache appCache, @Nullable String name, @Nullable String artPath, @Nullable UUID categoryId, ModpackManifest modpack, ModpackVersionManifest versionManifest, String mcVersion, boolean isPrivate, byte packType) {
-        this.instances = instances;
-        this.settings = settings;
-        this.appPaths = appPaths;
-        this.rcpApi = rcpApi;
-        this.accounts = accounts;
-        this.appCache = appCache;
-        this.appThreads = appThreads;
-        this.launcher = new InstanceLauncher(settings, appPaths, rcpApi, accounts, appThreads, this);
-        
-        String[] jvmArgs = Constants.jvmArsFromMcVersion(mcVersion); 
-        
-        props = new InstanceJson(settings, modpack, versionManifest, mcVersion, isPrivate, packType, jvmArgs);
+    public Instance(InstanceFactory factory, @Nullable String name, @Nullable String artPath, @Nullable UUID categoryId, ModpackManifest modpack, ModpackVersionManifest versionManifest, String mcVersion, boolean isPrivate, byte packType) {
+        this.factory = factory;
+        this.launcher = new InstanceLauncher(this);
+
+        String[] jvmArgs = Constants.jvmArsFromMcVersion(mcVersion);
+
+        props = new InstanceJson(factory.settings(), modpack, versionManifest, mcVersion, isPrivate, packType, jvmArgs);
         if (name != null) {
             props.name = name;
         }
 
         props.categoryId = categoryId == null ? InstanceCategory.DEFAULT.uuid() : categoryId;
 
-        path = settings.getInstancesDir().resolve(folderNameFor(props));
+        path = factory.settings().getInstancesDir().resolve(folderNameFor(props));
         metaPath = path.resolve(META_FOLDER_NAME);
-        
+
         FileUtils.createDirectories(path);
         FileUtils.createDirectories(metaPath);
 
@@ -127,38 +106,32 @@ public class Instance {
     }
 
     // Loading an existing instance.
-    public Instance(Instances instances, Settings settings, AppPaths appPaths, RcpApi rcpApi, AccountManager accounts, AppThreads appThreads, AppCache appCache, Path path, Path json) throws IOException {
-        this.instances = instances;
-        this.settings = settings;
-        this.appPaths = appPaths;
-        this.rcpApi = rcpApi;
-        this.accounts = accounts;
-        this.appThreads = appThreads;
-        this.appCache = appCache;
-        this.launcher = new InstanceLauncher(settings, appPaths, rcpApi, accounts, appThreads, this);
-        
+    public Instance(InstanceFactory factory, Path path, Path json) throws IOException {
+        this.factory = factory;
+        this.launcher = new InstanceLauncher(this);
+
         this.path = path;
         this.metaPath = path.resolve(META_FOLDER_NAME);
         this.logoArtwork = new InstanceArtwork("logo", metaPath);
-        
+
         props = InstanceJson.load(json);
         loadVersionManifest();
-        
+
         if (Files.notExists(metaPath)) {
             FileUtils.createDirectories(metaPath);
         }
-        
+
         this.tryPutMarkerFile();
     }
-        
+
     public void tryPutMarkerFile() {
         // File size of the correct marker file is 179 bytes.
         var payload = """
-{
-    "__comment": "This file is not used by the app anymore as it was moved to the .ftbapp folder, but it is still used as a marker for other things. Please do not delete it."
-}
-""";
-        
+            {
+                "__comment": "This file is not used by the app anymore as it was moved to the .ftbapp folder, but it is still used as a marker for other things. Please do not delete it."
+            }
+            """;
+
         try {
             Path markerFilePath = this.path.resolve(VERSION_FILE_NAME);
             if (Files.exists(markerFilePath)) {
@@ -170,13 +143,13 @@ public class Instance {
                 }
                 return;
             }
-            
+
             Files.writeString(markerFilePath, payload);
         } catch (Exception e) {
             LOGGER.error("Failed to put marker file for instance.", e);
         }
     }
-    
+
     private void storeArtwork(ModpackManifest modpack, @Nullable String artPath) {
         if (artPath != null && artPath.startsWith("data:") && artPath.contains(";base64,")) {
             try {
@@ -186,7 +159,7 @@ public class Instance {
             }
             return;
         }
-        
+
         // Don't try and resolve a path of a url.
         if (artPath != null && !artPath.startsWith("http://") && !artPath.startsWith("https://")) {
             try {
@@ -224,7 +197,7 @@ public class Instance {
             if (extension.contains(".")) {
                 extension = extension.substring(extension.lastIndexOf(".") + 1);
             }
-            
+
             updateArtwork(is, extension);
         } catch (IOException ex) {
             LOGGER.error("Failed to update artwork.", ex);
@@ -234,6 +207,7 @@ public class Instance {
 
     /**
      * Parses a base64 prefixed image string and updates the artwork with it.
+     *
      * @param artPath The base64 string, prefixed with "base64:" and the extension, e.g. "data:image/png;base64,{base64data}"
      */
     private void updateArtworkFromBase64(String artPath) {
@@ -243,16 +217,16 @@ public class Instance {
             LOGGER.error("Invalid base64 image type: {}", imageTypeRaw);
             return;
         }
-        
+
         String extension = imageTypeRaw.substring("image/".length());
         String[] base64DataRaw = withoutPrefix.split(",");
         if (base64DataRaw.length != 2) {
             LOGGER.error("Invalid base64 image data.");
             return;
         }
-        
+
         String base64Data = base64DataRaw[1];
-        
+
         // Decode the base64 data and update the artwork.
         try {
             byte[] imageBytes = Base64.getDecoder().decode(base64Data);
@@ -263,17 +237,17 @@ public class Instance {
             LOGGER.error("Failed to decode base64 image data.", ex);
         }
     }
-    
+
     public void updateArtwork(InputStream inputStream, String extension) {
         this.logoArtwork.saveImage(inputStream, extension);
     }
-    
+
     private void downloadAndUpdateArt(ModpackManifest modpack) {
         ModpackManifest.Art art = modpack.getFirstArt("square");
         if (art == null) {
             return;
         }
-        
+
         Path tempFile = null;
         try {
             tempFile = Files.createTempFile("art", "");
@@ -303,7 +277,7 @@ public class Instance {
     public synchronized void pollVersionManifest() {
         if (props.isImport) return; // Can't update manifests for imports.
         try {
-            Pair<ModpackManifest, ModpackVersionManifest> newManifest = ModpackVersionManifest.queryManifests(props.id, props.versionId, props._private, props.packType);
+            Pair<ModpackManifest, ModpackVersionManifest> newManifest = ModpackVersionManifest.queryManifests(this.factory.httpClient(), props.id, props.versionId, props._private, props.packType);
             if (newManifest == null) {
                 LOGGER.warn("Failed to update modpack version manifest for instance. This may be a private pack.");
                 return;
@@ -322,12 +296,12 @@ public class Instance {
             // We don't need to query the mods manifest for these packs.
             return null;
         }
-        
+
         if (this.props.id == -1 || this.props.versionId == -1) {
             // This is a custom instance, we don't have a modpack ID or version ID.
             return null;
         }
-        
+
         ModpackVersionModsManifest manifest = null;
         Path file = this.metaPath.resolve(VERSION_MODS_FILE_NAME);
         try {
@@ -339,7 +313,7 @@ public class Instance {
         if (manifest != null) return manifest;
 
         try {
-            manifest = ModpackVersionModsManifest.query(props.id, props.versionId, props._private, props.packType);
+            manifest = ModpackVersionModsManifest.query(factory.httpClient(), props.id, props.versionId, props._private, props.packType);
             ModpackVersionModsManifest.save(file, manifest);
             return manifest;
         } catch (IOException | JsonParseException ex) {
@@ -408,10 +382,10 @@ public class Instance {
         LOGGER.info("Adding start/shutdown tasks..");
         launcher.withStartTask(ctx -> {
             ctx.shellArgs.addAll(MiscUtils.splitCommand(props.shellArgs));
-            
+
             // TODO, `extraArgs` and `jvmArgs` should be an array
             ctx.extraJVMArgs.addAll(MiscUtils.splitCommand(extraArgs));
-            
+
             if (props.programArgs != null && !props.programArgs.isEmpty()) {
                 ctx.extraProgramArgs.addAll(MiscUtils.splitCommand(props.programArgs));
             }
@@ -435,12 +409,12 @@ public class Instance {
 
         // TODO: Check if private
         launcher.withStartTask(ctx -> {
-            Analytics.sendPlayRequest(getId(), getVersionId(), props.packType);
+            Analytics.sendPlayRequest(this.factory.httpClient(), getId(), getVersionId(), props.packType);
         });
 
         OperatingSystem os = OperatingSystem.current();
         launcher.withStartTask(ctx -> {
-            InstanceSupportMeta supportMeta = this.instances.supportMeta();
+            InstanceSupportMeta supportMeta = this.factory.instances().supportMeta();
             supportMeta.update();
 
             if (!this.props.preventMetaAgentInjection) {
@@ -452,7 +426,7 @@ public class Instance {
                     }
                 }
             }
-            
+
             if (!scanner.hasLegacyJavaFixer()) {
                 for (InstanceSupportMeta.SupportFile file : supportMeta.getSupportMods("legacyjavafixer")) {
                     if (!file.canApply(props.modLoader, os)) continue;
@@ -483,7 +457,7 @@ public class Instance {
         com.sun.jna.platform.FileUtils instance = com.sun.jna.platform.FileUtils.getInstance();
         if (!instance.hasTrash()) {
             // Hardcore delete.
-            FileUtils.deleteDirectory(path);    
+            FileUtils.deleteDirectory(path);
         } else {
             try {
                 instance.moveToTrash(path.toFile());
@@ -492,8 +466,8 @@ public class Instance {
                 FileUtils.deleteDirectory(path); // Just delete it instead.
             }
         }
-        
-        this.instances.refreshInstances();
+
+        this.factory.instances().refreshInstances();
         return true;
     }
 
@@ -551,7 +525,7 @@ public class Instance {
         json.potentiallyBrokenDismissed = false;
         json.categoryId = category != null ? category : props.categoryId;
 
-        Path newDir = this.settings.getInstancesDir().resolve(folderNameFor(json));
+        Path newDir = this.factory.settings().getInstancesDir().resolve(folderNameFor(json));
         Path newJson = newDir.resolve("instance.json");
 
         Files.createDirectories(newDir);
@@ -559,7 +533,7 @@ public class Instance {
         org.apache.commons.io.FileUtils.copyDirectory(path.toFile(), newDir.toFile());
         InstanceJson.save(newJson, json);
 
-        return new Instance(this.instances, this.settings, this.appPaths, this.rcpApi, this.accounts, this.appThreads, this.appCache, newDir, newJson);
+        return new Instance(this.factory, newDir, newJson);
     }
 
     /**
@@ -571,7 +545,7 @@ public class Instance {
     public synchronized List<ModInfo> getMods(boolean rich) {
         LOGGER.info("Building instance mods list..");
         List<ModInfo> mods = new ArrayList<>();
-        
+
         ModpackVersionModsManifest modsManifest = rich ? getModsManifest() : null;
         InstanceModifications modifications = getModifications();
 
@@ -613,17 +587,17 @@ public class Instance {
             boolean enabled = (override != null && override.getState().enabled()) || (fileExists && !file.getName().endsWith(".disabled"));
 
             mods.add(new ModInfo(
-                    file.getId(),
-                    file.getName(),
-                    file.getVersionOrNull(),
-                    enabled,
-                    file.getSize(),
-                    sha1,
-                    murmur,
-                    rich ? this.appCache.curseMetadata().getCurseMeta(mod, String.valueOf(murmur)) : null
+                file.getId(),
+                file.getName(),
+                file.getVersionOrNull(),
+                enabled,
+                file.getSize(),
+                sha1,
+                murmur,
+                rich ? this.factory.cache().curseMetadata().getCurseMeta(mod, String.valueOf(murmur)) : null
             ));
         }
-        
+
         // Mods added manually or via CurseForge integ.
         if (modifications != null) {
             for (ModOverride override : modifications.getOverrides()) {
@@ -639,34 +613,34 @@ public class Instance {
                         file = null;
                     }
                 }
-                
+
                 CurseMetadata ids;
                 if (rich) {
-                    ids = this.appCache.curseMetadata().getCurseMeta(override.getCurseProject(), override.getCurseFile());
+                    ids = this.factory.cache().curseMetadata().getCurseMeta(override.getCurseProject(), override.getCurseFile());
                 } else {
                     ids = CurseMetadata.basic(override.getCurseProject(), override.getCurseFile());
                 }
                 mods.add(new ModInfo(
-                        -1,
-                        override.getFileName(),
-                        null,
-                        override.getState().enabled(),
-                        tryGetSize(file),
-                        override.getSha1(),
-                        override.getMurmurHash(),
-                        ids
+                    -1,
+                    override.getFileName(),
+                    null,
+                    override.getState().enabled(),
+                    tryGetSize(file),
+                    override.getSha1(),
+                    override.getMurmurHash(),
+                    ids
                 ));
             }
         }
-        
+
         for (Path path : FileUtils.listDir(modsDir)) {
             if (!Files.isRegularFile(path)) continue;
 
             String fName = path.getFileName().toString();
             if (!isMod(fName)) continue;
-            
+
             String fName2 = StringUtils.stripEnd(fName, ".disabled");
-            
+
             // Do we already know about the mod?
             if (mods.stream().anyMatch(e -> e.fileName().equals(fName) || e.fileName().equals(fName2))) {
                 if (!fName2.equals(fName)) {
@@ -674,7 +648,7 @@ public class Instance {
                 }
                 continue;
             }
-            
+
             LOGGER.info("Found unknown mod in Mods folder. {}", fName);
             // We don't know about the mod! We need to add it and create a Modification for it.
 
@@ -683,8 +657,8 @@ public class Instance {
             long size;
             try {
                 size = Files.size(path);
-                var fileBytes = Files.readAllBytes(path);     
-                
+                var fileBytes = Files.readAllBytes(path);
+
                 sha1 = DigestUtils.sha1Hex(fileBytes);
                 murmurHash = HashingUtils.createCurseForgeMurmurHash(fileBytes);
 
@@ -695,7 +669,7 @@ public class Instance {
 
             long curseProject = -1;
             long curseFile = -1;
-            FileMetadata metadata = this.appCache.curseMetadata().queryMetadata(String.valueOf(murmurHash));
+            FileMetadata metadata = this.factory.cache().curseMetadata().queryMetadata(String.valueOf(murmurHash));
             if (metadata != null) {
                 LOGGER.info(" Identified as {} {} {}", metadata.name(), metadata.curseProject(), metadata.curseFile());
                 curseProject = metadata.curseProject();
@@ -707,14 +681,14 @@ public class Instance {
             ModOverrideState state = fName.endsWith(".disabled") ? ModOverrideState.ADDED_DISABLED : ModOverrideState.ADDED_ENABLED;
 
             mods.add(new ModInfo(
-                    -1,
-                    fName2,
-                    null,
-                    state.enabled(),
-                    size,
-                    sha1,
-                    murmurHash,
-                    metadata != null ? metadata.toCurseInfo() : null
+                -1,
+                fName2,
+                null,
+                state.enabled(),
+                size,
+                sha1,
+                murmurHash,
+                metadata != null ? metadata.toCurseInfo() : null
             ));
 
             getOrCreateModifications().getOverrides().add(new ModOverride(state, fName2, sha1, murmurHash, curseProject, curseFile));
@@ -726,7 +700,7 @@ public class Instance {
         LOGGER.info("List built {} mods.", mods.size());
         return mods;
     }
-    
+
     private static boolean isInModPath(String path) {
         return path.startsWith("./mods") || path.startsWith("mods/");
     }
@@ -758,11 +732,12 @@ public class Instance {
         boolean isNewOverride = override == null;
         if (isNewOverride) {
             // Could indicate a bug with listing instance mods. But, likely just broken call.
-            if (fileId == -1) throw new IllegalArgumentException("Did not find an existing ModOverride for the given name. File ID required.");
+            if (fileId == -1)
+                throw new IllegalArgumentException("Did not find an existing ModOverride for the given name. File ID required.");
             ModpackVersionManifest.ModpackFile file = versionManifest.getFiles().stream()
-                    .filter(e -> e.getId() == fileId)
-                    .findFirst()
-                    .orElse(null);
+                .filter(e -> e.getId() == fileId)
+                .findFirst()
+                .orElse(null);
             if (file == null) throw new IllegalArgumentException("Did not find any files with the given fileId.");
 
             boolean isEnabled = !fileName.endsWith(".disabled");
@@ -820,16 +795,16 @@ public class Instance {
      */
     private String folderNameFor(InstanceJson props) {
         var computedName = props.name.replaceAll("[^a-zA-Z0-9\\s-]", "").toLowerCase();
-        
+
         // Trim the computed name to 64 characters.
         computedName = computedName.substring(0, Math.min(computedName.length(), 64));
         computedName = computedName.trim();
-        
-        Path instancesDir = this.settings.getInstancesDir();
+
+        Path instancesDir = this.factory.settings().getInstancesDir();
         if (!Files.exists(instancesDir.resolve(computedName))) {
             return computedName;
         }
-        
+
         int count = 1;
         try (var stream = Files.list(instancesDir)) {
             for (var path : stream.toList()) {
@@ -839,11 +814,11 @@ public class Instance {
             }
         } catch (IOException ex) {
             LOGGER.error("Failed to count instances.", ex);
-            
+
             // Fallback to UUID.
             return computedName + "-" + UUID.randomUUID().toString().substring(0, 8).trim();
         }
-        
+
         return computedName + (" (" + count + ")").trim();
     }
 
@@ -853,7 +828,7 @@ public class Instance {
         if (modloader.isEmpty()) {
             return null;
         }
-        
+
         if (modloader.contains("neoforge")) {
             return "neoforge";
         } else if (modloader.contains("forge")) {
@@ -865,13 +840,36 @@ public class Instance {
         }
     }
 
-    // @formatter:off
-    public long getId() { return props.id; }
-    public long getVersionId() { return props.versionId; }
-    public String getName() { return props.name; }
-    public Path getDir() { return path; }
-    public String getMcVersion() { return props.mcVersion; }
-    public UUID getUuid() { return props.uuid; }
-    @Deprecated public String getModLoader() { return props.modLoader; }
-    // @formatter:on
+    public InstanceFactory factory() {
+        return factory;
+    }
+    
+    public long getId() {
+        return props.id;
+    }
+
+    public long getVersionId() {
+        return props.versionId;
+    }
+
+    public String getName() {
+        return props.name;
+    }
+
+    public Path getDir() {
+        return path;
+    }
+
+    public String getMcVersion() {
+        return props.mcVersion;
+    }
+
+    public UUID getUuid() {
+        return props.uuid;
+    }
+
+    @Deprecated
+    public String getModLoader() {
+        return props.modLoader;
+    }
 }

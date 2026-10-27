@@ -44,7 +44,7 @@ public class InstanceInstallModHandler implements IMessageHandler<InstanceInstal
             return;
         }
 
-        ModInstaller modInstaller = new ModInstaller(context.services().rcpApi(), context.services().threads(), instance, context.services().cache(), mcVersion, modloaderName, data.modId, data.versionId);
+        ModInstaller modInstaller = new ModInstaller(context.services().http(), context.services().rcpApi(), context.services().threads(), instance, context.services().cache(), mcVersion, modloaderName, data.modId, data.versionId);
 
         try {
             modInstaller.resolve();

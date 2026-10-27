@@ -4,7 +4,7 @@ import com.google.common.hash.HashCode;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.JsonAdapter;
-import dev.ftb.app.Constants;
+import dev.ftb.app.services.AppHttp;
 import dev.ftb.app.util.ModpackApiUtils;
 import net.covers1624.quack.gson.HashCodeAdapter;
 import net.covers1624.quack.gson.JsonUtils;
@@ -42,13 +42,12 @@ public class ModpackManifest {
     private List<Version> versions = new LinkedList<>();
 
     @Nullable
-    public static ModpackManifest queryManifest(long packId, boolean isPrivate, byte packType) throws IOException, JsonParseException {
+    public static ModpackManifest queryManifest(AppHttp http, long packId, boolean isPrivate, byte packType) throws IOException, JsonParseException {
         String url = ModpackApiUtils.getModpacksEndpoint(isPrivate, packType) + packId;
         LOGGER.info("Querying Modpack version manifest: {}", url);
         StringWriter sw = new StringWriter();
         DownloadAction action = new OkHttpDownloadAction()
-                .setClient(Constants.httpClient())
-                .setUserAgent(Constants.USER_AGENT.get())
+                .setClient(http.httpClient())
                 .setUrl(url)
                 .setDest(sw);
         

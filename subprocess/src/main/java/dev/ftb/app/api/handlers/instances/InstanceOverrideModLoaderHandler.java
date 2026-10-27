@@ -32,7 +32,7 @@ public class InstanceOverrideModLoaderHandler implements IMessageHandler<Instanc
         if (id != -1 && version != -1) {
             ModpackVersionManifest versionManifest;
             try {
-                versionManifest = ModpackVersionManifest.queryManifest(data.modLoaderId, data.modLoaderVersion, false, (byte) 0);
+                versionManifest = ModpackVersionManifest.queryManifest(context.services().http(), data.modLoaderId, data.modLoaderVersion, false, (byte) 0);
             } catch (IOException | JsonSyntaxException ex) {
                 LOGGER.error("Error Finding ModLoader Manifest.", ex);
                 context.reply(new InstanceOverrideModLoaderData.Reply(data, "error", "Error requesting ModLoader version."));

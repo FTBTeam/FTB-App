@@ -26,7 +26,7 @@ public class WebRequestHandler implements IMessageHandler<WebRequestData> {
             }
         }
         
-        try (Response response = context.services().httpClient().newCall(builder.build()).execute()) {
+        try (Response response = context.services().http().httpClient().newCall(builder.build()).execute()) {
             WebRequestData.WebRequestDataResponse resp = new WebRequestData.WebRequestDataResponse(data, "success");
             resp.statusCode = response.code();
             resp.statusLine = response.message();

@@ -10,6 +10,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import dev.ftb.app.AppPaths;
 import dev.ftb.app.data.mod.ModManifest;
+import dev.ftb.app.services.AppHttp;
 import dev.ftb.app.services.AppThreads;
 import net.covers1624.quack.gson.JsonUtils;
 import org.apache.logging.log4j.LogManager;
@@ -38,27 +39,32 @@ public class ModVersionCache {
     private static final Type TYPE = new TypeToken<Map<String, CacheEntry>>() { }.getType();
 
     private final AppThreads appThreads;
+    private final AppHttp appHttp;
     
     private final Path file;
     private final Map<String, CacheEntry> modVersionCache;
     
     private final Set<Long> modNegativeCache = ConcurrentHashMap.newKeySet();
     private final Set<String> versionNegativeCache = ConcurrentHashMap.newKeySet();
-    private final LoadingCache<Long, ModManifest> modCache = CacheBuilder.newBuilder()
+    private final LoadingCache<Long, ModManifest> modCache;
+    
+    public ModVersionCache(AppPaths appPaths, AppThreads appThreads, AppHttp appHttp) {
+        this.appThreads = appThreads;
+        this.appHttp = appHttp;
+        
+        this.modCache = CacheBuilder.newBuilder()
             .expireAfterAccess(10, TimeUnit.MINUTES)
             .build(new CacheLoader<>() {
                 @Override
                 public ModManifest load(Long key) throws Exception {
                     try {
-                        return ModManifest.queryManifest(key);
+                        return ModManifest.queryManifest(ModVersionCache.this.appHttp, key);
                     } catch (Throwable ex) {
                         throw new IllegalStateException("Failed to query mod manifest for: " + key, ex);
                     }
                 }
             });
-    
-    public ModVersionCache(AppPaths appPaths, AppThreads appThreads) {
-        this.appThreads = appThreads;
+        
         this.file = appPaths.workingDir().resolve(".mod_meta.json");
         
         Map<String, CacheEntry> modVersionCache = null;

@@ -8,12 +8,12 @@ import dev.ftb.app.Constants;
 import dev.ftb.app.data.mod.CurseMetadata;
 import dev.ftb.app.data.mod.ModManifest;
 import dev.ftb.app.data.modpack.ModpackVersionModsManifest;
+import dev.ftb.app.services.AppHttp;
 import dev.ftb.app.util.ModpackApiUtils;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.net.DownloadAction;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import org.apache.logging.log4j.LogManager;
@@ -41,9 +41,9 @@ public class CurseMetadataCache {
     private final Set<String> failedCache = ConcurrentHashMap.newKeySet();
     
     private final ModVersionCache modVersionCache;
-    private final OkHttpClient httpClient;
+    private final AppHttp httpClient;
 
-    public CurseMetadataCache(AppPaths appPaths, OkHttpClient httpClient, ModVersionCache modVersionCache) {
+    public CurseMetadataCache(AppPaths appPaths, AppHttp httpClient, ModVersionCache modVersionCache) {
         this.file = appPaths.workingDir().resolve(".curse_meta.json");
         this.httpClient = httpClient;
         this.modVersionCache = modVersionCache;
@@ -161,7 +161,7 @@ public class CurseMetadataCache {
             return queryManifestData;
         }
 
-        var request = this.httpClient.newCall(new Request.Builder()
+        var request = this.httpClient.httpClient().newCall(new Request.Builder()
             .url(Constants.FTB_MODPACKS_API + "/mod/lookup/hashes")
             .post(RequestBody.create(new Gson().toJson(Map.of("hashes", toQuery)), MediaType.parse("application/json")))
             .build());
@@ -222,7 +222,7 @@ public class CurseMetadataCache {
         try {
             LOGGER.info("Querying metadata for {}", murmur);
             DownloadAction action = new OkHttpDownloadAction()
-                    .setClient(this.httpClient)
+                    .setClient(this.httpClient.httpClient())
                     .setUrl(ModpackApiUtils.getModpacksApi() + "/mod/lookup/" + murmur)
                     .setDest(sw);
             

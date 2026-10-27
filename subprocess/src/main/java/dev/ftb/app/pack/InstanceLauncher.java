@@ -16,8 +16,6 @@ import dev.ftb.app.minecraft.jsons.AssetIndexManifest;
 import dev.ftb.app.minecraft.jsons.VersionListManifest;
 import dev.ftb.app.minecraft.jsons.VersionManifest;
 import dev.ftb.app.minecraft.jsons.VersionManifest.AssetIndex;
-import dev.ftb.app.services.AppThreads;
-import dev.ftb.app.storage.settings.Settings;
 import dev.ftb.app.util.StreamGobblerLog;
 import net.covers1624.jdkutils.JavaInstall;
 import net.covers1624.jdkutils.JavaVersion;
@@ -85,19 +83,8 @@ public class InstanceLauncher {
     private final List<ThrowingRunnable<Throwable>> exitTasks = new LinkedList<>();
 
     private static final int NUM_STEPS = 7;
-    
-    private final Settings settings;
-    private final AppPaths appPaths;
-    private final RcpApi rcpApi;
-    private final AccountManager accounts;
-    private final AppThreads appThreads;
 
-    public InstanceLauncher(Settings settings, AppPaths appPaths, RcpApi rcpApi, AccountManager accounts, AppThreads appThreads, Instance instance) {
-        this.settings = settings;
-        this.appPaths = appPaths;
-        this.rcpApi = rcpApi;
-        this.accounts = accounts;
-        this.appThreads = appThreads;
+    public InstanceLauncher(Instance instance) {
         this.instance = instance;
         
         this.progressTracker = new ProgressTracker(this.instance);
@@ -152,9 +139,12 @@ public class InstanceLauncher {
         setPhase(Phase.INITIALIZING);
         progressTracker.reset(NUM_STEPS);
 
-        Path assetsDir = this.appPaths.mcAssetsDir();
-        Path versionsDir = this.appPaths.mcVersionsDir();
-        Path librariesDir = this.appPaths.mcLibrariesDir();
+        AppPaths appPaths = this.factory().appPaths();
+        RcpApi rcpApi = this.factory().rcpApi();
+        
+        Path assetsDir = appPaths.mcAssetsDir();
+        Path versionsDir = appPaths.mcVersionsDir();
+        Path librariesDir = appPaths.mcLibrariesDir();
 
         Set<String> features = new HashSet<>();
         if (instance.props.width != 0 && instance.props.height != 0) {
@@ -363,7 +353,7 @@ public class InstanceLauncher {
                         .build();
                 }
                 
-                var javaHome = Constants.getJdkManager().provisionJdk(provisionRequest);
+                var javaHome = instance.factory().jdkInstallationManager().provisionJdk(provisionRequest);
                 
                 LOGGER.info("Java home: {}", javaHome);
                 javaExecutable = JavaInstall.getJavaExecutable(javaHome, true);
@@ -417,7 +407,9 @@ public class InstanceLauncher {
             progressTracker.startStep("Prepare process");
             
             Map<String, String> subMap = new HashMap<>();
-            MicrosoftProfile profile = this.accounts.getActiveProfile();
+            AccountManager accounts = this.factory().accounts();
+            
+            MicrosoftProfile profile = accounts.getActiveProfile();
             if (offlineUsername != null || profile == null) {
                 UUID uuid;
                 String username;
@@ -473,7 +465,7 @@ public class InstanceLauncher {
 
             AssetIndexManifest.AssetObject icon = assetPair.getRight().objects.get("icons/minecraft.icns");
             if (icon != null) {
-                Path path = this.appPaths.mcAssetsDir()
+                Path path = this.factory().appPaths().mcAssetsDir()
                         .resolve("objects")
                         .resolve(icon.getPath());
                 subMap.put("minecraft_icon", path.toAbsolutePath().toString());
@@ -503,7 +495,7 @@ public class InstanceLauncher {
                     .collect(Collectors.toList());
 
             List<String> command = new ArrayList<>(jvmArgs.size() + progArgs.size() + 2);
-            Boolean feralGamemode = this.settings.settings().enableFeralGameMode();
+            Boolean feralGamemode = this.factory().settings().settings().enableFeralGameMode();
             if (feralGamemode != null && feralGamemode) {
                 command.add("gamemoderun");
             }
@@ -583,7 +575,7 @@ public class InstanceLauncher {
             }
         }
 
-        InstallAssetsTask assetsTask = new InstallAssetsTask(this.appPaths, this.appThreads, index);
+        InstallAssetsTask assetsTask = new InstallAssetsTask(this.factory().appPaths(), this.factory().threads(), index);
         if (!assetsTask.isRedundant()) {
             try {
                 assetsTask.execute(token, progressTracker.listenerForStep(true));
@@ -851,6 +843,10 @@ public class InstanceLauncher {
         }
         return manifests.get(manifests.size() - 1).id;
     }
+    
+    private InstanceFactory factory() {
+        return instance.factory();
+    }
 
     public static class LaunchContext {
         public final List<String> extraJVMArgs = new ArrayList<>();
@@ -997,7 +993,7 @@ public class InstanceLauncher {
                 LOGGER.info("Progress [{}/{}] {}: {} {}", currStep, totalSteps, stepProgress, stepDesc, humanDesc);
             }
 
-            rcpApi.sendMessage(new LaunchInstanceData.Status(this.instance.getUuid(), currStep, totalSteps, stepProgress, stepDesc, humanDesc));
+            factory().rcpApi().sendMessage(new LaunchInstanceData.Status(this.instance.getUuid(), currStep, totalSteps, stepProgress, stepDesc, humanDesc));
         }
     }
 
@@ -1047,7 +1043,7 @@ public class InstanceLauncher {
                         // After 100k lines, just stop sending the logs and terminate the logging thread along
                         // with the stream gobblers to avoid accumulating too much data in memory.
                         if (linesWritten > 100_000) {
-                            rcpApi.sendMessage(new LaunchInstanceData.Logs(instance.getUuid(), List.of("[... Log truncated ...]")));
+                            factory().rcpApi().sendMessage(new LaunchInstanceData.Logs(instance.getUuid(), List.of("[... Log truncated ...]")));
                             // Now we need to kill this thread and the gobblers.
                             stop = true;
                             for (StreamGobblerLog gobbler : gobblers) {
@@ -1057,7 +1053,7 @@ public class InstanceLauncher {
                             break;
                         }
 
-                        rcpApi.sendMessage(new LaunchInstanceData.Logs(instance.getUuid(), toSend));
+                        factory().rcpApi().sendMessage(new LaunchInstanceData.Logs(instance.getUuid(), toSend));
                     }
                 }
                 try {

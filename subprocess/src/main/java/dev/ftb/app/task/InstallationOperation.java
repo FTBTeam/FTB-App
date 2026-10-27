@@ -23,6 +23,8 @@ public class InstallationOperation extends LongRunningOperation {
     private final ModpackVersionManifest manifest;
     private final InstanceInstaller installer;
 
+    // This class is only created from the webhook api meaning we can pass services. 
+    // If it is ever used anywhere else we would need to refactor this and pass the services respectively.
     public InstallationOperation(Services services, LongRunningTaskManager manager, InstallInstanceData data, Instance instance, ModpackVersionManifest manifest) throws IOException {
         super(manager);
         this.services = services;
@@ -30,7 +32,7 @@ public class InstallationOperation extends LongRunningOperation {
         this.instance = instance;
         this.manifest = manifest;
         OperationProgressTracker tracker = new OperationProgressTracker(services.rcpApi(), "install", Map.of("instance", instance.getUuid().toString()));
-        installer = new InstanceInstaller(services.paths(), services.settings(), services.threads(), services.cache(), instance, manifest, cancelToken, tracker);
+        installer = new InstanceInstaller(services.paths(), services.settings(), services.threads(), services.cache(), services.http(), instance, manifest, cancelToken, tracker);
     }
 
     public Instance getInstance() {

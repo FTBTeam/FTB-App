@@ -4,9 +4,9 @@ import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
-import dev.ftb.app.Constants;
 import dev.ftb.app.install.FileValidation;
 import dev.ftb.app.install.ModCollector;
+import dev.ftb.app.services.AppHttp;
 import dev.ftb.app.util.ModpackApiUtils;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.net.DownloadAction;
@@ -42,24 +42,24 @@ public class ModManifest {
     private final List<Link> links = new LinkedList<>();
     private final List<Author> authors = new LinkedList<>();
     private final List<Version> versions = new LinkedList<>();
-
-    public static @Nullable ModManifest tryQuery(long id) {
+    
+    public static @Nullable ModManifest tryQuery(AppHttp http, long id) {
         try {
-            return queryManifest(id);
+            return queryManifest(http, id);
         } catch (IOException | JsonParseException ex) {
             LOGGER.warn("Failed to query mod manifest for {}.", id, ex);
             return null;
         }
     }
 
-    public static ModManifest queryManifest(long id) throws IOException, JsonParseException {
-        return queryManifest(String.valueOf(id));
+    public static ModManifest queryManifest(AppHttp http, long id) throws IOException, JsonParseException {
+        return queryManifest(http, String.valueOf(id));
     }
 
-    public static ModManifest queryManifest(String id) throws IOException, JsonParseException {
+    public static ModManifest queryManifest(AppHttp http, String id) throws IOException, JsonParseException {
         StringWriter sw = new StringWriter();
         DownloadAction action = new OkHttpDownloadAction()
-                .setClient(Constants.httpClient())
+                .setClient(http.httpClient())
                 .setUrl(ModpackApiUtils.getModpacksApi() + "/mod/" + id)
                 .setDest(sw);
         
@@ -76,9 +76,9 @@ public class ModManifest {
                 .orElse(null);
     }
 
-    public void visitVersion(ModCollector collector, Version version) {
+    public void visitVersion(AppHttp http, ModCollector collector, Version version) {
         collector.addMod(this, version);
-        version.visitDependencies(this, collector);
+        version.visitDependencies(http, this, collector);
     }
 
     public @Nullable Version findLatestCompatibleVersion(String modLoader, String mcVersion) {
@@ -116,14 +116,14 @@ public class ModManifest {
             .orElse(null);
     }
 
-    public void visitCompatibleVersion(ModManifest requestedBy, ModCollector collector) {
+    public void visitCompatibleVersion(AppHttp http, ModManifest requestedBy, ModCollector collector) {
         Version version = findLatestCompatibleVersion(collector.modLoader(), collector.mcVersion());
         if (version == null) {
             collector.unsatisfiableDependency(requestedBy, this);
             return;
         }
 
-        visitVersion(collector, version);
+        visitVersion(http, collector, version);
     }
 
     // @formatter:off
@@ -230,9 +230,9 @@ public class ModManifest {
         public List<Dependency> getDependencies() { return dependencies; }
         // @formatter:on
 
-        public void visitDependencies(ModManifest mod, ModCollector visitor) {
+        public void visitDependencies(AppHttp http, ModManifest mod, ModCollector visitor) {
             for (Dependency dependency : dependencies) {
-                dependency.visit(mod, visitor);
+                dependency.visit(http, mod, visitor);
             }
         }
 
@@ -290,15 +290,15 @@ public class ModManifest {
         public boolean isRequired() { return required; }
         // @formatter:on
 
-        public void visit(ModManifest mod, ModCollector collector) {
+        public void visit(AppHttp http, ModManifest mod, ModCollector collector) {
             if (!required) return;
 
-            ModManifest manifest = tryQuery(id);
+            ModManifest manifest = tryQuery(http, id);
             if (manifest == null) {
                 collector.unavailableDependency(mod, this);
                 return;
             }
-            manifest.visitCompatibleVersion(mod, collector);
+            manifest.visitCompatibleVersion(http, mod, collector);
         }
     }
 }

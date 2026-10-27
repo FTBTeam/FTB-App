@@ -10,6 +10,7 @@ import dev.ftb.app.data.mod.ModInfo;
 import dev.ftb.app.data.mod.ModManifest;
 import dev.ftb.app.install.tasks.*;
 import dev.ftb.app.pack.Instance;
+import dev.ftb.app.services.AppHttp;
 import dev.ftb.app.services.AppThreads;
 import dev.ftb.app.services.cache.AppCache;
 import org.apache.commons.lang3.StringUtils;
@@ -50,10 +51,11 @@ public class ModInstaller implements ModCollector {
 
     private final AppThreads appThreads;
     private final AppCache appCache;
+    private final AppHttp appHttp;
 
-    public ModInstaller(RcpApi rcpApi, AppThreads appThreads, Instance instance, AppCache appCache, String mcVersion, String modLoader, long modId, long versionId) {
+    public ModInstaller(AppHttp appHttp, RcpApi rcpApi, AppThreads appThreads, Instance instance, AppCache appCache, String mcVersion, String modLoader, long modId, long versionId) {
         this.instance = instance;
-        
+        this.appHttp = appHttp;
         this.appThreads = appThreads;
         this.appCache = appCache;
         this.mcVersion = mcVersion;
@@ -80,7 +82,7 @@ public class ModInstaller implements ModCollector {
         try {
             ModManifest manifest;
             try {
-                manifest = ModManifest.queryManifest(modId);
+                manifest = ModManifest.queryManifest(this.appHttp, modId);
             } catch (IOException | JsonParseException ex) {
                 throw new ModInstallerException("Mod does not exist.", ex);
             }
@@ -90,7 +92,7 @@ public class ModInstaller implements ModCollector {
                 throw new ModInstallerException("Mod version does not exist.");
             }
 
-            manifest.visitVersion(this, version);
+            manifest.visitVersion(this.appHttp,this, version);
         } catch (Throwable ex) {
             tracker.finished();
             throw ex;

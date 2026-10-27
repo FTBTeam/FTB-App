@@ -14,6 +14,7 @@ import dev.ftb.app.install.tasks.modloader.ModLoaderInstallTask;
 import dev.ftb.app.instance.InstanceOperation;
 import dev.ftb.app.pack.CancellationToken;
 import dev.ftb.app.pack.Instance;
+import dev.ftb.app.services.AppHttp;
 import dev.ftb.app.services.AppThreads;
 import dev.ftb.app.services.cache.AppCache;
 import dev.ftb.app.storage.settings.Settings;
@@ -127,7 +128,7 @@ public class InstanceInstaller extends InstanceOperation {
     private final AppThreads appThreads;
     private final AppCache appCache;
 
-    public InstanceInstaller(AppPaths appPaths, Settings settings, AppThreads appThreads, AppCache appCache, Instance instance,
+    public InstanceInstaller(AppPaths appPaths, Settings settings, AppThreads appThreads, AppCache appCache, AppHttp http, Instance instance,
         ModpackVersionManifest manifest,
         CancellationToken cancelToken,
         OperationProgressTracker tracker
@@ -156,7 +157,7 @@ public class InstanceInstaller extends InstanceOperation {
                 operationType = OperationType.UPGRADE;
                 oldMods = instance.getModsManifest();
                 try {
-                    newMods = ModpackVersionModsManifest.query(instance.props.id, manifest.getId(), instance.props._private, instance.props.packType);
+                    newMods = ModpackVersionModsManifest.query(http, instance.props.id, manifest.getId(), instance.props._private, instance.props.packType);
                 } catch (IOException ex) {
                     LOGGER.error("Failed to query mods manifest.", ex);
                 }

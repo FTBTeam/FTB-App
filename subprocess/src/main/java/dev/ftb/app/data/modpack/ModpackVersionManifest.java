@@ -5,8 +5,8 @@ import com.google.common.hash.Hashing;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
-import dev.ftb.app.Constants;
 import dev.ftb.app.install.FileValidation;
+import dev.ftb.app.services.AppHttp;
 import dev.ftb.app.util.FileUtils;
 import dev.ftb.app.util.ModpackApiUtils;
 import net.covers1624.quack.gson.HashCodeAdapter;
@@ -101,10 +101,10 @@ public class ModpackVersionManifest {
     }
 
     @Nullable
-    public static Pair<ModpackManifest, ModpackVersionManifest> queryManifests(long packId, long versionId, boolean isPrivate, byte packType) throws IOException, JsonParseException {
-        ModpackManifest modpackManifest = ModpackManifest.queryManifest(packId, isPrivate, packType);
+    public static Pair<ModpackManifest, ModpackVersionManifest> queryManifests(AppHttp http, long packId, long versionId, boolean isPrivate, byte packType) throws IOException, JsonParseException {
+        ModpackManifest modpackManifest = ModpackManifest.queryManifest(http, packId, isPrivate, packType);
         if (modpackManifest != null) {
-            ModpackVersionManifest versionManifest = queryManifest(packId, versionId, isPrivate, packType);
+            ModpackVersionManifest versionManifest = queryManifest(http, packId, versionId, isPrivate, packType);
             if (versionManifest != null) {
                 return Pair.of(
                         modpackManifest,
@@ -112,28 +112,27 @@ public class ModpackVersionManifest {
                 );
             }
         }
-        modpackManifest = ModpackManifest.queryManifest(packId, !isPrivate, packType);
+        modpackManifest = ModpackManifest.queryManifest(http, packId, !isPrivate, packType);
 
         if (modpackManifest == null) return null; // We tried, really doesn't exist..
 
         return Pair.of(
                 modpackManifest,
-                queryManifest(packId, versionId, !isPrivate, packType)
+                queryManifest(http, packId, versionId, !isPrivate, packType)
         );
     }
 
     @Nullable
-    public static ModpackVersionManifest queryManifest(long packId, long versionId, boolean isPrivate, byte packType) throws IOException, JsonParseException {        
-        return queryManifest(ModpackApiUtils.getModpacksEndpoint(isPrivate, packType) + packId + "/" + versionId);
+    public static ModpackVersionManifest queryManifest(AppHttp http, long packId, long versionId, boolean isPrivate, byte packType) throws IOException, JsonParseException {        
+        return queryManifest(http, ModpackApiUtils.getModpacksEndpoint(isPrivate, packType) + packId + "/" + versionId);
     }
 
     @Nullable
-    public static ModpackVersionManifest queryManifest(String url) throws IOException, JsonParseException {
+    public static ModpackVersionManifest queryManifest(AppHttp http, String url) throws IOException, JsonParseException {
         LOGGER.info("Querying Modpack version manifest: {}", url);
         StringWriter sw = new StringWriter();
         DownloadAction action = new OkHttpDownloadAction()
-                .setClient(Constants.httpClient())
-                .setUserAgent(Constants.USER_AGENT.get())
+                .setClient(http.httpClient())
                 .setUrl(url)
                 .setDest(sw);
         
@@ -151,14 +150,14 @@ public class ModpackVersionManifest {
     }
 
     @Nullable
-    public static ModpackVersionManifest convert(String inputData) throws IOException {
+    public static ModpackVersionManifest convert(AppHttp http, String inputData) throws IOException {
         Request.Builder builder = new Request.Builder()
                 .url(ModpackApiUtils.getModpacksApi() + "/curseforge/import")
                 .put(RequestBody.create(inputData, MediaType.parse("application/json; charset=utf-8")));
         
         ModpackApiUtils.injectBearerHeader(builder);
         
-        try (Response response = Constants.httpClient().newCall(builder.build()).execute()) {
+        try (Response response = http.httpClient().newCall(builder.build()).execute()) {
             ResponseBody body = response.body();
             if (body == null) {
                 LOGGER.error("Request returned empty body. Status code: {}", response.code());

@@ -11,12 +11,15 @@ import dev.ftb.app.data.modpack.ModpackVersionManifest;
 import dev.ftb.app.instance.InstanceCategory;
 import dev.ftb.app.minecraft.jsons.VersionManifest;
 import dev.ftb.app.pack.Instance;
+import dev.ftb.app.pack.InstanceFactory;
+import dev.ftb.app.services.AppHttp;
 import dev.ftb.app.services.AppThreads;
 import dev.ftb.app.services.cache.AppCache;
 import dev.ftb.app.storage.settings.Settings;
 import dev.ftb.app.util.ElapsedTimer;
 import dev.ftb.app.util.FileUtils;
 import dev.ftb.app.util.GsonUtils;
+import net.covers1624.jdkutils.JdkInstallationManager;
 import net.covers1624.quack.gson.HashCodeAdapter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -49,6 +52,8 @@ public class Instances {
     private final AccountManager accounts;
     private final AppThreads appThreads;
     private final AppCache appCache;
+    private final AppHttp appHttp;
+    private final JdkInstallationManager jdkManager;
     
     public Instances(
         AppPaths appPaths,
@@ -56,7 +61,9 @@ public class Instances {
         RcpApi rcpApi,
         AccountManager accounts,
         AppThreads appThreads,
-        AppCache appCache
+        AppCache appCache,
+        AppHttp appHttp,
+        JdkInstallationManager jdkManager
     ) {
         this.appPaths = appPaths;
         this.settings = settings;
@@ -64,6 +71,8 @@ public class Instances {
         this.accounts = accounts;
         this.appCache = appCache;
         this.appThreads = appThreads;
+        this.appHttp = appHttp;
+        this.jdkManager = jdkManager;
         
         this.supportMeta = new InstanceSupportMeta(appPaths);
     }
@@ -156,7 +165,19 @@ public class Instances {
 
     @Nullable
     private Instance tryLoadInstance(Path path, Path json) throws IOException {
-        Instance localInstance = new Instance(this, this.settings, this.appPaths, this.rcpApi, this.accounts, this.appThreads, this.appCache, path, json);
+        var factory = new InstanceFactory(
+            this.settings,
+            this.appPaths,
+            this.appThreads,
+            this.appCache,
+            this.appHttp,
+            this.accounts,
+            this,
+            this.rcpApi,
+            this.jdkManager
+        );
+        
+        Instance localInstance = factory.load(path, json);
         if (!localInstance.props.installComplete) {
             // TODO we should provide a cleanup function somewhere to remove these old installs, probably next to our cache flush button.
             LOGGER.warn("Instance install never completed, Ignoring. {}", json.toAbsolutePath());
