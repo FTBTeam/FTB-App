@@ -12,6 +12,7 @@ import org.jspecify.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -56,13 +57,15 @@ public class AccountManager {
     }
 
     public void setActiveProfile(UUID uuid) {
+        Optional<MicrosoftProfile> foundActiveProfile = this.store.get().profiles.stream().filter(p -> p.getUuid().equals(uuid)).findFirst();
+        
         try {
             this.store.update(existing -> {
                 // Update but ensure the profile exists first, otherwise set to null
-                existing.activeProfile = existing.profiles.stream().filter(p -> p.getUuid().equals(uuid)).findFirst()
-                    .map(MicrosoftProfile::getUuid)
-                    .orElse(null);
+                existing.activeProfile = foundActiveProfile.map(MicrosoftProfile::getUuid).orElse(null);
             });
+            
+            this.activeProfile = foundActiveProfile.orElse(null);
         } catch (IOException e) {
             LOGGER.error("Failed to set active profile", e);
         }
