@@ -8,6 +8,7 @@ import com.google.gson.annotations.JsonAdapter;
 import dev.ftb.app.Constants;
 import dev.ftb.app.install.tasks.DownloadTask;
 import dev.ftb.app.install.tasks.DownloadTask.DownloadValidation;
+import dev.ftb.app.services.AppHttp;
 import dev.ftb.app.util.GsonUtils;
 import net.covers1624.quack.gson.HashCodeAdapter;
 import net.covers1624.quack.gson.JsonUtils;
@@ -41,14 +42,15 @@ public class VersionListManifest {
     /**
      * Updates (if required) the version list manifest.
      *
+     * @param http        The HTTP client to use for downloading.
      * @param versionsDir The versions directory.
      * @return The {@link VersionListManifest} parsed from disk.
      * @throws IOException        Thrown when an error occurs whilst loading the manifest.
      * @throws JsonParseException Thrown when the Json cannot be parsed.
      */
-    public static VersionListManifest update(Path versionsDir) throws IOException {
+    public static VersionListManifest update(AppHttp http, Path versionsDir) throws IOException {
         Path versionsFile = versionsDir.resolve("version_manifest_v2.json");
-        DownloadTask downloadTask = DownloadTask.builder()
+        DownloadTask downloadTask = DownloadTask.builder(http)
                 .url(Constants.MC_VERSIONS)
                 .dest(versionsFile)
                 .withValidation(DownloadValidation.of()
@@ -84,11 +86,11 @@ public class VersionListManifest {
     }
 
     @Nullable
-    public VersionManifest resolve(Path versionsFolder, String id) throws IOException {
+    public VersionManifest resolve(AppHttp appHttp, Path versionsFolder, String id) throws IOException {
         VersionListManifest.Version version = locate(id);
         if (version == null) return null;
 
-        return VersionManifest.update(versionsFolder, version);
+        return VersionManifest.update(appHttp, versionsFolder, version);
     }
 
     /**
@@ -100,8 +102,8 @@ public class VersionListManifest {
      * @throws IOException If an IO Error occurs.
      */
     @Nullable
-    public VersionManifest resolveOrLocal(Path versionsFolder, String id) throws IOException {
-        VersionManifest ret = resolve(versionsFolder, id);
+    public VersionManifest resolveOrLocal(AppHttp http, Path versionsFolder, String id) throws IOException {
+        VersionManifest ret = resolve(http, versionsFolder, id);
         if (ret != null) return ret;
 
         LOGGER.info("Version {} not found on remote list, trying locally.", id);

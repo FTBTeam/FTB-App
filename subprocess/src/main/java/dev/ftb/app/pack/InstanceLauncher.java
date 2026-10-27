@@ -328,12 +328,12 @@ public class InstanceLauncher {
             Path javaExecutable;
             
             // Let's pull the info directly from Minecrafts manifests
-            var locatedVersion = VersionListManifest.update(versionsDir).locate(instance.props.mcVersion);
+            var locatedVersion = VersionListManifest.update(this.instance.factory().httpClient(), versionsDir).locate(instance.props.mcVersion);
             if (locatedVersion == null) {
                 throw new RuntimeException("Failed to find version manifest for " + instance.props.mcVersion);
             }
 
-            VersionManifest manifest = VersionManifest.update(versionsDir, locatedVersion);
+            VersionManifest manifest = VersionManifest.update(this.instance.factory().httpClient(), versionsDir, locatedVersion);
             
             if (instance.props.embeddedJre) {
                 ProvisionRequest.Builder provisionBuilder = new ProvisionRequest.Builder()
@@ -538,14 +538,14 @@ public class InstanceLauncher {
 
     private void prepareManifests(CancellationToken token, Path versionsDir) throws IOException, InstanceLaunchException {
         manifests.clear();
-        VersionListManifest versions = VersionListManifest.update(versionsDir);
+        VersionListManifest versions = VersionListManifest.update(this.factory().httpClient(), versionsDir);
         Set<String> seen = new HashSet<>();
         String id = instance.props.modLoader;
         while (id != null) {
             token.throwIfCancelled();
             if (!seen.add(id)) throw new IllegalStateException("Circular VersionManifest reference. Root: " + instance.props.modLoader);
             LOGGER.info("Preparing manifest {}", id);
-            VersionManifest manifest = versions.resolveOrLocal(versionsDir, id);
+            VersionManifest manifest = versions.resolveOrLocal(instance.factory().httpClient(), versionsDir, id);
             if (manifest == null) {
                 throw new InstanceLaunchException("Failed to prepare instance. Missing installed version " + id + ". Please validate/re-install.");
             }
@@ -565,9 +565,9 @@ public class InstanceLauncher {
             LOGGER.info("Old manifest with broken assets. Querying vanilla manifest for assets..");
             if (manifest.assets == null) {
                 LOGGER.warn("Version '{}' does not have an assetIndex. Assuming Legacy. (Harvesting from {})", manifest.id, LEGACY_ASSETS_VERSION);
-                index = VersionManifest.assetsFor(versionsDir, LEGACY_ASSETS_VERSION);
+                index = VersionManifest.assetsFor(this.instance.factory().httpClient(), versionsDir, LEGACY_ASSETS_VERSION);
             } else {
-                index = VersionManifest.assetsFor(versionsDir, manifest.assets);
+                index = VersionManifest.assetsFor(this.instance.factory().httpClient(), versionsDir, manifest.assets);
             }
             if (index == null) {
                 LOGGER.error("Unable to find assets for '{}'.", manifest.id);
@@ -575,7 +575,7 @@ public class InstanceLauncher {
             }
         }
 
-        InstallAssetsTask assetsTask = new InstallAssetsTask(this.factory().appPaths(), this.factory().threads(), index);
+        InstallAssetsTask assetsTask = new InstallAssetsTask(this.factory().httpClient(), this.factory().appPaths(), this.factory().threads(), index);
         if (!assetsTask.isRedundant()) {
             try {
                 assetsTask.execute(token, progressTracker.listenerForStep(true));
@@ -611,7 +611,7 @@ public class InstanceLauncher {
 
     private void validateClient(CancellationToken token, Path versionsDir) throws IOException {
         VersionManifest vanillaManifest = manifests.get(0);
-        DownloadTask task = vanillaManifest.getClientDownload(versionsDir, getClientId());
+        DownloadTask task = vanillaManifest.getClientDownload(this.instance.factory().httpClient(), versionsDir, getClientId());
         if (task != null) {
             LOGGER.info("Validating client download for {}", vanillaManifest.id);
             task.execute(token, progressTracker.listenerForStep(true));
@@ -622,7 +622,7 @@ public class InstanceLauncher {
         LOGGER.info("Validating minecraft libraries...");
         List<DownloadTask> tasks = new LinkedList<>();
         for (VersionManifest.Library library : libraries) {
-            DownloadTask task = library.createDownloadTask(librariesDir, true);
+            DownloadTask task = library.createDownloadTask(this.instance.factory().httpClient(), librariesDir, true);
             if (task != null && !task.isRedundant()) {
                 tasks.add(task);
             }
@@ -632,7 +632,7 @@ public class InstanceLauncher {
                 .mapToLong(e -> {
                     if (e.getValidation().expectedSize == -1) {
                         // Try and HEAD request the content length.
-                        return DownloadTask.getContentLength(e.getUrl());
+                        return DownloadTask.getContentLength(this.factory().httpClient(), e.getUrl());
                     }
                     return e.getValidation().expectedSize;
                 })

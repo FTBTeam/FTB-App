@@ -74,7 +74,7 @@ public class Instances {
         this.appHttp = appHttp;
         this.jdkManager = jdkManager;
         
-        this.supportMeta = new InstanceSupportMeta(appPaths);
+        this.supportMeta = new InstanceSupportMeta(appPaths, this.appHttp);
     }
 
     @Nullable

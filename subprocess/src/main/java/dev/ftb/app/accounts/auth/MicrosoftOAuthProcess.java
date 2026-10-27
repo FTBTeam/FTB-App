@@ -3,6 +3,7 @@ package dev.ftb.app.accounts.auth;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import dev.ftb.app.accounts.data.*;
+import dev.ftb.app.services.AppHttp;
 import dev.ftb.app.util.Result;
 
 public class MicrosoftOAuthProcess {
@@ -11,13 +12,13 @@ public class MicrosoftOAuthProcess {
     /**
      * Runs over the entire Microsoft authentication flow. This is quite a few steps and can take a bit to complete fully.
      */
-    public static Result<MinecraftProfileWithAuthData, ErrorWithCode> authWithMinecraft(OAuthTokenHolder xboxTokenHolder) {
-        var stepOne = MicrosoftRequests.authenticateWithXbox(xboxTokenHolder.accessToken());
+    public static Result<MinecraftProfileWithAuthData, ErrorWithCode> authWithMinecraft(AppHttp http, OAuthTokenHolder xboxTokenHolder) {
+        var stepOne = MicrosoftRequests.authenticateWithXbox(http, xboxTokenHolder.accessToken());
         if (stepOne.isErr()) {
             return Result.err(stepOne.unwrapErr().extendMessageIfRequestError("Failed to authenticate with Xbox"));
         }
         
-        var stepTwo = MicrosoftRequests.authenticateWithXSTS(stepOne.unwrap().get("Token").getAsString());
+        var stepTwo = MicrosoftRequests.authenticateWithXSTS(http, stepOne.unwrap().get("Token").getAsString());
         if (stepTwo.isErr()) {
             return Result.err(stepTwo.unwrapErr().extendMessageIfRequestError("Failed to authenticate with XSTS"));
         }
@@ -39,6 +40,7 @@ public class MicrosoftOAuthProcess {
         String userHash = userHashRes.unwrap();
         
         var stepThree = MicrosoftRequests.authenticateWithMinecraft(
+            http,
             stepTwoData.get("Token").getAsString(),
             userHash
         );
@@ -50,7 +52,7 @@ public class MicrosoftOAuthProcess {
         var minecraftAccessToken = stepThree.unwrap().get("access_token").getAsString();
         var minecraftExpiresIn = stepThree.unwrap().get("expires_in").getAsInt();
         
-        var profile = checkEntitlementsAndGetProfile(minecraftAccessToken);
+        var profile = checkEntitlementsAndGetProfile(http, minecraftAccessToken);
         if (profile.isErr()) {
             return Result.err(profile.unwrapErr());
         }
@@ -87,13 +89,13 @@ public class MicrosoftOAuthProcess {
         return hasProductMinecraft || hasGameMinecraft;
     }
     
-    public static Result<MinecraftProfileData, ErrorWithCode> checkEntitlementsAndGetProfile(String minecraftAccessToken) {
-        var entitlements = MicrosoftRequests.queryEntitlements(minecraftAccessToken);
+    public static Result<MinecraftProfileData, ErrorWithCode> checkEntitlementsAndGetProfile(AppHttp http, String minecraftAccessToken) {
+        var entitlements = MicrosoftRequests.queryEntitlements(http, minecraftAccessToken);
         var failedToQueryEntitlements = entitlements.isErr();
 
         // Validate the entitlements
         var hasGame = entitlements.isOk() && validateEntitlements(entitlements.unwrap());
-        var profile = MicrosoftRequests.queryProfile(minecraftAccessToken);
+        var profile = MicrosoftRequests.queryProfile(http, minecraftAccessToken);
         
         if (profile.isErr()) {
             // Default to an entitlement error if we don't have the game and the profile request failed

@@ -64,9 +64,7 @@ public class InstanceOverrideModLoaderHandler implements IMessageHandler<Instanc
                         instance,
                         instance.getMcVersion(),
                         target.getName(),
-                        target.getVersion(),
-                        context.services().paths(),
-                        context.services().settings()
+                        target.getVersion()
                 );
 
                 task.execute(null, null);

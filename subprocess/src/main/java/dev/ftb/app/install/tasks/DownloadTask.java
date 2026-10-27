@@ -5,6 +5,7 @@ import com.google.common.hash.HashFunction;
 import dev.ftb.app.Constants;
 import dev.ftb.app.install.FileValidation;
 import dev.ftb.app.pack.CancellationToken;
+import dev.ftb.app.services.AppHttp;
 import dev.ftb.app.util.SSLUtils;
 import dev.ftb.app.util.X509Formatter;
 import net.covers1624.quack.io.IOUtils;
@@ -13,10 +14,7 @@ import net.covers1624.quack.util.MultiHasher;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
 import net.covers1624.quack.util.MultiHasher.HashResult;
 import net.covers1624.quack.util.TimeUtils;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
+import okhttp3.*;
 import okio.*;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -57,11 +55,14 @@ public class DownloadTask implements Task {
     private final LocalFileLocator fileLocator;
     private final boolean tryCompanionHashes;
     private final boolean tryResumeDownload;
+    
+    private final AppHttp http;
 
     private DownloadTask(Builder builder) {
         if (builder.urls.isEmpty()) throw new IllegalStateException("URL not set.");
         if (builder.dest == null) throw new IllegalStateException("Dest not set.");
 
+        http = builder.http;
         tries = builder.tries;
         urls = builder.urls;
         dest = builder.dest;
@@ -78,8 +79,8 @@ public class DownloadTask implements Task {
      *
      * @return The {@link Builder}.
      */
-    public static Builder builder() {
-        return new Builder();
+    public static Builder builder(AppHttp http) {
+        return new Builder(http);
     }
 
     @Override
@@ -126,7 +127,7 @@ public class DownloadTask implements Task {
 
             for (int i = 0; i < tries; i++) {
                 try {
-                    doRequest(url, Constants.httpClient(), dest, validation, progressListener);
+                    doRequest(url, http.httpClient(), dest, validation, progressListener);
                     success = true;
                     break outer;
                 } catch (Throwable ex) {
@@ -137,7 +138,7 @@ public class DownloadTask implements Task {
             LOGGER.warn("Download failed 3 times. Trying HTTP/1.1");
             for (int i = 0; i < tries; i++) {
                 try {
-                    doRequest(url, Constants.http1Client(), dest, validation, progressListener);
+                    doRequest(url, http.httpClient(Protocol.HTTP_1_1), dest, validation, progressListener);
                     success = true;
                     break outer;
                 } catch (Throwable ex) {
@@ -179,7 +180,7 @@ public class DownloadTask implements Task {
         Throwable fail = null;
         for (int i = 0; i < tries; i++) {
             try {
-                doRequest(url + ext, Constants.httpClient(), dest, DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true), null);
+                doRequest(url + ext, http.httpClient(), dest, DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true), null);
                 fail = null;
                 break;
             } catch (Throwable ex) {
@@ -216,7 +217,7 @@ public class DownloadTask implements Task {
             LOGGER.info("  Downloading url: {}", url);
             Request.Builder builder = new Request.Builder()
                     .url(url)
-                    .addHeader("User-Agent", Constants.USER_AGENT.get());
+                    .addHeader("User-Agent", this.http.userAgent().get());
 
             if (url.startsWith("https://edge.forgecdn.net/files")) {
                 builder.addHeader("x-api-key", Constants.curseForgeApiKey());
@@ -414,13 +415,13 @@ public class DownloadTask implements Task {
     //@formatter:on
 
     // TODO CONVERT TO INSTANCE METHOD WHICH TRIES MIRRORS.
-    public static long getContentLength(String url) {
+    public static long getContentLength(AppHttp http, String url) {
         try {
             Request request = new Request.Builder()
                     .head()
                     .url(url)
                     .build();
-            try (Response response = Constants.httpClient().newCall(request).execute()) {
+            try (Response response = http.httpClient().newCall(request).execute()) {
                 ResponseBody body = response.body();
                 if (body != null) return body.contentLength();
 
@@ -437,8 +438,8 @@ public class DownloadTask implements Task {
      *
      * @return The {@link Builder}.
      */
-    public Builder toBuilder() {
-        Builder builder = new Builder();
+    public Builder toBuilder(AppHttp http) {
+        Builder builder = new Builder(http);
         builder.urls = new LinkedList<>(urls);
         builder.dest = dest;
         builder.validation = validation;
@@ -459,8 +460,11 @@ public class DownloadTask implements Task {
         private LocalFileLocator fileLocator;
         private boolean tryCompanionHashes;
         private boolean tryResumeDownload;
+        private final AppHttp http;
 
-        private Builder() { }
+        private Builder(AppHttp http) {
+            this.http = http;
+        }
 
         public Builder tries(int tries) {
             this.tries = tries;

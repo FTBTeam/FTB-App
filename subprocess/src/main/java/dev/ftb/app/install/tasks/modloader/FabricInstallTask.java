@@ -5,6 +5,7 @@ import dev.ftb.app.install.tasks.DownloadTask;
 import dev.ftb.app.install.tasks.TaskProgressListener;
 import dev.ftb.app.minecraft.jsons.VersionManifest;
 import dev.ftb.app.pack.CancellationToken;
+import dev.ftb.app.services.AppHttp;
 import net.covers1624.quack.gson.JsonUtils;
 import org.jspecify.annotations.Nullable;
 
@@ -20,20 +21,22 @@ public abstract class FabricInstallTask extends ModLoaderInstallTask {
 
     private final String versionName;
     private final AppPaths paths;
+    private final AppHttp http;
 
-    private FabricInstallTask(AppPaths paths, String loaderName, String mcVersion, String loaderVersion) {
+    private FabricInstallTask(AppPaths paths, AppHttp http, String loaderName, String mcVersion, String loaderVersion) {
         this.paths = paths;
+        this.http = http;
         this.mcVersion = mcVersion;
         this.loaderVersion = loaderVersion;
 
         versionName = loaderName + "-" + mcVersion + "-" + loaderVersion;
     }
 
-    public static FabricInstallTask fabric(AppPaths paths, String mcVersion, String loaderVersion) {
-        return new FabricInstallTask(paths, "fabric-loader", mcVersion, loaderVersion) {
+    public static FabricInstallTask fabric(AppPaths paths, AppHttp http, String mcVersion, String loaderVersion) {
+        return new FabricInstallTask(paths, http, "fabric-loader", mcVersion, loaderVersion) {
             @Override
             protected DownloadTask getProfileDownload(Path dest) {
-                return DownloadTask.builder()
+                return DownloadTask.builder(http)
                         .url(FABRIC_META + "v2/versions/loader/" + mcVersion + "/" + loaderVersion + "/profile/json")
                         .dest(dest)
                         .build();
@@ -49,7 +52,7 @@ public abstract class FabricInstallTask extends ModLoaderInstallTask {
         Path versionJson = versionsDir.resolve(versionName).resolve(versionName + ".json");
 
         VersionManifest loaderManifest = downloadLoaderManifest(versionJson, cancelToken);
-        downloadVanilla(versionsDir, mcVersion);
+        downloadVanilla(this.http, versionsDir, mcVersion);
 
         for (VersionManifest.Library library : loaderManifest.libraries) {
             if (cancelToken != null) cancelToken.throwIfCancelled();
@@ -63,7 +66,7 @@ public abstract class FabricInstallTask extends ModLoaderInstallTask {
     }
 
     private void processLibrary(@Nullable CancellationToken token, Path librariesDir, VersionManifest.Library library) throws IOException {
-        DownloadTask task = library.createDownloadTask(librariesDir, true);
+        DownloadTask task = library.createDownloadTask(this.http, librariesDir, true);
         if (task == null) throw new IOException("Unable to download or locate library: " + library.name);
 
         if (!task.isRedundant()) {

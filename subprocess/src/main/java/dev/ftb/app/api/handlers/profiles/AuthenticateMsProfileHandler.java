@@ -13,7 +13,7 @@ import org.jspecify.annotations.Nullable;
 public class AuthenticateMsProfileHandler implements IMessageHandler<AuthenticateMsProfileHandler.Data> {
     @Override
     public void handle(MessageContext context, Data data) {
-        var result = MicrosoftOAuthProcess.authWithMinecraft(new OAuthTokenHolder(
+        var result = MicrosoftOAuthProcess.authWithMinecraft(context.services().http(), new OAuthTokenHolder(
                 data.liveAccessToken,
                 data.liveRefreshToken,
                 data.liveExpires

@@ -253,7 +253,7 @@ public class Instance {
             tempFile = Files.createTempFile("art", "");
             Files.delete(tempFile);
             var extension = art.getUrl().substring(art.getUrl().lastIndexOf(".") + 1);
-            DownloadTask task = DownloadTask.builder()
+            DownloadTask task = DownloadTask.builder(this.factory.httpClient())
                 .url(art.getUrl())
                 .dest(tempFile)
                 .build();
@@ -421,7 +421,7 @@ public class Instance {
                 for (InstanceSupportMeta.SupportEntry agent : supportMeta.getSupportAgents()) {
                     for (InstanceSupportMeta.SupportFile file : agent.getFiles()) {
                         if (!file.canApply(props.modLoader, os)) continue;
-                        file.createTask(path).execute(null, null);
+                        file.createTask(this.factory.httpClient(), path).execute(null, null);
                         ctx.extraJVMArgs.add("-javaagent:" + file.getName());
                     }
                 }
@@ -430,7 +430,7 @@ public class Instance {
             if (!scanner.hasLegacyJavaFixer()) {
                 for (InstanceSupportMeta.SupportFile file : supportMeta.getSupportMods("legacyjavafixer")) {
                     if (!file.canApply(props.modLoader, os)) continue;
-                    file.createTask(path.resolve("mods")).execute(null, null);
+                    file.createTask(this.factory.httpClient(), path.resolve("mods")).execute(null, null);
                 }
             }
         });

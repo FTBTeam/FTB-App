@@ -7,6 +7,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import dev.ftb.app.install.tasks.DownloadTask;
+import dev.ftb.app.services.AppHttp;
 import dev.ftb.app.util.GsonUtils;
 import net.covers1624.quack.gson.HashCodeAdapter;
 import org.apache.logging.log4j.LogManager;
@@ -46,11 +47,11 @@ public class AssetIndexManifest {
      * @throws IOException        Thrown when an error occurs whilst loading the manifest.
      * @throws JsonParseException Thrown when the Json cannot be parsed.
      */
-    public static AssetIndexManifest update(Path assetsDir, VersionManifest.AssetIndex assetIndex) throws IOException {
+    public static AssetIndexManifest update(AppHttp http, Path assetsDir, VersionManifest.AssetIndex assetIndex) throws IOException {
         Path assetIndexFile = assetsDir.resolve("indexes/" + assetIndex.getId() + ".json");
         LOGGER.info("Updating AssetIndex Manifest for '{}' from '{}'.", assetIndex.getId(), assetIndex.getUrl());
 
-        DownloadTask downloadTask = DownloadTask.builder()
+        DownloadTask downloadTask = DownloadTask.builder(http)
                 .url(assetIndex.getUrl())
                 .dest(assetIndexFile)
                 .withValidation(assetIndex.validation()

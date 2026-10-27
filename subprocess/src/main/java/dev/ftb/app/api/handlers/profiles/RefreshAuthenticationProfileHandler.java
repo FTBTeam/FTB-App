@@ -27,7 +27,7 @@ public class RefreshAuthenticationProfileHandler implements IMessageHandler<Refr
      * Refresh using Microsoft flow
      */
     private void refreshMicrosoft(MessageContext context, Data data, MicrosoftProfile profile) {
-        var result = profile.refreshAccount(context.services().accounts());
+        var result = profile.refreshAccount(context.services().http(), context.services().accounts());
         if (!result) {
             context.reply(new Reply(data, false, "Failed to refresh account"));
             return;

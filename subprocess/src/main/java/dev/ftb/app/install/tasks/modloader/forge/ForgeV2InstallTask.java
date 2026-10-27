@@ -5,15 +5,12 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import dev.ftb.app.AppPaths;
-import dev.ftb.app.Constants;
 import dev.ftb.app.data.forge.installerv2.InstallManifest;
 import dev.ftb.app.install.tasks.DownloadTask;
 import dev.ftb.app.install.tasks.TaskProgressListener;
 import dev.ftb.app.minecraft.jsons.VersionManifest;
 import dev.ftb.app.pack.CancellationToken;
 import dev.ftb.app.pack.Instance;
-import dev.ftb.app.storage.settings.Settings;
 import dev.ftb.app.util.StreamGobblerLog;
 import joptsimple.OptionException;
 import joptsimple.OptionParser;
@@ -52,18 +49,16 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
 
     private final Instance instance;
     private final Path installerJar;
-    private final AppPaths appPaths;
-    private final Settings settings;
 
-    public ForgeV2InstallTask(AppPaths appPaths, Settings settings, Instance instance, Path installerJar) {
-        this.appPaths = appPaths;
-        this.settings = settings;
+    public ForgeV2InstallTask(Instance instance, Path installerJar) {
         this.instance = instance;
         this.installerJar = installerJar;
     }
 
     @Override
     public void execute(@Nullable CancellationToken cancelToken, @Nullable TaskProgressListener listener) throws Throwable {
+        var appPaths = instance.factory().appPaths();
+        
         Path versionsDir = appPaths.mcVersionsDir();
         Path librariesDir = appPaths.mcLibrariesDir();
 
@@ -80,11 +75,11 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
                     IOUtils.makeParents(versionsDir.resolve(instManifest.version).resolve(instManifest.version + ".json")),
                     StandardCopyOption.REPLACE_EXISTING
             );
-            VersionManifest vanillaManifest = downloadVanilla(versionsDir, instManifest.minecraft);
+            VersionManifest vanillaManifest = downloadVanilla(this.instance.factory().httpClient(), versionsDir, instManifest.minecraft);
 
             for (VersionManifest.Library library : Stream.concat(forgeManifest.libraries.stream(), instManifest.libraries.stream()).toList()) {
                 if (cancelToken != null) cancelToken.throwIfCancelled();
-                processLibrary(cancelToken, installerRoot, librariesDir, library);
+                processLibrary(cancelToken, this.instance.factory().httpClient(), installerRoot, librariesDir, library);
             }
 
             Map<String, String> dataCache = null;
@@ -108,14 +103,14 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
         String javaTarget = instance.versionManifest.getTargetVersion("runtime");
         Path javaHome;
         if (javaTarget == null) {
-            javaHome = Constants.getJdkManager().provisionJdk(
+            javaHome = instance.factory().jdkInstallationManager().provisionJdk(
                     new ProvisionRequest.Builder()
                             .forVersion(vanillaManifest.getJavaVersionOrDefault(JavaVersion.JAVA_1_8))
                             .preferJRE(true)
                             .build()
             );
         } else {
-            javaHome = Constants.getJdkManager().provisionJdk(
+            javaHome = instance.factory().jdkInstallationManager().provisionJdk(
                     new ProvisionRequest.Builder()
                             .withSemver(javaTarget)
                             .preferJRE(true)
@@ -161,7 +156,7 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
         data.put("SIDE", "client");
         data.put("MINECRAFT_JAR", versionsDir.resolve(vanillaManifest.id).resolve(vanillaManifest.id + ".jar").toAbsolutePath().toString());
         data.put("MINECRAFT_VERSION", vanillaManifest.id);
-        data.put("ROOT", this.appPaths.binDir().toAbsolutePath().toString());
+        data.put("ROOT", instance.factory().appPaths().binDir().toAbsolutePath().toString());
         data.put("INSTALLER", installerJar.toAbsolutePath().toString());
         data.put("LIBRARY_DIR", librariesDir.toAbsolutePath().toString());
 
@@ -284,7 +279,7 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
         command.addAll(args);
 
         ProcessBuilder builder = new ProcessBuilder()
-                .directory(this.appPaths.binDir().toFile())
+                .directory(instance.factory().appPaths().binDir().toFile())
                 .command(command);
         LOGGER.info("Starting processor with command '{}'", String.join(" ", builder.command()));
         try {
@@ -331,7 +326,7 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
                     LOGGER.warn("Output '{}' failed to validate.", output);
                     LOGGER.warn(" Expected: {}", value);
                     LOGGER.warn(" Got     : {}", hash);
-                    if (this.settings.ignoreForgeProcessorOutputHashes()) {
+                    if (instance.factory().settings().ignoreForgeProcessorOutputHashes()) {
                         LOGGER.warn("Ignoring invalid hash. Workaround active.");
                     } else {
                         validated = false;
@@ -368,7 +363,7 @@ public class ForgeV2InstallTask extends AbstractForgeInstallTask {
             return false;
         }
 
-        DownloadTask task = vanillaManifest.getDownload(side + "_mappings", output);
+        DownloadTask task = vanillaManifest.getDownload(this.instance.factory().httpClient(), side + "_mappings", output);
         if (task == null) {
             LOGGER.warn("Failed to find {}_mappings download. Falling back to InstallerTools invoke.", side);
             return false;

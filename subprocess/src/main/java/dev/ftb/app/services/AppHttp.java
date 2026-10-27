@@ -86,4 +86,8 @@ public class AppHttp {
             default -> throw new IllegalArgumentException("Unsupported protocol: " + protocol);
         };
     }
+
+    public Supplier<String> userAgent() {
+        return userAgent;
+    }
 }

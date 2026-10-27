@@ -467,9 +467,7 @@ public class InstanceInstaller extends InstanceOperation {
                         instance,
                         instance.getMcVersion(),
                         modLoaderTarget.getName(),
-                        modLoaderTarget.getVersion(),
-                        this.appPaths,
-                        this.settings
+                        modLoaderTarget.getVersion()
                 );
             } catch (IOException ex) {
                 throw new IllegalStateException("Failed to prepare ModLoader install task.", ex);
@@ -500,7 +498,7 @@ public class InstanceInstaller extends InstanceOperation {
                 continue;
             }
 
-            DownloadTask task = DownloadTask.builder()
+            DownloadTask task = DownloadTask.builder(this.instance.factory().httpClient())
                     .url(file.getUrl())
                     .withMirrors(file.getMirror())
                     .dest(filePath)
@@ -510,7 +508,7 @@ public class InstanceInstaller extends InstanceOperation {
             if (!task.isRedundant()) {
                 long size = file.getSize();
                 if (size <= 0) {
-                    size = DownloadTask.getContentLength(file.getUrl());
+                    size = DownloadTask.getContentLength(this.instance.factory().httpClient(), file.getUrl());
                 }
                 filesToDownload.add(task.getDest());
                 tasks.add(new DlTask(size, task));

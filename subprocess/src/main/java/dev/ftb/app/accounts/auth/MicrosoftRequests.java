@@ -2,15 +2,11 @@ package dev.ftb.app.accounts.auth;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import dev.ftb.app.Constants;
 import dev.ftb.app.accounts.data.CodedError;
 import dev.ftb.app.accounts.data.ErrorWithCode;
+import dev.ftb.app.services.AppHttp;
 import dev.ftb.app.util.Result;
-import okhttp3.MediaType;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
+import okhttp3.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,8 +29,9 @@ public class MicrosoftRequests {
                 .header("Accept", "application/json");
     }
 
-    public static Result<JsonObject, ErrorWithCode> refreshWithXbox(String refreshToken) {
+    public static Result<JsonObject, ErrorWithCode> refreshWithXbox(AppHttp http, String refreshToken) {
         return standardJsonReq(
+            http,
             newStandardRequest()
                 .url("https://login.microsoftonline.com/consumers/oauth2/v2.0/token")
                 .post(RequestBody.create(
@@ -51,8 +48,9 @@ public class MicrosoftRequests {
     /**
      * Authenticate with Microsoft using an Xbox access token
      */
-    public static Result<JsonObject, ErrorWithCode> authenticateWithXbox(String accessToken) {
+    public static Result<JsonObject, ErrorWithCode> authenticateWithXbox(AppHttp http, String accessToken) {
         return standardJsonReq(
+            http,
             newStandardRequest()
                 .url("https://user.auth.xboxlive.com/user/authenticate")
                 .post(mapToJsonBody(Map.of(
@@ -71,8 +69,9 @@ public class MicrosoftRequests {
     /**
      * Authenticate with XSTS using a token from the previous step
      */
-    public static Result<JsonObject, ErrorWithCode> authenticateWithXSTS(String token) {
+    public static Result<JsonObject, ErrorWithCode> authenticateWithXSTS(AppHttp http, String token) {
         var res = standardJsonReq(
+            http,
             newStandardRequest()
                 .url("https://xsts.auth.xboxlive.com/xsts/authorize")
                 .post(mapToJsonBody(Map.of(
@@ -101,8 +100,9 @@ public class MicrosoftRequests {
         return res;
     }
 
-    public static Result<JsonObject, ErrorWithCode> authenticateWithMinecraft(String token, String userHash) {
+    public static Result<JsonObject, ErrorWithCode> authenticateWithMinecraft(AppHttp http, String token, String userHash) {
         var firstLoginAttempt = standardJsonReq(
+            http,
             newStandardRequest()
                 .url("https://api.minecraftservices.com/launcher/login")
                 .post(mapToJsonBody(Map.of(
@@ -118,6 +118,7 @@ public class MicrosoftRequests {
         
         // Try the other known good login endpoint
         return standardJsonReq(
+            http,
             newStandardRequest()
                 .url("https://api.minecraftservices.com/authentication/login_with_xbox")
                 .post(mapToJsonBody(Map.of(
@@ -127,8 +128,9 @@ public class MicrosoftRequests {
         );
     }
 
-    public static Result<JsonObject, ErrorWithCode> queryEntitlements(String accessToken) {
+    public static Result<JsonObject, ErrorWithCode> queryEntitlements(AppHttp http, String accessToken) {
         var firstEndpoint = standardJsonReq(
+            http,
             newStandardRequest()
                 .url("https://api.minecraftservices.com/entitlements/license?requestId=" + UUID.randomUUID())
                 .header("Authorization", "Bearer " + accessToken).get(),
@@ -141,14 +143,16 @@ public class MicrosoftRequests {
         
         // Try the other known good endpoint
         return standardJsonReq(
+            http,
             newStandardRequest()
                 .url("https://api.minecraftservices.com/entitlements/mcstore?requestId=" + UUID.randomUUID())
                 .header("Authorization", "Bearer " + accessToken).get(),
             json -> json.has("items"));
     }
     
-    public static Result<JsonObject, ErrorWithCode> queryProfile(String accessToken) {
+    public static Result<JsonObject, ErrorWithCode> queryProfile(AppHttp http, String accessToken) {
         return standardJsonReq(
+            http,
             newStandardRequest()
                 .url("https://api.minecraftservices.com/minecraft/profile")
                 .header("Authorization", "Bearer " + accessToken)
@@ -170,19 +174,20 @@ public class MicrosoftRequests {
         };
     }
     
-    private static Result<JsonObject, ErrorWithCode> standardJsonReq(Request.Builder builder, Function<JsonObject, Boolean> validator) {
-        return standardJsonReq(builder, validator, false);
+    private static Result<JsonObject, ErrorWithCode> standardJsonReq(AppHttp http, Request.Builder builder, Function<JsonObject, Boolean> validator) {
+        return standardJsonReq(http, builder, validator, false);
     }
     
     /**
      * Runs a standard request with post 
      */
     private static Result<JsonObject, ErrorWithCode> standardJsonReq(
+        AppHttp http,
         Request.Builder builder,
         Function<JsonObject, Boolean> validator,
         boolean bypassIsSuccessful
     ) {
-        var response = request(builder);
+        var response = request(http, builder);
 
         if (response.isErr()) {
             return Result.err(logAndCreateError(CodedError.COMPLETE_REQUEST_FAILURE));
@@ -231,8 +236,8 @@ public class MicrosoftRequests {
     /**
      * Log wrapped request data and execute the request
      */
-    private static Result<Response, String> request(Request.Builder builder) {
-        var client = Constants.httpClient();
+    private static Result<Response, String> request(AppHttp http, Request.Builder builder) {
+        var client = http.httpClient();
         var request = builder.build();
         
         try {

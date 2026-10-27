@@ -158,7 +158,7 @@ public class ModInstaller implements ModCollector {
                 ModInfo selfExisting = onlyOrDefault(existingMods.stream()
                         .filter(e -> e.curse() != null && e.curse().curseProject() == modId), null);
                 String suffix = selfExisting != null && !selfExisting.enabled() ? ".disabled" : "";
-                DownloadTask task = DownloadTask.builder()
+                DownloadTask task = DownloadTask.builder(this.appHttp)
                         .url(version.getUrl())
                         .dest(instance.getDir().resolve(version.getPath()).resolve(version.getName() + suffix))
                         .withValidation(version.createValidation().asDownloadValidation())
@@ -167,7 +167,7 @@ public class ModInstaller implements ModCollector {
                 if (!task.isRedundant()) {
                     long size = version.getSize();
                     if (size <= 0) {
-                        size = DownloadTask.getContentLength(version.getUrl());
+                        size = DownloadTask.getContentLength(this.appHttp, version.getUrl());
                     }
                     totalSize += size;
                     tasks.add((cancelToken, listener) -> {

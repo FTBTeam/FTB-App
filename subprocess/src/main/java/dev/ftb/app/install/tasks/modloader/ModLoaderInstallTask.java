@@ -1,13 +1,12 @@
 package dev.ftb.app.install.tasks.modloader;
 
-import dev.ftb.app.AppPaths;
 import dev.ftb.app.install.tasks.DownloadTask;
 import dev.ftb.app.install.tasks.Task;
 import dev.ftb.app.install.tasks.modloader.forge.AbstractForgeInstallTask;
 import dev.ftb.app.minecraft.jsons.VersionListManifest;
 import dev.ftb.app.minecraft.jsons.VersionManifest;
 import dev.ftb.app.pack.Instance;
-import dev.ftb.app.storage.settings.Settings;
+import dev.ftb.app.services.AppHttp;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.maven.artifact.versioning.InvalidVersionSpecificationException;
@@ -44,24 +43,24 @@ public abstract class ModLoaderInstallTask implements Task {
 
     public abstract String getModLoaderTarget();
 
-    public static ModLoaderInstallTask createInstallTask(Instance instance, String mcVersion, String mlName, String mlVersion, AppPaths paths, Settings settings) throws IOException {
+    public static ModLoaderInstallTask createInstallTask(Instance instance, String mcVersion, String mlName, String mlVersion) throws IOException {
         return switch (mlName) {
-            case "neoforge" -> AbstractForgeInstallTask.createNeoForgeInstallTask(instance, mcVersion, mlVersion, paths, settings);
-            case "forge" -> AbstractForgeInstallTask.createInstallTask(instance, mcVersion, mlVersion, paths, settings);
-            case "fabric" -> FabricInstallTask.fabric(paths, mcVersion, mlVersion);
+            case "neoforge" -> AbstractForgeInstallTask.createNeoForgeInstallTask(instance, mcVersion, mlVersion);
+            case "forge" -> AbstractForgeInstallTask.createInstallTask(instance, mcVersion, mlVersion);
+            case "fabric" -> FabricInstallTask.fabric(instance.factory().appPaths(), instance.factory().httpClient(), mcVersion, mlVersion);
             default -> throw new IllegalArgumentException("Unknown ModLoader name: " + mlName);
         };
     }
 
-    protected static VersionManifest downloadVanilla(Path versionsDir, String version) throws IOException {
-        VersionListManifest listManifest = VersionListManifest.update(versionsDir);
-        VersionManifest manifest = listManifest.resolve(versionsDir, version);
+    protected static VersionManifest downloadVanilla(AppHttp http, Path versionsDir, String version) throws IOException {
+        VersionListManifest listManifest = VersionListManifest.update(http, versionsDir);
+        VersionManifest manifest = listManifest.resolve(http, versionsDir, version);
         if (manifest == null) {
             LOGGER.error("No vanilla version manifest found for {}", version);
             throw new IOException("No vanilla version manifest found for " + version);
         }
 
-        DownloadTask clientDownload = manifest.getClientDownload(versionsDir, manifest.id);
+        DownloadTask clientDownload = manifest.getClientDownload(http, versionsDir, manifest.id);
         if (clientDownload == null) {
             LOGGER.warn("Failed to find 'client' download for {}. Skipping..", version);
             return manifest;

@@ -5,6 +5,7 @@ import dev.ftb.app.accounts.auth.MicrosoftOAuthProcess;
 import dev.ftb.app.accounts.auth.MicrosoftRequests;
 import dev.ftb.app.accounts.data.ErrorWithCode;
 import dev.ftb.app.accounts.data.MinecraftProfileData;
+import dev.ftb.app.services.AppHttp;
 import dev.ftb.app.util.Result;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -69,10 +70,10 @@ public class MicrosoftProfile {
     /**
      * Refreshes the account if needed
      */
-    public boolean refreshAccount(AccountManager accounts, boolean forceRefresh) {
+    public boolean refreshAccount(AppHttp http, AccountManager accounts, boolean forceRefresh) {
         try {
             LOGGER.info("Refreshing account for {}", this.minecraftName);
-            boolean result = this.unsafeRefreshAccount(accounts, forceRefresh);
+            boolean result = this.unsafeRefreshAccount(http, accounts, forceRefresh);
             if (!result) {
                 LOGGER.error("Failed to refresh account for {}", this.minecraftName);
                 
@@ -90,20 +91,20 @@ public class MicrosoftProfile {
         }
     }
     
-    public boolean refreshAccount(AccountManager accounts) {
-        return this.refreshAccount(accounts, false);
+    public boolean refreshAccount(AppHttp http, AccountManager accounts) {
+        return this.refreshAccount(http, accounts, false);
     }
 
     /**
      * Big thanks to ATLauncher for the rough implementation of this method
      * <a href="https://github.com/ATLauncher/ATLauncher/blob/master/src/main/java/com/atlauncher/data/MicrosoftAccount.java#L159">...</a>
      */
-    private boolean unsafeRefreshAccount(AccountManager accounts, boolean forceRefresh) {
+    private boolean unsafeRefreshAccount(AppHttp http, AccountManager accounts, boolean forceRefresh) {
         var now = Instant.now();
         
         if (forceRefresh || now.getEpochSecond() >= this.microsoftAccessExpiresAt) {
             LOGGER.info("Xbox token expired, refreshing");
-            var refreshResult = MicrosoftRequests.refreshWithXbox(this.microsoftRefreshToken);
+            var refreshResult = MicrosoftRequests.refreshWithXbox(http, this.microsoftRefreshToken);
             if (refreshResult.isErr()) {
                 LOGGER.error("Failed to refresh Xbox token: {}", refreshResult.unwrapErr());
                 return false;
@@ -119,7 +120,7 @@ public class MicrosoftProfile {
         
         if (forceRefresh || now.getEpochSecond() >= this.xstsNotAfter) {
             LOGGER.info("XSTS token expired, refreshing");
-            var xstsResult = MicrosoftRequests.authenticateWithXbox(this.microsoftAccessToken);
+            var xstsResult = MicrosoftRequests.authenticateWithXbox(http, this.microsoftAccessToken);
             if (xstsResult.isErr()) {
                 LOGGER.error("Failed to authenticate with XSTS: {}", xstsResult.unwrapErr());
                 return false;
@@ -132,7 +133,7 @@ public class MicrosoftProfile {
                 return false;
             }
             
-            var xstsTokenResult = MicrosoftRequests.authenticateWithXSTS(xstsData.get("Token").getAsString());
+            var xstsTokenResult = MicrosoftRequests.authenticateWithXSTS(http, xstsData.get("Token").getAsString());
             if (xstsTokenResult.isErr()) {
                 LOGGER.error("Failed to authenticate with XSTS Tokens: {}", xstsTokenResult.unwrapErr());
                 return false;
@@ -159,7 +160,7 @@ public class MicrosoftProfile {
         
         if (forceRefresh || now.getEpochSecond() >= this.minecraftAccessExpiresAt) {
             LOGGER.info("Minecraft token expired, refreshing");
-            var minecraftResult = MicrosoftRequests.authenticateWithMinecraft(this.xstsToken, this.xstsUserHash);
+            var minecraftResult = MicrosoftRequests.authenticateWithMinecraft(http, this.xstsToken, this.xstsUserHash);
             if (minecraftResult.isErr()) {
                 LOGGER.error("Failed to authenticate with Minecraft: {}", minecraftResult.unwrapErr());
                 return false;
@@ -170,7 +171,7 @@ public class MicrosoftProfile {
             this.minecraftAccessExpiresAt = now.plus(Duration.ofSeconds(minecraftData.get("expires_in").getAsLong())).getEpochSecond();
             
             // Now rerun the entitlements check and profile fetching
-            var profile = MicrosoftOAuthProcess.checkEntitlementsAndGetProfile(this.minecraftAccessToken);
+            var profile = MicrosoftOAuthProcess.checkEntitlementsAndGetProfile(http, this.minecraftAccessToken);
             if (profile.isErr()) {
                 LOGGER.error("Failed to check entitlements and get profile: {}", profile.unwrapErr());
                 return false;

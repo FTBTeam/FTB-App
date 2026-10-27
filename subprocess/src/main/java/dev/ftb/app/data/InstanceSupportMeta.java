@@ -7,6 +7,7 @@ import dev.ftb.app.AppPaths;
 import dev.ftb.app.Constants;
 import dev.ftb.app.install.tasks.DownloadTask;
 import dev.ftb.app.install.tasks.DownloadTask.DownloadValidation;
+import dev.ftb.app.services.AppHttp;
 import net.covers1624.quack.gson.HashCodeAdapter;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.platform.OperatingSystem;
@@ -34,9 +35,11 @@ public class InstanceSupportMeta {
     private List<SupportEntry> supportAgents = new LinkedList<>();
 
     private AppPaths appPaths;
+    private AppHttp http;
     
-    public InstanceSupportMeta(AppPaths paths) {
+    public InstanceSupportMeta(AppPaths paths, AppHttp http) {
         this.appPaths = paths;
+        this.http = http;
     }
 
     public void update() throws IOException {
@@ -55,7 +58,7 @@ public class InstanceSupportMeta {
             }
         }
 
-        DownloadTask task = DownloadTask.builder()
+        DownloadTask task = DownloadTask.builder(http)
                 .url(Constants.META_JSON)
                 .dest(metaFile)
                 .withValidation(DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true))
@@ -148,8 +151,8 @@ public class InstanceSupportMeta {
             return validation;
         }
 
-        public DownloadTask createTask(Path destFolder) {
-            return DownloadTask.builder()
+        public DownloadTask createTask(AppHttp http, Path destFolder) {
+            return DownloadTask.builder(http)
                     .url(getUrl())
                     .dest(destFolder.resolve(getName()))
                     .withValidation(makeValidation())

@@ -87,7 +87,7 @@ public abstract class InstanceOperation {
         if (cfExtractEntries.size() > 1) throw new IllegalStateException("More than one cf-extract entry found.");
 
         ModpackVersionManifest.ModpackFile cfExtractEntry = cfExtractEntries.getFirst();
-        DownloadTask task = DownloadTask.builder()
+        DownloadTask task = DownloadTask.builder(this.instance.factory().httpClient())
                 .url(cfExtractEntry.getUrl())
                 .withMirrors(cfExtractEntry.getMirror())
                 .dest(cfExtractEntry.getCfExtractPath(instance.getDir(), manifest.getName()))
