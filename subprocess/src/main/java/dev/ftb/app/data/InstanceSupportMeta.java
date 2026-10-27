@@ -34,8 +34,8 @@ public class InstanceSupportMeta {
     private List<SupportEntry> supportMods = new LinkedList<>();
     private List<SupportEntry> supportAgents = new LinkedList<>();
 
-    private AppPaths appPaths;
-    private AppHttp http;
+    private transient AppPaths appPaths;
+    private transient AppHttp http;
     
     public InstanceSupportMeta(AppPaths paths, AppHttp http) {
         this.appPaths = paths;
