@@ -26,8 +26,8 @@ public class SettingsConfigureHandler implements IMessageHandler<SettingsConfigu
             }
 
             if (!data.settings.proxy().password().isEmpty()) {
-                context.services().storage().legacyCredentialStorage().set("proxyPassword", data.settings.proxy().password());
-                data.settings.proxy().setPassword("");
+                context.services().storage().vault().put("proxyPassword", data.settings.proxy().password());
+                data.settings.proxy().setPassword(""); // Ensure the legacy field isn't populated.
             }
 
             settings.store().set(data.settings);            

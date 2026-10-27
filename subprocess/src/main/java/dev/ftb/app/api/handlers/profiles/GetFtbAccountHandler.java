@@ -5,19 +5,25 @@ import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.api.data.PrivateBaseData;
 import dev.ftb.app.api.handlers.IMessageHandler;
 import dev.ftb.app.api.handlers.MessageContext;
-import dev.ftb.app.storage.LegacyCredentialStorage;
+import dev.ftb.app.services.storage.VaultException;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GetFtbAccountHandler implements IMessageHandler<BaseData> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(GetFtbAccountHandler.class);
+    
     @Override
     public void handle(MessageContext context, BaseData data) {
-        LegacyCredentialStorage instance = context.services().storage().legacyCredentialStorage();
-        var accountData = instance.get("ftbAccount");
-        if (accountData == null) {
+        String accountData;
+        try {
+            accountData = context.services().storage().vault().get("ftbAccount");
+        } catch (VaultException e) {
+            LOGGER.error("Failed to retrieve FTB account data from vault", e);
             context.reply(new Reply(data, null));
             return;
         }
-        
+
         // Deserialize the account data
         StoreFtbAccountHandler.CompleteTokenData authData = new Gson().fromJson(accountData, StoreFtbAccountHandler.CompleteTokenData.class);
         if (authData == null) {

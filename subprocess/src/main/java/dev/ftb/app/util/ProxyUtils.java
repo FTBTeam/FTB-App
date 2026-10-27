@@ -1,6 +1,7 @@
 package dev.ftb.app.util;
 
 import dev.ftb.app.services.AppStorage;
+import dev.ftb.app.services.storage.VaultException;
 import dev.ftb.app.storage.settings.Settings;
 import okhttp3.OkHttpClient;
 import org.apache.commons.lang3.StringUtils;
@@ -40,18 +41,13 @@ public class ProxyUtils {
         int settingsProxyPort = settings.settings().proxy().port();
         String settingsProxyUser = settings.settings().proxy().username();
         
-        // TODO: Remove: Migration, won't be needed for much longer
-        if (!settings.settings().proxy().password().isEmpty()) {
-            // Move it to the credential storage.
-            storage.legacyCredentialStorage().set("proxyPassword", settings.settings().proxy().password());
-            try {
-                settings.store().update(existing -> existing.proxy().setPassword(""));
-            } catch (IOException e) {
-                LOGGER.error("Failed to clear proxy password from settings after migrating to credential storage.", e);
-            }
+        String settingsProxyPassword = "";
+        try {
+            settingsProxyPassword = storage.vault().get("proxyPassword");
+        } catch (VaultException e) {
+            LOGGER.error("Failed to retrieve proxy password from vault", e);
         }
         
-        String settingsProxyPassword = storage.legacyCredentialStorage().get("proxyPassword");
         boolean requiresReset;
         requiresReset = !Objects.equals(proxyType, settingsProxyType);
         requiresReset |= !Objects.equals(proxyHost, settingsProxyHost);

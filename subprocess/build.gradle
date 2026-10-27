@@ -166,6 +166,7 @@ shadowJar {
         ] as LinkedHashMap, "dev/ftb/app/")
         attributes 'Multi-Release': 'true'
         attributes 'Main-Class': 'dev.ftb.app.AppMain'
+        attributes 'Enable-Native-Access': 'ALL-UNNAMED' // FFM calls for the OS vault key stores
     }
 }
 assemble.dependsOn 'shadowJar'

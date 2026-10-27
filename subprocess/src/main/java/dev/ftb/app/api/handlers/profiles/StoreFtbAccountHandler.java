@@ -5,16 +5,16 @@ import dev.ftb.app.api.data.PrivateBaseData;
 import dev.ftb.app.api.data.other.RequestInstanceRefresh;
 import dev.ftb.app.api.handlers.IMessageHandler;
 import dev.ftb.app.api.handlers.MessageContext;
-import dev.ftb.app.storage.LegacyCredentialStorage;
+import dev.ftb.app.services.storage.VaultException;
 import dev.ftb.app.util.ModpackApiUtils;
+import dev.ftb.app.util.ReleaseBlocking;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Instant;
 
 public class StoreFtbAccountHandler implements IMessageHandler<StoreFtbAccountHandler.Data> {
     @Override
-    public void handle(MessageContext context, Data data) {
-        LegacyCredentialStorage instance = context.services().storage().legacyCredentialStorage();
-        
+    public void handle(MessageContext context, Data data) {        
         CompleteTokenData completeToken = new CompleteTokenData();
         
         completeToken.token = data.token;
@@ -34,8 +34,17 @@ public class StoreFtbAccountHandler implements IMessageHandler<StoreFtbAccountHa
         var json = new Gson().toJson(completeToken);
         
         // Meh, just store it as json.
-        instance.set("ftbAccount", json);
-        
+        try {
+            @ReleaseBlocking(reason = "This needs to be handled on the frontend if this fails.")
+            var valForAnnotation = true;
+            
+            context.services().storage().vault().put("ftbAccount", json);
+        } catch (VaultException e) {
+            // Error.
+            context.reply(new Reply(data));
+            return;
+        }
+
         // Return the token back for convenience
         context.reply(new Reply(data, completeToken));
         context.reply(new RequestInstanceRefresh());
@@ -67,6 +76,7 @@ public class StoreFtbAccountHandler implements IMessageHandler<StoreFtbAccountHa
     
     public static class Reply extends Data {
         public boolean success;
+        @Nullable
         public CompleteTokenData completeToken;
         
         public Reply(Data data, CompleteTokenData completeToken) {
@@ -74,6 +84,12 @@ public class StoreFtbAccountHandler implements IMessageHandler<StoreFtbAccountHa
             this.requestId = data.requestId;
             this.success = true;
             this.completeToken = completeToken;
+        }
+        
+        public Reply(Data data) {
+            this.type = data.type + "Reply";
+            this.requestId = data.requestId;
+            this.success = false;
         }
     }
 }
