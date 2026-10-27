@@ -13,8 +13,6 @@ import java.util.stream.Collectors;
 public class GetProfilesHandler implements IMessageHandler<BaseData> {
     @Override
     public void handle(MessageContext context, BaseData data) {
-        System.out.println("DEBUG: GetProfilesHandler.handle() called with data: " + data);
-        System.out.println(context.services().accounts().getActiveProfile().getUuid());
         context.reply(new Reply(
                 data,
                 context.services().accounts().getProfiles().stream().map(MicrosoftProfile::toSharableData).collect(Collectors.toSet()),

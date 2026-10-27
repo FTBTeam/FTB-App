@@ -136,8 +136,7 @@ public final class EncryptedFileVault implements Vault {
         } catch (GeneralSecurityException | IllegalArgumentException | JsonParseException ex) {
             throw new VaultException("Failed to decrypt vault using '" + store.id() + "'.", ex);
         }
-
-        System.out.println("DEBUG: Unencrypted vault data: " + data);
+        
         return new Unlocked(store, key, data != null ? data : Map.of());
     }
 
