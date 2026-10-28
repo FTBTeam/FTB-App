@@ -27,7 +27,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Function;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 
@@ -42,8 +41,22 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
     private static final MavenNotation FORGE_NOTATION = MavenNotation.parse("net.minecraftforge:forge");
     private static final MavenNotation NEO_FORGE_NOTATION = MavenNotation.parse("net.neoforged:forge");
     private static final MavenNotation NEO_FORGE_1_20_2_PLUS_NOTATION = MavenNotation.parse("net.neoforged:neoforge");
+    
+    private static volatile @Nullable VersionOverrides specialVersions;
 
-    private static final Function<AppHttp, VersionOverrides> SPECIAL_VERSIONS = VersionOverrides::compute;
+    private static VersionOverrides specialVersions(AppHttp http) {
+        VersionOverrides overrides = specialVersions;
+        if (overrides == null) {
+            synchronized (AbstractForgeInstallTask.class) {
+                overrides = specialVersions;
+                if (overrides == null) {
+                    overrides = VersionOverrides.compute(http);
+                    specialVersions = overrides;
+                }
+            }
+        }
+        return overrides;
+    }
 
     @Nullable
     protected String versionName;
@@ -152,7 +165,7 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
     }
 
     private static MavenNotation getVersionNotation(AppHttp http, String mcVersion, String forgeVersion) {
-        String override = SPECIAL_VERSIONS.apply(http).find(forgeVersion);
+        String override = specialVersions(http).find(forgeVersion);
         if (override != null) {
             LOGGER.info("Overriding Forge version from {} to {}.", forgeVersion, override);
             return FORGE_NOTATION.withVersion(override);
