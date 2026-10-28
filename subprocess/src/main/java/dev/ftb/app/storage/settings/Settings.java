@@ -3,7 +3,11 @@ package dev.ftb.app.storage.settings;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import dev.ftb.app.AppPaths;
+import dev.ftb.app.services.AppStorage;
+import dev.ftb.app.services.storage.VaultException;
 import dev.ftb.app.util.JsonStore;
+import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,25 +16,26 @@ import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.function.Consumer;
 
 public class Settings {
     private static final Logger LOGGER = LoggerFactory.getLogger(Settings.class);
     private static final Type LEGACY_SETTINGS_TOKEN = new TypeToken<HashMap<String, String>>(){}.getType();
-    
+
     private static final Gson GSON = new Gson().newBuilder()
         .setPrettyPrinting()
         .create();
-    
-    private final List<OnChangeCallback> onChange = new LinkedList<>();
-    
+
+    public static final String PROXY_PASSWORD_KEY = "proxy.password";
+
     private final AppPaths appPaths;
+    private final AppStorage storage;
     private final JsonStore<SettingsData> store;
 
-    public Settings(AppPaths appPaths) {
+    public Settings(AppPaths appPaths, AppStorage storage) {
         this.appPaths = appPaths;
-        
+        this.storage = storage;
+
         this.store = new JsonStore<>(
             appPaths.settingsFile(),
             GSON,
@@ -38,42 +43,69 @@ public class Settings {
             () -> SettingsData.createDefault(this.appPaths)
         );
 
-        this.store.onChange(newSettings -> {
-            for (OnChangeCallback callback : onChange) {
-                try {
-                    callback.onChange(newSettings);
-                } catch (Throwable ex) {
-                    LOGGER.error("Failed to notify listener of change to settings", ex);
-                }
-            }
-        });
-
         attemptMigration();
-        this.load();
+        load();
     }
 
-    @Deprecated
-    public void onChange(OnChangeCallback callback) {
-        this.onChange.add(callback);
+    public SettingsData get() {
+        return this.store.get();
     }
-    
-    // TODO: remove this method and use store().get() directly
-    @Deprecated
-    public void save() {
+
+    /// Mutates the settings and saves them.
+    public void update(Consumer<SettingsData> mutator) throws IOException {
+        this.store.update(mutator);
+    }
+
+    /// Replaces all the settings, as sent by the frontend, and saves them.
+    public void replace(SettingsData data) throws IOException, VaultException {
+        var proxy = data.proxy();
+        
+        // Older settings files kept the proxy password in plain text. Move it to the vault if it's there.
+        if (proxy != null && StringUtils.isNotEmpty(proxy.password())) {
+            this.storage.vault().put(PROXY_PASSWORD_KEY, proxy.password());
+            proxy.setPassword("");
+        } else if (usesProxyAuth(get()) && !usesProxyAuth(data)) {
+            this.storage.vault().remove(PROXY_PASSWORD_KEY);
+        }
+
+        this.store.set(data);
+    }
+
+    /// Called after every change has been saved.
+    public void onChange(Consumer<SettingsData> listener) {
+        this.store.onChange(listener);
+    }
+
+    /// @return the proxy password, or `null` if the proxy doesn't use one or the vault can't be read
+    @Nullable
+    public String proxyPassword() {
+        if (!usesProxyAuth(get())) {
+            return null;
+        }
+
         try {
-            this.store.save();
-        } catch (IOException e) {
-            LOGGER.error("Failed to save settings file.", e);
+            return this.storage.vault().get(PROXY_PASSWORD_KEY);
+        } catch (VaultException e) {
+            LOGGER.error("Failed to retrieve proxy password from vault", e);
+            return null;
         }
     }
 
-    // TODO: remove this method and use store().get() directly
-    @Deprecated
-    public void load() {
+    private void load() {
         try {
             this.store.load();
         } catch (IOException e) {
             LOGGER.error("Failed to load settings file. Falling back to default.", e);
+            return;
+        }
+
+        if (moveProxyPasswordToVault(get())) {
+            try {
+                this.store.save();
+                this.store.save(); // The first save backs up the old file, password included. The second replaces that backup.
+            } catch (IOException e) {
+                LOGGER.error("Failed to save settings after moving the proxy password to the vault.", e);
+            }
         }
     }
 
@@ -83,17 +115,20 @@ public class Settings {
         if (Files.notExists(legacySettingsFile) || Files.exists(this.appPaths.settingsFile())) {
             return;
         }
-        
+
         LOGGER.info("Migrating old settings to new format.");
         try {
             var originalSettingsRaw = Files.readString(legacySettingsFile);
             var originalSettings = new Gson().<HashMap<String, String>>fromJson(originalSettingsRaw, LEGACY_SETTINGS_TOKEN);
             var migrator = new SettingsMigrator(this.appPaths, originalSettings);
             var newSettings = migrator.migrate();
-            
+
+            // The legacy file kept the proxy password in plain text, keep it out of the new one
+            moveProxyPasswordToVault(newSettings);
+
             // Save the new settings
             this.store.set(newSettings);
-            
+
             // Delete the old settings file
             try {
                 Files.deleteIfExists(legacySettingsFile);
@@ -110,17 +145,34 @@ public class Settings {
             }
         }
     }
-    
-    public SettingsData settings() {
-        return this.store.get();
+
+    /// Older installs kept the proxy password in the settings file. If the vault fails it's left in place, so this
+    /// retries on the next launch.
+    ///
+    /// @return whether a password was moved
+    private boolean moveProxyPasswordToVault(SettingsData data) {
+        var proxy = data.proxy();
+        if (proxy == null || StringUtils.isEmpty(proxy.password())) {
+            return false;
+        }
+
+        try {
+            this.storage.vault().put(PROXY_PASSWORD_KEY, proxy.password());
+            proxy.setPassword("");
+            return true;
+        } catch (VaultException e) {
+            LOGGER.error("Failed to move the proxy password to the vault.", e);
+            return false;
+        }
     }
 
-    public JsonStore<SettingsData> store() {
-        return store;
+    private static boolean usesProxyAuth(SettingsData data) {
+        var proxy = data.proxy();
+        return proxy != null && !"none".equalsIgnoreCase(proxy.type()) && StringUtils.isNotEmpty(proxy.username());
     }
-    
+
     public Path getInstancesDir() {
-        return settings().instanceLocation();
+        return get().instanceLocation();
     }
 
     public static int getDefaultThreadLimit() {
@@ -129,20 +181,15 @@ public class Settings {
         return defaultThreads;
     }
 
-    public long getSpeedLimit() {        
-        return settings().download().speedLimit();
+    public long getSpeedLimit() {
+        return get().download().speedLimit();
     }
 
     public int getThreadLimit() {
-        return settings().download().threadLimit();
+        return get().download().threadLimit();
     }
 
     public boolean ignoreForgeProcessorOutputHashes() {
-        return settings().workaround().ignoreForgeProcessorOutputHashes();
-    }
-    
-    @FunctionalInterface
-    public interface OnChangeCallback {
-        void onChange(SettingsData newSettings);
+        return get().workaround().ignoreForgeProcessorOutputHashes();
     }
 }

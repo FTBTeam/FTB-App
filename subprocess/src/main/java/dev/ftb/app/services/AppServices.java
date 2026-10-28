@@ -43,12 +43,12 @@ public class AppServices implements Services {
         );
 
         this.paths = new AppPaths();
-        this.settings = new Settings(this.paths);
+        this.appStorage = new AppStorage(this.paths);
+        this.settings = new Settings(this.paths, this.appStorage);
         this.threads = new AppThreads(this.settings.getThreadLimit());
         
         this.appHttp = new AppHttp(this.flags, this.settings);
         this.jdkInstallationManager = this.createJdkManager(this.appHttp);
-        this.appStorage = new AppStorage(this.paths);
 
         this.accounts = new AccountManager(this.paths, this.appStorage);
         this.cache = new AppCache(this.paths, this.settings, this.threads, this.http());
@@ -56,8 +56,11 @@ public class AppServices implements Services {
         this.settings.onChange((newSettings) -> {
             this.cache.local().updateLocationIfNeeded();
             // If something changed, recreate the http clients.
-            ProxyUtils.loadProxy(this.appStorage, this.settings, this.appHttp::createClients);
+            ProxyUtils.loadProxy(this.settings, this.appHttp::createClients);
         });
+        
+        // Apply the saved proxy now, the listener only runs on later changes
+        ProxyUtils.loadProxy(this.settings, this.appHttp::createClients);
         
         this.rcpApi = new RcpApi(this);
         this.instances = new Instances(this.paths, this.settings, this.rcpApi, this.accounts, this.threads, this.cache, this.appHttp, this.jdkInstallationManager);

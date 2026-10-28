@@ -182,7 +182,7 @@ public class LocalCache implements DownloadTask.LocalFileLocator {
      * Removes any files that are too old from the cache.
      */
     public void clean() {
-        long cacheLife = settings.settings().general().cacheLife();
+        long cacheLife = settings.get().general().cacheLife();
         if (cacheLife < 0) cacheLife = 900L;
         synchronized (files) {
             Instant now = Instant.now();

@@ -27,7 +27,7 @@ public class MoveInstancesHandler implements IMessageHandler<MoveInstancesHandle
     
     @Override
     public void handle(MessageContext context, Data data) {
-        var currentLocation = context.services().settings().settings().instanceLocation();
+        var currentLocation = context.services().settings().get().instanceLocation();
         if (currentLocation.toString().isEmpty()) {
             // Something is borked, just assume the default location is the right one
             currentLocation = context.services().paths().instancesDir();
@@ -84,7 +84,7 @@ public class MoveInstancesHandler implements IMessageHandler<MoveInstancesHandle
             LOGGER.warn("Current location {} does not exist, bypassing migration", currentLocation);
 
             try {
-                context.services().settings().store().update(existing -> existing.setInstanceLocation(newLocation.toAbsolutePath()));
+                context.services().settings().update(existing -> existing.setInstanceLocation(newLocation.toAbsolutePath()));
             } catch (IOException e) {
                 LOGGER.error("Failed to update settings with new instance location", e);
                 context.reply(new Reply(data, "Failed to update settings with new instance location: " + e.getMessage()));
@@ -246,7 +246,7 @@ public class MoveInstancesHandler implements IMessageHandler<MoveInstancesHandle
                 LOGGER.info("Successfully completed moving instances from {} to {}", currentLocation, newLocation);
                 
                 try {
-                    context.services().settings().store().update(existing -> existing.setInstanceLocation(newLocation.toAbsolutePath()));
+                    context.services().settings().update(existing -> existing.setInstanceLocation(newLocation.toAbsolutePath()));
                 } catch (IOException e) {
                     LOGGER.error("Failed to update settings with new instance location", e);
                     context.reply(new Reply(data, "Failed to update settings with new instance location: " + e.getMessage()));

@@ -1,7 +1,5 @@
 package dev.ftb.app.util;
 
-import dev.ftb.app.services.AppStorage;
-import dev.ftb.app.services.storage.VaultException;
 import dev.ftb.app.storage.settings.Settings;
 import okhttp3.OkHttpClient;
 import org.apache.commons.lang3.StringUtils;
@@ -35,18 +33,13 @@ public class ProxyUtils {
     @Nullable
     private static String proxyPassword;
 
-    public static void loadProxy(AppStorage storage, Settings settings, Runnable onChange) {
-        String settingsProxyType = settings.settings().proxy().type();
-        String settingsProxyHost = settings.settings().proxy().host();
-        int settingsProxyPort = settings.settings().proxy().port();
-        String settingsProxyUser = settings.settings().proxy().username();
+    public static void loadProxy(Settings settings, Runnable onChange) {
+        String settingsProxyType = settings.get().proxy().type();
+        String settingsProxyHost = settings.get().proxy().host();
+        int settingsProxyPort = settings.get().proxy().port();
+        String settingsProxyUser = settings.get().proxy().username();
         
-        String settingsProxyPassword = "";
-        try {
-            settingsProxyPassword = storage.vault().get("proxyPassword");
-        } catch (VaultException e) {
-            LOGGER.error("Failed to retrieve proxy password from vault", e);
-        }
+        String settingsProxyPassword = settings.proxyPassword();
         
         boolean requiresReset;
         requiresReset = !Objects.equals(proxyType, settingsProxyType);

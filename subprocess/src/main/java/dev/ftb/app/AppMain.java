@@ -247,7 +247,6 @@ public class AppMain {
     public void cleanUpBeforeExit() {
         LOGGER.info("Cleaning up for shutdown");
         this.services.rcpApi().stop();
-        this.services.settings().save();
         this.services.threads().close();
     }
 

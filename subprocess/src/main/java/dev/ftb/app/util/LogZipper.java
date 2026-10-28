@@ -166,7 +166,7 @@ public class LogZipper {
 
     private String getFilteredSettings() {
         try {
-            SettingsData settings = this.services.settings().settings();
+            SettingsData settings = this.services.settings().get();
             // Null out the proxy so we don't log it in the export.
             var proxySettingsOld = settings.proxy();
             settings.setProxy(null);

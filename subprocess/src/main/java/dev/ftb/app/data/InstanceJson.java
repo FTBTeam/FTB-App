@@ -153,13 +153,13 @@ public class InstanceJson {
         minMemory = versionManifest.getMinimumSpec();
         recMemory = versionManifest.getRecommendedSpec();
         
-        memory = settings.settings().instanceDefaults().memory();
-        shellArgs = settings.settings().instanceDefaults().shellArgs();
-        programArgs = settings.settings().instanceDefaults().getProgramArgs();
-        width = settings.settings().instanceDefaults().width();
-        height = settings.settings().instanceDefaults().height();
-        preventMetaModInjection = settings.settings().instanceDefaults().preventMetaModInjection();
-        preventMetaAgentInjection = settings.settings().instanceDefaults().preventMetaAgentInjection();
+        memory = settings.get().instanceDefaults().memory();
+        shellArgs = settings.get().instanceDefaults().shellArgs();
+        programArgs = settings.get().instanceDefaults().getProgramArgs();
+        width = settings.get().instanceDefaults().width();
+        height = settings.get().instanceDefaults().height();
+        preventMetaModInjection = settings.get().instanceDefaults().preventMetaModInjection();
+        preventMetaAgentInjection = settings.get().instanceDefaults().preventMetaAgentInjection();
         
         this._private = isPrivate;
         this.packType = packType;

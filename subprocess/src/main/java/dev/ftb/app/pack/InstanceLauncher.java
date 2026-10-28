@@ -498,7 +498,7 @@ public class InstanceLauncher {
                     .collect(Collectors.toList());
 
             List<String> command = new ArrayList<>(jvmArgs.size() + progArgs.size() + 2);
-            Boolean feralGamemode = this.factory().settings().settings().enableFeralGameMode();
+            Boolean feralGamemode = this.factory().settings().get().enableFeralGameMode();
             if (feralGamemode != null && feralGamemode) {
                 command.add("gamemoderun");
             }

@@ -2,6 +2,7 @@ package dev.ftb.app.migration.migrations;
 
 import dev.ftb.app.migration.Migration;
 import dev.ftb.app.services.Services;
+import dev.ftb.app.storage.settings.Settings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,7 +15,7 @@ public class MoveCredentialsToVault implements Migration {
     
     private static final Map<String, String> KEY_MAPPING = Map.of(
             "ftbAccount", "ftbAccount",
-            "proxyPassword", "proxy.password"
+            "proxyPassword", Settings.PROXY_PASSWORD_KEY
     );
     
     @Override

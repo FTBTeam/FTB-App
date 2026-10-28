@@ -17,20 +17,15 @@ public class SettingsConfigureHandler implements IMessageHandler<SettingsConfigu
         Settings settings = context.services().settings();
         
         try {
-            var originalSettings = settings.settings().toString();
+            var originalSettings = settings.get().toString();
             var newSettings = data.settings.toString();
 
             if (originalSettings.equals(newSettings)) {
                 context.reply(new SettingsConfigureData.Reply(data, "success", data.settings));
                 return;
             }
-
-            if (!data.settings.proxy().password().isEmpty()) {
-                context.services().storage().vault().put("proxyPassword", data.settings.proxy().password());
-                data.settings.proxy().setPassword(""); // Ensure the legacy field isn't populated.
-            }
-
-            settings.store().set(data.settings);            
+            
+            settings.replace(data.settings);
             context.reply(new SettingsConfigureData.Reply(data, "success", data.settings));
         } catch (Exception e) {
             LOGGER.error("Failed to handle settings change event.", e);
