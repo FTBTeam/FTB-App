@@ -31,10 +31,7 @@ public class AccountManager {
     private final Map<UUID, ProfileTokens> legacyTokens = new HashMap<>();
     
     private final JsonStore<AccountStore> store;
-    
-    @Nullable
-    private MicrosoftProfile activeProfile = null;
-    
+
     private final AppStorage appStorage;
 
     public AccountManager(AppPaths appPaths, AppStorage storage) {
@@ -122,8 +119,6 @@ public class AccountManager {
                 // Update but ensure the profile exists first, otherwise set to null
                 existing.activeProfile = foundActiveProfile.map(MicrosoftProfile::getUuid).orElse(null);
             });
-            
-            this.activeProfile = foundActiveProfile.orElse(null);
         } catch (IOException e) {
             LOGGER.error("Failed to set active profile", e);
         }
@@ -148,11 +143,6 @@ public class AccountManager {
         try {
             this.store.load();
             this.migrateLegacyTokens();
-            this.activeProfile = store.get().profiles
-                    .stream()
-                    .filter(e -> e.getUuid().equals(store.get().activeProfile))
-                    .findFirst()
-                    .orElse(null);
         } catch (IOException e) {
             LOGGER.error("Failed to load profiles.", e);
         }
@@ -228,10 +218,18 @@ public class AccountManager {
             .findFirst()
             .orElse(null);
     }
-
+    
     @Nullable
     public MicrosoftProfile getActiveProfile() {
-        return this.activeProfile;
+        AccountStore current = this.store.get();
+        if (current.activeProfile == null) {
+            return null;
+        }
+
+        return current.profiles.stream()
+                .filter(p -> p.getUuid().equals(current.activeProfile))
+                .findFirst()
+                .orElse(null);
     }
     
     /// Only needed whilst migrations are in place, to convert old token storage to the vault.
