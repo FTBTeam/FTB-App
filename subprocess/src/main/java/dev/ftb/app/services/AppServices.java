@@ -56,16 +56,21 @@ public class AppServices implements Services {
         this.settings.onChange((newSettings) -> {
             this.cache.local().updateLocationIfNeeded();
             // If something changed, recreate the http clients.
-            ProxyUtils.loadProxy(this.settings, this.appHttp::createClients);
+            this.reloadProxy();
         });
-        
+
         // Apply the saved proxy now, the listener only runs on later changes
-        ProxyUtils.loadProxy(this.settings, this.appHttp::createClients);
+        this.reloadProxy();
         
         this.rcpApi = new RcpApi(this);
         this.instances = new Instances(this.paths, this.settings, this.rcpApi, this.accounts, this.threads, this.cache, this.appHttp, this.jdkInstallationManager);
     }
     
+    /// Applies the proxy from the current settings, rebuilding the http clients if it changed.
+    public void reloadProxy() {
+        ProxyUtils.loadProxy(this.settings, this.appHttp::createClients);
+    }
+
     /**
      * Returns the JDK installation manager, if something goes wrong during initialization, we'll purge its index of installed
      * JDKs and try again.

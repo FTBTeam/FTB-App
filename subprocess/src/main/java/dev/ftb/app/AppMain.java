@@ -112,6 +112,12 @@ public class AppMain {
         Runtime.getRuntime().addShutdownHook(new Thread(this::cleanUpBeforeExit));
         
         this.services().instances().refreshInstances();
+
+        this.migrations.runMigrations();
+
+        // The proxy was applied before migrations ran, so pick up a password that was just moved into the vault
+        this.services().reloadProxy();
+
         var flags = this.services().flags();
 
         LOGGER.info("{} integration mode", flags.isOverwolf() ? "Overwolf" : "Electron");
@@ -190,9 +196,6 @@ public class AppMain {
         }
 
         updateJavaVersions();
-        
-        // Lastly, run any needed migrations after the app is ready
-        this.migrations.runMigrations();
 
         //Hang indefinitely until this lock is interrupted.
         try {
