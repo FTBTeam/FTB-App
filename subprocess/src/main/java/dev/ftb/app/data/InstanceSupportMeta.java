@@ -74,7 +74,9 @@ public class InstanceSupportMeta {
 
             LOGGER.info("Meta file parsed to null. Deleting..");
             delete(metaFile);
+            // The retry populates the fields itself
             update(depth + 1);
+            return;
         }
         
         // We have meta so populate the fields
