@@ -42,7 +42,7 @@ public class AppServices implements Services {
         this.settings = new Settings(this.paths, this.appStorage);
         this.threads = new AppThreads(this.settings.getThreadLimit());
         
-        this.appHttp = new AppHttp(this.flags, this.settings);
+        this.appHttp = new AppHttp(this.flags, this.settings::getSpeedLimit);
         this.jdkInstallationManager = this.createJdkManager(this.appHttp);
 
         this.accounts = new AccountManager(this.paths, this.appStorage);

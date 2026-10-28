@@ -4,7 +4,6 @@ import com.google.common.base.Suppliers;
 import dev.ftb.app.AppFlags;
 import dev.ftb.app.Constants;
 import dev.ftb.app.os.OS;
-import dev.ftb.app.storage.settings.Settings;
 import dev.ftb.app.util.FetchLoggerInterceptor;
 import dev.ftb.app.util.ProxyUtils;
 import dev.ftb.app.util.SSLUtils;
@@ -18,6 +17,7 @@ import okio.Throttler;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
 public class AppHttp {
@@ -28,11 +28,12 @@ public class AppHttp {
     private OkHttpClient httpClientV1;
     
     private final AppFlags flags;
-    private final Settings settings;
     
-    public AppHttp(AppFlags flags, Settings settings) {
+    private final LongSupplier speedLimit;
+    
+    public AppHttp(AppFlags flags, LongSupplier speedLimit) {
         this.flags = flags;
-        this.settings = settings;
+        this.speedLimit = speedLimit;
 
         // This needs to happen before the client is created.
         this.userAgent = Suppliers.memoize(() -> "ftb-app/" + Constants.APPVERSION + " " +
@@ -65,7 +66,7 @@ public class AppHttp {
 
     private Throttler getClientThrottler() {
         // TODO, double-check this logic.
-        long maxSpeed = this.settings.getSpeedLimit() * 1000L;
+        long maxSpeed = this.speedLimit.getAsLong() * 1000L;
         if (maxSpeed > 0) {
             this.clientThrottler.bytesPerSecond((maxSpeed / 8) * 2); //Some reason it always limits to 50% for me, so we multiply!
         } else {
