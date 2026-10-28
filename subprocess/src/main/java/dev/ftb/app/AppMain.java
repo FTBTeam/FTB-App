@@ -67,13 +67,20 @@ public class AppMain {
     }
     
     private final ImmutableMap<String, String> startArgs;
-    private final MigrationsManager migrations;
-    private final AppServices services;
+    private final AppFlags flags;
+    private final AppPaths paths;
+    
+    // Built in startApp, once a previous instance has been stopped and the start args are applied
+    private MigrationsManager migrations;
+    private AppServices services;
     
     public AppMain(ImmutableMap<String, String> args) {
         this.startArgs = args;
-        this.services = new AppServices(args);
-        this.migrations = new MigrationsManager(this.services);
+        this.flags = new AppFlags(
+            args.containsKey("dev"),
+            args.containsKey("overwolf") ? AppFlags.FrontendPlatform.OVERWOLF : AppFlags.FrontendPlatform.ELECTRON
+        );
+        this.paths = new AppPaths();
     }
     
     public AppServices services() {
@@ -102,6 +109,11 @@ public class AppMain {
         } catch (Throwable ex) {
             LOGGER.error("Prelaunch checks failed but are not fatal", ex);
         }
+        
+        // Services read and write settings, accounts and the vault, so they must not start until a previous
+        // instance has been stopped. Settings defaults also need the screen size parsed above.
+        this.services = new AppServices(this.flags, this.paths);
+        this.migrations = new MigrationsManager(this.services);
         
         // If this fails, we're fucked.
         this.mainImpl();
@@ -247,7 +259,12 @@ public class AppMain {
         }, 0, 3, TimeUnit.SECONDS);
     }
 
+    private final AtomicBoolean cleanedUp = new AtomicBoolean(false);
+
+    /// Runs from exit() and again from the shutdown hook that System.exit fires, so only the first call does anything.
     public void cleanUpBeforeExit() {
+        if (!cleanedUp.compareAndSet(false, true)) return;
+
         LOGGER.info("Cleaning up for shutdown");
         this.services.rcpApi().stop();
         this.services.threads().close();
@@ -267,8 +284,6 @@ public class AppMain {
             return;
         }
 
-        var paths = this.services().paths();
-        
         // Read the pid and check if the process is still running
         if (Files.exists(paths.processMarkerFile())) {
             try {
@@ -336,11 +351,11 @@ FTB App Subprocess startup;
         """,
             Constants.APPVERSION,
             Constants.BRANCH,
-            this.services.flags().platform(),
+            this.flags.platform(),
             System.getProperty("os.name"),
             System.getProperty("os.version"),
             Architecture.current().name(),
-            this.services.paths().workingDir().toAbsolutePath(),
+            this.paths.workingDir().toAbsolutePath(),
             String.join(" ", startArgs.values()),
             jvmArgs
         );

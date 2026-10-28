@@ -1,6 +1,7 @@
 package dev.ftb.app.util;
 
 import com.google.common.util.concurrent.Striped;
+import net.covers1624.quack.platform.OperatingSystem;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -10,6 +11,7 @@ import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -82,8 +84,8 @@ public final class SafeFiles {
 
     /// Moves `from` over `to`, atomically where the filesystem supports it.
     ///
-    /// Retries when access is denied, which lets us get past anything holding a temporary lock on the file, such as
-    /// an anti-virus or Windows indexing.
+    /// Retries when the file is temporarily locked, which lets us get past anything holding it open, such as an
+    /// anti-virus or Windows indexing.
     public static void moveWithRetry(Path from, Path to) throws IOException {
         for (int attempt = 1; ; attempt++) {
             try {
@@ -93,11 +95,11 @@ public final class SafeFiles {
                     Files.move(from, to, StandardCopyOption.REPLACE_EXISTING);
                 }
                 return;
-            } catch (AccessDeniedException ex) {
-                if (attempt >= MOVE_ATTEMPTS) {
+            } catch (FileSystemException ex) {
+                if (attempt >= MOVE_ATTEMPTS || !isTemporaryLock(ex)) {
                     throw ex;
                 }
-                LOGGER.warn("Access denied moving {} to {}, retrying ({}/{})", from, to, attempt, MOVE_ATTEMPTS);
+                LOGGER.warn("File is locked moving {} to {}, retrying ({}/{})", from, to, attempt, MOVE_ATTEMPTS, ex);
                 try {
                     Thread.sleep(MOVE_RETRY_DELAY_MS * attempt);
                 } catch (InterruptedException ie) {
@@ -106,5 +108,13 @@ public final class SafeFiles {
                 }
             }
         }
+    }
+
+    /// Windows reports a file held open by another process (`ERROR_SHARING_VIOLATION`) as a plain
+    /// [FileSystemException] rather than an [AccessDeniedException]. Subclasses such as a missing file are real
+    /// failures, as is a plain one elsewhere, so those aren't retried.
+    private static boolean isTemporaryLock(FileSystemException ex) {
+        return ex instanceof AccessDeniedException
+                || (ex.getClass() == FileSystemException.class && OperatingSystem.current().isWindows());
     }
 }

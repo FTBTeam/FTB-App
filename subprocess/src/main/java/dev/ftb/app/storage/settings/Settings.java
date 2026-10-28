@@ -99,6 +99,14 @@ public class Settings {
             return;
         }
 
+        // Something (likely path parsing) has left this pointing at the app directory before, which would install
+        // instances into the app root. Not saved, the next settings change writes it back.
+        Path instanceLocation = get().instanceLocation();
+        if (instanceLocation == null || instanceLocation.equals(this.appPaths.workingDir())) {
+            LOGGER.warn("Instance location is '{}', resetting it to the default.", instanceLocation);
+            get().setInstanceLocation(this.appPaths.instancesDir());
+        }
+
         if (moveProxyPasswordToVault(get())) {
             try {
                 this.store.save();
@@ -181,12 +189,15 @@ public class Settings {
         return defaultThreads;
     }
 
+    /// Read on every http request, so a settings file without a download section must not throw.
     public long getSpeedLimit() {
-        return get().download().speedLimit();
+        var download = get().download();
+        return download != null ? download.speedLimit() : 0;
     }
 
     public int getThreadLimit() {
-        return get().download().threadLimit();
+        var download = get().download();
+        return download != null ? download.threadLimit() : getDefaultThreadLimit();
     }
 
     public boolean ignoreForgeProcessorOutputHashes() {

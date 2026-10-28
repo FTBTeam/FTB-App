@@ -58,16 +58,18 @@ public class AppThreads {
             taskPool.setMaximumPoolSize(limit);
         }
     }
-
+    
     public void close() {
         for (ExecutorService pool : allPools) {
             pool.shutdown();
         }
-        
-        // Wait for all pools to terminate
+
+        // One deadline shared by all pools, so shutdown never takes longer than this
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(3);
         for (ExecutorService pool : allPools) {
             try {
-                if (!pool.awaitTermination(30, TimeUnit.SECONDS)) {
+                long remaining = deadline - System.nanoTime();
+                if (remaining <= 0 || !pool.awaitTermination(remaining, TimeUnit.NANOSECONDS)) {
                     pool.shutdownNow();
                 }
             } catch (InterruptedException e) {

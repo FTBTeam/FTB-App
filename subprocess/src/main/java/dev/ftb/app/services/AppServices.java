@@ -1,6 +1,5 @@
 package dev.ftb.app.services;
 
-import com.google.common.collect.ImmutableMap;
 import dev.ftb.app.AppFlags;
 import dev.ftb.app.AppPaths;
 import dev.ftb.app.Instances;
@@ -36,13 +35,9 @@ public class AppServices implements Services {
     private final AppHttp appHttp;
     private final AppStorage appStorage;
     
-    public AppServices(ImmutableMap<String, String> args) {
-        this.flags = new AppFlags(
-            args.containsKey("dev"),
-            args.containsKey("overwolf") ? AppFlags.FrontendPlatform.OVERWOLF : AppFlags.FrontendPlatform.ELECTRON
-        );
-
-        this.paths = new AppPaths();
+    public AppServices(AppFlags flags, AppPaths paths) {
+        this.flags = flags;
+        this.paths = paths;
         this.appStorage = new AppStorage(this.paths);
         this.settings = new Settings(this.paths, this.appStorage);
         this.threads = new AppThreads(this.settings.getThreadLimit());
