@@ -114,7 +114,7 @@ public class Instance {
         this.metaPath = path.resolve(META_FOLDER_NAME);
         this.logoArtwork = new InstanceArtwork("logo", metaPath);
 
-        props = InstanceJson.load(json);
+        props = InstanceJson.load(json, factory.settings().get().instanceDefaults());
         loadVersionManifest();
 
         if (Files.notExists(metaPath)) {

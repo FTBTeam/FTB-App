@@ -40,40 +40,49 @@ public class LocalCache implements DownloadTask.LocalFileLocator {
             .create();
     private static final Type SET_TYPE = new TypeToken<Set<HashCode>>() { }.getType();
 
-    private Path cacheLocation;
-    private Path cacheIndexFile;
+    // Swapped when the instance location moves, read by installs on other threads
+    private volatile Path cacheLocation;
+    private volatile Path cacheIndexFile;
     private final Set<HashCode> files = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private boolean isDirty = false;
-    
+
     private final Settings settings;
 
     public LocalCache(Settings settings) {
         this.settings = settings;
-        
-        this.cacheLocation = settings.getInstancesDir().resolve(".localCache");
-        if (FileUtils.createDirectories(cacheLocation) == null || !Files.exists(cacheLocation)) {
-            LOGGER.error("Unable to create instance directory");
-        }
+        this.openAt(settings.getInstancesDir().resolve(".localCache"));
+    }
 
-        cacheIndexFile = cacheLocation.resolve("index.json");
+    /// Points the cache at a location, creating it if needed and loading its index.
+    private void openAt(Path location) {
+        synchronized (files) {
+            this.cacheLocation = location;
+            this.cacheIndexFile = location.resolve("index.json");
+            this.files.clear();
+            this.isDirty = false;
 
-        if (Files.exists(cacheIndexFile)) {
-            try {
-                Set<HashCode> index = JsonUtils.parse(GSON, cacheIndexFile, SET_TYPE);
-                for (HashCode hash : index) {
-                    Path file = cacheLocation.resolve(makePath(hash));
-                    if (Files.notExists(file)) {
-                        isDirty = true;
-                        LOGGER.warn("File in cache index does not exist, ignoring.. {}:{}", hash, file);
-                        continue;
-                    }
-                    files.add(hash);
-                }
-            } catch (Throwable e) {
-                LOGGER.error("Failed to load cache index.", e);
+            if (FileUtils.createDirectories(location) == null || !Files.exists(location)) {
+                LOGGER.error("Unable to create instance directory");
             }
+
+            if (Files.exists(cacheIndexFile)) {
+                try {
+                    Set<HashCode> index = JsonUtils.parse(GSON, cacheIndexFile, SET_TYPE);
+                    for (HashCode hash : index) {
+                        Path file = location.resolve(makePath(hash));
+                        if (Files.notExists(file)) {
+                            isDirty = true;
+                            LOGGER.warn("File in cache index does not exist, ignoring.. {}:{}", hash, file);
+                            continue;
+                        }
+                        files.add(hash);
+                    }
+                } catch (Throwable e) {
+                    LOGGER.error("Failed to load cache index.", e);
+                }
+            }
+            save();
         }
-        save();
     }
 
     /**
@@ -246,11 +255,9 @@ public class LocalCache implements DownloadTask.LocalFileLocator {
         if (newLocation.equals(cacheLocation)) {
             return;
         }
-        
-        this.cacheLocation = newLocation;
-        this.cacheIndexFile = cacheLocation.resolve("index.json");
-        this.files.clear();
-        this.isDirty = false;
+
+        // Load the index that was moved along with the instances, rather than starting empty and overwriting it
+        this.openAt(newLocation);
     }
     
     /**

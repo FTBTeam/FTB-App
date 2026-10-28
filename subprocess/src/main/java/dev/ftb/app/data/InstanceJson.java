@@ -7,6 +7,7 @@ import com.google.gson.annotations.JsonAdapter;
 import dev.ftb.app.data.modpack.ModpackManifest;
 import dev.ftb.app.data.modpack.ModpackVersionManifest;
 import dev.ftb.app.storage.settings.Settings;
+import dev.ftb.app.storage.settings.SettingsData;
 import joptsimple.internal.Strings;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.gson.PathTypeAdapter;
@@ -166,12 +167,27 @@ public class InstanceJson {
         this.jvmArgs = Strings.join(jvmArgs, " ");
     }
 
-    public static InstanceJson load(Path path) throws IOException {
+    public static InstanceJson load(Path path, SettingsData.InstanceSettings defaults) throws IOException {
         // Parse to generic obj
         JsonObject obj = JsonUtils.parse(GSON, path, JsonObject.class);
-        
+
         // Parse to instance json.
-        return GSON.fromJson(obj, InstanceJson.class);
+        InstanceJson json = GSON.fromJson(obj, InstanceJson.class);
+        json.applyMissingDefaults(obj, defaults);
+        return json;
+    }
+
+    /// Older instance.json files can predate some fields, which Gson then leaves as null, 0 or false. Fill those from
+    /// the user's instance defaults instead. The raw json is checked so a value that really is 0 or false is kept.
+    private void applyMissingDefaults(JsonObject obj, SettingsData.InstanceSettings defaults) {
+        if (!obj.has("memory")) memory = defaults.memory();
+        if (!obj.has("programArgs")) programArgs = defaults.getProgramArgs();
+        if (!obj.has("width")) width = defaults.width();
+        if (!obj.has("height")) height = defaults.height();
+        if (!obj.has("preventMetaModInjection")) preventMetaModInjection = defaults.preventMetaModInjection();
+        if (!obj.has("preventMetaAgentInjection")) preventMetaAgentInjection = defaults.preventMetaAgentInjection();
+        // Launching splits this, so it can never be null
+        if (shellArgs == null) shellArgs = defaults.shellArgs();
     }
 
     public static InstanceJson load(byte[] bytes) throws IOException {
