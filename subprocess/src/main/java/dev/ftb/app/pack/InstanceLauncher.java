@@ -76,7 +76,8 @@ public class InstanceLauncher {
     @Nullable
     private LogThread logThread;
 
-    private boolean forceStopped;
+    // Set by forceStop() on another thread, read when the process exits
+    private volatile boolean forceStopped;
 
     private final ProgressTracker progressTracker;
     private final List<ThrowingConsumer<LaunchContext, Throwable>> startTasks = new LinkedList<>();
@@ -217,8 +218,10 @@ public class InstanceLauncher {
                 }
                 int exit = process.exitValue();
                 LOGGER.info("Minecraft exited with status code: " + exit);
-                setPhase(exit != 0 ? Phase.ERRORED : Phase.STOPPED);
-                rcpApi.sendMessage(new LaunchInstanceData.Stopped(instance.getUuid(), exit != 0 && !forceStopped ? "errored" : "stopped", exit));
+                // A forced stop exits non-zero (e.g. 137), but that's the user's doing, not an error
+                boolean errored = exit != 0 && !forceStopped;
+                setPhase(errored ? Phase.ERRORED : Phase.STOPPED);
+                rcpApi.sendMessage(new LaunchInstanceData.Stopped(instance.getUuid(), errored ? "errored" : "stopped", exit));
                 forceStopped = false;
                 process = null;
                 processThread = null;
