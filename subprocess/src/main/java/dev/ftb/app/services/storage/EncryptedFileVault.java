@@ -50,9 +50,14 @@ public final class EncryptedFileVault implements Vault {
 
     @Override
     public synchronized void put(String key, String value) throws VaultException {
+        putAll(Map.of(key, value));
+    }
+
+    @Override
+    public synchronized void putAll(Map<String, String> entries) throws VaultException {
         Unlocked unlocked = unlock();
         Map<String, String> data = new HashMap<>(unlocked.data());
-        data.put(key, value);
+        data.putAll(entries);
         write(unlocked.store(), unlocked.key(), data);
         state = new Unlocked(unlocked.store(), unlocked.key(), data);
     }

@@ -9,6 +9,7 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -168,6 +169,17 @@ public class EncryptedFileVaultTests {
 
         EncryptedFileVault reopened = vault();
         assertNull(reopened.get("a"));
+        assertEquals("2", reopened.get("b"));
+    }
+
+    @Test
+    public void testPutAll() throws Exception {
+        EncryptedFileVault vault = vault();
+        vault.put("a", "old");
+        vault.putAll(Map.of("a", "1", "b", "2"));
+
+        EncryptedFileVault reopened = vault();
+        assertEquals("1", reopened.get("a"));
         assertEquals("2", reopened.get("b"));
     }
 

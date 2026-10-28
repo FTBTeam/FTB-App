@@ -7,7 +7,10 @@ import java.util.Set;
 import java.util.UUID;
 
 public class AccountStore {
-    public static final AccountStore EMPTY = new AccountStore(new HashSet<>(), null);
+    /// A fresh store each time, as the profiles set is mutated in place.
+    public static AccountStore empty() {
+        return new AccountStore(new HashSet<>(), null);
+    }
     
     String version;
 

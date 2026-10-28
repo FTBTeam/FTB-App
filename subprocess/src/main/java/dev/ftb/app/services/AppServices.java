@@ -60,7 +60,7 @@ public class AppServices implements Services {
         });
         
         this.rcpApi = new RcpApi(this);
-        this.instances = new Instances(this.paths, this.settings, this.rcpApi, this.accounts, this.threads, this.cache, this.appHttp, this.jdkInstallationManager, this.appStorage);
+        this.instances = new Instances(this.paths, this.settings, this.rcpApi, this.accounts, this.threads, this.cache, this.appHttp, this.jdkInstallationManager);
     }
     
     /**

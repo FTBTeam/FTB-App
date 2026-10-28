@@ -28,7 +28,7 @@ public class AuthenticateMsProfileHandler implements IMessageHandler<Authenticat
         var accountData = result.unwrap();
         
         var newAccount = MicrosoftProfile.create(
-            context.services().storage(),
+            context.services().accounts(),
             MiscUtils.createUuidFromStringWithoutDashes(accountData.profileData().id()),
             accountData.profileData().name(),
             accountData.minecraftAccessToken(),
@@ -41,6 +41,11 @@ public class AuthenticateMsProfileHandler implements IMessageHandler<Authenticat
             accountData.xstsToken(),
             accountData.profileData().getActiveSkinUrl()
         );
+        
+        if (newAccount == null) {
+            context.reply(new Reply(data, false, null, "Failed to securely store the account tokens."));
+            return;
+        }
         
         context.services().accounts().addProfile(newAccount);
 

@@ -6,6 +6,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import dev.ftb.app.AppPaths;
 import dev.ftb.app.services.AppStorage;
+import dev.ftb.app.services.storage.VaultException;
 import dev.ftb.app.util.JsonStore;
 import dev.ftb.app.util.MiscUtils;
 import org.apache.logging.log4j.LogManager;
@@ -43,7 +44,7 @@ public class AccountManager {
             appPaths.storageDir().resolve("mc-accounts.json"),
             GSON,
             AccountStore.class,
-            () -> AccountStore.EMPTY,
+            AccountStore::empty,
             this::migrator
         );
         
@@ -76,13 +77,30 @@ public class AccountManager {
                         profile.remove(field); // Purge the old tokens from the profile so they don't get saved again.
                     }
                 }
+
+                obj.addProperty("version", SPEC_VERSION);
             }
         }
         
         return jsonElement;
     }
 
+    /// Removes the profile and its tokens.
     public void removeProfile(UUID uuid) {
+        removeProfileData(uuid);
+
+        try {
+            var vault = appStorage.vault();
+            for (MicrosoftProfile.TokenKey key : MicrosoftProfile.TokenKey.values()) {
+                vault.remove(tokenKey(uuid, key));
+            }
+        } catch (VaultException e) {
+            LOGGER.error("Failed to remove tokens for profile {} from the vault", uuid, e);
+        }
+    }
+
+    /// Removes only the stored profile, leaving its tokens in the vault.
+    private void removeProfileData(UUID uuid) {
         try {
             this.store.update(existing -> {
                 existing.profiles.removeIf(p -> p.getUuid().equals(uuid));
@@ -112,8 +130,8 @@ public class AccountManager {
     }
 
     public void addProfile(MicrosoftProfile profile) {
-        // Remove the profile if it already exists.
-        this.removeProfile(profile.getUuid());
+        // Remove the profile if it already exists. Its tokens have already been replaced, so they stay.
+        this.removeProfileData(profile.getUuid());
 
         try {
             this.store.update(existing -> {
@@ -154,28 +172,18 @@ public class AccountManager {
             return;
         }
 
-        List<UUID> failedProfiles = new ArrayList<>();
         for (MicrosoftProfile profile : store.get().profiles) {
             ProfileTokens tokens = legacyTokens.get(profile.getUuid());
             if (tokens != null) {
                 try {
-                    var vault = appStorage.vault();
-                    vault.put(MicrosoftProfile.tokenKey(profile.getUuid(), MicrosoftProfile.TokenKey.MINECRAFT_ACCESS_TOKEN), tokens.minecraftAccessToken);
-                    vault.put(MicrosoftProfile.tokenKey(profile.getUuid(), MicrosoftProfile.TokenKey.MICROSOFT_ACCESS_TOKEN), tokens.microsoftAccessToken);
-                    vault.put(MicrosoftProfile.tokenKey(profile.getUuid(), MicrosoftProfile.TokenKey.MICROSOFT_REFRESH_TOKEN), tokens.microsoftRefreshToken);
-                    vault.put(MicrosoftProfile.tokenKey(profile.getUuid(), MicrosoftProfile.TokenKey.XSTS_TOKEN), tokens.xstsToken);
-                } catch (Exception e) {
+                    storeTokens(profile.getUuid(), tokens.toMap());
+                } catch (VaultException e) {
                     LOGGER.error("Failed to migrate legacy tokens for profile {}", profile.getUuid(), e);
-                    
-                    // If it fails we basically have no choice but to remove the profile, as it will be in a broken state.
-                    failedProfiles.add(profile.getUuid());
+
+                    // The tokens are dropped from the file either way, so keep the profile and have the user log in again.
+                    profile.markNotLoggedIn();
                 }
             }
-        }
-        
-        // This has to be done outside the loop to avoid concurrent modification exceptions.
-        for (UUID failedProfile : failedProfiles) {
-            this.removeProfile(failedProfile);
         }
 
         legacyTokens.clear();
@@ -187,6 +195,28 @@ public class AccountManager {
         }
     }
     
+    /// @return the token, or `null` if it's missing or the vault can't be read
+    @Nullable
+    public String token(UUID uuid, MicrosoftProfile.TokenKey key) {
+        try {
+            return appStorage.vault().get(tokenKey(uuid, key));
+        } catch (VaultException e) {
+            LOGGER.error("Failed to read {} for profile {} from the vault", key.getKeyName(), uuid, e);
+            return null;
+        }
+    }
+
+    /// Stores the tokens in a single vault write, so either all of them are saved or none are.
+    public void storeTokens(UUID uuid, Map<MicrosoftProfile.TokenKey, String> tokens) throws VaultException {
+        Map<String, String> entries = new HashMap<>();
+        tokens.forEach((key, value) -> entries.put(tokenKey(uuid, key), value));
+        appStorage.vault().putAll(entries);
+    }
+
+    private static String tokenKey(UUID uuid, MicrosoftProfile.TokenKey key) {
+        return "msa." + uuid + "." + key.getKeyName();
+    }
+
     public Set<MicrosoftProfile> getProfiles() {
         return this.store.get().profiles;
     }
@@ -205,6 +235,16 @@ public class AccountManager {
     }
     
     /// Only needed whilst migrations are in place, to convert old token storage to the vault.
-    private record ProfileTokens(String minecraftAccessToken, String microsoftAccessToken,
-                                String microsoftRefreshToken, String xstsToken) { }
+    private record ProfileTokens(@Nullable String minecraftAccessToken, @Nullable String microsoftAccessToken,
+                                @Nullable String microsoftRefreshToken, @Nullable String xstsToken) {
+        /// Skips any token missing from the old file, the refresh will then fail and ask the user to log in again.
+        Map<MicrosoftProfile.TokenKey, String> toMap() {
+            Map<MicrosoftProfile.TokenKey, String> map = new EnumMap<>(MicrosoftProfile.TokenKey.class);
+            if (minecraftAccessToken != null) map.put(MicrosoftProfile.TokenKey.MINECRAFT_ACCESS_TOKEN, minecraftAccessToken);
+            if (microsoftAccessToken != null) map.put(MicrosoftProfile.TokenKey.MICROSOFT_ACCESS_TOKEN, microsoftAccessToken);
+            if (microsoftRefreshToken != null) map.put(MicrosoftProfile.TokenKey.MICROSOFT_REFRESH_TOKEN, microsoftRefreshToken);
+            if (xstsToken != null) map.put(MicrosoftProfile.TokenKey.XSTS_TOKEN, xstsToken);
+            return map;
+        }
+    }
 }

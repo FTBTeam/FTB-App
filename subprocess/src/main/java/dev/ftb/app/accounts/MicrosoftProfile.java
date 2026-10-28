@@ -6,7 +6,6 @@ import dev.ftb.app.accounts.auth.MicrosoftRequests;
 import dev.ftb.app.accounts.data.ErrorWithCode;
 import dev.ftb.app.accounts.data.MinecraftProfileData;
 import dev.ftb.app.services.AppHttp;
-import dev.ftb.app.services.AppStorage;
 import dev.ftb.app.services.storage.VaultException;
 import dev.ftb.app.util.Result;
 import org.jspecify.annotations.Nullable;
@@ -15,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -53,13 +53,14 @@ public class MicrosoftProfile {
     }
     
     @Nullable
-    public static MicrosoftProfile create(AppStorage storage, UUID uuid, String minecraftName, String minecraftAccessToken, int minecraftAccessExpiresIn, String microsoftAccessToken, String microsoftRefreshToken, int microsoftAccessExpiresIn, String xstsUserHash, String xstsNotAfter, String xstsToken, String skinUrl) {
+    public static MicrosoftProfile create(AccountManager accounts, UUID uuid, String minecraftName, String minecraftAccessToken, int minecraftAccessExpiresIn, String microsoftAccessToken, String microsoftRefreshToken, int microsoftAccessExpiresIn, String xstsUserHash, String xstsNotAfter, String xstsToken, String skinUrl) {
         try {
-            var vault = storage.vault();
-            vault.put(tokenKey(uuid, TokenKey.MINECRAFT_ACCESS_TOKEN), minecraftAccessToken);
-            vault.put(tokenKey(uuid, TokenKey.MICROSOFT_ACCESS_TOKEN), microsoftAccessToken);
-            vault.put(tokenKey(uuid, TokenKey.MICROSOFT_REFRESH_TOKEN), microsoftRefreshToken);
-            vault.put(tokenKey(uuid, TokenKey.XSTS_TOKEN), xstsToken);
+            accounts.storeTokens(uuid, Map.of(
+                TokenKey.MINECRAFT_ACCESS_TOKEN, minecraftAccessToken,
+                TokenKey.MICROSOFT_ACCESS_TOKEN, microsoftAccessToken,
+                TokenKey.MICROSOFT_REFRESH_TOKEN, microsoftRefreshToken,
+                TokenKey.XSTS_TOKEN, xstsToken
+            ));
         } catch (VaultException e) {
             LOGGER.error("Failed to store tokens in the vault", e);
             return null;
@@ -84,10 +85,10 @@ public class MicrosoftProfile {
     /**
      * Refreshes the account if needed
      */
-    public boolean refreshAccount(AppHttp http, AccountManager accounts, AppStorage storage, boolean forceRefresh) {
+    public boolean refreshAccount(AppHttp http, AccountManager accounts, boolean forceRefresh) {
         try {
             LOGGER.info("Refreshing account for {}", this.minecraftName);
-            boolean result = this.unsafeRefreshAccount(http, accounts, storage, forceRefresh);
+            boolean result = this.unsafeRefreshAccount(http, accounts, forceRefresh);
             if (!result) {
                 LOGGER.error("Failed to refresh account for {}", this.minecraftName);
                 
@@ -105,26 +106,20 @@ public class MicrosoftProfile {
         }
     }
     
-    public boolean refreshAccount(AppHttp http, AccountManager accounts, AppStorage storage) {
-        return this.refreshAccount(http, accounts, storage, false);
+    public boolean refreshAccount(AppHttp http, AccountManager accounts) {
+        return this.refreshAccount(http, accounts, false);
     }
 
     /**
      * Big thanks to ATLauncher for the rough implementation of this method
      * <a href="https://github.com/ATLauncher/ATLauncher/blob/master/src/main/java/com/atlauncher/data/MicrosoftAccount.java#L159">...</a>
      */
-    private boolean unsafeRefreshAccount(AppHttp http, AccountManager accounts, AppStorage storage, boolean forceRefresh) {
+    private boolean unsafeRefreshAccount(AppHttp http, AccountManager accounts, boolean forceRefresh) {
         var now = Instant.now();
         
         if (forceRefresh || now.getEpochSecond() >= this.microsoftAccessExpiresAt) {
             LOGGER.info("Xbox token expired, refreshing");
-            var microsoftAccessToken = getMicrosoftToken(storage);
-            if (microsoftAccessToken == null) {
-                LOGGER.error("Microsoft access token is missing, cannot refresh");
-                return false;
-            }
-            
-            var microsoftRefreshToken = getMicrosoftRefreshToken(storage);
+            var microsoftRefreshToken = accounts.token(uuid, TokenKey.MICROSOFT_REFRESH_TOKEN);
             if (microsoftRefreshToken == null) {
                 LOGGER.error("Microsoft refresh token is missing, cannot refresh");
                 return false;
@@ -140,8 +135,11 @@ public class MicrosoftProfile {
             var jsonData = refreshResult.unwrap();
             
             try {
-                storage.vault().put(tokenKey(uuid, TokenKey.MICROSOFT_ACCESS_TOKEN), jsonData.get("access_token").getAsString());
-                storage.vault().put(tokenKey(uuid, TokenKey.MICROSOFT_REFRESH_TOKEN), jsonData.get("refresh_token").getAsString());
+                // Microsoft rotates the refresh token, so both have to be saved together
+                accounts.storeTokens(uuid, Map.of(
+                    TokenKey.MICROSOFT_ACCESS_TOKEN, jsonData.get("access_token").getAsString(),
+                    TokenKey.MICROSOFT_REFRESH_TOKEN, jsonData.get("refresh_token").getAsString()
+                ));
             } catch (VaultException e) {
                 LOGGER.error("Failed to store refreshed tokens in the vault", e);
                 return false;
@@ -153,7 +151,7 @@ public class MicrosoftProfile {
         
         if (forceRefresh || now.getEpochSecond() >= this.xstsNotAfter) {
             LOGGER.info("XSTS token expired, refreshing");
-            var microsoftAccessToken = getMicrosoftToken(storage);
+            var microsoftAccessToken = accounts.token(uuid, TokenKey.MICROSOFT_ACCESS_TOKEN);
             if (microsoftAccessToken == null) {
                 LOGGER.error("Microsoft access token is missing, cannot refresh XSTS token");
                 return false;
@@ -192,7 +190,7 @@ public class MicrosoftProfile {
             
             LOGGER.info("Successfully refreshed XSTS token");
             try {
-                storage.vault().put(tokenKey(uuid, TokenKey.XSTS_TOKEN), xstsTokenData.get("Token").getAsString());
+                accounts.storeTokens(uuid, Map.of(TokenKey.XSTS_TOKEN, xstsTokenData.get("Token").getAsString()));
             } catch (VaultException e) {
                 LOGGER.error("Failed to store refreshed XSTS token in the vault", e);
                 return false;
@@ -205,7 +203,7 @@ public class MicrosoftProfile {
         
         if (forceRefresh || now.getEpochSecond() >= this.minecraftAccessExpiresAt) {
             LOGGER.info("Minecraft token expired, refreshing");
-            var xstsToken = getXstsToken(storage);
+            var xstsToken = accounts.token(uuid, TokenKey.XSTS_TOKEN);
             if (xstsToken == null) {
                 LOGGER.error("XSTS token is missing, cannot refresh Minecraft token");
                 return false;
@@ -220,7 +218,7 @@ public class MicrosoftProfile {
             JsonObject minecraftData = minecraftResult.unwrap();
             String accessToken = minecraftData.get("access_token").getAsString();
             try {
-                storage.vault().put(tokenKey(uuid, TokenKey.MINECRAFT_ACCESS_TOKEN), accessToken);
+                accounts.storeTokens(uuid, Map.of(TokenKey.MINECRAFT_ACCESS_TOKEN, accessToken));
             } catch (VaultException e) {
                 LOGGER.error("Failed to store refreshed Minecraft token in the vault", e);
                 return false;
@@ -248,44 +246,9 @@ public class MicrosoftProfile {
         return true;
     }
 
-    @Nullable
-    public String getMinecraftToken(AppStorage storage) {
-        try {
-            return storage.vault().get(tokenKey(uuid, TokenKey.MINECRAFT_ACCESS_TOKEN));
-        } catch (VaultException e) {
-            LOGGER.error("Failed to retrieve Minecraft token from vault", e);
-            return null;
-        }
-    }
-    
-    @Nullable
-    private String getMicrosoftToken(AppStorage storage) {
-        try {
-            return storage.vault().get(tokenKey(uuid, TokenKey.MICROSOFT_ACCESS_TOKEN));
-        } catch (VaultException e) {
-            LOGGER.error("Failed to retrieve Microsoft token from vault", e);
-            return null;
-        }
-    }
-    
-    @Nullable
-    private String getMicrosoftRefreshToken(AppStorage storage) {
-        try {
-            return storage.vault().get(tokenKey(uuid, TokenKey.MICROSOFT_REFRESH_TOKEN));
-        } catch (VaultException e) {
-            LOGGER.error("Failed to retrieve Microsoft refresh token from vault", e);
-            return null;
-        }
-    }
-    
-    @Nullable
-    public String getXstsToken(AppStorage storage) {
-        try {
-            return storage.vault().get(tokenKey(uuid, TokenKey.XSTS_TOKEN));
-        } catch (VaultException e) {
-            LOGGER.error("Failed to retrieve XSTS token from vault", e);
-            return null;
-        }
+    /// Used when the tokens are lost, so the user is asked to log in again.
+    void markNotLoggedIn() {
+        this.notLoggedIn = true;
     }
     
     public UUID getUuid() {
@@ -327,11 +290,6 @@ public class MicrosoftProfile {
     @Override
     public int hashCode() {
         return Objects.hashCode(uuid);
-    }
-    
-    // TODO: Close scope access once the migrator is removed. 
-    public static String tokenKey(UUID uuid, TokenKey key) {
-        return uuid + "." + key.getKeyName();
     }
     
     public enum TokenKey {

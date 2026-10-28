@@ -434,7 +434,7 @@ public class InstanceLauncher {
                 subMap.put("user_properties", "{}"); // TODO, we may need to provide this all the time.
                 subMap.put("user_type", "msa");
                 subMap.put("xuid", profile.getXstsUserHash());
-                String accessToken = profile.getMinecraftToken(this.factory().storage());
+                String accessToken = accounts.token(profile.getUuid(), MicrosoftProfile.TokenKey.MINECRAFT_ACCESS_TOKEN);
                 if (accessToken == null) {
                     throw new InstanceLaunchException("Failed to retrieve Minecraft access token for profile " + profile.getMinecraftName() + "(" + profile.getUuid() + ").");
                 }

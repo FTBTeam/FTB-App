@@ -13,7 +13,6 @@ import dev.ftb.app.minecraft.jsons.VersionManifest;
 import dev.ftb.app.pack.Instance;
 import dev.ftb.app.pack.InstanceFactory;
 import dev.ftb.app.services.AppHttp;
-import dev.ftb.app.services.AppStorage;
 import dev.ftb.app.services.AppThreads;
 import dev.ftb.app.services.cache.AppCache;
 import dev.ftb.app.storage.settings.Settings;
@@ -55,7 +54,6 @@ public class Instances {
     private final AppCache appCache;
     private final AppHttp appHttp;
     private final JdkInstallationManager jdkManager;
-    private final AppStorage appStorage;
     
     public Instances(
         AppPaths appPaths,
@@ -65,8 +63,7 @@ public class Instances {
         AppThreads appThreads,
         AppCache appCache,
         AppHttp appHttp,
-        JdkInstallationManager jdkManager,
-        AppStorage appStorage
+        JdkInstallationManager jdkManager
     ) {
         this.appPaths = appPaths;
         this.settings = settings;
@@ -76,7 +73,6 @@ public class Instances {
         this.appThreads = appThreads;
         this.appHttp = appHttp;
         this.jdkManager = jdkManager;
-        this.appStorage = appStorage;
         
         this.supportMeta = new InstanceSupportMeta(appPaths, this.appHttp);
     }
@@ -178,8 +174,7 @@ public class Instances {
             this.accounts,
             this,
             this.rcpApi,
-            this.jdkManager,
-            this.appStorage
+            this.jdkManager
         );
         
         Instance localInstance = factory.load(path, json);

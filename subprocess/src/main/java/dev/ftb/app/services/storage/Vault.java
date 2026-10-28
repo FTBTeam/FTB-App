@@ -4,6 +4,8 @@ import dev.ftb.app.AppPaths;
 import net.covers1624.quack.platform.OperatingSystem;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Map;
+
 /// Essentially a key-value store for secrets, protected by system-level storage.
 ///
 /// Calls may block on first use, as the backing [MasterKeyStore] can show an OS prompt (unlocking a keyring, allowing
@@ -12,6 +14,9 @@ public interface Vault {
     @Nullable String get(String key) throws VaultException;
 
     void put(String key, String value) throws VaultException;
+
+    /// Stores all the entries in a single write, so either all of them are saved or none are.
+    void putAll(Map<String, String> entries) throws VaultException;
 
     void remove(String key) throws VaultException;
 
