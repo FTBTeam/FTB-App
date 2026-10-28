@@ -45,12 +45,12 @@ public class AppServices implements Services {
         this.paths = new AppPaths();
         this.settings = new Settings(this.paths);
         this.threads = new AppThreads(this.settings.getThreadLimit());
-        this.accounts = new AccountManager(this.paths);
         
         this.appHttp = new AppHttp(this.flags, this.settings);
         this.jdkInstallationManager = this.createJdkManager(this.appHttp);
         this.appStorage = new AppStorage(this.paths);
 
+        this.accounts = new AccountManager(this.paths, this.appStorage);
         this.cache = new AppCache(this.paths, this.settings, this.threads, this.http());
         
         this.settings.onChange((newSettings) -> {
@@ -60,7 +60,7 @@ public class AppServices implements Services {
         });
         
         this.rcpApi = new RcpApi(this);
-        this.instances = new Instances(this.paths, this.settings, this.rcpApi, this.accounts, this.threads, this.cache, this.appHttp, this.jdkInstallationManager);
+        this.instances = new Instances(this.paths, this.settings, this.rcpApi, this.accounts, this.threads, this.cache, this.appHttp, this.jdkInstallationManager, this.appStorage);
     }
     
     /**

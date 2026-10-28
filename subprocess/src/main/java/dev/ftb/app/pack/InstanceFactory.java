@@ -7,6 +7,7 @@ import dev.ftb.app.api.RcpApi;
 import dev.ftb.app.data.modpack.ModpackManifest;
 import dev.ftb.app.data.modpack.ModpackVersionManifest;
 import dev.ftb.app.services.AppHttp;
+import dev.ftb.app.services.AppStorage;
 import dev.ftb.app.services.AppThreads;
 import dev.ftb.app.services.Services;
 import dev.ftb.app.services.cache.AppCache;
@@ -20,7 +21,7 @@ import java.util.UUID;
 
 public record InstanceFactory(Settings settings, AppPaths appPaths, AppThreads threads, AppCache cache,
                               AppHttp httpClient, AccountManager accounts, Instances instances, RcpApi rcpApi,
-                              JdkInstallationManager jdkInstallationManager) {
+                              JdkInstallationManager jdkInstallationManager, AppStorage storage) {
 
     /// Creates a new instance based on the provided modpack and version manifest. The name, artPath, and categoryId can be null, in which case defaults will be used.
     public Instance create(@Nullable String name, @Nullable String artPath, @Nullable UUID categoryId, ModpackManifest modpack, ModpackVersionManifest versionManifest, String mcVersion, boolean isPrivate, byte packType) {
@@ -44,7 +45,8 @@ public record InstanceFactory(Settings settings, AppPaths appPaths, AppThreads t
             services.accounts(),
             services.instances(),
             services.rcpApi(),
-            services.jdkInstallationManager()
+            services.jdkInstallationManager(),
+            services.storage()
         );
     }
 }

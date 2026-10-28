@@ -27,7 +27,8 @@ public class AuthenticateMsProfileHandler implements IMessageHandler<Authenticat
         
         var accountData = result.unwrap();
         
-        var newAccount = new MicrosoftProfile(
+        var newAccount = MicrosoftProfile.create(
+            context.services().storage(),
             MiscUtils.createUuidFromStringWithoutDashes(accountData.profileData().id()),
             accountData.profileData().name(),
             accountData.minecraftAccessToken(),
