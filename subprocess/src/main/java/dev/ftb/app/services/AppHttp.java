@@ -65,14 +65,10 @@ public class AppHttp {
     }
 
     private Throttler getClientThrottler() {
-        // TODO, double-check this logic.
-        long maxSpeed = this.speedLimit.getAsLong() * 1000L;
-        if (maxSpeed > 0) {
-            this.clientThrottler.bytesPerSecond((maxSpeed / 8) * 2); //Some reason it always limits to 50% for me, so we multiply!
-        } else {
-            this.clientThrottler.bytesPerSecond(Long.MAX_VALUE);
-        }
-
+        // The slider stores kilobits per second. One throttler is shared by every request, so this caps total
+        // download bandwidth, not each file. With several files downloading at once, each gets a share of it.
+        long bytesPerSecond = this.speedLimit.getAsLong() * 1000L / 8;
+        this.clientThrottler.bytesPerSecond(Math.max(bytesPerSecond, 0)); // 0 is okio's "no limit"
         return this.clientThrottler;
     }
     
