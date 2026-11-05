@@ -20,6 +20,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
@@ -112,6 +113,23 @@ public final class JsonStore<T> {
         try {
             mutator.accept(get());
             saveLocked();
+        } finally {
+            lock.unlock();
+        }
+    }
+    
+    /// Conditionally mutates the data and saves it. If the predicate returns false, the data is not mutated or saved and
+    /// the result is passed back to the caller.
+    public boolean updateIf(Predicate<T> predicate, Consumer<T> mutator) throws IOException {
+        lock.lock();
+        try {
+            T current = get();
+            if (!predicate.test(current)) {
+                return false;
+            }
+            mutator.accept(current);
+            saveLocked();
+            return true;
         } finally {
             lock.unlock();
         }

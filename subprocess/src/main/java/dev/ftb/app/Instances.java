@@ -18,7 +18,7 @@ import dev.ftb.app.services.cache.AppCache;
 import dev.ftb.app.storage.settings.Settings;
 import dev.ftb.app.util.ElapsedTimer;
 import dev.ftb.app.util.FileUtils;
-import dev.ftb.app.util.GsonUtils;
+import dev.ftb.app.util.JsonStore;
 import net.covers1624.jdkutils.JdkInstallationManager;
 import net.covers1624.quack.gson.HashCodeAdapter;
 import org.apache.logging.log4j.LogManager;
@@ -38,12 +38,11 @@ public class Instances {
         .registerTypeAdapter(HashCode.class, new HashCodeAdapter())
         .create();
     
-    private final TypeToken<LinkedList<InstanceCategory>> CATEGORIES_TYPE = new TypeToken<>() {};
+    private static final TypeToken<LinkedList<InstanceCategory>> CATEGORIES_TYPE = new TypeToken<>() {};
     
     private Map<UUID, Instance> instances = new HashMap<>();
     
-    /// TODO: Replace with JsonStore. 
-    private LinkedList<InstanceCategory> categories = new LinkedList<>();
+    private final JsonStore<LinkedList<InstanceCategory>> categories;
     private final InstanceSupportMeta supportMeta;
     
     private final Settings settings;
@@ -74,6 +73,13 @@ public class Instances {
         this.appHttp = appHttp;
         this.jdkManager = jdkManager;
         
+        this.categories = new JsonStore<>(
+            settings.getInstancesDir().resolve("categories.json"),
+            GSON,
+            CATEGORIES_TYPE.getType(),
+            () -> new LinkedList<>(List.of(InstanceCategory.DEFAULT))
+        );
+        
         this.supportMeta = new InstanceSupportMeta(appPaths, this.appHttp);
     }
 
@@ -91,7 +97,7 @@ public class Instances {
     }
     
     public LinkedList<InstanceCategory> categories() {
-        return categories;
+        return categories.get();
     }
 
     public void refreshInstances() {
@@ -193,8 +199,6 @@ public class Instances {
     }
 
     private void loadCategories() {
-        categories.clear();
-        
         var categoriesFile = this.settings.getInstancesDir().resolve("categories.json");
         if (Files.notExists(categoriesFile)) {
             // Try and migrate
@@ -202,48 +206,37 @@ public class Instances {
             return;
         }
         
-        // Load the categories from the file.
         try {
-            LinkedList<InstanceCategory> loadedCategories = GSON.fromJson(Files.newBufferedReader(categoriesFile), CATEGORIES_TYPE.getType());
-            if (loadedCategories == null) {
-                LOGGER.warn("Failed to load instance categories from file: {}", categoriesFile);
-                return;
-            }
-            
-            categories = new LinkedList<>(loadedCategories);
+            this.categories.load();
         } catch (IOException e) {
             LOGGER.error("Failed to load instance categories from file: {}", categoriesFile, e);
         }
     }
     
-    public void saveCategories() {
-        var categoriesFile = this.settings.getInstancesDir().resolve("categories.json");
-        try {
-            if (Files.notExists(categoriesFile.getParent())) {
-                Files.createDirectories(categoriesFile.getParent());
-            }
-            GsonUtils.saveJson(GSON, categoriesFile, categories, CATEGORIES_TYPE.getType());
-        } catch (IOException e) {
-            LOGGER.error("Failed to save instance categories to file: {}", categoriesFile, e);
-        }
-    }
-    
     @Nullable
     public InstanceCategory addCategory(String categoryName) {
-        if (categories.stream().anyMatch(e -> e.name().equalsIgnoreCase(categoryName))) {
-            LOGGER.warn("Tried to add existing category: {}", categoryName);
+        var newCategory = new InstanceCategory(categoryName);
+        try {
+            // The name check runs under the store's lock so two concurrent adds can't both pass it.
+            boolean added = this.categories.updateIf(
+                existing -> existing.stream().noneMatch(e -> e.name().equalsIgnoreCase(categoryName)),
+                existing -> existing.add(newCategory)
+            );
+            if (!added) {
+                LOGGER.warn("Tried to add existing category: {}", categoryName);
+                return null;
+            }
+        } catch (IOException e) {
+            LOGGER.error("Failed to add new category: {}", categoryName, e);
             return null;
         }
-        
-        var newCategory = new InstanceCategory(categoryName);
-        categories.add(newCategory);
-        saveCategories();
         
         return newCategory;
     }
     
+    @Nullable
     public InstanceCategory updateCategory(UUID category, String newName) {
-        var foundCategory = categories.stream()
+        var foundCategory = categories.get().stream()
             .filter(e -> e.uuid().equals(category))
             .findFirst();
         
@@ -252,22 +245,31 @@ public class Instances {
             return null;
         }
         
-        // Check if the new name already exists.
-        if (categories.stream().anyMatch(e -> e.name().equalsIgnoreCase(newName))) {
-            LOGGER.warn("Tried to update category to existing name: {}", newName);
+        try {
+            // Checked under the store's lock so a concurrent rename or remove can't slip in between the check and the update.
+            boolean updated = this.categories.updateIf(
+                existing -> existing.stream().anyMatch(e -> e.uuid().equals(category))
+                    && existing.stream().noneMatch(e -> e.name().equalsIgnoreCase(newName)),
+                existing -> existing.stream()
+                    .filter(e -> e.uuid().equals(category))
+                    .findFirst()
+                    .ifPresent(e -> e.setName(newName))
+            );
+            if (!updated) {
+                LOGGER.warn("Tried to update category {} to existing name: {}", category, newName);
+                return null;
+            }
+        } catch (IOException e) {
+            LOGGER.error("Failed to update category: {} to new name: {}", category, newName, e);
             return null;
         }
-        
-        // Update the category name.
-        foundCategory.get().setName(newName);
-        saveCategories();
         
         LOGGER.info("Updated category {} to new name: {}", category, newName);
         return foundCategory.get();
     }
     
     public void removeCategory(UUID category) {
-        var foundCategory = categories.stream()
+        var foundCategory = categories.get().stream()
             .filter(e -> e.uuid().equals(category))
             .findFirst();
         
@@ -288,20 +290,24 @@ public class Instances {
             }
         }
         
-        // Remove the category from the list.
-        categories.removeIf(e -> e.uuid().equals(category));
-        
+        try {
+            this.categories.update(existing -> {
+                existing.removeIf(e -> e.uuid().equals(category));
+            });
+        } catch (IOException e) {
+            LOGGER.error("Failed to remove category: {}", category, e);
+        }
+
         LOGGER.info("Removed category: {}", foundCategory.get().name());
-        saveCategories();
     }
     
-    // TODO: Should this be a migration as part of the migration process?
     private void migrateCategories() {
         LinkedList<InstanceCategory> newCategories = new LinkedList<>();
         LOGGER.info("Migrating old instance categories to new format..");
 
         newCategories.add(InstanceCategory.DEFAULT);
         
+        List<Instance> instancesToSave = new ArrayList<>();
         for (Instance instance : allInstances()) {
             if (instance.props == null || instance.props.categoryId != null) {
                 continue;
@@ -324,27 +330,22 @@ public class Instances {
                     newCategories.add(newCategory);
                     return newCategory.uuid();
                 });
-            
-            try {
-                instance.saveJson();
-            } catch (IOException e) {
-                LOGGER.error("Failed to save instance with new category id: {}", instance.getDir(), e);
-            }
+
+            instancesToSave.add(instance);
         }
         
-        // Save the categories to the file.
         try {
-            Path categoriesFile = this.settings.getInstancesDir().resolve("categories.json");
-            if (Files.notExists(categoriesFile.getParent())) {
-                Files.createDirectories(categoriesFile.getParent());
-            }
+            this.categories.update(existing -> {
+                existing.clear();
+                existing.addAll(newCategories);
+            });
             
-            GsonUtils.saveJson(GSON, categoriesFile, newCategories, CATEGORIES_TYPE.getType());
+            for (Instance instance : instancesToSave) {
+                instance.saveJson();
+            }
         } catch (IOException e) {
-            LOGGER.error("Failed to save migrated categories.", e);
+            LOGGER.error("Failed to save migrated instance categories.", e);
         }
-        
-        categories.addAll(newCategories);
     }
 
     public InstanceSupportMeta supportMeta() {
