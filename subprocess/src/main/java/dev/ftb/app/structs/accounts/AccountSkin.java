@@ -1,4 +1,4 @@
-package dev.ftb.app.accounts.data;
+package dev.ftb.app.structs.accounts;
 
 public record AccountSkin(String id, String state, String url, String variant, String alias) {
     @Override

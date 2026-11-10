@@ -85,8 +85,8 @@ public class LogZipper {
         metaDetails.addProperty("today", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE));
         metaDetails.addProperty("time", System.currentTimeMillis());
         metaDetails.addProperty("timeTaken", System.currentTimeMillis() - startTime);
-        metaDetails.addProperty("addedAccounts", services.accounts().getProfiles().size());
-        metaDetails.addProperty("hasActiveAccount", services.accounts().getActiveProfile() != null);
+        metaDetails.addProperty("addedAccounts", services.accounts().minecraft().getProfiles().size());
+        metaDetails.addProperty("hasActiveAccount", services.accounts().minecraft().getActiveProfile() != null);
         obj.add("metaDetails", metaDetails);
 
         var appDetails = new JsonObject();

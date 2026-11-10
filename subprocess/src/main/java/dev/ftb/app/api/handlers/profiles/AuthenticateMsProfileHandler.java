@@ -1,8 +1,8 @@
 package dev.ftb.app.api.handlers.profiles;
 
-import dev.ftb.app.accounts.MicrosoftProfile;
-import dev.ftb.app.accounts.auth.MicrosoftOAuthProcess;
-import dev.ftb.app.accounts.data.OAuthTokenHolder;
+import dev.ftb.app.services.accounts.minecraft.MicrosoftProfile;
+import dev.ftb.app.services.accounts.minecraft.MicrosoftOAuthProcess;
+import dev.ftb.app.structs.accounts.OAuthTokenHolder;
 import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.api.data.PrivateBaseData;
 import dev.ftb.app.api.handlers.IMessageHandler;
@@ -28,7 +28,7 @@ public class AuthenticateMsProfileHandler implements IMessageHandler<Authenticat
         var accountData = result.unwrap();
         
         var newAccount = MicrosoftProfile.create(
-            context.services().accounts(),
+            context.services().accounts().minecraft(),
             MiscUtils.createUuidFromStringWithoutDashes(accountData.profileData().id()),
             accountData.profileData().name(),
             accountData.minecraftAccessToken(),
@@ -47,7 +47,7 @@ public class AuthenticateMsProfileHandler implements IMessageHandler<Authenticat
             return;
         }
         
-        context.services().accounts().addProfile(newAccount);
+        context.services().accounts().minecraft().addProfile(newAccount);
 
         context.reply(new Reply(data));
     }

@@ -1,6 +1,6 @@
 package dev.ftb.app.api.handlers.profiles;
 
-import dev.ftb.app.accounts.MicrosoftProfile;
+import dev.ftb.app.services.accounts.minecraft.MicrosoftProfile;
 import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.api.data.PrivateBaseData;
 import dev.ftb.app.api.handlers.IMessageHandler;
@@ -15,8 +15,8 @@ public class GetProfilesHandler implements IMessageHandler<BaseData> {
     public void handle(MessageContext context, BaseData data) {
         context.reply(new Reply(
                 data,
-                context.services().accounts().getProfiles().stream().map(MicrosoftProfile::toSharableData).collect(Collectors.toSet()),
-                context.services().accounts().getActiveProfile()
+                context.services().accounts().minecraft().getProfiles().stream().map(MicrosoftProfile::toSharableData).collect(Collectors.toSet()),
+                context.services().accounts().minecraft().getActiveProfile()
         ));
     }
 

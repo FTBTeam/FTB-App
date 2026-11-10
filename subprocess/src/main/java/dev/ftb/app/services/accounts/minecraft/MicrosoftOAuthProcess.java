@@ -1,9 +1,9 @@
-package dev.ftb.app.accounts.auth;
+package dev.ftb.app.services.accounts.minecraft;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import dev.ftb.app.accounts.data.*;
 import dev.ftb.app.services.AppHttp;
+import dev.ftb.app.structs.accounts.*;
 import dev.ftb.app.util.Result;
 
 public class MicrosoftOAuthProcess {

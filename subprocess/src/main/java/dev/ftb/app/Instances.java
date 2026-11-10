@@ -4,7 +4,7 @@ import com.google.common.hash.HashCode;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import dev.ftb.app.accounts.AccountManager;
+import dev.ftb.app.services.accounts.McAccounts;
 import dev.ftb.app.api.RcpApi;
 import dev.ftb.app.data.InstanceSupportMeta;
 import dev.ftb.app.data.modpack.ModpackVersionManifest;
@@ -48,7 +48,7 @@ public class Instances {
     private final Settings settings;
     private final AppPaths appPaths;
     private final RcpApi rcpApi;
-    private final AccountManager accounts;
+    private final McAccounts accounts;
     private final AppThreads appThreads;
     private final AppCache appCache;
     private final AppHttp appHttp;
@@ -58,7 +58,7 @@ public class Instances {
         AppPaths appPaths,
         Settings settings,
         RcpApi rcpApi,
-        AccountManager accounts,
+        McAccounts accounts,
         AppThreads appThreads,
         AppCache appCache,
         AppHttp appHttp,

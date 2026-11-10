@@ -1,4 +1,4 @@
-package dev.ftb.app.accounts.data;
+package dev.ftb.app.structs.accounts;
 
 public record OAuthTokenHolder(
     String accessToken,

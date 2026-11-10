@@ -1,5 +1,7 @@
-package dev.ftb.app.accounts;
+package dev.ftb.app.structs.accounts;
 
+import dev.ftb.app.services.accounts.minecraft.MicrosoftProfile;
+import dev.ftb.app.services.accounts.McAccounts;
 import org.jspecify.annotations.Nullable;
 
 import java.util.HashSet;
@@ -20,7 +22,7 @@ public class AccountStore {
     public UUID activeProfile;
 
     public AccountStore(Set<MicrosoftProfile> profiles, @Nullable UUID activeProfile) {
-        this.version = AccountManager.SPEC_VERSION;
+        this.version = McAccounts.SPEC_VERSION;
         this.profiles = profiles;
         this.activeProfile = activeProfile;
     }

@@ -2,7 +2,7 @@ package dev.ftb.app.pack;
 
 import dev.ftb.app.AppPaths;
 import dev.ftb.app.Instances;
-import dev.ftb.app.accounts.AccountManager;
+import dev.ftb.app.services.accounts.McAccounts;
 import dev.ftb.app.api.RcpApi;
 import dev.ftb.app.data.modpack.ModpackManifest;
 import dev.ftb.app.data.modpack.ModpackVersionManifest;
@@ -19,7 +19,7 @@ import java.nio.file.Path;
 import java.util.UUID;
 
 public record InstanceFactory(Settings settings, AppPaths appPaths, AppThreads threads, AppCache cache,
-                              AppHttp httpClient, AccountManager accounts, Instances instances, RcpApi rcpApi,
+                              AppHttp httpClient, McAccounts accounts, Instances instances, RcpApi rcpApi,
                               JdkInstallationManager jdkInstallationManager) {
 
     /// Creates a new instance based on the provided modpack and version manifest. The name, artPath, and categoryId can be null, in which case defaults will be used.
@@ -41,7 +41,7 @@ public record InstanceFactory(Settings settings, AppPaths appPaths, AppThreads t
             services.threads(),
             services.cache(),
             services.http(),
-            services.accounts(),
+            services.accounts().minecraft(),
             services.instances(),
             services.rcpApi(),
             services.jdkInstallationManager()

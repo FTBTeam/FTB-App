@@ -1,10 +1,12 @@
-package dev.ftb.app.accounts;
+package dev.ftb.app.services.accounts;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import dev.ftb.app.AppPaths;
+import dev.ftb.app.structs.accounts.AccountStore;
+import dev.ftb.app.services.accounts.minecraft.MicrosoftProfile;
 import dev.ftb.app.services.AppStorage;
 import dev.ftb.app.services.storage.VaultException;
 import dev.ftb.app.util.JsonStore;
@@ -16,7 +18,7 @@ import org.jspecify.annotations.Nullable;
 import java.io.IOException;
 import java.util.*;
 
-public class AccountManager {
+public class McAccounts {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Logger LOGGER = LogManager.getLogger();
 
@@ -31,10 +33,9 @@ public class AccountManager {
     private final Map<UUID, ProfileTokens> legacyTokens = new HashMap<>();
     
     private final JsonStore<AccountStore> store;
-
     private final AppStorage appStorage;
 
-    public AccountManager(AppPaths appPaths, AppStorage storage) {
+    public McAccounts(AppPaths appPaths, AppStorage storage) {
         this.appStorage = storage;
         
         this.store = new JsonStore<>(
@@ -46,40 +47,6 @@ public class AccountManager {
         );
         
         loadProfiles();
-    }
-
-    /// Older stores kept tokens in each profile. Pull them out before Gson sees them.
-    private JsonElement migrator(JsonElement jsonElement) {
-        // this shouldn't happen but we'll support it anyway
-        if (!jsonElement.isJsonObject()) return jsonElement;
-        
-        var obj = jsonElement.getAsJsonObject();
-        if (obj.has("version")) {
-            if (obj.get("version").getAsString().equals(SPEC_VERSION)) {
-                return jsonElement;
-            }
-            
-            var version = obj.get("version").getAsString();
-            // 1.0.0 -> 1.0.1 migration: Move tokens to the vault
-            if (version.equals("1.0.0")) {
-                if (!obj.has("profiles") || !obj.get("profiles").isJsonArray()) return jsonElement;
-                
-                var profiles = obj.get("profiles").getAsJsonArray();
-                for (JsonElement element : profiles) {
-                    JsonObject profile = element.getAsJsonObject();
-                    if (!profile.has("minecraftAccessToken")) continue;
-
-                    legacyTokens.put(UUID.fromString(profile.get("uuid").getAsString()), GSON.fromJson(profile, ProfileTokens.class));
-                    for (String field : LEGACY_TOKEN_FIELDS) {
-                        profile.remove(field); // Purge the old tokens from the profile so they don't get saved again.
-                    }
-                }
-
-                obj.addProperty("version", SPEC_VERSION);
-            }
-        }
-        
-        return jsonElement;
     }
 
     /// Removes the profile and its tokens.
@@ -157,34 +124,6 @@ public class AccountManager {
         }
     }
 
-    private void migrateLegacyTokens() {
-        if (legacyTokens.isEmpty()) {
-            return;
-        }
-
-        for (MicrosoftProfile profile : store.get().profiles) {
-            ProfileTokens tokens = legacyTokens.get(profile.getUuid());
-            if (tokens != null) {
-                try {
-                    storeTokens(profile.getUuid(), tokens.toMap());
-                } catch (VaultException e) {
-                    LOGGER.error("Failed to migrate legacy tokens for profile {}", profile.getUuid(), e);
-
-                    // The tokens are dropped from the file either way, so keep the profile and have the user log in again.
-                    profile.markNotLoggedIn();
-                }
-            }
-        }
-
-        legacyTokens.clear();
-        try {
-            store.save();
-            store.save(); // The first save backs up the old file, tokens included. The second replaces that backup.
-        } catch (IOException ex) {
-            LOGGER.error("Failed to save accounts after migrating tokens.", ex);
-        }
-    }
-    
     /// @return the token, or `null` if it's missing or the vault can't be read
     @Nullable
     public String token(UUID uuid, MicrosoftProfile.TokenKey key) {
@@ -218,7 +157,7 @@ public class AccountManager {
             .findFirst()
             .orElse(null);
     }
-    
+
     @Nullable
     public MicrosoftProfile getActiveProfile() {
         AccountStore current = this.store.get();
@@ -227,9 +166,71 @@ public class AccountManager {
         }
 
         return current.profiles.stream()
-                .filter(p -> p.getUuid().equals(current.activeProfile))
-                .findFirst()
-                .orElse(null);
+            .filter(p -> p.getUuid().equals(current.activeProfile))
+            .findFirst()
+            .orElse(null);
+    }
+    
+    /// Older stores kept tokens in each profile. Pull them out before Gson sees them.
+    private JsonElement migrator(JsonElement jsonElement) {
+        // this shouldn't happen but we'll support it anyway
+        if (!jsonElement.isJsonObject()) return jsonElement;
+
+        var obj = jsonElement.getAsJsonObject();
+        if (obj.has("version")) {
+            if (obj.get("version").getAsString().equals(SPEC_VERSION)) {
+                return jsonElement;
+            }
+
+            var version = obj.get("version").getAsString();
+            // 1.0.0 -> 1.0.1 migration: Move tokens to the vault
+            if (version.equals("1.0.0")) {
+                if (!obj.has("profiles") || !obj.get("profiles").isJsonArray()) return jsonElement;
+
+                var profiles = obj.get("profiles").getAsJsonArray();
+                for (JsonElement element : profiles) {
+                    JsonObject profile = element.getAsJsonObject();
+                    if (!profile.has("minecraftAccessToken")) continue;
+
+                    legacyTokens.put(UUID.fromString(profile.get("uuid").getAsString()), GSON.fromJson(profile, ProfileTokens.class));
+                    for (String field : LEGACY_TOKEN_FIELDS) {
+                        profile.remove(field); // Purge the old tokens from the profile so they don't get saved again.
+                    }
+                }
+
+                obj.addProperty("version", SPEC_VERSION);
+            }
+        }
+
+        return jsonElement;
+    }
+
+    private void migrateLegacyTokens() {
+        if (legacyTokens.isEmpty()) {
+            return;
+        }
+
+        for (MicrosoftProfile profile : store.get().profiles) {
+            ProfileTokens tokens = legacyTokens.get(profile.getUuid());
+            if (tokens != null) {
+                try {
+                    storeTokens(profile.getUuid(), tokens.toMap());
+                } catch (VaultException e) {
+                    LOGGER.error("Failed to migrate legacy tokens for profile {}", profile.getUuid(), e);
+
+                    // The tokens are dropped from the file either way, so keep the profile and have the user log in again.
+                    profile.markNotLoggedIn();
+                }
+            }
+        }
+
+        legacyTokens.clear();
+        try {
+            store.save();
+            store.save(); // The first save backs up the old file, tokens included. The second replaces that backup.
+        } catch (IOException ex) {
+            LOGGER.error("Failed to save accounts after migrating tokens.", ex);
+        }
     }
     
     /// Only needed whilst migrations are in place, to convert old token storage to the vault.

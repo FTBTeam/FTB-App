@@ -11,6 +11,7 @@ import java.util.Map;
  * Makes a web request.
  * <p>
  * Cookies will be handled and stored automatically, they will not be persisted.
+ * @deprecated This should be removed and all fetching should be done via the api.
  */
 public class WebRequestData extends BaseData {
 

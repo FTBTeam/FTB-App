@@ -1,6 +1,6 @@
 package dev.ftb.app.api.handlers.profiles;
 
-import dev.ftb.app.accounts.MicrosoftProfile;
+import dev.ftb.app.services.accounts.minecraft.MicrosoftProfile;
 import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.api.handlers.IMessageHandler;
 import dev.ftb.app.api.handlers.MessageContext;
@@ -14,7 +14,7 @@ public class AccountIsValidHandler implements IMessageHandler<AccountIsValidHand
             return;
         }
 
-        MicrosoftProfile profile = context.services().accounts().getProfileFromUuid(data.profileUuid);
+        MicrosoftProfile profile = context.services().accounts().minecraft().getProfileFromUuid(data.profileUuid);
         if (profile == null) {
             context.reply(new Reply(data, MicrosoftProfile.ValidCheckResult.TOTAL_FAILURE, "Profile not found"));
             return;

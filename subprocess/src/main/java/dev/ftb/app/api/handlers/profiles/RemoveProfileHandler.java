@@ -1,6 +1,6 @@
 package dev.ftb.app.api.handlers.profiles;
 
-import dev.ftb.app.accounts.AccountManager;
+import dev.ftb.app.services.accounts.McAccounts;
 import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.api.handlers.IMessageHandler;
 import dev.ftb.app.api.handlers.MessageContext;
@@ -13,7 +13,7 @@ public class RemoveProfileHandler implements IMessageHandler<RemoveProfileHandle
         boolean removed = false;
         
         // TODO: this could be much more graceful.
-        AccountManager accounts = context.services().accounts();
+        McAccounts accounts = context.services().accounts().minecraft();
         accounts.removeProfile(data.uuid);
         
         var foundProfile = accounts.getProfiles().stream()

@@ -12,6 +12,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+/// @deprecated This should be removed and all fetching should be done via the api.
+@Deprecated
 public class WebRequestHandler implements IMessageHandler<WebRequestData> {
     private static final Logger LOGGER = LogManager.getLogger();
         

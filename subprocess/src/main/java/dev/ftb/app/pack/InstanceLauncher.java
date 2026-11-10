@@ -4,8 +4,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import dev.ftb.app.AppPaths;
 import dev.ftb.app.Constants;
-import dev.ftb.app.accounts.AccountManager;
-import dev.ftb.app.accounts.MicrosoftProfile;
+import dev.ftb.app.services.accounts.McAccounts;
+import dev.ftb.app.services.accounts.minecraft.MicrosoftProfile;
 import dev.ftb.app.api.RcpApi;
 import dev.ftb.app.api.data.instances.LaunchInstanceData;
 import dev.ftb.app.install.tasks.DownloadTask;
@@ -410,7 +410,7 @@ public class InstanceLauncher {
             progressTracker.startStep("Prepare process");
             
             Map<String, String> subMap = new HashMap<>();
-            AccountManager accounts = this.factory().accounts();
+            McAccounts accounts = this.factory().accounts();
             
             MicrosoftProfile profile = accounts.getActiveProfile();
             if (offlineUsername != null || profile == null) {

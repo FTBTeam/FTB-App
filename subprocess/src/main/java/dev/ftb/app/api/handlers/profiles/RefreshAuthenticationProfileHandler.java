@@ -1,6 +1,6 @@
 package dev.ftb.app.api.handlers.profiles;
 
-import dev.ftb.app.accounts.MicrosoftProfile;
+import dev.ftb.app.services.accounts.minecraft.MicrosoftProfile;
 import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.api.data.PrivateBaseData;
 import dev.ftb.app.api.handlers.IMessageHandler;
@@ -14,7 +14,7 @@ public class RefreshAuthenticationProfileHandler implements IMessageHandler<Refr
             return;
         }
 
-        MicrosoftProfile profile = context.services().accounts().getProfileFromUuid(data.profileUuid);
+        MicrosoftProfile profile = context.services().accounts().minecraft().getProfileFromUuid(data.profileUuid);
         if (profile == null) {
             context.reply(new Reply(data, false, "Profile not found"));
             return;
@@ -27,7 +27,7 @@ public class RefreshAuthenticationProfileHandler implements IMessageHandler<Refr
      * Refresh using Microsoft flow
      */
     private void refreshMicrosoft(MessageContext context, Data data, MicrosoftProfile profile) {
-        var result = profile.refreshAccount(context.services().http(), context.services().accounts());
+        var result = profile.refreshAccount(context.services().http(), context.services().accounts().minecraft());
         if (!result) {
             context.reply(new Reply(data, false, "Failed to refresh account"));
             return;

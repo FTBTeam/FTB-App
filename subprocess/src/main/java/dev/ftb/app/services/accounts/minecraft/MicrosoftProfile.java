@@ -1,11 +1,10 @@
-package dev.ftb.app.accounts;
+package dev.ftb.app.services.accounts.minecraft;
 
 import com.google.gson.JsonObject;
-import dev.ftb.app.accounts.auth.MicrosoftOAuthProcess;
-import dev.ftb.app.accounts.auth.MicrosoftRequests;
-import dev.ftb.app.accounts.data.ErrorWithCode;
-import dev.ftb.app.accounts.data.MinecraftProfileData;
+import dev.ftb.app.structs.accounts.ErrorWithCode;
+import dev.ftb.app.structs.accounts.MinecraftProfileData;
 import dev.ftb.app.services.AppHttp;
+import dev.ftb.app.services.accounts.McAccounts;
 import dev.ftb.app.services.storage.VaultException;
 import dev.ftb.app.util.Result;
 import org.jspecify.annotations.Nullable;
@@ -53,7 +52,7 @@ public class MicrosoftProfile {
     }
     
     @Nullable
-    public static MicrosoftProfile create(AccountManager accounts, UUID uuid, String minecraftName, String minecraftAccessToken, int minecraftAccessExpiresIn, String microsoftAccessToken, String microsoftRefreshToken, int microsoftAccessExpiresIn, String xstsUserHash, String xstsNotAfter, String xstsToken, String skinUrl) {
+    public static MicrosoftProfile create(McAccounts accounts, UUID uuid, String minecraftName, String minecraftAccessToken, int minecraftAccessExpiresIn, String microsoftAccessToken, String microsoftRefreshToken, int microsoftAccessExpiresIn, String xstsUserHash, String xstsNotAfter, String xstsToken, String skinUrl) {
         try {
             accounts.storeTokens(uuid, Map.of(
                 TokenKey.MINECRAFT_ACCESS_TOKEN, minecraftAccessToken,
@@ -85,7 +84,7 @@ public class MicrosoftProfile {
     /**
      * Refreshes the account if needed
      */
-    public boolean refreshAccount(AppHttp http, AccountManager accounts, boolean forceRefresh) {
+    public boolean refreshAccount(AppHttp http, McAccounts accounts, boolean forceRefresh) {
         try {
             LOGGER.info("Refreshing account for {}", this.minecraftName);
             boolean result = this.unsafeRefreshAccount(http, accounts, forceRefresh);
@@ -106,7 +105,7 @@ public class MicrosoftProfile {
         }
     }
     
-    public boolean refreshAccount(AppHttp http, AccountManager accounts) {
+    public boolean refreshAccount(AppHttp http, McAccounts accounts) {
         return this.refreshAccount(http, accounts, false);
     }
 
@@ -114,7 +113,7 @@ public class MicrosoftProfile {
      * Big thanks to ATLauncher for the rough implementation of this method
      * <a href="https://github.com/ATLauncher/ATLauncher/blob/master/src/main/java/com/atlauncher/data/MicrosoftAccount.java#L159">...</a>
      */
-    private boolean unsafeRefreshAccount(AppHttp http, AccountManager accounts, boolean forceRefresh) {
+    private boolean unsafeRefreshAccount(AppHttp http, McAccounts accounts, boolean forceRefresh) {
         var now = Instant.now();
         
         if (forceRefresh || now.getEpochSecond() >= this.microsoftAccessExpiresAt) {
@@ -247,7 +246,7 @@ public class MicrosoftProfile {
     }
 
     /// Used when the tokens are lost, so the user is asked to log in again.
-    void markNotLoggedIn() {
+    public void markNotLoggedIn() {
         this.notLoggedIn = true;
     }
     

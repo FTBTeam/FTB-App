@@ -1,4 +1,4 @@
 @NullMarked
-package dev.ftb.app.accounts.data;
+package dev.ftb.app.services;
 
 import org.jspecify.annotations.NullMarked;

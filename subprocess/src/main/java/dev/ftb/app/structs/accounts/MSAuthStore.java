@@ -1,4 +1,4 @@
-package dev.ftb.app.accounts.data;
+package dev.ftb.app.structs.accounts;
 
 import org.jspecify.annotations.Nullable;
 

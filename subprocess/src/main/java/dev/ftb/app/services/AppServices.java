@@ -3,8 +3,8 @@ package dev.ftb.app.services;
 import dev.ftb.app.AppFlags;
 import dev.ftb.app.AppPaths;
 import dev.ftb.app.Instances;
-import dev.ftb.app.accounts.AccountManager;
 import dev.ftb.app.api.RcpApi;
+import dev.ftb.app.services.accounts.Accounts;
 import dev.ftb.app.services.cache.AppCache;
 import dev.ftb.app.storage.settings.Settings;
 import dev.ftb.app.util.ProxyUtils;
@@ -26,7 +26,7 @@ public class AppServices implements Services {
     private final AppPaths paths;
 
     private final RcpApi rcpApi;
-    private final AccountManager accounts;
+    private final Accounts accounts;
     private final Settings settings;
     private final Instances instances;
     private final AppCache cache;
@@ -45,7 +45,7 @@ public class AppServices implements Services {
         this.appHttp = new AppHttp(this.flags, this.settings::getSpeedLimit);
         this.jdkInstallationManager = this.createJdkManager(this.appHttp);
 
-        this.accounts = new AccountManager(this.paths, this.appStorage);
+        this.accounts = new Accounts(this.paths, this.appStorage);
         this.cache = new AppCache(this.paths, this.settings, this.threads, this.http());
         
         this.settings.onChange((newSettings) -> {
@@ -58,7 +58,7 @@ public class AppServices implements Services {
         this.reloadProxy();
         
         this.rcpApi = new RcpApi(this);
-        this.instances = new Instances(this.paths, this.settings, this.rcpApi, this.accounts, this.threads, this.cache, this.appHttp, this.jdkInstallationManager);
+        this.instances = new Instances(this.paths, this.settings, this.rcpApi, this.accounts.minecraft(), this.threads, this.cache, this.appHttp, this.jdkInstallationManager);
     }
     
     /// Applies the proxy from the current settings, rebuilding the http clients if it changed.
@@ -97,7 +97,7 @@ public class AppServices implements Services {
     }
     
     @Override
-    public AccountManager accounts() {
+    public Accounts accounts() {
         return this.accounts;
     }
 
