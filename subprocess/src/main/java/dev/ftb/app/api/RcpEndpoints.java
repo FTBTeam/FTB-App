@@ -50,13 +50,19 @@ public class RcpEndpoints {
         register("setInstanceArt", SetInstanceArtData.class, new SetInstanceArtHandler());
         register("instanceVersionInfo", InstanceVersionInfoData.class, new InstanceVersionInfoHandler());
 
+        register("profiles.flow", MinecraftAuthFlowHandler.Data.class, new MinecraftAuthFlowHandler());
+        // TOOD: Roll into the above. 
+        register("profiles.ms.authenticate", AuthenticateMsProfileHandler.Data.class, new AuthenticateMsProfileHandler());
+        
         register("profiles.get", BaseData.class, new GetProfilesHandler());
         register("profiles.remove", RemoveProfileHandler.Data.class, new RemoveProfileHandler());
         register("profiles.setActiveProfile", SetActiveProfileHandler.Data.class, new SetActiveProfileHandler());
-        register("profiles.ms.authenticate", AuthenticateMsProfileHandler.Data.class, new AuthenticateMsProfileHandler());
+        
         register("profiles.refresh", RefreshAuthenticationProfileHandler.Data.class, new RefreshAuthenticationProfileHandler());
         register("profiles.is-valid", AccountIsValidHandler.Data.class, new AccountIsValidHandler());
 
+        // TODO: FTB device flow, same shape as profiles.flow once FtbTokenExchange exists
+        // register("ftb.account.flow", ...);
         register("accounts.store-oauth", StoreFtbAccountHandler.Data.class, new StoreFtbAccountHandler());
         register("accounts.get-oauth", BaseData.class, new GetFtbAccountHandler());
         register("accounts.sign-out", BaseData.class, new SignOutFTBAccountHandler());
@@ -65,6 +71,7 @@ public class RcpEndpoints {
         register("storage.get", StorageGetHandler.Data.class, new StorageGetHandler());
         register("storage.get-all", BaseData.class, new StorageGetAllHandler());
 
+        /* @deprecated This should be removed and all fetching should be done via the api. */
         register("webRequest", WebRequestData.class, new WebRequestHandler());
 
         register("purge", PurgeHandler.Data.class, new PurgeHandler());

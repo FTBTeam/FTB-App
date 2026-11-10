@@ -14,6 +14,8 @@ public enum CodedError {
     
     // Special
     REQUEST_REJECTED("auth:80", "Request was rejected by the server. Check firewall settings..."),
+    TOKEN_STORAGE_FAILED("auth:81", "Failed to securely store the account tokens."),
+    UNEXPECTED_FAILURE("auth:82", "Something unexpected went wrong while logging in."),
     
     // Normal flow errors
     XBOX_ACCOUNT_MISSING("auth:50", "This account does not have an XBox Live account. You have likely not migrated your account."),
