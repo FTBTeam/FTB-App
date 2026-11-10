@@ -10,7 +10,6 @@ import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.api.handlers.IMessageHandler;
 import dev.ftb.app.api.handlers.MessageContext;
 import dev.ftb.app.services.Services;
-import dev.ftb.app.util.MiscUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,13 +35,15 @@ public class RcpApi {
     
     public int start(PortMode portMode) {
         int port = switch (portMode) {
-            case DYNAMIC -> MiscUtils.getRandomEphemeralPort();
+            // 0 lets the OS pick a free port when binding, which avoids racing another process for it
+            case DYNAMIC -> 0;
             case STATIC -> Constants.WEBSOCKET_PORT;
         };
         server = new JettyWebsocketServer(port, this::handleMessage);
         server.startServer();
-        
-        return port;
+
+        // The port actually bound, not the one requested
+        return server.getPort();
     }
 
     public void stop() {

@@ -24,16 +24,16 @@ public class JettyWebsocketServer implements WebsocketServer {
     
     private static final long MAX_MESSAGE_SIZE = 64L * 1024 * 1024; // Jetty defaults to a fairly small payload size but our app can send large messages. This is the same limit as the frontend.
 
-    private final int port;
     private final Server server;
+    private final ServerConnector connector;
     private final List<Connection> connections = Collections.synchronizedList(new ArrayList<>());
     private final List<String> buffer = Collections.synchronizedList(new ArrayList<>());
     
     private final Consumer<String> onMessage;
     
+    /// @param port the port to bind to, or `0` to let the OS pick a free one
     public JettyWebsocketServer(int port, Consumer<String> onMessage) {
         this.onMessage = onMessage;
-        this.port = port;
 
         QueuedThreadPool threadPool = new QueuedThreadPool(16, 2);
         threadPool.setName("WebSocket");
@@ -41,7 +41,7 @@ public class JettyWebsocketServer implements WebsocketServer {
 
         server = new Server(threadPool);
 
-        ServerConnector connector = new ServerConnector(server);
+        connector = new ServerConnector(server);
         connector.setHost("127.0.0.1");
         connector.setPort(port);
         server.addConnector(connector);
@@ -66,13 +66,13 @@ public class JettyWebsocketServer implements WebsocketServer {
 
     @Override
     public void startServer() {
-        LOGGER.info("Starting websocket server on 127.0.0.1:{}", port);
+        LOGGER.info("Starting websocket server on 127.0.0.1 (requested port {})", connector.getPort());
         try {
             server.start();
         } catch (Exception ex) {
             throw new RuntimeException("Failed to start websocket.", ex);
         }
-        LOGGER.info("Websocket started!");
+        LOGGER.info("Websocket started on 127.0.0.1:{}", getPort());
     }
 
     @Override
@@ -102,9 +102,10 @@ public class JettyWebsocketServer implements WebsocketServer {
         }
     }
 
+    /// The port actually bound, not the one requested. If `0` was passed to the constructor, this will be a random ephemeral port.
     @Override
     public int getPort() {
-        return port;
+        return connector.getLocalPort();
     }
 
     private void addConnection(Connection conn) {

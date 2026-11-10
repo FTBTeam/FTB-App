@@ -6,7 +6,6 @@ import dev.ftb.app.AppFlags;
 import dev.ftb.app.install.tasks.DownloadTask.DownloadValidation;
 import dev.ftb.app.install.tasks.NewDownloadTaskTests.EtagTestWebServer.BakedResponse;
 import dev.ftb.app.services.AppHttp;
-import dev.ftb.app.util.MiscUtils;
 import fi.iki.elonen.NanoHTTPD;
 import net.covers1624.quack.util.HashUtils;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
@@ -162,20 +161,13 @@ public class NewDownloadTaskTests {
 
         public final Map<String, BakedResponse> responseMap = new HashMap<>();
 
-        private final int port;
-
         public EtagTestWebServer() throws IOException {
-            this(MiscUtils.getRandomEphemeralPort());
-        }
-
-        public EtagTestWebServer(int port) throws IOException {
-            super(port);
-            this.port = port;
+            super(0);
             start();
         }
 
         public String getAddr() {
-            return "http://localhost:" + port;
+            return "http://localhost:" + getListeningPort();
         }
 
         @Override
@@ -233,7 +225,7 @@ public class NewDownloadTaskTests {
         private final Map<String, ExpectedResponse> responseMap = new HashMap<>();
 
         public ResumeTestWebServer() throws IOException {
-            super(MiscUtils.getRandomEphemeralPort());
+            super(0);
             start();
         }
 

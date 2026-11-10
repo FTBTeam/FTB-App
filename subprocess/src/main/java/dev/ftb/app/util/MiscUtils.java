@@ -4,31 +4,12 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.net.*;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 
 public class MiscUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(MiscUtils.class);
-
-    /**
-     * Gets a random free Ephemeral port.
-     *
-     * @return The port. <code>-1</code> if no port could be found.
-     */
-    public static int getRandomEphemeralPort() {
-        int tries = 0;
-        while (tries < 5) {
-            try (ServerSocket socket = new ServerSocket(0)) {
-                return socket.getLocalPort();
-            } catch (IOException ignored) {
-                tries++;
-            }
-        }
-        return -1;
-    }
 
     /**
      * Split the provided string on space, respecting paired quotes.
