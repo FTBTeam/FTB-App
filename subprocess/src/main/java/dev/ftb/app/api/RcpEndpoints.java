@@ -50,6 +50,8 @@ public class RcpEndpoints {
         register("setInstanceArt", SetInstanceArtData.class, new SetInstanceArtHandler());
         register("instanceVersionInfo", InstanceVersionInfoData.class, new InstanceVersionInfoHandler());
 
+        register("accounts.oauth.start", AuthFlowStartHandler.Data.class, new AuthFlowStartHandler());
+        
         register("profiles.flow", MinecraftAuthFlowHandler.Data.class, new MinecraftAuthFlowHandler());
         // TOOD: Roll into the above. 
         register("profiles.ms.authenticate", AuthenticateMsProfileHandler.Data.class, new AuthenticateMsProfileHandler());

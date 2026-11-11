@@ -30,10 +30,12 @@ export type ApiEndpoints = 	"appInit" |
 	"instanceInstallMod" |
 	"setInstanceArt" |
 	"instanceVersionInfo" |
+	"accounts.oauth.start" |
+	"profiles.flow" |
+	"profiles.ms.authenticate" |
 	"profiles.get" |
 	"profiles.remove" |
 	"profiles.setActiveProfile" |
-	"profiles.ms.authenticate" |
 	"profiles.refresh" |
 	"profiles.is-valid" |
 	"accounts.store-oauth" |

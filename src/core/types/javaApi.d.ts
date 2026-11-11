@@ -245,24 +245,6 @@ export interface GetJavasDataReply extends BaseData {
     javas: JavaInstall[];
 }
 
-export interface OpenModalData extends BaseData {
-    title: string;
-    message: string;
-    buttons: ModalButton[];
-    id: string;
-}
-
-export interface ModalButton {
-    message: string;
-    name: string;
-    type: string;
-}
-
-export interface ModalCallbackData extends BaseData {
-    id: string;
-    message: string;
-}
-
 export interface PingLauncherData extends BaseData {
 }
 
@@ -396,6 +378,16 @@ export interface AccountIsValidHandlerReply extends AccountIsValidHandlerData {
     response: string;
 }
 
+export interface AuthFlowStartHandlerData extends BaseData {
+    handlerType: string;
+}
+
+export interface AuthFlowStartHandlerReply extends BaseData {
+    url: string;
+    success: boolean;
+    reason: string;
+}
+
 export interface AuthenticateMsProfileHandlerData extends BaseData {
     liveAccessToken: string;
     liveRefreshToken: string;
@@ -416,6 +408,13 @@ export interface GetFtbAccountHandlerReply extends PrivateBaseData {
 export interface GetProfilesHandlerReply extends PrivateBaseData {
     profiles: SharableData[];
     activeProfile: SharableData;
+}
+
+export interface MinecraftAuthFlowHandlerData extends BaseData {
+    type: FlowType;
+}
+
+export interface MinecraftAuthFlowHandlerReply extends BaseData {
 }
 
 export interface RefreshAuthenticationProfileHandlerData extends BaseData {
@@ -704,6 +703,8 @@ export interface CurseForgeIds {
 export type Action = "GET" | "CREATE" | "DELETE" | "RENAME";
 
 export type ValidCheckResult = "VALID" | "EXPIRED" | "NOT_LOGGED_IN" | "TOTAL_FAILURE";
+
+export type FlowType = "GET_CODE" | "CHECK_FOR_TOKEN" | "AUTHORIZE";
 
 export type PurgeTarget = "ALL" | "INSTANCE_CACHE" | "RUNTIMES" | "MINECRAFT";
 

@@ -1,5 +1,9 @@
 <template>
   <div class="home page-spacing">
+    <UiButton @click="tryLogin()">
+      Hello cats
+    </UiButton>
+    
     <template v-if="recentInstances.length">
       <h2 class="text-2xl font-bold text-white mb-4">Jump back in where you left off</h2>
       
@@ -21,11 +25,23 @@
 <script lang="ts" setup>
 import PackPreview from '@/components/groups/modpack/PackPreview.vue';
 import PackCard2 from '@/components/groups/modpack/PackCard2.vue';
-import { Message } from '@/components/ui';
+import {Message, UiButton} from '@/components/ui';
 import { computed, onMounted, ref } from 'vue';
 import { useInstanceStore } from '@/store/instancesStore.ts';
 import { useModpackStore } from '@/store/modpackStore.ts';
 import { toggleBeforeAndAfter } from '@/utils/helpers/asyncHelpers.ts';
+import {sendMessage} from "@/core/websockets/websocketsApi.ts";
+import appPlatform from '@platform';
+
+async function tryLogin() {
+  const res = await sendMessage("accounts.oauth.start", {
+    handlerType: "ftb"
+  })
+
+  if (res.url) {
+    appPlatform.utils.openUrl(res.url)
+  }
+}
 
 const instanceStore = useInstanceStore();
 const modpackStore = useModpackStore();

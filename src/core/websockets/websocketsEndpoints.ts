@@ -4,7 +4,7 @@ import {
   AppInitHandlerData,
   AppInitHandlerReply,
   AuthenticateMsProfileHandlerData,
-  AuthenticateMsProfileHandlerReply,
+  AuthenticateMsProfileHandlerReply, AuthFlowStartHandlerData, AuthFlowStartHandlerReply,
   BaseData,
   CancelInstallInstanceData,
   CancelInstallInstanceDataReply,
@@ -132,6 +132,7 @@ const endpoints = {
   "accounts.get-oauth":           io<BaseData, GetFtbAccountHandlerReply>(),
   "accounts.sign-out":            io<BaseData, SignOutFTBAccountHandlerReply>(),
   'purge':                        io<PurgeHandlerData, PurgeHandlerReply>(),
+  "accounts.oauth.start":         io<AuthFlowStartHandlerData, AuthFlowStartHandlerReply>
 } satisfies Record<ApiEndpoints, EndpointDefinition<any, any>>;
 
 export type EmptyMessageResponse = {}
