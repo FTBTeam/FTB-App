@@ -159,7 +159,7 @@ ipcMain.handle("action/app/get-channel", async () => {
     } else if (appVersion.includes("-alpha")) {
       return "alpha";
     } else {
-      return "stable";
+      return "latest";
     }
   }
 

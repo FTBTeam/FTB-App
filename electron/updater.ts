@@ -59,7 +59,7 @@ function loadChannel() {
   try {
     const channelFile = path.join(appHome, 'storage', 'electron-settings.json');
     if (!fs.existsSync(channelFile)) {
-      return 'stable';
+      return 'latest';
     }
 
     try {
@@ -75,5 +75,5 @@ function loadChannel() {
     log.error("Failed to load channel", e)
   }
 
-  return 'stable';
+  return 'latest';
 }
