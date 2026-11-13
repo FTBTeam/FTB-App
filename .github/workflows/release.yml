@@ -316,7 +316,7 @@ jobs:
         with:
           name: release-${{ matrix.os }}
           path: release/
-      # TODO: Temporary shim for installs stuck on the "stable" channel.
+      # TODO: Temporary shim for installs stuck on the "stable" channel. This should be removed in the next few versions.
       # Due to an issue with channel fallbacks, it selected stable instead of latest.
       # To fix this, we just need to publish a temp patch.
       - name: Mirror latest channel to stable (temporary)
