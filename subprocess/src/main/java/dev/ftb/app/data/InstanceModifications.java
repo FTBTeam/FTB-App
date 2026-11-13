@@ -3,7 +3,6 @@ package dev.ftb.app.data;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import dev.ftb.app.data.modpack.ModpackVersionManifest;
-import dev.ftb.app.pack.Instance;
 import dev.ftb.app.util.HashingUtils;
 import net.covers1624.quack.gson.JsonUtils;
 import org.jspecify.annotations.Nullable;
@@ -22,32 +21,37 @@ public class InstanceModifications {
     private ModpackVersionManifest.@Nullable Target modLoaderOverride;
 
     private final List<ModOverride> overrides = new LinkedList<>();
-    private boolean requiresMurmurFix = true;
+    
+    /// Notifies the startup process to flag this instance for recomputation of hashes 
+    private volatile boolean requiresMurmurFix = true;
 
-    public static @Nullable InstanceModifications load(Path path, Instance instance) throws IOException, JsonParseException {
+    public static @Nullable InstanceModifications load(Path path) throws IOException, JsonParseException {
         if (!Files.exists(path)) return null;
 
-        InstanceModifications modifications = JsonUtils.parse(GSON, path, InstanceModifications.class);
-        if (modifications.requiresMurmurFix) {
-            for (ModOverride override : modifications.overrides) {
-                if (override.getMurmurHash() == -1) {
-                    var modPath = instance.path.resolve("mods").resolve(override.getFileName());
-                    if (Files.exists(modPath)) {
-                        try {
-                            var bytes = Files.readAllBytes(modPath);
-                            override.murmurHash = HashingUtils.createCurseForgeMurmurHash(bytes);
-                        } catch (Exception e) {
-                            override.murmurHash = 0;
-                        }
-                    }
-                }
-            }
-            
-            modifications.requiresMurmurFix = false;
-            save(path, modifications);
+        return JsonUtils.parse(GSON, path, InstanceModifications.class);
+    }
+
+    /**
+     * Compute the CurseForge murmur hash for a mod jar.
+     *
+     * @return the hash, -1 if the file does not exist, or 0 if it could not be read.
+     */
+    public static long computeMurmurHash(Path modPath) {
+        if (Files.notExists(modPath)) return -1;
+        try {
+            return HashingUtils.createCurseForgeMurmurHash(Files.readAllBytes(modPath));
+        } catch (Exception e) {
+            return 0;
         }
-        
-        return modifications;
+    }
+
+    public boolean requiresMurmurFix() {
+        return requiresMurmurFix;
+    }
+
+    // Called from within a sync-lock
+    public void markMurmurFixed() {
+        requiresMurmurFix = false;
     }
 
     public static void save(Path path, InstanceModifications modifications) throws IOException {
@@ -136,6 +140,7 @@ public class InstanceModifications {
         public long getCurseFile() { return curseFile; }
         public void setState(ModOverrideState state) { this.state = state; }
         public void setFileName(String fileName) { this.fileName = fileName; }
+        public void setMurmurHash(long murmurHash) { this.murmurHash = murmurHash; }
         // @formatter:on
 
 

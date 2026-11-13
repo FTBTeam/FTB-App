@@ -248,6 +248,9 @@ public class AppMain {
         
         // Lastly, run any needed migrations after the app is ready
         MigrationsManager.INSTANCE.runMigrations();
+        
+        // Spins up threaded long-lived work for fixing instances.
+        Instances.scheduleMurmurFixing();
 
         //Hang indefinitely until this lock is interrupted.
         try {

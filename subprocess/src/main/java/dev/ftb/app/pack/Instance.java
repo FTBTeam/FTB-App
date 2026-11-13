@@ -178,7 +178,7 @@ public class Instance {
                 // TODO we need to validate the state of mod modifications.
                 //      Dynamically add/remove them as manual modifications are always possible.
                 //      We should do this any time the Mods list is queried. I.e the frontend or installer requests it.
-                modifications = InstanceModifications.load(modificationsJson, this);
+                modifications = InstanceModifications.load(modificationsJson);
             }
         }
     }
@@ -492,7 +492,8 @@ public class Instance {
         return modifications;
     }
 
-    public void saveModifications() {
+    // Synchronized so the background hash backfill and user actions never write modifications.json at the same time.
+    public synchronized void saveModifications() {
         try {
             if (modifications != null) {
                 Path modificationsJson = this.metaPath.resolve(MODIFICATIONS_FILE_NAME);
@@ -500,6 +501,51 @@ public class Instance {
             }
         } catch (IOException ex) {
             LOGGER.error("Failed to save instance modifications.", ex);
+        }
+    }
+
+    /// Compute murmur hashes off thread of the instance hasn't already had them fixed.
+    /// As we're dealing with reading in whole mods, this can slow down the startup flow a good amount. So it's best
+    /// to do this off thread. 
+    public void ensureMurmurHashes() {
+        InstanceModifications modifications = this.modifications;
+        if (modifications == null || !modifications.requiresMurmurFix()) return;
+
+        List<ModOverride> pending;
+        synchronized (this) {
+            if (!modifications.requiresMurmurFix()) return;
+            pending = modifications.getOverrides().stream()
+                .filter(e -> e.getMurmurHash() == -1)
+                .toList();
+        }
+
+        Path modsDir = path.resolve("mods");
+        Map<ModOverride, Long> hashes = new IdentityHashMap<>();
+        var elapsed = MiscUtils.timeRun(() -> {
+            for (ModOverride override : pending) {
+                long hash = InstanceModifications.computeMurmurHash(modsDir.resolve(override.getFileName()));
+                if (hash != -1) {
+                    hashes.put(override, hash);
+                }
+            }
+        });
+
+        // Attempt to toggle the murmur fixed and file changes smoothly
+        synchronized (this) {
+            if (this.modifications != modifications || !modifications.requiresMurmurFix()) return;
+            
+            List<ModOverride> current = modifications.getOverrides();
+            hashes.forEach((override, hash) -> {
+                if (override.getMurmurHash() == -1 && current.contains(override)) {
+                    override.setMurmurHash(hash);
+                }
+            });
+            modifications.markMurmurFixed();
+            saveModifications();
+        }
+
+        if (!pending.isEmpty()) {
+            LOGGER.info("Backfilled {}/{} mod hashes for instance {} in {}", hashes.size(), pending.size(), getName(), MiscUtils.formatDuration(elapsed));
         }
     }
 
@@ -530,6 +576,8 @@ public class Instance {
      */
     public synchronized List<ModInfo> getMods(boolean rich) {
         LOGGER.info("Building instance mods list..");
+        // The mods list exposes override murmur hashes, make sure they exist if the background backfill hasn't reached us yet.
+        ensureMurmurHashes();
         List<ModInfo> mods = new ArrayList<>();
         
         ModpackVersionModsManifest modsManifest = rich ? getModsManifest() : null;
