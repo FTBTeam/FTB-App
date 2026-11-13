@@ -6,6 +6,10 @@ import {spawn} from "node:child_process";
 import {appHome} from "./main.ts";
 import {AppData} from "./app";
 
+// Somewhat inline with how often the heartbeat will send back something from the startup flow.
+const subprocessIdleTimeout = 30_000;
+const subprocessMaxStartupTime = 5 * 60_000; // 5 minutes seems fair.
+
 export function startSubprocess(appData: AppData, args: any) {
   log.debug("Starting subprocess")
   if (!import.meta.env.PROD) {
@@ -88,9 +92,35 @@ export function startSubprocess(appData: AppData, args: any) {
 
   // Spawn the process so it can run in the background and capture the output
   return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      reject("Subprocess timed out")
-    }, 30_000) // 30 seconds
+    // Sometimes the app starting can take a little while... To allow for this, the subproces will start firing off
+    // heartbeats every few seconds to let us know it's still running. If this stops before the app has figured itself
+    // out. We can assume it's failed and retry. We have a hard timout as well.
+    const startedAt = Date.now();
+    let settled = false;
+    let idleTimeout: ReturnType<typeof setTimeout> | undefined;
+
+    const fail = (reason: string) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(idleTimeout);
+      clearTimeout(hardTimeout);
+      log.warn(reason);
+      reject(reason);
+    }
+
+    const resetIdleTimeout = () => {
+      if (settled) return;
+      clearTimeout(idleTimeout);
+      idleTimeout = setTimeout(() => {
+        fail(`Subprocess timed out, no output for ${subprocessIdleTimeout / 1000}s (${Math.round((Date.now() - startedAt) / 1000)}s since start)`);
+      }, subprocessIdleTimeout);
+    }
+
+    const hardTimeout = setTimeout(() => {
+      fail(`Subprocess timed out, not ready after ${subprocessMaxStartupTime / 1000}s`);
+    }, subprocessMaxStartupTime);
+
+    resetIdleTimeout();
 
     const mappedEnv = env.reduce((curr, itt) => {
       const [key, value] = itt.split("=");
@@ -115,6 +145,7 @@ export function startSubprocess(appData: AppData, args: any) {
     appData.subprocess = subprocess;
 
     subprocess.stderr?.on('data', (data) => {
+      resetIdleTimeout();
       let outputData = data.toString();
       if (outputData.endsWith("\n")) {
         outputData = outputData.slice(0, -1);
@@ -123,6 +154,7 @@ export function startSubprocess(appData: AppData, args: any) {
     });
 
     subprocess.stdout?.on('data', (data) => {
+      resetIdleTimeout();
       let outputData = data.toString();
       if (outputData.endsWith("\n")) {
         outputData = outputData.slice(0, -1);
@@ -137,7 +169,10 @@ export function startSubprocess(appData: AppData, args: any) {
           if (!(!port || !secret || isNaN(port))) {
             log.debug('Found port and secret', port, secret);
             appData.state.isSubprocessSetup = true;
-            clearTimeout(timeout);
+            settled = true;
+            clearTimeout(idleTimeout);
+            clearTimeout(hardTimeout);
+            log.info(`Subprocess ready after ${Math.round((Date.now() - startedAt) / 1000)}s`);
 
             if (subprocess?.pid) {
               appData.state.ws = {
@@ -164,6 +199,8 @@ export function startSubprocess(appData: AppData, args: any) {
 
     subprocess.on('exit', (code, signal) => {
       log.debug("Subprocess exited", code, signal)
+      // No point waiting out the timers for a process that's already gone.
+      fail(`Subprocess exited before it was ready (code: ${code}, signal: ${signal})`);
     });
 
     subprocess?.on('close', (code) => {
