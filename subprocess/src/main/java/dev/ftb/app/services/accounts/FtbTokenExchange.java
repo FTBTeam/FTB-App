@@ -23,7 +23,13 @@ public class FtbTokenExchange extends TokenExchange<FtbFinalToken> {
     }
     
     FtbTokenExchange(AppHttp http, String authority) {
-        super(LOGGER, GSON, http, "FTB", FtbFinalToken.class, authority + "/auth/device", authority + "/token", CLIENT_ID, SCOPE);
+        super(LOGGER, GSON, http, "FTB", FtbFinalToken.class, authority + "/auth", authority + "/auth/device", authority + "/token", CLIENT_ID, SCOPE);
+    }
+
+    /// `login` always shows the sign-in form,
+    @Override
+    protected String chooseAccountPrompt() {
+        return "login";
     }
 
     @Override

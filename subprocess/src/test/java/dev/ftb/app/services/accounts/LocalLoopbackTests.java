@@ -1,5 +1,6 @@
 package dev.ftb.app.services.accounts;
 
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -32,9 +33,27 @@ public class LocalLoopbackTests {
         try (var loopback = start(Duration.ofSeconds(10))) {
             var uri = URI.create(loopback.redirectUri());
             assertEquals("http", uri.getScheme());
-            assertEquals("127.0.0.1", uri.getHost());
+            assertEquals("localhost", uri.getHost());
             assertTrue(uri.getPort() > 0);
             assertEquals("/callback", uri.getPath());
+        }
+    }
+
+    @Test
+    void listensOnTheIpv4Loopback() throws Exception {
+        try (var loopback = start(Duration.ofSeconds(10))) {
+            assertEquals(200, get(onHost(loopback.redirectUri(), "127.0.0.1") + "?code=v4&state=" + STATE));
+            assertEquals("v4", loopback.result().get(5, TimeUnit.SECONDS).code());
+        }
+    }
+
+    @Test
+    void listensOnTheIpv6LoopbackOnTheSamePort() throws Exception {
+        try (var loopback = start(Duration.ofSeconds(10))) {
+            Assumptions.assumeTrue(loopback.listensOnIpv6(), "IPv6 loopback isn't available on this machine");
+
+            assertEquals(200, get(onHost(loopback.redirectUri(), "[::1]") + "?code=v6&state=" + STATE));
+            assertEquals("v6", loopback.result().get(5, TimeUnit.SECONDS).code());
         }
     }
 
@@ -124,18 +143,29 @@ public class LocalLoopbackTests {
         assertTrue(LocalLoopback.start(" ", Duration.ofSeconds(1)).isErr());
     }
 
-    /// Stopping runs asynchronously after the result completes, so give it a moment.
+    private static String onHost(String redirect, String host) {
+        return redirect.replace("localhost", host);
+    }
+
+    /// Stopping runs asynchronously after the result completes, so give it a moment. Checks both loopback addresses,
+    /// connecting to one that was never bound is refused too, so this holds without IPv6.
     private static void assertStopsListening(String redirect) throws InterruptedException {
+        for (var host : new String[]{"127.0.0.1", "[::1]"}) {
+            assertStopsListening(redirect, host);
+        }
+    }
+
+    private static void assertStopsListening(String redirect, String host) throws InterruptedException {
         long deadline = System.currentTimeMillis() + 5000;
         while (System.currentTimeMillis() < deadline) {
             try {
-                get(redirect + "?state=" + STATE + "&code=late");
+                get(onHost(redirect, host) + "?state=" + STATE + "&code=late");
             } catch (IOException e) {
                 return; // connection refused, server is gone
             }
             Thread.sleep(50);
         }
 
-        fail("Loopback server was still listening after completing");
+        fail("Loopback server on " + host + " was still listening after completing");
     }
 }

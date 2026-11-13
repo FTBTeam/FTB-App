@@ -23,7 +23,6 @@ public class RcpEndpoints {
     private final Map<String, Pair<Class<? extends BaseData>, IMessageHandler<? extends BaseData>>> register = new LinkedHashMap<>();
 
     public RcpEndpoints() {
-        register("appInit", AppInitHandler.Data.class, new AppInitHandler());
         register("moveInstances", MoveInstancesHandler.Data.class, new MoveInstancesHandler());
         register("installedInstances", InstalledInstancesData.class, new InstalledInstancesHandler());
         register("instanceCategories", InstanceCategoryHandler.Data.class, new InstanceCategoryHandler());
@@ -50,9 +49,10 @@ public class RcpEndpoints {
         register("setInstanceArt", SetInstanceArtData.class, new SetInstanceArtHandler());
         register("instanceVersionInfo", InstanceVersionInfoData.class, new InstanceVersionInfoHandler());
 
-        register("accounts.oauth.start", AuthFlowStartHandler.Data.class, new AuthFlowStartHandler());
+        register("accounts.oauth.start", OAuthFlowStartHandler.Data.class, new OAuthFlowStartHandler());
+        register("accounts.device.flow", DeviceAuthFlowHandler.Data.class, new DeviceAuthFlowHandler());
         
-        register("profiles.flow", MinecraftAuthFlowHandler.Data.class, new MinecraftAuthFlowHandler());
+//        register("profiles.flow", MinecraftAuthFlowHandler.Data.class, new MinecraftAuthFlowHandler());
         // TOOD: Roll into the above. 
         register("profiles.ms.authenticate", AuthenticateMsProfileHandler.Data.class, new AuthenticateMsProfileHandler());
         
@@ -62,9 +62,8 @@ public class RcpEndpoints {
         
         register("profiles.refresh", RefreshAuthenticationProfileHandler.Data.class, new RefreshAuthenticationProfileHandler());
         register("profiles.is-valid", AccountIsValidHandler.Data.class, new AccountIsValidHandler());
-
-        // TODO: FTB device flow, same shape as profiles.flow once FtbTokenExchange exists
-        // register("ftb.account.flow", ...);
+        
+        // TOOD: Rework.
         register("accounts.store-oauth", StoreFtbAccountHandler.Data.class, new StoreFtbAccountHandler());
         register("accounts.get-oauth", BaseData.class, new GetFtbAccountHandler());
         register("accounts.sign-out", BaseData.class, new SignOutFTBAccountHandler());

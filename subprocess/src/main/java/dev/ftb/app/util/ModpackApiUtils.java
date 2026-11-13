@@ -18,6 +18,7 @@ public class ModpackApiUtils {
         };
     }
 
+    @Deprecated
     public static String getModpacksApi() {
         return Constants.FTB_MODPACKS_API;
     }
@@ -27,13 +28,15 @@ public class ModpackApiUtils {
         
         return getModpacksApi() + "/" + typeSlug.getSlug() + "/";
     }
-    
+
+    @Deprecated
     public static void injectBearerHeader(Request.Builder builder) {
         if (API_TOKEN != null) {
             builder.addHeader("Authorization", "Bearer " + API_TOKEN);
         }
     }
-    
+
+    @Deprecated
     public static void injectBearerHeader(DownloadAction action) {
         if (API_TOKEN != null) {
             action.addRequestHeader("Authorization", "Bearer " + API_TOKEN);
@@ -41,6 +44,7 @@ public class ModpackApiUtils {
     }
     
     @ReleaseBlocking(reason = "This whole class needs to move into a service.")
+    @Deprecated
     public static void loadPrivateToken(AppStorage storage) {
         // Set the API key if we have it
         String accountData = storage.legacyCredentialStorage().get("ftbAccount");

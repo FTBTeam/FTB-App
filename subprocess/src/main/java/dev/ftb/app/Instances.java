@@ -265,7 +265,11 @@ public class Instances {
         }
         
         LOGGER.info("Updated category {} to new name: {}", category, newName);
-        return foundCategory.get();
+        // The rename was applied to a copy, so return the category from the new data
+        return categories.get().stream()
+            .filter(e -> e.uuid().equals(category))
+            .findFirst()
+            .orElse(null);
     }
     
     public void removeCategory(UUID category) {

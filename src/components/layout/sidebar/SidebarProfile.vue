@@ -20,8 +20,6 @@ const { disabled = false } = defineProps<{
 const loading = ref(false);
 const open = ref(false);
 const awaitingConfirm = ref(false);
-const specialOpen = ref(false);
-const closeTimeoutRef = ref<ReturnType<typeof setTimeout> | null>(null);
 
 const sidebarRef = useTemplateRef<HTMLDivElement>("sidebarRef");
 
@@ -108,37 +106,24 @@ async function confirm() {
   return result
 }
 
-function openMenu(event: MouseEvent) {
+function openMenu() {
   if (open.value) {
     closeMenu()
     return;
   }
-
-  if (closeTimeoutRef.value) {
-    clearTimeout(closeTimeoutRef.value);
-  }
   
   open.value = true;
-  if (event.shiftKey) {
-    specialOpen.value = true;
-  }
 }
 
 function closeMenu() {
   open.value = false;
-  if (closeTimeoutRef.value) {
-    clearTimeout(closeTimeoutRef.value);
-  }
-  closeTimeoutRef.value = setTimeout(() => {
-    specialOpen.value = false;
-  }, 200);
 }
 </script>
 
 <template>
   <div class="profile-area" :class="{ disabled }" ref="sidebarRef">
     <div class="profile">
-      <div class="avatar cursor-pointer" @click="openMenu($event)">
+      <div class="avatar cursor-pointer" @click="openMenu()">
         <Popover :text="!open ? 'Sign in or manage your accounts' : undefined">
             <img
               :src="getMinecraftHead(accountsStore.mcActiveProfile?.uuid ?? null)"
@@ -171,7 +156,7 @@ function closeMenu() {
           <UiButton class="mt-4" size="small" type="primary" :icon="faPlus" @click="() => openSignIn()">Add Minecraft Account</UiButton>
         </section>
 
-        <section v-if="specialOpen">
+        <section>
           <p class="font-bold mb-4">FTB Account</p>
 
           <div class="accounts" v-if="accountsStore.ftbAccount">

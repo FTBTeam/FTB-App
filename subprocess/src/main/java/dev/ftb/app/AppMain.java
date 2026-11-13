@@ -160,6 +160,8 @@ public class AppMain {
             LOGGER.info(flags.isDev() ? "Development mode" : "No PID args specified");
         }
         
+        // TODO: Move to a service, load into http service for the token.
+        // TODO: Attach account switching to switch the active token and refresh systems that rely on it.
         ModpackApiUtils.loadPrivateToken(this.services.storage());
 
         try {

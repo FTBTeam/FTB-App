@@ -85,8 +85,8 @@ public class LogZipper {
         metaDetails.addProperty("today", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE));
         metaDetails.addProperty("time", System.currentTimeMillis());
         metaDetails.addProperty("timeTaken", System.currentTimeMillis() - startTime);
-        metaDetails.addProperty("addedAccounts", services.accounts().minecraft().getProfiles().size());
-        metaDetails.addProperty("hasActiveAccount", services.accounts().minecraft().getActiveProfile() != null);
+        metaDetails.addProperty("addedAccounts", services.accounts().minecraft().all().size());
+        metaDetails.addProperty("hasActiveAccount", services.accounts().minecraft().active() != null);
         obj.add("metaDetails", metaDetails);
 
         var appDetails = new JsonObject();
@@ -167,12 +167,11 @@ public class LogZipper {
     private String getFilteredSettings() {
         try {
             SettingsData settings = this.services.settings().get();
-            // Null out the proxy so we don't log it in the export.
-            var proxySettingsOld = settings.proxy();
-            settings.setProxy(null);
-            var output = GSON.toJson(settings);
-            settings.setProxy(proxySettingsOld);
-            return output;
+            // Drop the proxy from a copy so we don't log it in the export. The settings themselves are shared and
+            // read-only, so they mustn't be changed, even briefly.
+            var json = GSON.toJsonTree(settings).getAsJsonObject();
+            json.remove("proxy");
+            return GSON.toJson(json);
         } catch (Throwable e) {
             LOGGER.warn("Failed to get settings", e);
             return "settings failed to load";

@@ -3,8 +3,7 @@
  * Do not modify this file directly.
  */
 
-export type ApiEndpoints = 	"appInit" |
-	"moveInstances" |
+export type ApiEndpoints = 	"moveInstances" |
 	"installedInstances" |
 	"instanceCategories" |
 	"pinInstance" |
@@ -31,7 +30,7 @@ export type ApiEndpoints = 	"appInit" |
 	"setInstanceArt" |
 	"instanceVersionInfo" |
 	"accounts.oauth.start" |
-	"profiles.flow" |
+	"accounts.device.flow" |
 	"profiles.ms.authenticate" |
 	"profiles.get" |
 	"profiles.remove" |

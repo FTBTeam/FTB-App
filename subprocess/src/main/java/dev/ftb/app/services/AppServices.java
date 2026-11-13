@@ -45,7 +45,7 @@ public class AppServices implements Services {
         this.appHttp = new AppHttp(this.flags, this.settings::getSpeedLimit);
         this.jdkInstallationManager = this.createJdkManager(this.appHttp);
 
-        this.accounts = new Accounts(this.paths, this.appStorage);
+        this.accounts = new Accounts(this.paths, this.appStorage, this.http());
         this.cache = new AppCache(this.paths, this.settings, this.threads, this.http());
         
         this.settings.onChange((newSettings) -> {

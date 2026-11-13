@@ -100,20 +100,24 @@ public class Settings {
         }
 
         // Something (likely path parsing) has left this pointing at the app directory before, which would install
-        // instances into the app root. Not saved, the next settings change writes it back.
+        // instances into the app root.
         Path instanceLocation = get().instanceLocation();
         if (instanceLocation == null || instanceLocation.equals(this.appPaths.workingDir())) {
             LOGGER.warn("Instance location is '{}', resetting it to the default.", instanceLocation);
-            get().setInstanceLocation(this.appPaths.instancesDir());
+            try {
+                this.store.update(data -> data.setInstanceLocation(this.appPaths.instancesDir()));
+            } catch (IOException e) {
+                LOGGER.error("Failed to save the reset instance location.", e);
+            }
         }
 
-        if (moveProxyPasswordToVault(get())) {
-            try {
-                this.store.save();
+        try {
+            boolean moved = this.store.updateIf(Settings::hasPlainTextProxyPassword, this::moveProxyPasswordToVault);
+            if (moved) {
                 this.store.save(); // The first save backs up the old file, password included. The second replaces that backup.
-            } catch (IOException e) {
-                LOGGER.error("Failed to save settings after moving the proxy password to the vault.", e);
             }
+        } catch (IOException e) {
+            LOGGER.error("Failed to save settings after moving the proxy password to the vault.", e);
         }
     }
 
@@ -159,10 +163,11 @@ public class Settings {
     ///
     /// @return whether a password was moved
     private boolean moveProxyPasswordToVault(SettingsData data) {
-        var proxy = data.proxy();
-        if (proxy == null || StringUtils.isEmpty(proxy.password())) {
+        if (!hasPlainTextProxyPassword(data)) {
             return false;
         }
+
+        var proxy = data.proxy();
 
         try {
             this.storage.vault().put(PROXY_PASSWORD_KEY, proxy.password());
@@ -172,6 +177,11 @@ public class Settings {
             LOGGER.error("Failed to move the proxy password to the vault.", e);
             return false;
         }
+    }
+
+    private static boolean hasPlainTextProxyPassword(SettingsData data) {
+        var proxy = data.proxy();
+        return proxy != null && StringUtils.isNotEmpty(proxy.password());
     }
 
     private static boolean usesProxyAuth(SettingsData data) {

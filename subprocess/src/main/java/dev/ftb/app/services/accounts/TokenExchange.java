@@ -6,9 +6,11 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import dev.ftb.app.services.AppHttp;
 import dev.ftb.app.structs.accounts.DeviceAuthResponse;
+import dev.ftb.app.structs.accounts.LoopbackHolder;
 import dev.ftb.app.util.Result;
 import dev.ftb.app.util.StringUtils;
 import okhttp3.FormBody;
+import okhttp3.HttpUrl;
 import okhttp3.Request;
 import okhttp3.Response;
 import org.jspecify.annotations.Nullable;
@@ -29,6 +31,7 @@ public abstract class TokenExchange<T> {
     private final String providerName;
     private final Class<T> tokenType;
 
+    protected final String authorizeUrl;
     protected final String deviceCodeUrl;
     protected final String tokenUrl;
     protected final String clientId;
@@ -40,6 +43,7 @@ public abstract class TokenExchange<T> {
         AppHttp http,
         String providerName,
         Class<T> tokenType,
+        String authorizeUrl,
         String deviceCodeUrl,
         String tokenUrl,
         String clientId,
@@ -50,11 +54,38 @@ public abstract class TokenExchange<T> {
         this.appHttp = http;
         this.providerName = providerName;
         this.tokenType = tokenType;
+        this.authorizeUrl = authorizeUrl;
         this.deviceCodeUrl = deviceCodeUrl;
         this.tokenUrl = tokenUrl;
         this.clientId = clientId;
         this.scope = scope;
     }
+
+    /// The URL to open in the browser to start an authorization code login with PKCE.
+    ///
+    /// @param state       random per login, the loopback only accepts a callback that echoes it back
+    /// @param challenge   `base64url(sha256(verifier))`, the verifier itself is only sent in [#exchangeCodeForTokens]
+    /// @param redirectUri the plain (not URL-encoded) loopback URI, this encodes it
+    /// @param prompt      whether the provider should let the user pick an account, see [AccountPrompt]
+    public String authorizeUrl(String state, String challenge, String redirectUri, AccountPrompt prompt) {
+        var url = HttpUrl.get(authorizeUrl).newBuilder()
+            .addQueryParameter("client_id", clientId)
+            .addQueryParameter("response_type", "code")
+            .addQueryParameter("redirect_uri", redirectUri)
+            .addQueryParameter("scope", scope)
+            .addQueryParameter("state", state)
+            .addQueryParameter("code_challenge", challenge)
+            .addQueryParameter("code_challenge_method", "S256");
+
+        if (prompt == AccountPrompt.CHOOSE_ACCOUNT) {
+            url.addQueryParameter("prompt", chooseAccountPrompt());
+        }
+
+        return url.build().toString();
+    }
+
+    /// The OIDC `prompt` value that lets the user pick which account to sign in with on this provider.
+    protected abstract String chooseAccountPrompt();
 
     /// Requests a new device code and user code from the provider.
     public Result<DeviceAuthResponse, String> initiate() {
@@ -146,6 +177,56 @@ public abstract class TokenExchange<T> {
             return new PollState.Pending<>(false, true, new ProviderError(0, null, e.toString(), null));
         }
     }
+    
+    /// Exchanges the authorization code from a browser login for tokens. Makes exactly one request.
+    ///
+    /// Codes are single use and short-lived (about a minute on Keycloak), so call this as soon as the callback arrives
+    /// and don't retry: once the provider has seen a code, a second attempt fails with `invalid_grant`.
+    public Result<T, String> exchangeCodeForTokens(String code, LoopbackHolder holder) {
+        var request = new Request.Builder()
+            .url(tokenUrl)
+            .header("Accept", "application/json")
+            .post(new FormBody.Builder()
+                .add("grant_type", "authorization_code")
+                .add("client_id", clientId)
+                .add("code", code)
+                .add("redirect_uri", holder.redirectUrl())
+                .add("code_verifier", holder.verifier())
+                .build())
+            .build();
+
+        try (Response response = appHttp.httpClient().newCall(request).execute()) {
+            JsonObject json = readJson(response);
+
+            if (!response.isSuccessful()) {
+                var error = toProviderError(response.code(), json);
+                logger.error("Failed to exchange a {} login code: {}", providerName, error);
+
+                return Result.err(switch (error.error() == null ? "" : error.error()) {
+                    // Expired, already used, or the verifier / redirect URI didn't match the authorize request
+                    case "invalid_grant" -> "The " + providerName + " login expired before it could be completed. Please sign in again.";
+                    case "invalid_request", "invalid_scope", "invalid_client", "unauthorized_client", "unsupported_grant_type" ->
+                        "The FTB App's " + providerName + " login isn't set up correctly. Please report this at https://github.com/FTBTeam/FTB-App/issues";
+                    default -> providerName + " couldn't complete the login (" + describe(error) + "). Please sign in again.";
+                });
+            }
+
+            if (json == null) {
+                return Result.err(providerName + " returned an empty or unreadable response. Please sign in again.");
+            }
+
+            T token = gson.fromJson(json, tokenType);
+            if (!isTokenValid(token)) {
+                logger.error("{} token response was missing fields: {}", providerName, json.keySet());
+                return Result.err(providerName + " didn't return a complete token. Please sign in again.");
+            }
+
+            return Result.ok(token);
+        } catch (IOException | JsonParseException e) {
+            logger.error("Failed to exchange a {} login code", providerName, e);
+            return Result.err("Couldn't reach " + providerName + " to finish signing in. Check your connection and sign in again.");
+        }
+    }
 
     /// The form sent to the device code endpoint. Override if a provider needs more than the RFC's fields.
     protected FormBody initiateBody() {
@@ -219,6 +300,13 @@ public abstract class TokenExchange<T> {
         return json.has(key) && json.get(key).isJsonPrimitive() ? json.get(key).getAsString() : null;
     }
     
+    public enum AccountPrompt {
+        /// Forces the user to select the account by telling the provider to not guess
+        CHOOSE_ACCOUNT,
+        /// Signing in again to an account we already know
+        REUSE_SESSION,
+    }
+
     public sealed interface PollState<T> {
         record Pending<T>(boolean slowDown, boolean retry, @Nullable ProviderError detail) implements PollState<T> {}
         record Done<T>(T token) implements PollState<T> {}

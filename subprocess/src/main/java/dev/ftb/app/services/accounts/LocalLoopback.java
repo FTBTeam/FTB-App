@@ -9,12 +9,14 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.net.BindException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -32,21 +34,25 @@ import java.util.concurrent.TimeUnit;
 public final class LocalLoopback implements Closeable {    
     private static final Logger LOGGER = LoggerFactory.getLogger(LocalLoopback.class);
     private static final String CALLBACK_PATH = "/callback";
+    private static final int MAX_BIND_ATTEMPTS = 5;
 
-    private final HttpServer server;
+    private final int port;
+    private final List<HttpServer> servers;
     private final String expectedState;
     private final CompletableFuture<Callback> result = new CompletableFuture<>();
 
-    private LocalLoopback(HttpServer server, String expectedState, Duration timeout) {
-        this.server = server;
+    private LocalLoopback(int port, List<HttpServer> servers, String expectedState, Duration timeout) {
+        this.port = port;
+        this.servers = servers;
         this.expectedState = expectedState;
+        for (var server : servers) {
+            server.createContext("/", this::handle);
+            server.start();
+        }
 
-        server.createContext("/", this::handle);
-        server.start();
-        
-        // When the loop is completed, we call back and stop the server if it hasn't been stopped yet.
+        // When the loop is completed, we call back and stop the servers if they haven't been stopped yet.
         result.orTimeout(timeout.toMillis(), TimeUnit.MILLISECONDS)
-            .whenCompleteAsync((callback, error) -> server.stop(0));
+            .whenCompleteAsync((callback, error) -> servers.forEach(server -> server.stop(0)));
     }
 
     /// Starts listening. On failure the caller should fall back to the device code flow.
@@ -57,18 +63,43 @@ public final class LocalLoopback implements Closeable {
             return Result.err("A state value is required");
         }
 
-        try {
-            var server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
-            return Result.ok(new LocalLoopback(server, expectedState, timeout));
-        } catch (IOException e) {
-            LOGGER.warn("Failed to start the login loopback listener", e);
-            return Result.err("Couldn't start the local login listener: " + e.getMessage());
+        // We need to spin up a ipv4 + ipv6 listener for systems that default to ipv6. I'm not sure if it would end up 
+        // falling back over to ipv4 but in-case it doesn't. It's fairly simple to spin up the second server 
+        for (int attempt = 0; attempt < MAX_BIND_ATTEMPTS; attempt++) {
+            HttpServer v4;
+            try {
+                v4 = HttpServer.create(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), 0), 0);
+            } catch (IOException e) {
+                LOGGER.warn("Failed to start the login loopback listener", e);
+                return Result.err("Couldn't start the local login listener: " + e.getMessage());
+            }
+
+            // Attempt to startup a new listener on the same port.
+            int port = v4.getAddress().getPort();
+            try {
+                var v6 = HttpServer.create(new InetSocketAddress(InetAddress.getByName("::1"), port), 0);
+                return Result.ok(new LocalLoopback(port, List.of(v4, v6), expectedState, timeout));
+            } catch (BindException e) {
+                LOGGER.debug("Port {} is taken on the IPv6 loopback, trying another", port);
+                v4.stop(0);
+            } catch (IOException e) {
+                // ipv6 isn't available on this machine, so browsers can only reach us on 127.0.0.1 anyway
+                LOGGER.debug("IPv6 loopback unavailable, listening on IPv4 only", e);
+                return Result.ok(new LocalLoopback(port, List.of(v4), expectedState, timeout));
+            }
         }
+
+        return Result.err("Couldn't find a free local port for the login listener");
     }
 
     /// The `redirect_uri` to send in the authorize request, and again in the code exchange. They must match exactly.
     public String redirectUri() {
-        return "http://127.0.0.1:" + server.getAddress().getPort() + CALLBACK_PATH;
+        return "http://localhost:" + port + CALLBACK_PATH;
+    }
+
+    /// Whether we're also listening on the IPv6 loopback, false when IPv6 isn't available on this machine.
+    boolean listensOnIpv6() {
+        return servers.size() > 1;
     }
 
     /// Completes once with the provider's response. Completes exceptionally with a `TimeoutException` if the user
@@ -77,6 +108,7 @@ public final class LocalLoopback implements Closeable {
         return result;
     }
 
+    /// Fairly unrelated to the actual loopback system but this is how we listen for the code.
     private void handle(HttpExchange exchange) throws IOException {
         Callback callback;
 
@@ -156,7 +188,7 @@ public final class LocalLoopback implements Closeable {
         return map;
     }
 
-    /// Stops listening. A pending [#result()] is cancelled. Safe to call more than once, the server is only stopped by
+    /// Stops listening. A pending [#result()] is cancelled. Safe to call more than once, the servers are only stopped by
     /// the completion hook in the constructor.
     @Override
     public void close() {

@@ -13,9 +13,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class JsonStoreTests {
     private static final Gson GSON = new Gson();
@@ -26,6 +24,7 @@ public class JsonStoreTests {
     static class Data {
         int count;
         String name = "default";
+        List<Integer> items = new ArrayList<>();
     }
 
     private JsonStore<Data> store(Path file) {
@@ -143,6 +142,90 @@ public class JsonStoreTests {
         var reloaded = store(file);
         reloaded.load();
         assertEquals(100, reloaded.get().count);
+    }
+
+    @Test
+    public void testSnapshotsAreNeverChangedByLaterWrites() throws IOException {
+        var store = store(dir.resolve("data.json"));
+        store.update(d -> d.name = "first");
+        var snapshot = store.get();
+
+        store.update(d -> d.name = "second");
+
+        assertEquals("first", snapshot.name);
+        assertEquals("second", store.get().name);
+        assertNotSame(snapshot, store.get());
+    }
+
+    @Test
+    public void testSetKeepsItsOwnCopy() throws IOException {
+        var store = store(dir.resolve("data.json"));
+        var value = new Data();
+        value.name = "set";
+        store.set(value);
+
+        value.name = "changed after set";
+        assertEquals("set", store.get().name);
+    }
+
+    @Test
+    public void testUpdateIfThatFailsChangesNothing() throws IOException {
+        var store = store(dir.resolve("data.json"));
+        store.update(d -> d.count = 1);
+        var before = store.get();
+
+        assertFalse(store.updateIf(d -> d.count == 99, d -> d.count = 2));
+        assertSame(before, store.get());
+    }
+
+    @Test
+    public void testFailedSaveLeavesTheDataUnchanged() throws IOException {
+        Path file = dir.resolve("data.json");
+        var store = store(file);
+        store.update(d -> d.count = 1);
+
+        // Make the save fail by putting a non-empty directory where the file goes
+        Files.delete(file);
+        Files.createDirectories(file.resolve("blocker"));
+
+        assertThrows(IOException.class, () -> store.update(d -> d.count = 2));
+        assertEquals(1, store.get().count);
+    }
+
+    @Test
+    public void testReadersCanIterateWhileOthersWrite() throws Exception {
+        var store = store(dir.resolve("data.json"));
+
+        try (ExecutorService executor = Executors.newFixedThreadPool(8)) {
+            try {
+                List<Future<?>> futures = new ArrayList<>();
+                for (int i = 0; i < 50; i++) {
+                    int value = i;
+                    futures.add(executor.submit(() -> {
+                        store.update(d -> d.items.add(value));
+                        return null;
+                    }));
+                    // With a shared live list this iteration would throw ConcurrentModificationException
+                    futures.add(executor.submit(() -> {
+                        for (int j = 0; j < 20; j++) {
+                            int sum = 0;
+                            for (int item : store.get().items) {
+                                sum += item;
+                            }
+                            assertTrue(sum >= 0);
+                        }
+                        return null;
+                    }));
+                }
+                for (var future : futures) {
+                    future.get();
+                }
+            } finally {
+                executor.shutdown();
+            }
+        }
+
+        assertEquals(50, store.get().items.size());
     }
 
     private boolean hasCorruptFile(String prefix) throws IOException {

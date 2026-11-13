@@ -37,7 +37,6 @@ import {
   KillInstanceDataReply,
   LaunchInstanceData,
   LaunchInstanceDataReply,
-  ModalCallbackData,
   MoveInstancesHandlerData,
   MoveInstancesHandlerReply,
   PingLauncherData,
@@ -105,7 +104,6 @@ const endpoints = {
   duplicateInstance:              io<DuplicateInstanceHandlerRequest, DuplicateInstanceHandlerReply>(),
   getSettings:                    io<SettingsInfoData, SettingsInfoDataReply>(),
   saveSettings:                   io<SettingsConfigureData, SettingsConfigureDataReply>(),
-  modalCallback:                  io<ModalCallbackData, EmptyMessageResponse>(),
   fileHash:                       io<FileHashData, FileHashDataReply>(),
   uploadLogs:                     io<UploadLogsData, UploadLogsDataReply>(),
   getJavas:                       io<GetJavasData, GetJavasDataReply>(),
@@ -125,14 +123,13 @@ const endpoints = {
   "storage.get":                  io<StorageGetHandlerData, StorageGetHandlerReply>(),
   "storage.get-all":              io<BaseData, StorageGetAllHandlerReply>(),
   webRequest:                     io<Nullable<WebRequestData, "body">, WebRequestDataResponse>(),
-  openDebugTools:                 io<BaseData, EmptyMessageResponse>(),
   instanceOverrideModLoader:      io<InstanceOverrideModLoaderData, InstanceOverrideModLoaderDataReply>(),
   moveInstances:                  io<MoveInstancesHandlerData, MoveInstancesHandlerReply>(),
   "accounts.store-oauth":         io<StoreFtbAccountHandlerData, StoreFtbAccountHandlerReply>(),
   "accounts.get-oauth":           io<BaseData, GetFtbAccountHandlerReply>(),
   "accounts.sign-out":            io<BaseData, SignOutFTBAccountHandlerReply>(),
   'purge':                        io<PurgeHandlerData, PurgeHandlerReply>(),
-  "accounts.oauth.start":         io<AuthFlowStartHandlerData, AuthFlowStartHandlerReply>
+  "accounts.oauth.start":         io<AuthFlowStartHandlerData, AuthFlowStartHandlerReply>()
 } satisfies Record<ApiEndpoints, EndpointDefinition<any, any>>;
 
 export type EmptyMessageResponse = {}

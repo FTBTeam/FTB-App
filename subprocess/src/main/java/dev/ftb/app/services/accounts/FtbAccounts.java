@@ -1,25 +1,34 @@
 package dev.ftb.app.services.accounts;
 
-import dev.ftb.app.AppPaths;
-import dev.ftb.app.services.AppStorage;
+import dev.ftb.app.services.AppHttp;
+import dev.ftb.app.services.storage.Vault;
 
-public class FtbAccounts {
-//    private final JsonStore<FtbAccount> store;
+import java.nio.file.Path;
 
-    private final AppStorage appStorage;
-    private final AppPaths appPaths;
-    
-    public FtbAccounts(AppPaths paths, AppStorage storage) {
-        this.appPaths = paths;
-        this.appStorage = storage;
-        
-//        this.store = new JsonStore<>(
-//            paths.storageDir().resolve("ftb-accounts.json"),
-//            FtbAccount.class,
-//            FtbAccount::new,
-//            () -> new FtbAccount[0]
-//        );
+/// The signed in FTB accounts, keyed by Keycloak user id.
+///
+/// Not used by the FTB account handlers yet, they still read and write the single legacy `ftbAccount` vault entry.
+public class FtbAccounts extends MultiAccountStore<FtbAccount, String, FtbAccount.TokenKey> {
+    public static final String SPEC_VERSION = "1.0.0";
+
+    private final FtbTokenExchange tokenExchange;
+
+    public FtbAccounts(Path storageDir, Vault vault, AppHttp http) {
+        super(
+            storageDir,
+            vault,
+            "ftb-accounts",
+            SPEC_VERSION,
+            "ftb",
+            FtbAccount.class,
+            String.class,
+            FtbAccount.TokenKey.class,
+            FtbAccount::getId
+        );
+        this.tokenExchange = new FtbTokenExchange(http);
     }
-    
-    
+
+    public FtbTokenExchange tokenExchange() {
+        return tokenExchange;
+    }
 }

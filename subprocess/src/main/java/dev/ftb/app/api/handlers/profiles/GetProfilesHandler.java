@@ -15,8 +15,8 @@ public class GetProfilesHandler implements IMessageHandler<BaseData> {
     public void handle(MessageContext context, BaseData data) {
         context.reply(new Reply(
                 data,
-                context.services().accounts().minecraft().getProfiles().stream().map(MicrosoftProfile::toSharableData).collect(Collectors.toSet()),
-                context.services().accounts().minecraft().getActiveProfile()
+                context.services().accounts().minecraft().all().stream().map(MicrosoftProfile::toSharableData).collect(Collectors.toSet()),
+                context.services().accounts().minecraft().active()
         ));
     }
 

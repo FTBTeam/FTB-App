@@ -361,14 +361,6 @@ export interface PinInstanceHandlerReply extends BaseData {
     instance: SugaredInstanceJson;
 }
 
-export interface AppInitHandlerData extends BaseData {
-}
-
-export interface AppInitHandlerReply extends AppInitHandlerData {
-    success: boolean;
-    errorMessage: string;
-}
-
 export interface AccountIsValidHandlerData extends BaseData {
     profileUuid: string;
 }
@@ -376,16 +368,6 @@ export interface AccountIsValidHandlerData extends BaseData {
 export interface AccountIsValidHandlerReply extends AccountIsValidHandlerData {
     checkResult: ValidCheckResult;
     response: string;
-}
-
-export interface AuthFlowStartHandlerData extends BaseData {
-    handlerType: string;
-}
-
-export interface AuthFlowStartHandlerReply extends BaseData {
-    url: string;
-    success: boolean;
-    reason: string;
 }
 
 export interface AuthenticateMsProfileHandlerData extends BaseData {
@@ -400,6 +382,14 @@ export interface AuthenticateMsProfileHandlerReply extends PrivateBaseData {
     message: string;
 }
 
+export interface DeviceAuthFlowHandlerData extends BaseData {
+    type: FlowStage;
+    provider: AccountProvider;
+}
+
+export interface DeviceAuthFlowHandlerReply extends BaseData {
+}
+
 export interface GetFtbAccountHandlerReply extends PrivateBaseData {
     success: boolean;
     authData: CompleteTokenData;
@@ -410,11 +400,14 @@ export interface GetProfilesHandlerReply extends PrivateBaseData {
     activeProfile: SharableData;
 }
 
-export interface MinecraftAuthFlowHandlerData extends BaseData {
-    type: FlowType;
+export interface OAuthFlowStartHandlerData extends BaseData {
+    provider: AccountProvider;
 }
 
-export interface MinecraftAuthFlowHandlerReply extends BaseData {
+export interface OAuthFlowStartHandlerReply extends BaseData {
+    url: string;
+    success: boolean;
+    reason: string;
 }
 
 export interface RefreshAuthenticationProfileHandlerData extends BaseData {
@@ -704,7 +697,9 @@ export type Action = "GET" | "CREATE" | "DELETE" | "RENAME";
 
 export type ValidCheckResult = "VALID" | "EXPIRED" | "NOT_LOGGED_IN" | "TOTAL_FAILURE";
 
-export type FlowType = "GET_CODE" | "CHECK_FOR_TOKEN" | "AUTHORIZE";
+export type FlowStage = "GET_CODE" | "CHECK_FOR_TOKEN" | "AUTHORIZE";
+
+export type AccountProvider = "FTB" | "MICROSOFT";
 
 export type PurgeTarget = "ALL" | "INSTANCE_CACHE" | "RUNTIMES" | "MINECRAFT";
 

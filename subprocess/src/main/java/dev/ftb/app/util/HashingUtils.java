@@ -5,9 +5,31 @@ import org.apache.commons.codec.digest.MurmurHash2;
 import java.io.ByteArrayOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.stream.IntStream;
 
 public class HashingUtils {
+    public static byte[] sha1(byte[] data) throws IllegalStateException {
+        return generateSha("SHA-1", data);
+    }
+
+    public static byte[] sha256(byte[] data) throws IllegalStateException {
+        return generateSha("SHA-256", data);
+    }
+
+    public static byte[] sha512(byte[] data) throws IllegalStateException {
+        return generateSha("SHA-512", data);
+    }
+    
+    private static byte[] generateSha(String algo, byte[] data) {
+        try {
+            return MessageDigest.getInstance(algo).digest(data);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e); // every JVM has SHA-256 and basically all other standard sha gen so this is fairly unneeded.
+        }
+    }
+    
     public static long createCurseForgeMurmurHash(Path file) {
         try {
             var fileBytes = Files.readAllBytes(file);

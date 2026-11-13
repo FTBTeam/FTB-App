@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import dev.ftb.app.structs.accounts.ErrorWithCode;
 import dev.ftb.app.structs.accounts.MinecraftProfileData;
 import dev.ftb.app.services.AppHttp;
+import dev.ftb.app.services.accounts.AccountTokenKey;
 import dev.ftb.app.services.accounts.McAccounts;
 import dev.ftb.app.services.storage.VaultException;
 import dev.ftb.app.util.Result;
@@ -81,28 +82,26 @@ public class MicrosoftProfile {
         return stillValid ? ValidCheckResult.VALID : ValidCheckResult.EXPIRED;
     }
     
-    /**
-     * Refreshes the account if needed
-     */
+    /// Refreshes the account if needed
     public boolean refreshAccount(AppHttp http, McAccounts accounts, boolean forceRefresh) {
+        boolean result;
         try {
             LOGGER.info("Refreshing account for {}", this.minecraftName);
-            boolean result = this.unsafeRefreshAccount(http, accounts, forceRefresh);
+            result = this.unsafeRefreshAccount(http, accounts, forceRefresh);
             if (!result) {
                 LOGGER.error("Failed to refresh account for {}", this.minecraftName);
-                
-                this.notLoggedIn = true;
-                accounts.saveProfiles();
+            } else {
+                LOGGER.info("Finished refreshing account for {}", this.minecraftName);
             }
-            
-            LOGGER.info("Finished refreshing account for {}", this.minecraftName);
-            return result;
         } catch (Exception e) {
             LOGGER.error("Failed to refresh account", e);
-            this.notLoggedIn = true;
-            accounts.saveProfiles();
-            return false;
+            result = false;
         }
+
+        if (!result) {
+            accounts.update(uuid, MicrosoftProfile::markNotLoggedIn);
+        }
+        return result;
     }
     
     public boolean refreshAccount(AppHttp http, McAccounts accounts) {
@@ -115,6 +114,8 @@ public class MicrosoftProfile {
      */
     private boolean unsafeRefreshAccount(AppHttp http, McAccounts accounts, boolean forceRefresh) {
         var now = Instant.now();
+        // The XSTS step can replace this, and the Minecraft step needs the new value
+        String userHash = this.xstsUserHash;
         
         if (forceRefresh || now.getEpochSecond() >= this.microsoftAccessExpiresAt) {
             LOGGER.info("Xbox token expired, refreshing");
@@ -144,8 +145,8 @@ public class MicrosoftProfile {
                 return false;
             }
             
-            this.microsoftAccessExpiresAt = now.plus(Duration.ofSeconds(jsonData.get("expires_in").getAsLong())).getEpochSecond();
-            accounts.saveProfiles();
+            long microsoftExpiresAt = now.plus(Duration.ofSeconds(jsonData.get("expires_in").getAsLong())).getEpochSecond();
+            accounts.update(uuid, p -> p.microsoftAccessExpiresAt = microsoftExpiresAt);
         }
         
         if (forceRefresh || now.getEpochSecond() >= this.xstsNotAfter) {
@@ -195,9 +196,13 @@ public class MicrosoftProfile {
                 return false;
             }
             
-            this.xstsUserHash = displayClaims.unwrap();
-            this.xstsNotAfter = Instant.parse(xstsTokenData.get("NotAfter").getAsString()).getEpochSecond();
-            accounts.saveProfiles();
+            userHash = displayClaims.unwrap();
+            String newUserHash = userHash;
+            long xstsNotAfter = Instant.parse(xstsTokenData.get("NotAfter").getAsString()).getEpochSecond();
+            accounts.update(uuid, p -> {
+                p.xstsUserHash = newUserHash;
+                p.xstsNotAfter = xstsNotAfter;
+            });
         }
         
         if (forceRefresh || now.getEpochSecond() >= this.minecraftAccessExpiresAt) {
@@ -208,7 +213,7 @@ public class MicrosoftProfile {
                 return false;
             }
             
-            var minecraftResult = MicrosoftRequests.authenticateWithMinecraft(http, xstsToken, this.xstsUserHash);
+            var minecraftResult = MicrosoftRequests.authenticateWithMinecraft(http, xstsToken, userHash);
             if (minecraftResult.isErr()) {
                 LOGGER.error("Failed to authenticate with Minecraft: {}", minecraftResult.unwrapErr());
                 return false;
@@ -223,7 +228,7 @@ public class MicrosoftProfile {
                 return false;
             }
             
-            this.minecraftAccessExpiresAt = now.plus(Duration.ofSeconds(minecraftData.get("expires_in").getAsLong())).getEpochSecond();
+            long minecraftExpiresAt = now.plus(Duration.ofSeconds(minecraftData.get("expires_in").getAsLong())).getEpochSecond();
             
             // Now rerun the entitlements check and profile fetching
             var profile = MicrosoftOAuthProcess.checkEntitlementsAndGetProfile(http, accessToken);
@@ -235,13 +240,14 @@ public class MicrosoftProfile {
             LOGGER.info("Successfully refreshed Minecraft token");
             MinecraftProfileData profileData = profile.unwrap();
             
-            this.minecraftName = profileData.name();
-            this.skinUrl = profileData.getActiveSkinUrl();
+            accounts.update(uuid, p -> {
+                p.minecraftAccessExpiresAt = minecraftExpiresAt;
+                p.minecraftName = profileData.name();
+                p.skinUrl = profileData.getActiveSkinUrl();
+            });
         }
 
-        this.notLoggedIn = false;
-        accounts.saveProfiles();
-        
+        accounts.update(uuid, p -> p.notLoggedIn = false);
         return true;
     }
 
@@ -291,7 +297,7 @@ public class MicrosoftProfile {
         return Objects.hashCode(uuid);
     }
     
-    public enum TokenKey {
+    public enum TokenKey implements AccountTokenKey {
         MINECRAFT_ACCESS_TOKEN("minecraftAccessToken"),
         MICROSOFT_ACCESS_TOKEN("microsoftAccessToken"),
         MICROSOFT_REFRESH_TOKEN("microsoftRefreshToken"),
@@ -303,6 +309,7 @@ public class MicrosoftProfile {
             this.keyName = keyName;
         }
         
+        @Override
         public String getKeyName() {
             return keyName;
         }

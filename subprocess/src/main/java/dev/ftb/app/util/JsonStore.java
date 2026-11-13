@@ -16,18 +16,20 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
-/// A JSON file on disk backing a single data object of type `T`.
+/// A JSON file on disk backing a single data object of type `T` with a focus on disk read + write safety and thread
+/// safety by using a lock around most data updates and a "snapshot" around the underlying data store to prevent
+/// cross-thread data mutation.
 ///
-/// This implementation should be thread-safe, crash-save and resilient to corruption. It comes with built-in support 
-/// for migrating older formats to newer ones, and for falling back to a backup or defaults when the file is unreadable.
+/// It is crash-safe and resilient to corruption, with built-in support for migrating older formats to newer ones and
+/// for falling back to a backup or defaults when the file is unreadable.
 ///
 /// @param <T> the type of the data held in the file
 public final class JsonStore<T> {
@@ -44,13 +46,11 @@ public final class JsonStore<T> {
     
     private final Supplier<T> defaults;
     private final UnaryOperator<JsonElement> migrator;
-    private final List<Consumer<T>> onChange = new LinkedList<>();
+    private final List<Consumer<T>> onChange = new CopyOnWriteArrayList<>();
     
-    /// Provides a thread-safe lock around IO operations.
     private final ReentrantLock lock = new ReentrantLock();
 
-    /// Null until first loaded, set or read. The defaults are created lazily so that constructing a store never
-    /// runs the supplier, which may itself depend on whatever owns this store.
+    /// A "Snapshot" of the current data. 
     private volatile @Nullable T data;
 
     /// @see #JsonStore(Path, Gson, Type, Supplier, UnaryOperator)
@@ -59,7 +59,7 @@ public final class JsonStore<T> {
     }
 
     /// @param path where the file lives on disk
-    /// @param gson the Gson instance used to read and write the data
+    /// @param gson the Gson instance used to read, write and copy the data
     /// @param type the type of `T`, either a `Class` or a `TypeToken` type for generic types
     /// @param defaults creates the data used when there is no usable file on disk
     /// @param migrator applied to the raw JSON before it is converted to `T`, used to upgrade older formats
@@ -77,7 +77,7 @@ public final class JsonStore<T> {
         return path;
     }
 
-    /// The current data. Holds the defaults until {@link #load()} has been called.
+    /// The current snapshot. Holds the defaults until [#load()] has been called.
     public T get() {
         T current = data;
         if (current != null) {
@@ -95,47 +95,56 @@ public final class JsonStore<T> {
         }
     }
 
-    /// Replaces the data and saves it.
-    /// This replaces the entire data object, not a specific field or partial update. Use {@link #update(Consumer)} for that.
+    /// Replaces the data and saves it. The store keeps its own copy, so the caller can carry on using `value`.
+    /// This replaces the entire data object, use [#update(Consumer)] to change part of it.
+    ///
+    /// @throws IOException if the save failed, the current data is then left unchanged
     public void set(T value) throws IOException {
         lock.lock();
         try {
-            data = value;
-            saveLocked();
+            publish(copy(value));
         } finally {
             lock.unlock();
         }
     }
 
-    /// Mutates the data and saves it
+    /// Applies `mutator` to a private copy of the data, saves the copy, then publishes it.
+    ///
+    /// @throws IOException if the save failed, the current data is then left unchanged
     public void update(Consumer<T> mutator) throws IOException {
         lock.lock();
         try {
-            mutator.accept(get());
-            saveLocked();
+            T next = copy(get());
+            mutator.accept(next);
+            publish(next);
         } finally {
             lock.unlock();
         }
     }
     
-    /// Conditionally mutates the data and saves it. If the predicate returns false, the data is not mutated or saved and
-    /// the result is passed back to the caller.
+    /// Like [#update(Consumer)], but only if `predicate` passes. The check and the change happen under the same lock,
+    /// so nothing can change in between. If the predicate fails nothing is copied or saved.
+    ///
+    /// @return whether the predicate passed and the change was saved
+    /// @throws IOException if the save failed, the current data is then left unchanged
     public boolean updateIf(Predicate<T> predicate, Consumer<T> mutator) throws IOException {
         lock.lock();
         try {
-            T current = get();
-            if (!predicate.test(current)) {
+            if (!predicate.test(get())) {
                 return false;
             }
-            mutator.accept(current);
-            saveLocked();
+
+            T next = copy(get());
+            mutator.accept(next);
+            publish(next);
             return true;
         } finally {
             lock.unlock();
         }
     }
 
-    /// Adds a listener that is called whenever the data is changed and saved. The listener is called after the save is complete.
+    /// Adds a listener that is called with the new snapshot whenever the data is changed and saved. The listener is
+    /// called after the save is complete, on the thread that made the change. The same read-only rule applies.
     public void onChange(Consumer<T> listener) {
         onChange.add(listener);
     }
@@ -172,7 +181,7 @@ public final class JsonStore<T> {
                 return LoadResult.RECOVERED_FROM_BACKUP;
             }
 
-            // Nothing worked, fall back to the defaults and save them to disk. This will overwrite any existing file or backup.
+            // Nothing worked, fall back to the defaults. Nothing is written until the first change.
             data = defaults.get();
             return foundCorrupt ? LoadResult.CORRUPT_RESET_TO_DEFAULTS : LoadResult.MISSING_USING_DEFAULTS;
         } finally {
@@ -191,7 +200,7 @@ public final class JsonStore<T> {
             LOGGER.warn("Recovered {} from backup {}", path, backupPath);
             data = loaded;
             try {
-                saveLocked();
+                write(loaded);
             } catch (IOException ex) {
                 LOGGER.error("Failed to rewrite {} after recovering it from backup", path, ex);
             }
@@ -201,18 +210,40 @@ public final class JsonStore<T> {
         return null;
     }
 
+    /// Writes the current data to disk again, without changing it. Mostly useful to push an old version out of the
+    /// backup file, as each save first copies the previous file to the backup.
     public void save() throws IOException {
         lock.lock();
         try {
-            saveLocked();
+            write(get());
         } finally {
             lock.unlock();
         }
     }
 
-    private void saveLocked() throws IOException {
+    /// Saves `next`, then makes it the published snapshot and notifies the listeners.
+    private void publish(T next) throws IOException {
+        write(next);
+        data = next;
+
+        for (Consumer<T> listener : onChange) {
+            try {
+                listener.accept(next);
+            } catch (Throwable ex) {
+                LOGGER.error("Failed to notify listener of change to {}", path, ex);
+            }
+        }
+    }
+
+    /// A deep copy, made by round-tripping through Gson so it works for any `T` the store can save.
+    private T copy(T value) {
+        return gson.fromJson(gson.toJsonTree(value, type), type);
+    }
+
+    /// Writes `value` to disk.
+    private void write(T value) throws IOException {
         // Serialize first so a serialization failure never touches the files on disk
-        byte[] bytes = gson.toJson(get(), type).getBytes(StandardCharsets.UTF_8);
+        byte[] bytes = gson.toJson(value, type).getBytes(StandardCharsets.UTF_8);
 
         if (Files.exists(path)) {
             // Backup the existing one. Copied rather than moved, so the real file exists at every point during the save.
@@ -224,15 +255,6 @@ public final class JsonStore<T> {
         }
 
         SafeFiles.writeAtomically(path, bytes);
-        
-        // Assuming the save was successful, we can now notify any listeners
-        for (Consumer<T> listener : onChange) {
-            try {
-                listener.accept(get());
-            } catch (Throwable ex) {
-                LOGGER.error("Failed to notify listener of change to {}", path, ex);
-            }
-        }
     }
 
     private @Nullable T read(Path file) throws IOException {

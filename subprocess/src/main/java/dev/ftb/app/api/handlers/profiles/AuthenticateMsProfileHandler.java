@@ -47,7 +47,7 @@ public class AuthenticateMsProfileHandler implements IMessageHandler<Authenticat
             return;
         }
         
-        context.services().accounts().minecraft().addProfile(newAccount);
+        context.services().accounts().minecraft().add(newAccount);
 
         context.reply(new Reply(data));
     }

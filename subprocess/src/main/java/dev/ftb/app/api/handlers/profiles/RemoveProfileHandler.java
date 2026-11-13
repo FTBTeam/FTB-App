@@ -10,21 +10,11 @@ import java.util.UUID;
 public class RemoveProfileHandler implements IMessageHandler<RemoveProfileHandler.Data> {
     @Override
     public void handle(MessageContext context, Data data) {
-        boolean removed = false;
-        
-        // TODO: this could be much more graceful.
         McAccounts accounts = context.services().accounts().minecraft();
-        accounts.removeProfile(data.uuid);
-        
-        var foundProfile = accounts.getProfiles().stream()
-            .filter(p -> p.getUuid().equals(data.uuid))
-            .findFirst();
-        
-        if (foundProfile.isEmpty()) {
-            removed = true;
-        }
-            
-        context.reply(new Reply(data, removed));
+        accounts.remove(data.uuid);
+
+        // Success means it's gone, including when it was never there
+        context.reply(new Reply(data, accounts.get(data.uuid) == null));
     }
 
     public static class Data extends BaseData {

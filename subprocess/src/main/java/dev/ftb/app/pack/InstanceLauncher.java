@@ -412,7 +412,7 @@ public class InstanceLauncher {
             Map<String, String> subMap = new HashMap<>();
             McAccounts accounts = this.factory().accounts();
             
-            MicrosoftProfile profile = accounts.getActiveProfile();
+            MicrosoftProfile profile = accounts.active();
             if (offlineUsername != null || profile == null) {
                 UUID uuid;
                 String username;

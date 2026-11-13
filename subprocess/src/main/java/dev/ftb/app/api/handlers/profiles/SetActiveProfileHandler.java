@@ -10,7 +10,7 @@ import java.util.UUID;
 public class SetActiveProfileHandler implements IMessageHandler<SetActiveProfileHandler.Data> {
     @Override
     public void handle(MessageContext context, Data data) {
-        context.services().accounts().minecraft().setActiveProfile(data.uuid);
+        context.services().accounts().minecraft().setActive(data.uuid);
         context.reply(new Reply(
                 data,
                 true
