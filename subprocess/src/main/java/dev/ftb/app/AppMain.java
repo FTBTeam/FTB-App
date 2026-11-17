@@ -1,6 +1,7 @@
 package dev.ftb.app;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import dev.ftb.app.api.WebsocketServer;
 import dev.ftb.app.api.data.other.PingLauncherData;
 import dev.ftb.app.migration.MigrationsManager;
@@ -22,8 +23,11 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -122,11 +126,14 @@ public class AppMain {
     private void mainImpl() {        
         // Cleanup before shutdown
         Runtime.getRuntime().addShutdownHook(new Thread(this::cleanUpBeforeExit));
-        
-        this.services().instances().refreshInstances();
+
+        // The Electron frontend restarts us if we go quiet for too long before "Backend Ready", so keep it informed
+        // that we are still making progress during slow startups (lots of instances, slow disks, anti-virus).
+        ScheduledExecutorService startupHeartbeat = startStartupHeartbeat();
+
+        this.services.instances().refreshInstances();
 
         this.migrations.runMigrations();
-
         // The proxy was applied before migrations ran, so pick up a password that was just moved into the vault
         this.services().reloadProxy();
 
@@ -179,8 +186,11 @@ public class AppMain {
         } catch (Throwable t) {
             websocketDisconnect = true;
             LOGGER.error("Unable to open websocket port or websocket has disconnected...", t);
+        } finally {
+            // Once the app is all started, we can shutdown the heartbeat single. 
+            startupHeartbeat.shutdownNow();
         }
-        
+
         // Reload in case settings changed. Ideally we want the front end to wait until the back end says "Ok we ready
         // bois" before the front end requests any information but that's a further issue, not for this release
 //        this.initSettingsAndCache();
@@ -210,6 +220,9 @@ public class AppMain {
         }
 
         updateJavaVersions();
+
+        // Spins up threaded long-lived work for fixing instances.
+        this.services.instances().scheduleMurmurFixing();
 
         //Hang indefinitely until this lock is interrupted.
         try {
@@ -249,6 +262,23 @@ public class AppMain {
         } catch (IOException ex) {
             LOGGER.error("Failed to poll available Java versions.", ex);
         }
+    }
+
+    private static ScheduledExecutorService startStartupHeartbeat() {
+        long startedAt = System.nanoTime();
+        
+        ScheduledExecutorService heartbeat = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder()
+            .setNameFormat("Startup Heartbeat")
+            .setDaemon(true)
+            .build());
+        
+        // Every x seconds, ping something back to the frontend. If this stops, the app knows it's failed.
+        heartbeat.scheduleAtFixedRate(
+            () -> LOGGER.info("Still starting up... ({} elapsed)", MiscUtils.formatDuration(Duration.ofNanos(System.nanoTime() - startedAt))),
+            10, 10, TimeUnit.SECONDS
+        );
+        
+        return heartbeat;
     }
 
     private void pingPong() {

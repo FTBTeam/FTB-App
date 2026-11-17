@@ -1,11 +1,14 @@
 package dev.ftb.app.util;
 
+import net.covers1624.quack.util.SneakyUtils;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 public class MiscUtils {
@@ -63,5 +66,38 @@ public class MiscUtils {
             // Invalid UUID format
             return null;
         }
+    }
+
+    public static <T, E extends Throwable> TimedResult<T> time(SneakyUtils.ThrowingSupplier<T, E> supplier) throws E {
+        long start = System.nanoTime();
+        T result = supplier.get();
+        return new TimedResult<>(result, Duration.ofNanos(System.nanoTime() - start));
+    }
+    
+    public static <E extends Throwable> Duration timeRun(SneakyUtils.ThrowingRunnable<E> runnable) throws E {
+        long start = System.nanoTime();
+        runnable.run();
+        return Duration.ofNanos(System.nanoTime() - start);
+    }
+
+    public record TimedResult<T>(T result, Duration elapsed) {
+        public String asString() {
+            return formatDuration(elapsed);
+        }
+    }
+
+    public static String formatDuration(Duration duration) {
+        long nanos = duration.toNanos();
+        if (nanos < 1_000L) return nanos + "ns";
+        if (nanos < 1_000_000L) return String.format(Locale.ROOT, "%.2fµs", nanos / 1e3);
+        if (nanos < 1_000_000_000L) return String.format(Locale.ROOT, "%.2fms", nanos / 1e6);
+        if (nanos < 60_000_000_000L) return String.format(Locale.ROOT, "%.2fs", nanos / 1e9);
+
+        long hours = duration.toHours();
+        int minutes = duration.toMinutesPart();
+        int seconds = duration.toSecondsPart();
+        return hours > 0
+            ? "%dh %dm %ds".formatted(hours, minutes, seconds)
+            : "%dm %ds".formatted(minutes, seconds);
     }
 }

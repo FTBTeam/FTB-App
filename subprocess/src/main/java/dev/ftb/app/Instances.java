@@ -1,10 +1,10 @@
 package dev.ftb.app;
 
 import com.google.common.hash.HashCode;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import dev.ftb.app.services.accounts.McAccounts;
 import dev.ftb.app.api.RcpApi;
 import dev.ftb.app.data.InstanceSupportMeta;
 import dev.ftb.app.data.modpack.ModpackVersionManifest;
@@ -14,11 +14,12 @@ import dev.ftb.app.pack.Instance;
 import dev.ftb.app.pack.InstanceFactory;
 import dev.ftb.app.services.AppHttp;
 import dev.ftb.app.services.AppThreads;
+import dev.ftb.app.services.accounts.McAccounts;
 import dev.ftb.app.services.cache.AppCache;
 import dev.ftb.app.storage.settings.Settings;
-import dev.ftb.app.util.ElapsedTimer;
 import dev.ftb.app.util.FileUtils;
 import dev.ftb.app.util.JsonStore;
+import dev.ftb.app.util.MiscUtils;
 import net.covers1624.jdkutils.JdkInstallationManager;
 import net.covers1624.quack.gson.HashCodeAdapter;
 import org.apache.logging.log4j.LogManager;
@@ -29,7 +30,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Instances {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -83,6 +87,15 @@ public class Instances {
         this.supportMeta = new InstanceSupportMeta(appPaths, this.appHttp);
     }
 
+    private static final Duration SLOW_INSTANCE_LOAD = Duration.ofSeconds(2);
+
+    /// Single low priority thread for instance processes like computing hashes on the fly.
+    private static final ExecutorService MAINTENANCE_EXECUTOR = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
+        .setNameFormat("Instance Maintenance")
+        .setDaemon(true)
+        .setPriority(Thread.MIN_PRIORITY)
+        .build());
+
     @Nullable
     public Instance getInstance(UUID uuid) {
         return instances.get(uuid);
@@ -100,8 +113,31 @@ public class Instances {
         return categories.get();
     }
 
+    /// Queue instances for murmur hashing fixes. 
+    public void scheduleMurmurFixing() {
+        List<UUID> pending = allInstances().stream()
+            .filter(e -> e.getModifications() != null && e.getModifications().requiresMurmurFix())
+            .map(Instance::getUuid)
+            .toList();
+        if (pending.isEmpty()) return;
+
+        LOGGER.info("Queueing mod hash backfill for {} instance(s).", pending.size());
+        MAINTENANCE_EXECUTOR.execute(() -> {
+            for (UUID uuid : pending) {
+                Instance instance = getInstance(uuid);
+                if (instance == null) continue;
+                try {
+                    instance.ensureMurmurHashes();
+                } catch (Throwable t) {
+                    // Flag stays set, so this is retried on demand or on next startup.
+                    LOGGER.warn("Failed to backfill mod hashes for instance {}.", instance.getName(), t);
+                }
+            }
+        });
+    }
+
     public void refreshInstances() {
-        ElapsedTimer totalTimer = new ElapsedTimer();
+        long start = System.nanoTime();
         Path instancesDir = this.settings.getInstancesDir();
 
         LOGGER.info("Reloading instances..");
@@ -110,13 +146,24 @@ public class Instances {
         if (!Files.exists(instancesDir)) {
             LOGGER.info("Instances directory missing, skipping..");
         } else {
-            ElapsedTimer timer = new ElapsedTimer();
-            List<Instance> loadedInstances = FileUtils.listDir(instancesDir)
-                    .parallelStream()
+            List<Path> instancePaths = FileUtils.listDir(instancesDir).stream()
                     .filter(e -> Files.isDirectory(e) && !e.getFileName().toString().startsWith("."))
-                    .map(this::loadInstance)
+                    .toList();
+
+            // Load in parallel, but time each instance so a slow one is named in the logs.
+            List<Instance> loadedInstances = instancePaths.parallelStream()
+                    .map(instancePath -> {
+                        var timed = MiscUtils.time(() -> loadInstance(instancePath));
+                        if (timed.elapsed().compareTo(SLOW_INSTANCE_LOAD) > 0) {
+                            LOGGER.warn("Slow instance load: {} took {}", instancePath.getFileName(), timed.asString());
+                        } else {
+                            LOGGER.debug("Loaded instance {} in {}", instancePath.getFileName(), timed.asString());
+                        }
+                        return timed.result(); // null for skipped/broken instances, already logged by loadInstance
+                    })
                     .filter(Objects::nonNull)
                     .toList();
+
             instances = new HashMap<>();
             for (Instance instance : loadedInstances) {
                 // TODO, there is probably a better solution to this.
@@ -124,13 +171,15 @@ public class Instances {
                     LOGGER.warn("Found duplicate instance {} with id {}. Ignoring.", instance.getDir(), instance.getUuid());
                     continue;
                 }
+                
                 instances.put(instance.getUuid(), instance);
             }
-            LOGGER.info("Loaded {} out of {} instances in {}.", instances.size(), loadedInstances.size(), timer.elapsedStr());
+            LOGGER.info("Loaded {} out of {} instances in {}.", instances.size(), loadedInstances.size(), MiscUtils.formatDuration(Duration.ofNanos(System.nanoTime() - start)));
         }
 
+        LOGGER.info("Loading categories");
         loadCategories();
-        LOGGER.info("Finished instance reload in {}", totalTimer.elapsedStr());
+        LOGGER.info("Finished instance reload in {}", MiscUtils.formatDuration(Duration.ofNanos(System.nanoTime() - start)));
     }
 
     @Nullable

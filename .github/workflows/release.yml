@@ -330,6 +330,18 @@ jobs:
         with:
           name: release-${{ matrix.os }}
           path: release/
+      # TODO: Temporary shim for installs stuck on the "stable" channel. This should be removed in the next few versions.
+      # Due to an issue with channel fallbacks, it selected stable instead of latest.
+      # To fix this, we just need to publish a temp patch.
+      - name: Mirror latest channel to stable (temporary)
+        shell: bash
+        run: |
+          shopt -s nullglob
+          for f in release/latest*.yml; do
+            target="release/stable${f#release/latest}"
+            cp "$f" "$target"
+            echo "Mirrored $f -> $target"
+          done
       - name: Get B2 client
         shell: bash
         run: |
