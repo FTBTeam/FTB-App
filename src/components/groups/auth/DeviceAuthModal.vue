@@ -208,6 +208,12 @@ async function continueTokenFlow(data: any) {
       alertController.error("Failed to login, please try again.");
       logInError.value = result.error;
       return;
+    } else if (result) {
+      // Success
+      logInError.value = "";
+      loggingIn.value = false;
+      alertController.success("Successfully logged in!");
+      emit("closed");
     }
   } catch (e) {
     alertController.error("Failed to login, please try again.");

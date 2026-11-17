@@ -36,6 +36,6 @@ const expectedRam = computed(() => modpack.versions?.[0].specs?.minimum ?? 1024 
 
 <style lang="scss">
 .helper-wysiwyg img {
-  border-radius: .5rem;
+  border-radius: var(--border-radius);
 }
 </style>

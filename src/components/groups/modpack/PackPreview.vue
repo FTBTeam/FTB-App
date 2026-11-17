@@ -126,7 +126,7 @@ const isInstalling = computed(() => {
   overflow: hidden;
   display: flex;
   padding: 1rem;
-  border-radius: 5px;
+  border-radius: var(--border-radius);
   margin-bottom: 1.5rem;
   align-items: center;
   background: var(--color-sidebar-item);
@@ -182,7 +182,7 @@ const isInstalling = computed(() => {
 
     img {
       height: 100%;
-      border-radius: 5px;
+      border-radius: var(--border-radius);
       box-shadow: 0 4px 15px rgba(black, 0.2);
     }
   }
@@ -225,7 +225,7 @@ const isInstalling = computed(() => {
       .tag {
         background-color: rgba(black, 0.4);
         padding: 0.2rem 0.5rem;
-        border-radius: 3px;
+        border-radius: var(--border-radius-inner);
       }
     }
   }
@@ -233,7 +233,7 @@ const isInstalling = computed(() => {
   .install-btn {
     padding: 0.5rem 1rem;
     background-color: #27ae60;
-    border-radius: 5px;
+    border-radius: var(--border-radius);
     box-shadow: 0 4px 15px rgba(black, 0.2);
     transition: background-color 0.25s ease-in-out;
 
@@ -245,7 +245,7 @@ const isInstalling = computed(() => {
   .fav-btn {
     padding: 0.5rem .8rem;
     background-color: var(--color-navbar);
-    border-radius: 5px;
+    border-radius: var(--border-radius);
     box-shadow: 0 4px 15px rgba(black, 0.2);
     transition: background-color 0.25s ease-in-out, color 0.25s ease-in-out;
     
@@ -294,7 +294,7 @@ const isInstalling = computed(() => {
   }
   
   .shadow {
-    border-radius: 8px;
+    border-radius: var(--border-radius);
     background-color: rgba(white, .1);
     animation: skeleton-loading 1s ease-in-out infinite alternate;
 

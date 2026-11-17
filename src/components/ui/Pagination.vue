@@ -54,7 +54,7 @@ const currentPage = computed(() => value.value ?? 0);
   li {
     padding: .4rem .8rem;
     background-color: rgba(white, .1);
-    border-radius: 3px;
+    border-radius: var(--border-radius);
     cursor: pointer;
     
     &:hover {

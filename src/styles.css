@@ -9,6 +9,16 @@
 :root {
     --color-navbar: #313131;
     --color-background: #2A2A2A;
+    
+    /*Basically 8px*/
+    --border-radius: 0.5rem;
+    /*Basically 6px, slightly less so the inner radius doesn't look stupid*/
+    --border-radius-inner: 0.375rem;
+
+    --curse-color-hsl: 15 87% 58%;
+    --curse-color: hsl(var(--curse-color-hsl));
+    
+    --transition-duration: 0.25s;
 }
 
 /* width */

@@ -69,7 +69,7 @@ const curseLink = computed(() => mod.links.find((e) => e.type === 'curseforge'))
   display: flex;
   align-items: center;
   padding: 1rem;
-  border-radius: 5px;
+  border-radius: var(--border-radius);
   background: rgba(white, 0.04);
   margin-bottom: 1rem;
 
@@ -79,7 +79,7 @@ const curseLink = computed(() => mod.links.find((e) => e.type === 'curseforge'))
 
     img {
       max-width: 80px;
-      border-radius: 5px;
+      border-radius: var(--border-radius);
       margin: 0 auto;
     }
   }

@@ -47,7 +47,7 @@ const colorFromType = computed(() => colorFromElementColorType(type, !hoverEffec
   font-weight: normal; 
   font-size: 0.875rem;
   padding: .15rem .5rem;
-  
-  border-radius: 3px;  
+
+  border-radius: var(--border-radius-inner);
 }
 </style>

@@ -1,7 +1,8 @@
 import {ModpackInstallAction} from './actions/ModpackInstallAction';
 import {createLogger} from '@/core/logger';
+import {StartInstanceAction} from "@/core/protocol/actions/StartInstanceAction.ts";
 
-export type ActionType = 'modpack' | 'auth' | 'mauth';
+export type ActionType = 'modpack' | 'auth' | 'mauth' | 'instance';
 
 export type ActionContext = {
   self: Action;
@@ -22,6 +23,7 @@ const protocolSpace = 'ftb';
 const actions: Action[] = [
   // NOTE: Used in test cases, don't remove without updating tests!
   new ModpackInstallAction(),
+  new StartInstanceAction()
 ];
 
 export const parseInput = (rawInput: string, log = true) => {

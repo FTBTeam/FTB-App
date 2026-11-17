@@ -87,7 +87,7 @@ function modalFeedback(button: ModalButton) {
     align-items: center;
     padding: 0.5rem 1rem;
     margin-top: 0.5rem;
-    border-radius: 5px;
+    border-radius: var(--border-radius);
 
     span {
       margin-right: 0.5rem;

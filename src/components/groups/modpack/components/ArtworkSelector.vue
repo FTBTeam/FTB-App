@@ -129,7 +129,7 @@ const hovering = isDraggingOver.value;
 .artwork-selector {
   position: relative;
   img {
-    border-radius: 8px;
+    border-radius: var(--border-radius);
     border: 1px solid rgba(white, .1);
   }
   
@@ -148,7 +148,7 @@ const hovering = isDraggingOver.value;
   position: absolute;
   inset: 0;
   background: rgba(white, .1);
-  border-radius: 8px;
+  border-radius: var(--border-radius);
   border: 1px dashed rgba(white, .2);
   z-index: 1;
   pointer-events: none;

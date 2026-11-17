@@ -29,6 +29,12 @@ const totalFailure = ref(false);
 onMounted(() => {
   log.log('Prelauncher mounted');
 
+  if (!import.meta.env.PROD) {
+    log.info("Skipping update and java check in dev mode");
+    startApp();
+    return;
+  }
+  
   if (window.nodeUtils.os.isFlatPak()) {
     log.info("Flatpak detected, skipping update check");
     progressToJavaCheck({});
@@ -216,7 +222,7 @@ async function attemptCheckJava() {
   color: white;
   padding: 3rem;
   text-align: center;
-  border-radius: 5px;
+  border-radius: .5rem;
   line-height: 1.7em;
   position: relative;
   z-index: 2;
@@ -268,7 +274,7 @@ async function attemptCheckJava() {
   cursor: pointer;
   transition: background-color .2s;
   margin-top: 2rem;
-  border-radius: 8px;
+  border-radius: .5rem;
   font-weight: bold;
 }
 

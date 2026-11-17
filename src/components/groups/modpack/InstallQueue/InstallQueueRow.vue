@@ -111,7 +111,7 @@ const status = computed(() => {
       cursor: pointer;
       background-color: rgba(white, .1);
       padding: 0 .35rem;
-      border-radius: 3px;
+      border-radius: var(--border-radius-inner);
       transition: background-color .2s ease-in-out;
       
       &:hover {

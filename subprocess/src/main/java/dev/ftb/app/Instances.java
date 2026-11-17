@@ -1,6 +1,7 @@
 package dev.ftb.app;
 
 import com.google.common.hash.HashCode;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -9,9 +10,9 @@ import dev.ftb.app.instance.InstanceCategory;
 import dev.ftb.app.minecraft.jsons.VersionManifest;
 import dev.ftb.app.pack.Instance;
 import dev.ftb.app.storage.settings.Settings;
-import dev.ftb.app.util.ElapsedTimer;
 import dev.ftb.app.util.FileUtils;
 import dev.ftb.app.util.GsonUtils;
+import dev.ftb.app.util.MiscUtils;
 import net.covers1624.quack.gson.HashCodeAdapter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,7 +22,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Instances {
 
@@ -35,6 +39,15 @@ public class Instances {
     private static LinkedList<InstanceCategory> categories = new LinkedList<>();
     
     private static final TypeToken<LinkedList<InstanceCategory>> CATEGORIES_TYPE = new TypeToken<>() {};
+
+    private static final Duration SLOW_INSTANCE_LOAD = Duration.ofSeconds(2);
+
+    /// Single low priority thread for instance processes like computing hashes on the fly.
+    private static final ExecutorService MAINTENANCE_EXECUTOR = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
+        .setNameFormat("Instance Maintenance")
+        .setDaemon(true)
+        .setPriority(Thread.MIN_PRIORITY)
+        .build());
 
     @Nullable
     public static Instance getInstance(UUID uuid) {
@@ -53,8 +66,31 @@ public class Instances {
         return categories;
     }
 
+    /// Queue instances for murmur hashing fixes. 
+    public static void scheduleMurmurFixing() {
+        List<UUID> pending = allInstances().stream()
+            .filter(e -> e.getModifications() != null && e.getModifications().requiresMurmurFix())
+            .map(Instance::getUuid)
+            .toList();
+        if (pending.isEmpty()) return;
+
+        LOGGER.info("Queueing mod hash backfill for {} instance(s).", pending.size());
+        MAINTENANCE_EXECUTOR.execute(() -> {
+            for (UUID uuid : pending) {
+                Instance instance = getInstance(uuid);
+                if (instance == null) continue;
+                try {
+                    instance.ensureMurmurHashes();
+                } catch (Throwable t) {
+                    // Flag stays set, so this is retried on demand or on next startup.
+                    LOGGER.warn("Failed to backfill mod hashes for instance {}.", instance.getName(), t);
+                }
+            }
+        });
+    }
+
     public static void refreshInstances() {
-        ElapsedTimer totalTimer = new ElapsedTimer();
+        long start = System.nanoTime();
         Path instancesDir = Settings.getInstancesDir();
 
         LOGGER.info("Reloading instances..");
@@ -63,13 +99,24 @@ public class Instances {
         if (!Files.exists(instancesDir)) {
             LOGGER.info("Instances directory missing, skipping..");
         } else {
-            ElapsedTimer timer = new ElapsedTimer();
-            List<Instance> loadedInstances = FileUtils.listDir(instancesDir)
-                    .parallelStream()
+            List<Path> instancePaths = FileUtils.listDir(instancesDir).stream()
                     .filter(e -> Files.isDirectory(e) && !e.getFileName().toString().startsWith("."))
-                    .map(Instances::loadInstance)
+                    .toList();
+
+            // Load in parallel, but time each instance so a slow one is named in the logs.
+            List<Instance> loadedInstances = instancePaths.parallelStream()
+                    .map(instancePath -> {
+                        var timed = MiscUtils.time(() -> loadInstance(instancePath));
+                        if (timed.elapsed().compareTo(SLOW_INSTANCE_LOAD) > 0) {
+                            LOGGER.warn("Slow instance load: {} took {}", instancePath.getFileName(), timed.asString());
+                        } else {
+                            LOGGER.debug("Loaded instance {} in {}", instancePath.getFileName(), timed.asString());
+                        }
+                        return timed.result(); // null for skipped/broken instances, already logged by loadInstance
+                    })
                     .filter(Objects::nonNull)
                     .toList();
+
             instances = new HashMap<>();
             for (Instance instance : loadedInstances) {
                 // TODO, there is probably a better solution to this.
@@ -77,13 +124,15 @@ public class Instances {
                     LOGGER.warn("Found duplicate instance {} with id {}. Ignoring.", instance.getDir(), instance.getUuid());
                     continue;
                 }
+                
                 instances.put(instance.getUuid(), instance);
             }
-            LOGGER.info("Loaded {} out of {} instances in {}.", instances.size(), loadedInstances.size(), timer.elapsedStr());
+            LOGGER.info("Loaded {} out of {} instances in {}.", instances.size(), loadedInstances.size(), MiscUtils.formatDuration(Duration.ofNanos(System.nanoTime() - start)));
         }
 
+        LOGGER.info("Loading categories");
         loadCategories();
-        LOGGER.info("Finished instance reload in {}", totalTimer.elapsedStr());
+        LOGGER.info("Finished instance reload in {}", MiscUtils.formatDuration(Duration.ofNanos(System.nanoTime() - start)));
     }
 
     private static Instance loadInstance(Path path) {

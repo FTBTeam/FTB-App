@@ -43,6 +43,6 @@ const styles = computed(() => {
 <style lang="scss" scoped>
 .message {
   padding: 1rem;
-  border-radius: .5rem;
+  border-radius: var(--border-radius);
 }
 </style>

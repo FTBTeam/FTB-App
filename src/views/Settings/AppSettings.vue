@@ -395,8 +395,8 @@ async function purge(type: PurgeTarget) {
 
 <style scoped lang="scss">
 .app-info-section {
-  background-color: var(--color-background);
+  background-color: var(--color-navbar);
   padding: 1rem;
-  border-radius: 5px;
+  border-radius: var(--border-radius);
 }
 </style>

@@ -161,7 +161,7 @@ onMounted(async () => {
         padding: calc(1rem - 2px);
         margin-bottom: 1.2rem;
         background-color: #393939;
-        border-radius: 5px;
+        border-radius: var(--border-radius);
         display: grid;
         grid-template-columns: auto 1fr;
         align-items: center;
@@ -210,7 +210,7 @@ onMounted(async () => {
   background-size: 150%;
   background: black url('../assets/backgrounds/discord-callout-bg.svg') no-repeat center bottom -80px;
   box-shadow: 0 5px 25px 5px rgba(black, 0.3);
-  border-radius: 5px;
+  border-radius: var(--border-radius);
   margin-bottom: 2rem;
   text-align: center;
 
@@ -224,7 +224,7 @@ onMounted(async () => {
     padding: 0.7rem 1.5rem;
     margin-top: 1.5rem;
     gap: 1rem;
-    border-radius: 5px;
+    border-radius: var(--border-radius);
     cursor: pointer;
     transition: 0.15s ease-in-out background-color, 0.15s ease-in-out box-shadow, 0.15s ease-in-out transform;
     font-weight: bold;

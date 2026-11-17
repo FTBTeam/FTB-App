@@ -187,11 +187,11 @@ const hasAvailableLoaders = computed(() => Object.keys(availableLoaders.value).l
     }
 
     &:first-child {
-      border-radius: 8px 0 0 8px;
+      border-radius: var(--border-radius) 0 0 var(--border-radius);
     }
 
     &:last-child {
-      border-radius: 0 8px 8px 0;
+      border-radius: 0 var(--border-radius) var(--border-radius) 0;
     }
 
     &:not(:last-child) {

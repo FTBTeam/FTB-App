@@ -122,7 +122,7 @@ const configData = appPlatform.config;
     .item {
       padding: 0.5rem;
       margin-bottom: 0.5rem;
-      border-radius: 5px;
+      border-radius: var(--border-radius);
       display: flex;
       align-items: center;
       cursor: pointer;

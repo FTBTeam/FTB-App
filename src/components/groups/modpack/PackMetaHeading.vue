@@ -172,7 +172,7 @@ const curseforgeWebsite = computed(() => apiPack?.links?.find(e => e.type === 'w
 
   .beta-tag {
     padding: 0.2rem 0.5rem;
-    border-radius: 4px;
+    border-radius: var(--border-radius-inner);
     background-color: rgba(234, 32, 32, 0.89);
     font-size: 0.75rem;
     font-weight: bold;

@@ -195,7 +195,7 @@ async function searchPacks() {
   .switcher {
     margin-right: 1rem;
     display: flex;
-    border-radius: 5px;
+    border-radius: var(--border-radius);
     overflow: hidden;
     border: 1px solid rgba(white, .3);
 

@@ -98,7 +98,7 @@ async function onItemClicked(givenDepth: number, option: MenuItem<any>) {
 
   cursor: pointer;
   padding: .4rem 1.2rem .4rem .6rem;
-  border-radius: 3px;
+  border-radius: var(--border-radius-inner);
   transition: background-color .25s ease-in-out, color .25s ease-in-out;
   font-weight: 500;
 
@@ -176,7 +176,7 @@ async function onItemClicked(givenDepth: number, option: MenuItem<any>) {
     top: -.44rem;
     background-color: #0a0a0a;
     color: rgba(white, .8);
-    border-radius: 3px;
+    border-radius: var(--border-radius);
     box-shadow: 0 3px 20px rgb(0 0 0 / 30%);
     min-width: 140px;
     opacity: 0;

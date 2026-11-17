@@ -21,6 +21,7 @@ const loading = ref(false);
 const open = ref(false);
 const awaitingConfirm = ref(false);
 const specialOpen = ref(false);
+const closeTimeoutRef = ref<ReturnType<typeof setTimeout> | null>(null);
 
 const sidebarRef = useTemplateRef<HTMLDivElement>("sidebarRef");
 
@@ -112,6 +113,10 @@ function openMenu(event: MouseEvent) {
     closeMenu()
     return;
   }
+
+  if (closeTimeoutRef.value) {
+    clearTimeout(closeTimeoutRef.value);
+  }
   
   open.value = true;
   if (event.shiftKey) {
@@ -121,7 +126,12 @@ function openMenu(event: MouseEvent) {
 
 function closeMenu() {
   open.value = false;
-  specialOpen.value = false;
+  if (closeTimeoutRef.value) {
+    clearTimeout(closeTimeoutRef.value);
+  }
+  closeTimeoutRef.value = setTimeout(() => {
+    specialOpen.value = false;
+  }, 200);
 }
 </script>
 
@@ -141,7 +151,7 @@ function closeMenu() {
       </div>
 
       <div class="profile-switch" :class="{open}" v-show="!disabled">
-        <section class="mb-8">
+        <section>
           <p class="font-bold mb-4">Minecraft Accounts</p>
           
           <div class="accounts" v-if="accountsStore.mcProfiles && accountsStore.mcProfiles.length">
@@ -158,7 +168,7 @@ function closeMenu() {
               :active="accountsStore.mcActiveProfile?.uuid === item.uuid" />
           </div>
           
-          <UiButton size="small" type="primary" :icon="faPlus" @click="() => openSignIn()">Add Minecraft Account</UiButton>
+          <UiButton class="mt-4" size="small" type="primary" :icon="faPlus" @click="() => openSignIn()">Add Minecraft Account</UiButton>
         </section>
 
         <section v-if="specialOpen">
@@ -206,7 +216,7 @@ function closeMenu() {
     align-items: center;
     width: 40px;
     height: 40px;
-    border-radius: 10px;
+    border-radius: var(--border-radius);
     background-color: #161313;
     border: 2px solid rgba(white, 0.3);
 
@@ -240,14 +250,14 @@ function closeMenu() {
   .profile-switch {
     position: absolute;
     left: 100%;
-    top: 0;
+    bottom: 1rem;
     width: 360px;
-    height: calc(100% - 1px);
+    max-height: calc(100% - 1px);
     z-index: 1000;
     opacity: 0;
     background-color: #363636;
-    border-left: 1px solid rgba(white, .1);
-    border-right: 1px solid rgba(white, .1);
+    border: 1px solid rgba(white, .1);
+    border-radius: var(--border-radius);
     padding: 1rem;
     
     transition: transform 0.2s ease-in-out, opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
@@ -262,10 +272,12 @@ function closeMenu() {
 
     section {
       position: relative;
+      &:not(:last-child) {
+        margin-bottom: 1rem;
+      }
     }
     
     .accounts {
-      margin-bottom: 1rem;
       position: relative;
       z-index: 1;
       display: flex;

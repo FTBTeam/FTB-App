@@ -85,7 +85,7 @@ const onlyQueue = computed(() => {
     align-items: center;
     justify-content: center;
     padding: .6rem .9rem;
-    border-radius: 6px;
+    border-radius: var(--border-radius);
     width: auto !important;
     font-size: 18px;
     
@@ -105,7 +105,7 @@ const onlyQueue = computed(() => {
     overflow-y: auto;
     background-color: var(--color-background);
     padding: 1rem;
-    border-radius: 5px;
+    border-radius: var(--border-radius);
     box-shadow: 0 5px 0.5rem rgb(0 0 0 / 20%);
     border: 1px solid #1a1a1a;
   }

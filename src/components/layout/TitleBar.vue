@@ -183,7 +183,7 @@ const isUnix = computed(async () => await appPlatform.utils.getOsType() !== "win
   font-size: 10px;
   background-color: rgba(white, .2);
   color: white;
-  border-radius: 4px;
+  border-radius: var(--border-radius-inner);
   font-weight: normal;
   padding: .1rem .3rem;
   white-space: nowrap;

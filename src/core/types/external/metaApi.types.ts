@@ -32,3 +32,12 @@ export interface BlogPost {
   feature_image_alt?: any;
   feature_image_caption?: any;
 }
+
+export interface Pagination {
+  page: number;
+  limit: number;
+  pages: number;
+  total: number;
+  next: number;
+  previous: number;
+}
