@@ -164,17 +164,14 @@ jobs:
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           APPLE_API_KEY: "./apple_api_key.p8"
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          CSC_LINK: ${{ secrets.CSC_LINK }}
           OW_CLI_API_KEY: ${{ secrets.OW_CLI_API_KEY }}
           OW_CLI_EMAIL: ${{ secrets.OW_CLI_EMAIL }}
           OW_BUILD_KEY: ${{ secrets.OW_BUILD_KEY }}
         run: |
           node ./tooling/release/patchBuilderYaml.js
           npm run build -- --publish always -m --x64 --arm64
-
-      - name: Remove signing keychain
-        if: ${{ always() && matrix.os == 'macos-latest' }}
-        run: |
-          [ -n "$CSC_KEYCHAIN" ] && security delete-keychain "$CSC_KEYCHAIN" || true
 
       # Linux build
       - name: Build frontend (Linux)
