@@ -16,7 +16,10 @@ module.exports = async function (context) {
 
   hasRepackedJar = true;
   const packer = context.packager;
-  const keychainFile = (await packer.codeSigningInfo.value).keychainFile
+  const keychainFile = (await packer.codeSigningInfo.value)?.keychainFile
+  if (!keychainFile) {
+    throw new Error("No signing keychain available. Is CSC_LINK set for the macOS build step?");
+  }
 
   const signingIdentity = '5372643C69B1D499BDF6EA772082E9CE99E85029';
   const entitlementsPath = './resources/entitlements.mac.plist';
