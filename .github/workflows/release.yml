@@ -124,32 +124,6 @@ jobs:
           echo "$APPLE_API_KEY" > apple_api_key.p8
           find apple_api_key.p8 -size +0c || exit 1
 
-      # Temp fix for signing keychain whilst we wait for https://github.com/electron-userland/electron-builder/issues/10066
-      # to be merged into overwolfs electron builder fork.
-      - name: Setup signing keychain
-        if: ${{ matrix.os == 'macos-latest' }}
-        env:
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-          CSC_LINK: ${{ secrets.CSC_LINK }}
-        run: |
-          KEYCHAIN_PATH="$RUNNER_TEMP/ftb-signing.keychain-db"
-          KEYCHAIN_PASSWORD="$(openssl rand -hex 24)"
-          CERT_PATH="$RUNNER_TEMP/ftb-signing.p12"
-
-          echo -n "$CSC_LINK" | base64 --decode > "$CERT_PATH"
-          find "$CERT_PATH" -size +0c || exit 1
-
-          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
-          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
-          security import "$CERT_PATH" -k "$KEYCHAIN_PATH" -P "$CSC_KEY_PASSWORD" -f pkcs12 -T /usr/bin/codesign -T /usr/bin/security
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
-          security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | tr -d '"')
-          rm -f "$CERT_PATH"
-
-          security find-identity -v -p codesigning "$KEYCHAIN_PATH"
-          echo "CSC_KEYCHAIN=$KEYCHAIN_PATH" >> "$GITHUB_ENV"
-
       # Windows app signing
       - name: Download AzureSignTool from nuget
         if: ${{ matrix.os == 'windows-latest' }}
