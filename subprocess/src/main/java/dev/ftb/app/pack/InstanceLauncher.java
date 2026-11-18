@@ -364,6 +364,7 @@ public class InstanceLauncher {
                 javaExecutable = instance.props.jrePath;
             }
             LOGGER.info("Java executable: {}", javaExecutable);
+            boolean applyCveMitigation = requiresCveMitigation(javaExecutable);
             progressTracker.updateDesc("Java Runtime Validated");
             progressTracker.finishStep();
 
@@ -510,6 +511,10 @@ public class InstanceLauncher {
             command.add(sub.replace("-Xmx${memory}M"));
             command.addAll(jvmArgs);
             command.addAll(context.extraJVMArgs);
+            // Forced after user/extra args so they can't be overridden (last flag wins).
+            if (applyCveMitigation) {
+                command.addAll(CVE_2026_114938_JVM_ARGS);
+            }
             command.add("-Duser.language=en");
             command.add("-Duser.country=US");
             // This is literally only required for forge 1.20.3. No clue why, but it does fix the issue :tada:
@@ -721,6 +726,38 @@ public class InstanceLauncher {
                 .map(e -> e.mainClass)
                 .reduce((a, b) -> b != null ? b : a) // Last on the list, gets priority.
                 .orElseThrow(() -> new IllegalStateException("Version manifest chain does not have mainClass attribute??? uwot?"));
+    }
+
+    /**
+     * Mitigation for CVE-2026-114938 until all JDK vendors have shipped a patch. Disables the Base64 intrinsics.
+     * TODO: remove once patched runtimes are in place.
+     */
+    private static final List<String> CVE_2026_114938_JVM_ARGS = List.of(
+            "-XX:+UnlockDiagnosticVMOptions",
+            "-XX:-UseBASE64Intrinsics"
+    );
+
+    /**
+     * Only applies to Java 17+ if the version can't be determined we fall back to the
+     * manifest's required version.
+     */
+    private boolean requiresCveMitigation(Path javaExecutable) {
+        JavaVersion version = null;
+        try {
+            JavaInstall install = JavaInstall.parse(javaExecutable);
+            if (install != null && install.langVersion != JavaVersion.UNKNOWN) {
+                version = install.langVersion;
+            }
+        } catch (Throwable ex) {
+            LOGGER.warn("Failed to determine Java version of {}, falling back to manifest version", javaExecutable, ex);
+        }
+        if (version == null) {
+            version = getJavaVersion();
+        }
+
+        boolean apply = version != JavaVersion.UNKNOWN && version.ordinal() >= JavaVersion.JAVA_17.ordinal();
+        LOGGER.info("Java version {} - CVE-2026-114938 mitigation args {}", version, apply ? "applied" : "not applied");
+        return apply;
     }
 
     private JavaVersion getJavaVersion() {
