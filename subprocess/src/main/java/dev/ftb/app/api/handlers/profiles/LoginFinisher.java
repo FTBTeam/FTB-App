@@ -9,6 +9,7 @@ import dev.ftb.app.services.accounts.minecraft.MicrosoftOAuthProcess;
 import dev.ftb.app.services.accounts.minecraft.MicrosoftProfile;
 import dev.ftb.app.services.storage.VaultException;
 import dev.ftb.app.structs.accounts.AccountProvider;
+import dev.ftb.app.structs.accounts.CodedError;
 import dev.ftb.app.structs.accounts.FtbFinalToken;
 import dev.ftb.app.structs.accounts.MicrosoftFinalToken;
 import dev.ftb.app.util.MiscUtils;
@@ -123,7 +124,7 @@ final class LoginFinisher {
         if (result.isErr()) {
             var error = result.unwrapErr();
             LOGGER.error("Failed to sign in to Minecraft: {} ({})", error.message(), error.code());
-            this.failed(error.message());
+            this.failed(error.message(), error.code());
             return;
         }
 
@@ -147,7 +148,7 @@ final class LoginFinisher {
         );
 
         if (profile == null) {
-            this.failed("Couldn't securely save your Minecraft account. Please try again.");
+            this.failed("Couldn't securely save your Minecraft account. Please try again.", CodedError.TOKEN_STORAGE_FAILED.code);
             return;
         }
 
@@ -168,7 +169,11 @@ final class LoginFinisher {
     }
 
     private void failed(String message) {
-        this.services.rcpApi().sendMessage(LoginFlowEvent.failed(this.provider, this.flowId, message));
+        this.failed(message, null);
+    }
+
+    private void failed(String message, @Nullable String errorCode) {
+        this.services.rcpApi().sendMessage(LoginFlowEvent.failed(this.provider, this.flowId, message, errorCode));
     }
 
     /// Parse and return the raw JTW claims

@@ -166,7 +166,10 @@ public class MicrosoftRequests {
      */
     private static CodedError decipherXErr(String xerr) {
         return switch (xerr) {
+            case "2148916227" -> CodedError.XBOX_BANNED;
+            case "2148916229" -> CodedError.XBOX_CHILD_RESTRICTED;
             case "2148916233" -> CodedError.XBOX_ACCOUNT_MISSING;
+            case "2148916234" -> CodedError.XBOX_TERMS_NOT_ACCEPTED;
             case "2148916235" -> CodedError.XBOX_INVALID_REGION;
             case "2148916236", "2148916237" -> CodedError.XBOX_ADULT_VERIFICATION;
             case "2148916238" -> CodedError.XBOX_UNDER_18;

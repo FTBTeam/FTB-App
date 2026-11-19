@@ -1,8 +1,7 @@
 import {
   AccountIsValidHandlerData,
   AccountIsValidHandlerReply,
-  AuthenticateMsProfileHandlerData,
-  AuthenticateMsProfileHandlerReply, OAuthFlowStartHandlerData, OAuthFlowStartHandlerReply, OAuthFlowCancelHandlerData, OAuthFlowCancelHandlerReply,
+  OAuthFlowStartHandlerData, OAuthFlowStartHandlerReply, OAuthFlowCancelHandlerData, OAuthFlowCancelHandlerReply,
   BaseData,
   CancelInstallInstanceData,
   CancelInstallInstanceDataReply,
@@ -113,7 +112,6 @@ const endpoints = {
   "profiles.get":                 io<BaseData, GetProfilesHandlerReply>(),
   "profiles.remove":              io<RemoveProfileHandlerData, RemoveProfileHandlerReply>(),
   "profiles.setActiveProfile":    io<SetActiveProfileHandlerData, SetActiveProfileHandlerReply>(),
-  "profiles.ms.authenticate":     io<AuthenticateMsProfileHandlerData, AuthenticateMsProfileHandlerReply>(),
   "profiles.refresh":             io<RefreshAuthenticationProfileHandlerData, RefreshAuthenticationProfileHandlerReply>(),
   "profiles.is-valid":            io<AccountIsValidHandlerData, AccountIsValidHandlerReply>(),
   "storage.put":                  io<StoragePutHandlerData, StoragePutHandlerReply>(),

@@ -9,6 +9,7 @@ import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 import {useAppStore} from "@/store/appStore.ts";
 import {useAccountsStore} from "@/store/accountsStore.ts";
 import {alertController} from "@/core/controllers/alertController.ts";
+import MinecraftAuthErrors from "@/components/groups/auth/MinecraftAuthErrors.vue";
 
 type AuthType = 'device' | 'oauth'
 type Phase = 'choose' | 'working' | 'failed'
@@ -41,6 +42,7 @@ const selectedType = ref<AuthType>('oauth');
 const phase = ref<Phase>('choose');
 const step = ref<LoginStep | null>(null);
 const failure = ref<string | null>(null);
+const failureCode = ref<string | null>(null);
 
 // The flow the user is looking at, events for any other flow are ignored
 const flowId = ref<string | null>(null);
@@ -83,6 +85,7 @@ function onMessage(data: any) {
     case 'FAILED':
       phase.value = 'failed';
       failure.value = event.message ?? "Something went wrong signing in. Please try again.";
+      failureCode.value = event.errorCode ?? null;
       break;
   }
 }
@@ -109,6 +112,7 @@ function reset() {
   phase.value = 'choose';
   step.value = null;
   failure.value = null;
+  failureCode.value = null;
   flowId.value = null;
 }
 
@@ -144,7 +148,8 @@ function close() {
     </div>
 
     <div v-if="phase === 'failed'">
-      <Message type="danger" title="Couldn't sign you in" class="mb-4">
+      <MinecraftAuthErrors v-if="failureCode" :code="failureCode" :error="failure ?? ''" class="mb-4" />
+      <Message v-else type="danger" title="Couldn't sign you in" class="mb-4">
         {{ failure }}
       </Message>
       <UiButton type="primary" @click="tryAgain">Try again</UiButton>

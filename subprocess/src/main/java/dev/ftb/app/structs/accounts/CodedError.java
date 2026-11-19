@@ -22,6 +22,9 @@ public enum CodedError {
     XBOX_INVALID_REGION("auth:51", "Your account resides in a region that does not support Xbox Live..."),
     XBOX_ADULT_VERIFICATION("auth:52", "The account needs adult verification on Xbox page."),
     XBOX_UNDER_18("auth:53", "This is an under 18 account. You cannot proceed unless the account is added to a Family by an adult"),
+    XBOX_BANNED("auth:54", "This account has been banned from Xbox Live."),
+    XBOX_CHILD_RESTRICTED("auth:55", "This is a child account and its parental controls don't allow online play."),
+    XBOX_TERMS_NOT_ACCEPTED("auth:56", "This account hasn't accepted the Xbox Live terms of use."),
     XBOX_UNKNOWN_FAILURE_CODE("auth:60", "Unknown failure code from Xbox Live"),
     
     MISSING_CLAIMS("auth:70", "Missing claims in the response"),

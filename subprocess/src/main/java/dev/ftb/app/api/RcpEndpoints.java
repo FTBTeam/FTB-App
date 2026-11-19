@@ -51,11 +51,7 @@ public class RcpEndpoints {
 
         register("accounts.oauth.start", OAuthFlowStartHandler.Data.class, new OAuthFlowStartHandler());
         register("accounts.oauth.cancel", OAuthFlowCancelHandler.Data.class, new OAuthFlowCancelHandler());
-        register("accounts.device.flow", DeviceAuthFlowHandler.Data.class, new DeviceAuthFlowHandler());
-        
-//        register("profiles.flow", MinecraftAuthFlowHandler.Data.class, new MinecraftAuthFlowHandler());
-        // TOOD: Roll into the above. 
-        register("profiles.ms.authenticate", AuthenticateMsProfileHandler.Data.class, new AuthenticateMsProfileHandler());
+        register("accounts.device.flow", DeviceAuthFlowHandler.Data.class, new DeviceAuthFlowHandler());. 
         
         register("profiles.get", BaseData.class, new GetProfilesHandler());
         register("profiles.remove", RemoveProfileHandler.Data.class, new RemoveProfileHandler());

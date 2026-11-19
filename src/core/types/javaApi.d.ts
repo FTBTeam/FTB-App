@@ -17,6 +17,7 @@ export interface LoginFlowEvent extends BaseData {
     step?: LoginStep;
     message?: string;
     accountName?: string;
+    errorCode?: string;
 }
 
 export interface CancelInstallInstanceData extends BaseData {
@@ -377,18 +378,6 @@ export interface AccountIsValidHandlerData extends BaseData {
 export interface AccountIsValidHandlerReply extends AccountIsValidHandlerData {
     checkResult: ValidCheckResult;
     response?: string;
-}
-
-export interface AuthenticateMsProfileHandlerData extends BaseData {
-    liveAccessToken: string;
-    liveRefreshToken: string;
-    liveExpires: number;
-}
-
-export interface AuthenticateMsProfileHandlerReply extends PrivateBaseData {
-    success: boolean;
-    code?: string;
-    message?: string;
 }
 
 export interface DeviceAuthFlowHandlerData extends BaseData {

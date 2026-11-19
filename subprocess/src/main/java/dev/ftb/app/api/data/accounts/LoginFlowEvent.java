@@ -16,8 +16,10 @@ public class LoginFlowEvent extends BaseData {
     public final @Nullable LoginStep step;
     public final @Nullable String message;
     public final @Nullable String accountName;
+    /// Set for Minecraft failures, code from [dev.ftb.app.structs.accounts.CodedError] the frontend can explain
+    public final @Nullable String errorCode;
 
-    private LoginFlowEvent(AccountProvider provider, String flowId, LoginStatus status, @Nullable LoginStep step, @Nullable String message, @Nullable String accountName) {
+    private LoginFlowEvent(AccountProvider provider, String flowId, LoginStatus status, @Nullable LoginStep step, @Nullable String message, @Nullable String accountName, @Nullable String errorCode) {
         this.type = TYPE;
         this.provider = provider;
         this.flowId = flowId;
@@ -25,18 +27,19 @@ public class LoginFlowEvent extends BaseData {
         this.step = step;
         this.message = message;
         this.accountName = accountName;
+        this.errorCode = errorCode;
     }
 
     public static LoginFlowEvent working(AccountProvider provider, String flowId, LoginStep step) {
-        return new LoginFlowEvent(provider, flowId, LoginStatus.WORKING, step, null, null);
+        return new LoginFlowEvent(provider, flowId, LoginStatus.WORKING, step, null, null, null);
     }
 
     public static LoginFlowEvent complete(AccountProvider provider, String flowId, String accountName) {
-        return new LoginFlowEvent(provider, flowId, LoginStatus.COMPLETE, null, null, accountName);
+        return new LoginFlowEvent(provider, flowId, LoginStatus.COMPLETE, null, null, accountName, null);
     }
 
-    public static LoginFlowEvent failed(AccountProvider provider, String flowId, String message) {
-        return new LoginFlowEvent(provider, flowId, LoginStatus.FAILED, null, message, null);
+    public static LoginFlowEvent failed(AccountProvider provider, String flowId, String message, @Nullable String errorCode) {
+        return new LoginFlowEvent(provider, flowId, LoginStatus.FAILED, null, message, null, errorCode);
     }
 
     public enum LoginStatus {

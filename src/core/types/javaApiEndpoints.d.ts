@@ -32,7 +32,6 @@ export type ApiEndpoints = 	"moveInstances" |
 	"accounts.oauth.start" |
 	"accounts.oauth.cancel" |
 	"accounts.device.flow" |
-	"profiles.ms.authenticate" |
 	"profiles.get" |
 	"profiles.remove" |
 	"profiles.setActiveProfile" |

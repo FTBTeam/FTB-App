@@ -19,8 +19,6 @@ const accountStore = useAccountsStore();
     <ImagePreview/>
 
     <SigninModal :open="accountStore.activeSignInModal !== null" :account-type="accountStore.activeSignInModal ?? 'MICROSOFT'" @closed="() => accountStore.openSignIn(null)"/>
-<!--    <MicrosoftLoginModal :open="accountStore.signInOpen" @closed="() => accountStore.openSignIn(false)"/>-->
-<!--    <FtbLoginModal :open="accountStore.signInFtbOpen" @closed="() => accountStore.openSignInFtb(false)"/>-->
 
     <!-- Only checks for an update once during startup -->
     <changelog/>
