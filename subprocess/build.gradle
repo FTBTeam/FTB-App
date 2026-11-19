@@ -322,6 +322,10 @@ def standardTypescriptSettings = (GenerateTask task, File file) -> {
     task.customTypeMappings = [
         "java.nio.file.Path:string"
     ]
+    // Gson leaves null fields out of the JSON, so a @Nullable field is one that may be missing: `field?: T`
+    task.optionalAnnotations = [
+        "org.jspecify.annotations.Nullable"
+    ]
 }
 
 tasks.named("generateTypeScript", GenerateTask) {

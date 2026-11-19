@@ -1,10 +1,8 @@
 import {
   AccountIsValidHandlerData,
   AccountIsValidHandlerReply,
-  AppInitHandlerData,
-  AppInitHandlerReply,
   AuthenticateMsProfileHandlerData,
-  AuthenticateMsProfileHandlerReply, AuthFlowStartHandlerData, AuthFlowStartHandlerReply,
+  AuthenticateMsProfileHandlerReply, OAuthFlowStartHandlerData, OAuthFlowStartHandlerReply,
   BaseData,
   CancelInstallInstanceData,
   CancelInstallInstanceDataReply,
@@ -66,7 +64,7 @@ import {
   UploadLogsData,
   UploadLogsDataReply,
   WebRequestData,
-  WebRequestDataResponse
+  WebRequestDataResponse, DeviceAuthFlowHandlerData, DeviceAuthFlowHandlerReply
 } from '@/core/types/javaApi';
 import {Nullable} from '@/core/websockets/websocketsApi';
 import {ApiEndpoints} from '@/core/types/javaApiEndpoints';
@@ -88,7 +86,6 @@ function io<Input, Output>(): EndpointDefinition<Input, Output> {
 
 // We don't export as nothing needs this. It just helps us infer the type of the endpoints object.
 const endpoints = {
-  appInit:                        io<AppInitHandlerData, AppInitHandlerReply>(),
   pinInstance:                    io<PinInstanceHandlerData, PinInstanceHandlerReply>(),
   installedInstances:             io<InstalledInstancesData, InstalledInstancesDataReply>(),
   launchInstance:                 io<Nullable<LaunchInstanceData, "cancelLaunch">, LaunchInstanceDataReply>(),
@@ -129,7 +126,8 @@ const endpoints = {
   "accounts.get-oauth":           io<BaseData, GetFtbAccountHandlerReply>(),
   "accounts.sign-out":            io<BaseData, SignOutFTBAccountHandlerReply>(),
   'purge':                        io<PurgeHandlerData, PurgeHandlerReply>(),
-  "accounts.oauth.start":         io<AuthFlowStartHandlerData, AuthFlowStartHandlerReply>()
+  "accounts.oauth.start":         io<OAuthFlowStartHandlerData, OAuthFlowStartHandlerReply>(),
+  "accounts.device.flow":         io<DeviceAuthFlowHandlerData, DeviceAuthFlowHandlerReply>() 
 } satisfies Record<ApiEndpoints, EndpointDefinition<any, any>>;
 
 export type EmptyMessageResponse = {}

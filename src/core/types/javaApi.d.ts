@@ -26,14 +26,14 @@ export interface InstallInstanceData extends BaseData {
     version: number;
     _private: boolean;
     packType: number;
-    mcVersion: string;
-    importFrom: string;
-    name: string;
-    artPath: string;
-    categoryId: string;
+    mcVersion?: string;
+    importFrom?: string;
+    name?: string;
+    artPath?: string;
+    categoryId?: string;
     ourOwn: boolean;
     ram: number;
-    fullscreen: boolean;
+    fullscreen?: boolean;
     screenWidth: number;
     screenHeight: number;
 }
@@ -41,7 +41,7 @@ export interface InstallInstanceData extends BaseData {
 export interface InstallInstanceDataReply extends BaseData {
     status: string;
     message: string;
-    instanceData: InstanceJson;
+    instanceData?: InstanceJson;
 }
 
 export interface InstalledInstancesData extends BaseData {
@@ -61,7 +61,7 @@ export interface InstanceConfigureData extends BaseData {
 export interface InstanceConfigureDataReply extends BaseData {
     errorMessage: string;
     status: string;
-    instanceJson: SugaredInstanceJson;
+    instanceJson?: SugaredInstanceJson;
 }
 
 export interface InstanceInstallModData extends BaseData {
@@ -111,7 +111,7 @@ export interface RichModData extends InstanceModsData {
 
 export interface RichModDataBinding {
     file: ModInfo;
-    richData: CurseMetadata;
+    richData?: CurseMetadata;
 }
 
 export interface UpdateAvailable extends InstanceModsData {
@@ -140,7 +140,7 @@ export interface InstanceVersionInfoData extends BaseData {
 export interface InstanceVersionInfoDataReply extends BaseData {
     status: string;
     message: string;
-    versionManifest: ModpackVersionManifest;
+    versionManifest?: ModpackVersionManifest;
 }
 
 export interface KillInstanceData extends BaseData {
@@ -157,7 +157,7 @@ export interface LaunchInstanceData extends BaseData {
     extraArgs: string;
     cancelLaunch: boolean;
     offline: boolean;
-    offlineUsername: string;
+    offlineUsername?: string;
 }
 
 export interface Logs extends BaseData {
@@ -177,7 +177,7 @@ export interface Status extends BaseData {
     totalSteps: number;
     stepProgress: number;
     stepDesc: string;
-    stepProgressHuman: string;
+    stepProgressHuman?: string;
 }
 
 export interface Stopped extends BaseData {
@@ -260,7 +260,7 @@ export interface SettingsConfigureData extends BaseData {
 
 export interface SettingsConfigureDataReply extends BaseData {
     status: string;
-    settings: SettingsData;
+    settings?: SettingsData;
 }
 
 export interface SettingsInfoData extends BaseData {
@@ -285,7 +285,7 @@ export interface WebRequestData extends BaseData {
     url: string;
     method: string;
     headers: { [index: string]: string[] };
-    body: Body;
+    body?: Body;
 }
 
 export interface Body {
@@ -295,23 +295,23 @@ export interface Body {
 
 export interface WebRequestDataResponse extends BaseData {
     status: string;
-    statusMessage: string;
+    statusMessage?: string;
     statusCode: number;
-    statusLine: string;
+    statusLine?: string;
     headers: { [index: string]: string[] };
-    body: Body;
+    body?: Body;
 }
 
 export interface DuplicateInstanceHandlerReply extends DuplicateInstanceHandlerRequest {
     message: string;
     success: boolean;
-    instance: SugaredInstanceJson;
+    instance?: SugaredInstanceJson;
 }
 
 export interface DuplicateInstanceHandlerRequest extends BaseData {
     uuid: string;
     newName: string;
-    category: string;
+    category?: string;
 }
 
 export interface GetInstanceFoldersHandlerReply extends GetInstanceFoldersHandlerRequest {
@@ -326,20 +326,20 @@ export interface GetInstanceFoldersHandlerRequest extends BaseData {
 export interface SugaredInstanceJson extends InstanceJson {
     path: string;
     rootDirs: string[];
-    artworkFile: string;
+    artworkFile?: string;
 }
 
 export interface InstanceCategoryHandlerData extends BaseData {
     action: Action;
-    categoryId: string;
-    categoryName: string;
+    categoryId?: string;
+    categoryName?: string;
 }
 
 export interface InstanceCategoryHandlerReply extends BaseData {
     success: boolean;
     message: string;
-    category: InstanceCategory;
-    categories: InstanceCategory[];
+    category?: InstanceCategory;
+    categories?: InstanceCategory[];
 }
 
 export interface MoveInstancesHandlerData extends BaseData {
@@ -367,7 +367,7 @@ export interface AccountIsValidHandlerData extends BaseData {
 
 export interface AccountIsValidHandlerReply extends AccountIsValidHandlerData {
     checkResult: ValidCheckResult;
-    response: string;
+    response?: string;
 }
 
 export interface AuthenticateMsProfileHandlerData extends BaseData {
@@ -378,26 +378,32 @@ export interface AuthenticateMsProfileHandlerData extends BaseData {
 
 export interface AuthenticateMsProfileHandlerReply extends PrivateBaseData {
     success: boolean;
-    code: string;
-    message: string;
+    code?: string;
+    message?: string;
 }
 
 export interface DeviceAuthFlowHandlerData extends BaseData {
-    type: FlowStage;
+    flowStage: FlowStage;
     provider: AccountProvider;
+    deviceToken?: string;
 }
 
 export interface DeviceAuthFlowHandlerReply extends BaseData {
+    start?: DeviceAuthResponse;
+    reason?: string;
+    success: boolean;
+    slowDown: boolean;
+    isPending: boolean;
 }
 
 export interface GetFtbAccountHandlerReply extends PrivateBaseData {
     success: boolean;
-    authData: CompleteTokenData;
+    authData?: CompleteTokenData;
 }
 
 export interface GetProfilesHandlerReply extends PrivateBaseData {
     profiles: SharableData[];
-    activeProfile: SharableData;
+    activeProfile?: SharableData;
 }
 
 export interface OAuthFlowStartHandlerData extends BaseData {
@@ -405,9 +411,9 @@ export interface OAuthFlowStartHandlerData extends BaseData {
 }
 
 export interface OAuthFlowStartHandlerReply extends BaseData {
-    url: string;
+    url?: string;
     success: boolean;
-    reason: string;
+    reason?: string;
 }
 
 export interface RefreshAuthenticationProfileHandlerData extends BaseData {
@@ -449,7 +455,7 @@ export interface StoreFtbAccountHandlerData extends PrivateBaseData {
 
 export interface StoreFtbAccountHandlerReply extends StoreFtbAccountHandlerData {
     success: boolean;
-    completeToken: CompleteTokenData;
+    completeToken?: CompleteTokenData;
 }
 
 export interface PurgeHandlerData extends BaseData {
@@ -466,7 +472,7 @@ export interface StorageGetAllHandlerReply extends BaseData {
 }
 
 export interface StorageGetHandlerData extends BaseData {
-    key: string;
+    key?: string;
 }
 
 export interface StorageGetHandlerReply extends StorageGetHandlerData {
@@ -474,8 +480,8 @@ export interface StorageGetHandlerReply extends StorageGetHandlerData {
 }
 
 export interface StoragePutHandlerData extends BaseData {
-    key: string;
-    value: string;
+    key?: string;
+    value?: string;
 }
 
 export interface StoragePutHandlerReply extends StoragePutHandlerData {
@@ -512,9 +518,9 @@ export interface InstanceJson {
     memory: number;
     jvmArgs: string;
     shellArgs: string;
-    programArgs: string;
+    programArgs?: string;
     embeddedJre: boolean;
-    jrePath: string;
+    jrePath?: string;
     width: number;
     height: number;
     fullscreen: boolean;
@@ -527,7 +533,7 @@ export interface InstanceJson {
      * @deprecated
      */
     category: string;
-    categoryId: string;
+    categoryId?: string;
     releaseChannel: string;
     locked: boolean;
     pinned: boolean;
@@ -540,39 +546,39 @@ export interface InstanceJson {
     /**
      * @deprecated
      */
-    art: string;
+    art?: string;
     potentiallyBrokenDismissed: boolean;
 }
 
 export interface ModInfo {
     fileId: number;
     fileName: string;
-    version: string;
+    version?: string;
     enabled: boolean;
     size: number;
-    sha1: string;
+    sha1?: string;
     murmurHash: number;
-    curse: CurseMetadata;
+    curse?: CurseMetadata;
 }
 
 export interface CurseMetadata {
     type: Type;
     curseProject: number;
     curseFile: number;
-    name: string;
-    slug: string;
-    synopsis: string;
-    icon: string;
+    name?: string;
+    slug?: string;
+    synopsis?: string;
+    icon?: string;
 }
 
 export interface ModpackVersionManifest {
-    status: string;
-    message: string;
+    status?: string;
+    message?: string;
     id: number;
     parent: number;
-    name: string;
-    specs: Specs;
-    type: string;
+    name?: string;
+    specs?: Specs;
+    type?: string;
     targets: Target[];
     files: ModpackFile[];
     installs: number;
@@ -587,6 +593,15 @@ export interface Stage {
 export interface InstanceCategory {
     uuid: string;
     name: string;
+}
+
+export interface DeviceAuthResponse {
+    device_code: string;
+    user_code: string;
+    verification_uri: string;
+    verification_uri_complete?: string;
+    expires_in: number;
+    interval: number;
 }
 
 export interface CompleteTokenData {
@@ -604,6 +619,7 @@ export interface SharableData {
     uuid: string;
     minecraftName: string;
     skinUrl: string;
+    notLoggedIn: boolean;
 }
 
 export interface GeneralSettings {
@@ -655,29 +671,29 @@ export interface Specs {
 
 export interface Target {
     id: number;
-    version: string;
-    name: string;
-    type: string;
+    version?: string;
+    name?: string;
+    type?: string;
     updated: number;
 }
 
 export interface ModpackFile {
     id: number;
-    version: string;
-    path: string;
-    name: string;
-    url: string;
+    version?: string;
+    path?: string;
+    name?: string;
+    url?: string;
     mirror: string[];
-    sha1: any;
+    sha1?: any;
     size: number;
     clientonly: boolean;
     serveronly: boolean;
     optional: boolean;
-    type: string;
-    hashes: FileHashes;
-    tags: any;
+    type?: string;
+    hashes?: FileHashes;
+    tags?: any;
     updated: number;
-    curseforge: CurseForgeIds;
+    curseforge?: CurseForgeIds;
 }
 
 export interface FileHashes {
@@ -697,7 +713,7 @@ export type Action = "GET" | "CREATE" | "DELETE" | "RENAME";
 
 export type ValidCheckResult = "VALID" | "EXPIRED" | "NOT_LOGGED_IN" | "TOTAL_FAILURE";
 
-export type FlowStage = "GET_CODE" | "CHECK_FOR_TOKEN" | "AUTHORIZE";
+export type FlowStage = "GET_CODE" | "CHECK_FOR_TOKEN" | "CANCEL";
 
 export type AccountProvider = "FTB" | "MICROSOFT";
 

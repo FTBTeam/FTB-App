@@ -5,11 +5,12 @@ import {createLogger} from '@/core/logger';
 import {ref, useTemplateRef} from 'vue';
 import { useAccountsStore } from '@/store/accountsStore.ts';
 import { AuthProfile } from '@/core/types/appTypes.ts';
-import {faExternalLink, faPlus} from '@fortawesome/free-solid-svg-icons';
+import {faCog, faExternalLink, faPlus} from '@fortawesome/free-solid-svg-icons';
 import {Popover, UiButton} from "@/components/ui";
 import {useAttachDomEvent} from "@/composables";
 import SidebarProfileItem from "@/components/layout/sidebar/SidebarProfileItem.vue";
 import {dialogsController} from "@/core/controllers/dialogsController.ts";
+import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 
 const accountsStore = useAccountsStore();
 
@@ -83,16 +84,6 @@ async function setActiveProfile(profile: AuthProfile) {
   loading.value = false;
 }
 
-function openSignIn() {
-  accountsStore.openSignIn(true);
-  closeMenu()
-}
-
-function openSignInFtb() {
-  accountsStore.openSignInFtb(true);
-  closeMenu()
-}
-
 async function ftbSignOut() {
   if (await confirm()) {
     await accountsStore.signOutFtb();
@@ -123,12 +114,12 @@ function closeMenu() {
 <template>
   <div class="profile-area" :class="{ disabled }" ref="sidebarRef">
     <div class="profile">
-      <div class="avatar cursor-pointer" @click="openMenu()">
+      <div class="avatar cursor-pointer border-4 rounded transition-all duration-200" :class="{'border-green-600': open, 'border-transparent': !open}" @click="openMenu()">
         <Popover :text="!open ? 'Sign in or manage your accounts' : undefined">
             <img
               :src="getMinecraftHead(accountsStore.mcActiveProfile?.uuid ?? null)"
               alt="Profile"
-              class="rounded"
+              class="rounded-xs"
               width="35"
               height="35"
             />
@@ -136,31 +127,53 @@ function closeMenu() {
       </div>
 
       <div class="profile-switch" :class="{open}" v-show="!disabled">
-        <section>
-          <p class="font-bold mb-4">Minecraft Accounts</p>
-          
+        <section class="p-4 border-b border-white/10" v-if="accountsStore.mcActiveProfile">
+          <p class="font-bold text-white/80 text-lg mb-4">Playing as</p>
+
+          <SidebarProfileItem
+            :is-playing-as-card="true"
+            :profile="{
+                  name: accountsStore.mcActiveProfile.username,
+                  avatarUrl: getMinecraftHead(accountsStore.mcActiveProfile.uuid)
+                }"
+            :on-delete="() => removeProfile(accountsStore.mcActiveProfile!)"
+            :on-select="() => {}"
+            subtext="//todo: Add auth status"
+            :active="true" />
+        </section>
+        
+        <section class="p-2">
           <div class="accounts" v-if="accountsStore.mcProfiles && accountsStore.mcProfiles.length">
-            <SidebarProfileItem
-              v-for="(item, key) in accountsStore.mcProfiles"
-              :key="key"
-              :profile="{
-                name: item.username,
-                avatarUrl: getMinecraftHead(item.uuid)
-              }" 
-              :on-delete="() => removeProfile(item)" 
-              :on-select="() => setActiveProfile(item)"
-              :subtext="accountsStore.mcActiveProfile?.uuid === item.uuid ? 'Active Profile' : undefined"
-              :active="accountsStore.mcActiveProfile?.uuid === item.uuid" />
+            <template v-for="(item, key) in accountsStore.mcProfiles">
+              <SidebarProfileItem
+                v-if="item.uuid !== accountsStore.mcActiveProfile?.uuid"
+                :key="key"
+                :profile="{
+                  name: item.username,
+                  avatarUrl: getMinecraftHead(item.uuid)
+                }" 
+                :on-delete="() => removeProfile(item)" 
+                :on-select="() => setActiveProfile(item)"
+                :active="accountsStore.mcActiveProfile?.uuid === item.uuid" />
+            </template>
           </div>
           
-          <UiButton class="mt-4" size="small" type="primary" :icon="faPlus" @click="() => openSignIn()">Add Minecraft Account</UiButton>
+          <div class="font-bold text-white/80 text-lg px-2" v-if="accountsStore.mcActiveProfile">Switch to</div>
+          
+          <div class="flex gap-3 items-center mt-2 hover:bg-white/10 p-2 rounded cursor-pointer" @click="() => accountsStore.openSignIn('MICROSOFT')">
+            <div class="w-10 h-10 border border-dashed border-blue-500 rounded-lg flex items-center justify-center">
+              <FontAwesomeIcon :icon="faPlus" class="text-blue-200" fixed-width />
+            </div>
+            <p>Add another Minecraft Account</p>
+          </div>
+          
         </section>
 
-        <section>
-          <p class="font-bold mb-4">FTB Account</p>
+        <section class="p-2 pt-4 bg-black/20 border-t border-b border-white/10">
+          <p class="font-bold text-white/80 text-lg px-2">FTB Accounts</p>
 
           <div class="accounts" v-if="accountsStore.ftbAccount">
-            <SidebarProfileItem :profile="{
+            <SidebarProfileItem :isMinecraft="false" :profile="{
               name: accountsStore.ftbAccount?.accountData.preferred_username ?? accountsStore.ftbAccount?.accountData.given_name ?? 'Unknown?',
               avatarUrl: accountsStore.ftbAccount?.accountData.picture
             }"
@@ -171,9 +184,19 @@ function closeMenu() {
             
             <a href="https://account.feed-the-beast.com" target="_blank"><UiButton :icon="faExternalLink">Go to accounts page</UiButton></a>
           </div>
-
-          <UiButton v-if="!accountsStore.ftbAccount" size="small" type="primary" :icon="faPlus" @click="() => openSignInFtb()">Add FTB Account</UiButton>
+          
+          <div class="flex gap-3 items-center mt-2 hover:bg-white/10 p-2 rounded cursor-pointer" @click="() => accountsStore.openSignIn('FTB')">
+            <div class="w-10 h-10 border border-dashed border-blue-500 rounded-full flex items-center justify-center">
+              <FontAwesomeIcon :icon="faPlus" class="text-blue-200" fixed-width />
+            </div>
+            <p>Add FTB Account</p>
+          </div>
+          
         </section>
+        
+        <div class="border-t p-3 border-t-white/10">
+          <FontAwesomeIcon :icon="faCog" /> Manage Accounts
+        </div>
       </div>
     </div>
   </div>
@@ -234,16 +257,15 @@ function closeMenu() {
 
   .profile-switch {
     position: absolute;
-    left: 100%;
+    left: 120%;
     bottom: 1rem;
-    width: 360px;
+    width: 320px;
     max-height: calc(100% - 1px);
     z-index: 1000;
     opacity: 0;
     background-color: #363636;
     border: 1px solid rgba(white, .1);
     border-radius: var(--border-radius);
-    padding: 1rem;
     
     transition: transform 0.2s ease-in-out, opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
     transform: translateX(1rem);
@@ -257,9 +279,6 @@ function closeMenu() {
 
     section {
       position: relative;
-      &:not(:last-child) {
-        margin-bottom: 1rem;
-      }
     }
     
     .accounts {

@@ -8,7 +8,10 @@ import { useAppStore } from '@/store/appStore.ts';
 type ContextMenuEventContext = {
   context: () => any,
   menu: ContextMenu<any>,
-  pointer: PointerEvent
+  pos: {
+    x: number;
+    y: number;
+  }
 }
 
 const appStore = useAppStore();
@@ -47,7 +50,7 @@ function handleMenuOpen(givenContext: ContextMenuEventContext) {
   context.value = givenContext.context;
 
   nextTick(() => {
-    placeMenu(givenContext.pointer);
+    placeMenu(givenContext.pos.x, givenContext.pos.y);
   })
 }
 
@@ -64,7 +67,7 @@ function handleMenuClose() {
   openToLeft.value = false;
 }
 
-function placeMenu(pointer: PointerEvent) {
+function placeMenu(x: number, y: number) {
   overflowFix.value = false;
   openToLeft.value = false;
   const bodyBound = document.body.getBoundingClientRect();
@@ -74,8 +77,8 @@ function placeMenu(pointer: PointerEvent) {
   const elmWidth = calculateWidth();
   const realElmWidth = elmBound?.width ?? 0;
 
-  menuX.value = pointer.clientX + 5;
-  menuY.value = pointer.clientY + 5;
+  menuX.value = x;
+  menuY.value = y;
 
   if ((menuY.value + elmHeight) > (bodyBound.height - 20)) {
     menuY.value = menuY.value - elmHeight;

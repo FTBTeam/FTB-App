@@ -99,7 +99,7 @@ export class InstanceController {
           loadingStatus.loggingIn = false;
           loadingStatus.error = "Failed to check profile";
           runningInstancesStore.clearLaunchingStatus()
-          accountsStore.openSignIn()
+          accountsStore.openSignIn('MICROSOFT')
           return;
         }
 

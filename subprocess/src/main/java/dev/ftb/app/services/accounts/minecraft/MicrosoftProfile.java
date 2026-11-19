@@ -273,10 +273,15 @@ public class MicrosoftProfile {
     }
     
     public SharableData toSharableData() {
-        return new SharableData(this.uuid, this.minecraftName, this.skinUrl);
+        return new SharableData(this.uuid, this.minecraftName, this.skinUrl, this.notLoggedIn);
     }
     
-    public record SharableData(UUID uuid, String minecraftName, String skinUrl) { }
+    public record SharableData(
+        UUID uuid, 
+        String minecraftName, 
+        String skinUrl,
+        boolean notLoggedIn
+    ) { }
     
     public enum ValidCheckResult {
         VALID,

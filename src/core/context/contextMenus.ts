@@ -3,4 +3,5 @@ export enum ContextMenus {
   NAV_SETTINGS_MENU = "navSettingsMenu",
   RUNNING_INSTANCE_OPTIONS_MENU = "runningInstanceOptionsMenu",
   MODPACK_MODS_MENU = "modpackModsMenu",
+  PROFILE_MENU = "profileMenu"
 }

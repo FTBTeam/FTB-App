@@ -4,6 +4,7 @@ import {AuthProfile} from '@/core/types/appTypes.ts';
 import {FtbAccountManager} from "@/core/auth/ftbAccountManager.ts";
 import {JWTIdTokenData} from "@/core/auth/jwtIdTokenData";
 import {InstanceActions} from "@/core/actions/instanceActions.ts";
+import {AccountProvider} from "@/core/types/javaApi";
 
 export type FTBAccountData = {
   preferred_username?: string;
@@ -25,8 +26,8 @@ type AccountsState = {
   } | null;
   ftbAccountManager: FtbAccountManager;
   ftbLoggingIn: boolean;
-  signInFtbOpen: boolean;
-  signInOpen: boolean;
+  
+  activeSignInModal: AccountProvider | null;
 }
 
 export const useAccountsStore = defineStore("accounts", {
@@ -34,8 +35,7 @@ export const useAccountsStore = defineStore("accounts", {
     return {
       mcProfiles: [],
       mcActiveProfile: null,
-      signInOpen: false,
-      signInFtbOpen: false,
+      activeSignInModal: null,
       ftbAccount: null,
       ftbLoggingIn: false,
       ftbAccountManager: new FtbAccountManager(),
@@ -49,11 +49,8 @@ export const useAccountsStore = defineStore("accounts", {
   },
   
   actions: {
-    openSignIn(open = true) {
-      this.signInOpen = open;
-    },
-    openSignInFtb(open = true) {
-      this.signInFtbOpen = open;
+    openSignIn(provider: AccountProvider | null = 'MICROSOFT') {
+      this.activeSignInModal = provider;
     },
     async loadProfiles() {
       const result = await sendMessage("profiles.get", {});
