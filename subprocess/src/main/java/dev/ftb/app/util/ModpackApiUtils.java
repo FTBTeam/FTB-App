@@ -52,8 +52,8 @@ public class ModpackApiUtils {
             // Parse it
             try {
                 StoreFtbAccountHandler.CompleteTokenData authData = new Gson().fromJson(accountData, StoreFtbAccountHandler.CompleteTokenData.class);
-                if (authData != null && authData.idToken != null) {
-                    API_TOKEN = authData.idToken;
+                if (authData != null && authData.token != null) {
+                    API_TOKEN = authData.token;
                 }
             } catch (Exception e) {
                 // Ignore

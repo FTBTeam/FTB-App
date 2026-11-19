@@ -35,7 +35,6 @@ public class FtbTokenExchange extends TokenExchange<FtbFinalToken> {
     @Override
     protected boolean isTokenValid(FtbFinalToken token) {
         return !StringUtils.isBlank(token.accessToken())
-            && !StringUtils.isBlank(token.idToken())
             && !StringUtils.isBlank(token.refreshToken());
     }
 }

@@ -110,7 +110,7 @@ export class FtbAccountManager {
       accountStore.ftbAccount = {
         accountData: userData satisfies FTBAccountData,
         idTokenData: idToken,
-        token: this.tokenData.idToken
+        token: this.tokenData.token
       }
 
       await InstanceActions.clearInstanceCache(false)

@@ -3,7 +3,7 @@ import {Loader, Message, UiButton} from "@/components/ui";
 import {onMounted, onUnmounted, ref} from "vue";
 import {AccountProvider} from "@/core/types/javaApi";
 import appPlatform from '@platform'
-import {useAppStore} from "@/store/appStore.ts";
+import {sendMessage} from "@/core/websockets/websocketsApi.ts";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 import {
   faClock,
@@ -17,43 +17,64 @@ const {
   provider: AccountProvider
 }>()
 
-const appStore = useAppStore();
+const emit = defineEmits<{
+  (event: 'started', flowId: string): void;
+}>()
 
 const loading = ref(true)
 const error = ref<string | null>(null);
 
 const redirectUri = ref<string>("");
+const flowId = ref<string | null>(null);
+
+let unmounted = false;
 
 onMounted(() => {
   startFlow();
-
-  appStore.emitter.on('ws/message', handleData)
 })
 
 onUnmounted(() => {
-  // TODO: Tell the backend to fuckoff
-  appStore.emitter.off('ws/message', handleData)
+  unmounted = true;
+  if (flowId.value) {
+    cancel(flowId.value);
+  }
 })
 
-function handleData(data: any) {
-  console.log(data);
+function cancel(id: string) {
+  sendMessage('accounts.oauth.cancel', {
+    provider: provider,
+    flowId: id
+  }).catch((e) => console.error(e))
 }
 
 async function startFlow() {
   loading.value = true;
   try {
-    // const result = await sendMessage('accounts.oauth.start', {
-    //   provider: provider
-    // })
-    //
-    // if (!result.success) {
-    //   redirectUri.value = "";
-    //   error.value = result.reason;
-    //   return;
-    // }
-    //
-    // redirectUri.value = result.url;
-    // appPlatform.utils.openUrl(result.url);
+    const result = await sendMessage('accounts.oauth.start', {
+      provider: provider
+    })
+    
+    if (unmounted) {
+      if (result.flowId) {
+        cancel(result.flowId);
+      }
+      return;
+    }
+
+    // Rip
+    if (!result.success || !result.url || !result.flowId) {
+      redirectUri.value = "";
+      error.value = result.reason ?? "Failed to start the sign in. Please try again.";
+      return;
+    }
+
+    flowId.value = result.flowId;
+    redirectUri.value = result.url;
+    emit('started', result.flowId);
+    appPlatform.utils.openUrl(result.url);
+  } catch (e) {
+    console.error(e);
+    error.value = "Failed to start the sign in. Please try again.";
   } finally {
     loading.value = false;
   }
@@ -87,9 +108,9 @@ async function startFlow() {
     </Message>
   </div>
   
-  <div v-if="error && !loading">
+  <Message type="danger" title="Something went wrong!" v-if="error && !loading">
     {{ error }}
-  </div>
+  </Message>
   
   <Loader v-if="loading" />
 </template>

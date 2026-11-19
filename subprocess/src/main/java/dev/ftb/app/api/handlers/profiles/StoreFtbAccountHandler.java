@@ -20,7 +20,7 @@ public class StoreFtbAccountHandler implements IMessageHandler<StoreFtbAccountHa
         completeToken.token = data.token;
         completeToken.idToken = data.idToken;
         // Update the API token
-        ModpackApiUtils.API_TOKEN = data.idToken;
+        ModpackApiUtils.API_TOKEN = data.token;
         completeToken.refreshToken = data.refreshToken;
         completeToken.expiresIn = data.expiresIn;
         completeToken.refreshExpiresIn = data.refreshExpiresIn;

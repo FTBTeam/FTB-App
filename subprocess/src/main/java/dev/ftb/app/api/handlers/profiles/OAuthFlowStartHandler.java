@@ -1,6 +1,7 @@
 package dev.ftb.app.api.handlers.profiles;
 
 import dev.ftb.app.api.data.BaseData;
+import dev.ftb.app.api.data.accounts.LoginFlowEvent;
 import dev.ftb.app.api.handlers.IMessageHandler;
 import dev.ftb.app.api.handlers.MessageContext;
 import dev.ftb.app.services.accounts.LocalLoopback;
@@ -10,6 +11,8 @@ import dev.ftb.app.structs.accounts.LoopbackHolder;
 import dev.ftb.app.util.HashingUtils;
 import dev.ftb.app.util.Result;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
@@ -17,8 +20,11 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.TimeoutException;
 
 public class OAuthFlowStartHandler implements IMessageHandler<OAuthFlowStartHandler.Data> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(OAuthFlowStartHandler.class);
     private static final SecureRandom RANDOM = new SecureRandom();
     
     @Override
@@ -54,37 +60,48 @@ public class OAuthFlowStartHandler implements IMessageHandler<OAuthFlowStartHand
         
         String url = exchange.authorizeUrl(state, challenge, loopback.redirectUri(), TokenExchange.AccountPrompt.CHOOSE_ACCOUNT);
         
-        // A success is the URL being returned, not anything to do with the loopback system.
-        context.reply(Reply.success(data, url));
-        
+        // A success is the URL being returned
+        context.reply(Reply.success(data, url, state));
+
         // Don't block. Loopback will close once it finishes. Completion does blocking HTTP (the code exchange, and the
         // Xbox / Minecraft chain for Microsoft), so keep it off the common pool.
+        var services = context.services();
         loopback.result()
             .whenCompleteAsync((callback, throwable) -> {
-                // Only remove our own entry, a newer login for this provider may have replaced it
-                listeners.remove(data.provider, holder);
-                
-                if (throwable instanceof CancellationException) {
-                    // Replaced by a newer login, or closed. Nothing to report.
+                boolean ours = listeners.remove(data.provider, holder);
+
+                Throwable cause = throwable instanceof CompletionException && throwable.getCause() != null ? throwable.getCause() : throwable;
+                if (!ours || cause instanceof CancellationException) {
                     return;
                 }
-                
-                if (throwable != null) {
-                    // TODO: Fire back an error; It'll be after the full reply so this will be an unsolicited response
-                    throwable.printStackTrace();
+
+                if (cause != null) {
+                    if (cause instanceof TimeoutException) {
+                        LoginFinisher.failed(services, data.provider, state, "The sign in took too long. Please try again.");
+                    } else {
+                        LOGGER.error("{} browser login failed", data.provider, cause);
+                        LoginFinisher.failed(services, data.provider, state, "Something went wrong signing in. Please try again.");
+                    }
                     return;
                 }
-                
-                // We have a successful callback!
-                if (data.provider == AccountProvider.FTB) {
-                    // Exchange it for a real token + store. That's the flow.
-                    // TODO: Store -> Reply
-                } else {
-                    // Exchange it for a real token, fire off the hellish microsoft flow.
-                    // TODO: Exchange -> Run full MS to MC flow -> Store
-                    // TODO: Use the same events that the device auth works for feedback.
+
+                if (callback.code() == null) {
+                    LOGGER.warn("{} returned an error to the login callback: {} ({})", data.provider, callback.error(), callback.errorDescription());
+                    LoginFinisher.failed(services, data.provider, state, "access_denied".equals(callback.error())
+                        ? "The sign in was cancelled in the browser."
+                        : "Couldn't sign in (" + callback.error() + "). Please try again.");
+                    return;
                 }
-            }, context.services().threads().messageHandlerPool());
+
+                LoginFinisher.working(services, data.provider, state, LoginFlowEvent.LoginStep.EXCHANGING_CODE);
+                var tokens = exchange.exchangeCodeForTokens(callback.code(), holder);
+                if (tokens.isErr()) {
+                    LoginFinisher.failed(services, data.provider, state, tokens.unwrapErr());
+                    return;
+                }
+
+                LoginFinisher.finish(services, data.provider, state, tokens.unwrap());
+            }, services.threads().messageHandlerPool());
     }
 
     private static String randomUrlSafe(int bytes) {
@@ -106,21 +123,23 @@ public class OAuthFlowStartHandler implements IMessageHandler<OAuthFlowStartHand
         public final String url;
         public final boolean success;
         @Nullable public final String reason;
+        @Nullable public final String flowId;
 
-        public Reply(Data data, boolean success, @Nullable String url, @Nullable String reason) {
+        public Reply(Data data, boolean success, @Nullable String url, @Nullable String reason, @Nullable String flowId) {
             this.type = data.type + "Reply";
             this.requestId = data.requestId;
             this.success = success;
             this.url = url;
             this.reason = reason;
+            this.flowId = flowId;
         }
-        
+
         public static Reply error(Data data, String error) {
-            return new Reply(data, false, null, error);
+            return new Reply(data, false, null, error, null);
         }
-        
-        public static Reply success(Data data, String url) {
-            return new Reply(data, true, url, null);
+
+        public static Reply success(Data data, String url, String flowId) {
+            return new Reply(data, true, url, null, flowId);
         }
     }
 }

@@ -50,6 +50,7 @@ public class RcpEndpoints {
         register("instanceVersionInfo", InstanceVersionInfoData.class, new InstanceVersionInfoHandler());
 
         register("accounts.oauth.start", OAuthFlowStartHandler.Data.class, new OAuthFlowStartHandler());
+        register("accounts.oauth.cancel", OAuthFlowCancelHandler.Data.class, new OAuthFlowCancelHandler());
         register("accounts.device.flow", DeviceAuthFlowHandler.Data.class, new DeviceAuthFlowHandler());
         
 //        register("profiles.flow", MinecraftAuthFlowHandler.Data.class, new MinecraftAuthFlowHandler());

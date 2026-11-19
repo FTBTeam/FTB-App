@@ -30,6 +30,7 @@ export type ApiEndpoints = 	"moveInstances" |
 	"setInstanceArt" |
 	"instanceVersionInfo" |
 	"accounts.oauth.start" |
+	"accounts.oauth.cancel" |
 	"accounts.device.flow" |
 	"profiles.ms.authenticate" |
 	"profiles.get" |

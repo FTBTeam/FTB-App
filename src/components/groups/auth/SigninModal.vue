@@ -1,13 +1,26 @@
 <script setup lang="ts">
-import {ref} from "vue";
-import {Modal} from "@/components/ui";
-import {AccountProvider} from "@/core/types/javaApi";
+import {onMounted, onUnmounted, ref} from "vue";
+import {Message, Modal, UiButton} from "@/components/ui";
+import {AccountProvider, LoginFlowEvent, LoginStep} from "@/core/types/javaApi";
 import DeviceAuthModal2 from "@/components/groups/auth/DeviceAuth.vue";
 import OAuthFlowModel from "@/components/groups/auth/OAuthFlow.vue";
-import {faMobile} from "@fortawesome/free-solid-svg-icons";
+import {faCircleNotch, faMobile} from "@fortawesome/free-solid-svg-icons";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
+import {useAppStore} from "@/store/appStore.ts";
+import {useAccountsStore} from "@/store/accountsStore.ts";
+import {alertController} from "@/core/controllers/alertController.ts";
 
 type AuthType = 'device' | 'oauth'
+type Phase = 'choose' | 'working' | 'failed'
+
+const stepLabels: Record<LoginStep, string> = {
+  EXCHANGING_CODE: "Finishing signing in",
+  XBOX: "Signing in to Xbox Live",
+  XSTS: "Getting access to Xbox Live",
+  MINECRAFT: "Signing in to Minecraft",
+  PROFILE: "Checking you own Minecraft",
+  SAVING: "Saving your account",
+}
 
 const {
   open,
@@ -21,14 +34,87 @@ const emit = defineEmits<{
   (event: 'closed'): void;
 }>()
 
+const appStore = useAppStore();
+const accountsStore = useAccountsStore();
+
 const selectedType = ref<AuthType>('oauth');
+const phase = ref<Phase>('choose');
+const step = ref<LoginStep | null>(null);
+const failure = ref<string | null>(null);
+
+// The flow the user is looking at, events for any other flow are ignored
+const flowId = ref<string | null>(null);
+
+onMounted(() => {
+  appStore.emitter.on('ws/message', onMessage)
+})
+
+onUnmounted(() => {
+  appStore.emitter.off('ws/message', onMessage)
+})
+
+function onMessage(data: any) {
+  if (data?.type !== "event.accounts.login") {
+    return;
+  }
+
+  const event = data as LoginFlowEvent;
+
+  if (event.status === 'COMPLETE' && event.provider === 'MICROSOFT') {
+    // We good! Let's refresh!
+    accountsStore.loadProfiles().catch(e => console.error(e));
+  }
+
+  if (!open || event.provider !== accountType || event.flowId !== flowId.value) {
+    return;
+  }
+
+  switch (event.status) {
+    case 'WORKING':
+      phase.value = 'working';
+      step.value = event.step ?? null;
+      break;
+    case 'COMPLETE':
+      alertController.success(event.accountName
+        ? `Signed in as ${event.accountName}`
+        : `Signed in to your ${event.provider === 'MICROSOFT' ? 'Microsoft' : 'FTB'} account`);
+      close();
+      break;
+    case 'FAILED':
+      phase.value = 'failed';
+      failure.value = event.message ?? "Something went wrong signing in. Please try again.";
+      break;
+  }
+}
+
+function onStarted(id: string) {
+  flowId.value = id;
+}
+
+function onDeviceCompleted() {
+  // The backend takes over from here, its events say how it's going
+  phase.value = 'working';
+  step.value = null;
+}
+
+function tryAgain() {
+  reset();
+}
 
 function switchType() {
   selectedType.value = selectedType.value === 'oauth' ? 'device' : 'oauth'
 }
 
+function reset() {
+  phase.value = 'choose';
+  step.value = null;
+  failure.value = null;
+  flowId.value = null;
+}
+
 function close() {
   selectedType.value = 'oauth';
+  reset();
   emit('closed')
 }
 </script>
@@ -43,11 +129,28 @@ function close() {
       </div>
       <p class="text-white/80 max-w-3/4 leading-6">{{accountType === 'MICROSOFT' ? "Use your Microsoft account that owns Minecraft: Java Edition to play Minecraft" : "Connect your FTB Account to get access to specific perks and features. This will not log you into Minecraft"}}</p>
     </div>
-    
-    <DeviceAuthModal2 :provider="accountType" v-if="selectedType === 'device'" />
-    <OAuthFlowModel :provider="accountType" v-if="selectedType === 'oauth'" />
-    
-    <template #footer>
+
+    <template v-if="phase === 'choose'">
+      <DeviceAuthModal2 :provider="accountType" v-if="selectedType === 'device'" @started="onStarted" @completed="onDeviceCompleted" />
+      <OAuthFlowModel :provider="accountType" v-if="selectedType === 'oauth'" @started="onStarted" />
+    </template>
+
+    <div v-if="phase === 'working'" class="bg-black/30 rounded-lg p-4 flex gap-4 items-center">
+      <FontAwesomeIcon :icon="faCircleNotch" spin fixedWidth />
+      <div class="flex-1">
+        <p>Logging you in, won't be a moment...</p>
+        <p class="text-white/80 text-sm" v-if="step">{{ stepLabels[step] }}</p>
+      </div>
+    </div>
+
+    <div v-if="phase === 'failed'">
+      <Message type="danger" title="Couldn't sign you in" class="mb-4">
+        {{ failure }}
+      </Message>
+      <UiButton type="primary" @click="tryAgain">Try again</UiButton>
+    </div>
+
+    <template #footer v-if="phase === 'choose'">
       <div class="py-4 flex gap-4 items-center text-blue-300 hover:text-blue-400 cursor-pointer font-bold" @click="switchType">
         <FontAwesomeIcon :icon="faMobile" /> Use {{selectedType === 'oauth' ? 'a code' : 'browser'}} instead
       </div>

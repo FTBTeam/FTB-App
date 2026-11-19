@@ -66,7 +66,6 @@ public class FtbAccount {
 
     public enum TokenKey implements AccountTokenKey {
         ACCESS_TOKEN("accessToken"),
-        ID_TOKEN("idToken"),
         REFRESH_TOKEN("refreshToken");
 
         private final String keyName;

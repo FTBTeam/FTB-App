@@ -8,6 +8,7 @@ import dayjs, {Dayjs} from "dayjs";
 import {faCircleNotch, faCopy, faExternalLink} from "@fortawesome/free-solid-svg-icons";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 import appPlatform from '@platform'
+import {useCopyToClipboard} from "@/composables/useCopyToClipboard.ts";
 
 const {
   provider
@@ -15,19 +16,28 @@ const {
   provider: AccountProvider
 }>()
 
+const emit = defineEmits<{
+  (event: 'started', flowId: string): void;
+  (event: 'completed'): void;
+}>()
+
 const loading = ref(true)
 const error = ref<string | null>(null)
 
+const {copied, copy} = useCopyToClipboard();
+
 const redirectUri = ref("")
-const polling = ref(false);
-const expiresIn = ref<Dayjs | null>(null);
+const expiresAt = ref<Dayjs | null>(null);
 const timerRef = ref<number | null>(null);
-const interval = ref(5); // Interval in seconds
+const interval = ref(5); // Seconds between polls, set by the backend
 const lastPollAt = ref<number>(-1);
 const deviceCode = ref("");
 const responseLock = ref(false);
-const deviceToken = ref("");
+const flowId = ref<string | null>(null);
 const timeLeft = ref("")
+
+let completed = false;
+let unmounted = false;
 
 onMounted(() => {
   startFlow();
@@ -43,91 +53,111 @@ async function startFlow() {
       flowStage: "GET_CODE"
     })
     
-    if (result.reason || !result.start) {
-      error.value = result.reason || "Failed to get reply from Microsoft";
+    if (unmounted) {
+      if (result.flowId) {
+        cancel(result.flowId);
+      }
       return;
     }
     
-    polling.value = true;
-    deviceCode.value = result.start.user_code
-    deviceToken.value = result.start.device_code;
-    expiresIn.value = dayjs().add(result.start.expires_in, 'seconds')
-    redirectUri.value = result.start.verification_uri_complete || result.start.verification_uri
-    interval.value = result.start.interval ?? 5;
+    if (result.status !== "CODE_ISSUED" || !result.code || !result.flowId) {
+      error.value = result.reason ?? "Failed to get a login code. Please try again.";
+      return;
+    }
+    
+    flowId.value = result.flowId;
+    deviceCode.value = result.code.userCode
+    expiresAt.value = dayjs.unix(result.code.expiresAt)
+    redirectUri.value = result.code.verificationUriComplete || result.code.verificationUri
+    interval.value = result.interval || 5;
+    emit('started', result.flowId);
     
     timerRef.value = setInterval(() => {
       poll().catch(e => console.log(e))
     }, 1000) as any as number // Once a second!
+  } catch (e) {
+    console.error(e);
+    error.value = "Failed to get a login code. Please try again.";
   } finally {
     loading.value = false;
   }
 }
 
 async function poll() {
-  timeLeft.value = expiresIn.value?.fromNow() ?? ""
+  timeLeft.value = expiresAt.value?.fromNow() ?? ""
   
   const now = Math.round(Date.now() / 1000);
   const diff = now - lastPollAt.value;
-  if (diff >= interval.value) {
-    if (responseLock.value) {
+  if (diff < interval.value || responseLock.value || !flowId.value) {
+    return;
+  }
+
+  responseLock.value = true;
+  lastPollAt.value = now;
+  try {
+    const result = await sendMessage("accounts.device.flow", {
+      provider: provider,
+      flowStage: "CHECK_FOR_TOKEN",
+      flowId: flowId.value
+    })
+    
+    if (unmounted) {
       return;
     }
 
-    responseLock.value = true;
-    lastPollAt.value = now;
-    // Poll!
-    try {
-      console.log("Polling")
-      const result = await sendMessage("accounts.device.flow", {
-        provider: provider,
-        flowStage: "CHECK_FOR_TOKEN",
-        deviceToken: deviceToken.value
-      })
-
-      if (!result.success) {
+    switch (result.status) {
+      case "PENDING":
+        interval.value = result.interval || interval.value;
+        break;
+      case "COMPLETE":
+        completed = true;
+        clearPoll();
+        emit('completed');
+        break;
+      case "FAILED":
         error.value = result.reason ?? "Unknown error. Please report this to our team."
         clearPoll();
         clearState();
-        return;
-      }
-      
-      if (result.slowDown) {
-        interval.value += 5; // Add 5 seconds to the polling interval
-        return;
-      }
-      
-      if (result.isPending) {
-        console.log("Pending...")
-      }
-    } finally {
-      responseLock.value = false;
+        break;
+      case "CANCELLED":
+        clearPoll();
+        break;
     }
+  } finally {
+    responseLock.value = false;
   }
 }
 
 onUnmounted(() => {
+  unmounted = true;
   clearPoll()
+  if (flowId.value && !completed) {
+    cancel(flowId.value);
+  }
+})
+
+function cancel(id: string) {
   sendMessage("accounts.device.flow", {
     provider: provider,
-    flowStage: "CANCEL"
+    flowStage: "CANCEL",
+    flowId: id
   }).catch((e) => console.error(e))
-})
+}
 
 function clearPoll() {
   if (timerRef.value !== null) {
     clearInterval(timerRef.value)
+    timerRef.value = null;
   }
 }
 
 function clearState() {
   redirectUri.value = "";
-  polling.value = false
-  expiresIn.value = null
-  timerRef.value = null;
+  expiresAt.value = null
   interval.value = 5;
   lastPollAt.value = -1;
   deviceCode.value = ""
-  deviceToken.value = ""
+  flowId.value = null
   timeLeft.value = ""
 }
 </script>
@@ -147,7 +177,7 @@ function clearState() {
             <span>{{ deviceCode }}</span>
           </div>
           
-          <UiButton class="flex! items-center" :icon="faCopy"></UiButton>
+          <UiButton class="flex! items-center" :icon="faCopy" :aria-label="copied ? 'Copied!' : 'Copy to clipboard'" @click="copy(redirectUri)"></UiButton>
         </div>
         <UiButton :icon="faExternalLink" size="large" fullWidth type="primary" @click="appPlatform.utils.openUrl(redirectUri)">
           Copy & Open

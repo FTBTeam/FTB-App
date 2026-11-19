@@ -2,7 +2,7 @@ import {
   AccountIsValidHandlerData,
   AccountIsValidHandlerReply,
   AuthenticateMsProfileHandlerData,
-  AuthenticateMsProfileHandlerReply, OAuthFlowStartHandlerData, OAuthFlowStartHandlerReply,
+  AuthenticateMsProfileHandlerReply, OAuthFlowStartHandlerData, OAuthFlowStartHandlerReply, OAuthFlowCancelHandlerData, OAuthFlowCancelHandlerReply,
   BaseData,
   CancelInstallInstanceData,
   CancelInstallInstanceDataReply,
@@ -127,6 +127,7 @@ const endpoints = {
   "accounts.sign-out":            io<BaseData, SignOutFTBAccountHandlerReply>(),
   'purge':                        io<PurgeHandlerData, PurgeHandlerReply>(),
   "accounts.oauth.start":         io<OAuthFlowStartHandlerData, OAuthFlowStartHandlerReply>(),
+  "accounts.oauth.cancel":        io<OAuthFlowCancelHandlerData, OAuthFlowCancelHandlerReply>(),
   "accounts.device.flow":         io<DeviceAuthFlowHandlerData, DeviceAuthFlowHandlerReply>() 
 } satisfies Record<ApiEndpoints, EndpointDefinition<any, any>>;
 

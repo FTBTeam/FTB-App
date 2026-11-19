@@ -6,18 +6,35 @@ import dev.ftb.app.services.AppHttp;
 import dev.ftb.app.structs.accounts.*;
 import dev.ftb.app.util.Result;
 
+import java.util.function.Consumer;
+
 public class MicrosoftOAuthProcess {
     private static final Gson GSON = new Gson();
+
+    /// The stages of [#authWithMinecraft]
+    public enum Stage {
+        XBOX,
+        XSTS,
+        MINECRAFT,
+        PROFILE
+    }
     
     /**
      * Runs over the entire Microsoft authentication flow. This is quite a few steps and can take a bit to complete fully.
      */
     public static Result<MinecraftProfileWithAuthData, ErrorWithCode> authWithMinecraft(AppHttp http, OAuthTokenHolder xboxTokenHolder) {
+        return authWithMinecraft(http, xboxTokenHolder, stage -> {});
+    }
+
+    /// As [#authWithMinecraft(AppHttp, OAuthTokenHolder)], calling `onStage` as each stage starts.
+    public static Result<MinecraftProfileWithAuthData, ErrorWithCode> authWithMinecraft(AppHttp http, OAuthTokenHolder xboxTokenHolder, Consumer<Stage> onStage) {
+        onStage.accept(Stage.XBOX);
         var stepOne = MicrosoftRequests.authenticateWithXbox(http, xboxTokenHolder.accessToken());
         if (stepOne.isErr()) {
             return Result.err(stepOne.unwrapErr().extendMessageIfRequestError("Failed to authenticate with Xbox"));
         }
         
+        onStage.accept(Stage.XSTS);
         var stepTwo = MicrosoftRequests.authenticateWithXSTS(http, stepOne.unwrap().get("Token").getAsString());
         if (stepTwo.isErr()) {
             return Result.err(stepTwo.unwrapErr().extendMessageIfRequestError("Failed to authenticate with XSTS"));
@@ -39,6 +56,7 @@ public class MicrosoftOAuthProcess {
         
         String userHash = userHashRes.unwrap();
         
+        onStage.accept(Stage.MINECRAFT);
         var stepThree = MicrosoftRequests.authenticateWithMinecraft(
             http,
             stepTwoData.get("Token").getAsString(),
@@ -52,6 +70,7 @@ public class MicrosoftOAuthProcess {
         var minecraftAccessToken = stepThree.unwrap().get("access_token").getAsString();
         var minecraftExpiresIn = stepThree.unwrap().get("expires_in").getAsInt();
         
+        onStage.accept(Stage.PROFILE);
         var profile = checkEntitlementsAndGetProfile(http, minecraftAccessToken);
         if (profile.isErr()) {
             return Result.err(profile.unwrapErr());

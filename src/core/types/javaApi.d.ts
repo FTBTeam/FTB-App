@@ -10,6 +10,15 @@ export interface PrivateBaseData extends BaseData {
     notViableForLogging: boolean;
 }
 
+export interface LoginFlowEvent extends BaseData {
+    provider: AccountProvider;
+    flowId: string;
+    status: LoginStatus;
+    step?: LoginStep;
+    message?: string;
+    accountName?: string;
+}
+
 export interface CancelInstallInstanceData extends BaseData {
     uuid: string;
 }
@@ -385,15 +394,15 @@ export interface AuthenticateMsProfileHandlerReply extends PrivateBaseData {
 export interface DeviceAuthFlowHandlerData extends BaseData {
     flowStage: FlowStage;
     provider: AccountProvider;
-    deviceToken?: string;
+    flowId?: string;
 }
 
 export interface DeviceAuthFlowHandlerReply extends BaseData {
-    start?: DeviceAuthResponse;
+    status: DeviceFlowStatus;
+    flowId?: string;
+    code?: DeviceUserCode;
+    interval: number;
     reason?: string;
-    success: boolean;
-    slowDown: boolean;
-    isPending: boolean;
 }
 
 export interface GetFtbAccountHandlerReply extends PrivateBaseData {
@@ -406,6 +415,14 @@ export interface GetProfilesHandlerReply extends PrivateBaseData {
     activeProfile?: SharableData;
 }
 
+export interface OAuthFlowCancelHandlerData extends BaseData {
+    provider: AccountProvider;
+    flowId: string;
+}
+
+export interface OAuthFlowCancelHandlerReply extends BaseData {
+}
+
 export interface OAuthFlowStartHandlerData extends BaseData {
     provider: AccountProvider;
 }
@@ -414,6 +431,7 @@ export interface OAuthFlowStartHandlerReply extends BaseData {
     url?: string;
     success: boolean;
     reason?: string;
+    flowId?: string;
 }
 
 export interface RefreshAuthenticationProfileHandlerData extends BaseData {
@@ -595,13 +613,11 @@ export interface InstanceCategory {
     name: string;
 }
 
-export interface DeviceAuthResponse {
-    device_code: string;
-    user_code: string;
-    verification_uri: string;
-    verification_uri_complete?: string;
-    expires_in: number;
-    interval: number;
+export interface DeviceUserCode {
+    userCode: string;
+    verificationUri: string;
+    verificationUriComplete?: string;
+    expiresAt: number;
 }
 
 export interface CompleteTokenData {
@@ -709,13 +725,19 @@ export interface CurseForgeIds {
     file: string;
 }
 
+export type LoginStatus = "WORKING" | "COMPLETE" | "FAILED";
+
+export type LoginStep = "EXCHANGING_CODE" | "XBOX" | "XSTS" | "MINECRAFT" | "PROFILE" | "SAVING";
+
+export type AccountProvider = "FTB" | "MICROSOFT";
+
 export type Action = "GET" | "CREATE" | "DELETE" | "RENAME";
 
 export type ValidCheckResult = "VALID" | "EXPIRED" | "NOT_LOGGED_IN" | "TOTAL_FAILURE";
 
 export type FlowStage = "GET_CODE" | "CHECK_FOR_TOKEN" | "CANCEL";
 
-export type AccountProvider = "FTB" | "MICROSOFT";
+export type DeviceFlowStatus = "CODE_ISSUED" | "PENDING" | "COMPLETE" | "FAILED" | "CANCELLED";
 
 export type PurgeTarget = "ALL" | "INSTANCE_CACHE" | "RUNTIMES" | "MINECRAFT";
 
