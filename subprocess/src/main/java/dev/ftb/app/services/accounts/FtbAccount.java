@@ -7,18 +7,19 @@ import java.util.Objects;
 /// A signed in FTB account. Only details that aren't secret are kept here, the tokens live in the vault
 public class FtbAccount {
     private final String id;
-    private final String username;
-    private final @Nullable String email;
+    private String username;
+    private @Nullable String email;
+    private @Nullable String avatarUrl;
+    private boolean premium;
     
     private long accessExpiresAt;
     private long refreshExpiresAt;
 
     private boolean notLoggedIn = false;
     
-    public FtbAccount(String id, String username, @Nullable String email, long accessExpiresAt, long refreshExpiresAt) {
-        this.id = id;
-        this.username = username;
-        this.email = email;
+    public FtbAccount(FtbTokenClaims claims, long accessExpiresAt, long refreshExpiresAt) {
+        this.id = claims.id();
+        this.applyClaims(claims);
         this.accessExpiresAt = accessExpiresAt;
         this.refreshExpiresAt = refreshExpiresAt;
     }
@@ -35,6 +36,14 @@ public class FtbAccount {
         return email;
     }
 
+    public @Nullable String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public boolean isPremium() {
+        return premium;
+    }
+
     public long getAccessExpiresAt() {
         return accessExpiresAt;
     }
@@ -47,9 +56,19 @@ public class FtbAccount {
         return notLoggedIn;
     }
     
-    public void refreshed(long accessExpiresAt, long refreshExpiresAt) {
+    public void refreshed(@Nullable FtbTokenClaims claims, long accessExpiresAt, long refreshExpiresAt) {
+        if (claims != null && claims.id().equals(this.id)) {
+            this.applyClaims(claims);
+        }
         this.accessExpiresAt = accessExpiresAt;
         this.refreshExpiresAt = refreshExpiresAt;
+    }
+
+    private void applyClaims(FtbTokenClaims claims) {
+        this.username = claims.username();
+        this.email = claims.email();
+        this.avatarUrl = claims.avatarUrl();
+        this.premium = claims.premium();
     }
 
     /// Used when the tokens are lost or can no longer be refreshed, so the user is asked to log in again.

@@ -16,7 +16,6 @@ public class MoveCredentialsToVault implements Migration {
     private static final Logger LOGGER = LoggerFactory.getLogger(MoveCredentialsToVault.class);
     
     private static final Map<String, String> KEY_MAPPING = Map.of(
-            "ftbAccount", "ftbAccount",
             "proxyPassword", Settings.PROXY_PASSWORD_KEY
     );
     

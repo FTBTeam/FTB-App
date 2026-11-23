@@ -82,17 +82,10 @@ export class JavaFetch {
     return new JavaFetch(url);
   }
   
-  //#region helper methods
   public static modpacksApi(endpoint: string) {
     return JavaFetch.create(constants.modpacksApi + "/" + endpoint)
   }
-  
-  public static modpacksApiPrivate(endpoint: string) {
-    return JavaFetch.create(constants.modpacksApi + "/" + endpoint);
-  }
-  
-  //#endregion
-  
+
   public method(method: HttpMethod) {
     this._method = method;
     return this;

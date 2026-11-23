@@ -37,9 +37,6 @@ export type ApiEndpoints = 	"moveInstances" |
 	"profiles.setActiveProfile" |
 	"profiles.refresh" |
 	"profiles.is-valid" |
-	"accounts.store-oauth" |
-	"accounts.get-oauth" |
-	"accounts.sign-out" |
 	"storage.put" |
 	"storage.get" |
 	"storage.get-all" |

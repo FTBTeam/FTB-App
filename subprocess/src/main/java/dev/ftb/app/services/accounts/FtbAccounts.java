@@ -161,7 +161,9 @@ public class FtbAccounts extends MultiAccountStore<FtbAccount, String, FtbAccoun
                 }
 
                 long refreshedAt = this.now();
+                FtbTokenClaims claims = FtbTokenClaims.read(token.accessToken());
                 this.update(id, a -> a.refreshed(
+                    claims,
                     refreshedAt + token.expiresIn(),
                     token.refreshExpiresIn() <= 0 ? 0 : refreshedAt + token.refreshExpiresIn()
                 ));

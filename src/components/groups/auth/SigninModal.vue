@@ -62,9 +62,9 @@ function onMessage(data: any) {
 
   const event = data as LoginFlowEvent;
 
-  if (event.status === 'COMPLETE' && event.provider === 'MICROSOFT') {
-    // We good! Let's refresh!
-    accountsStore.loadProfiles().catch(e => console.error(e));
+  if (event.status === 'COMPLETE') {
+    (event.provider === 'FTB' ? accountsStore.ftbAccountChanged() : accountsStore.loadProfiles())
+      .catch(e => console.error(e));
   }
 
   if (!open || event.provider !== accountType || event.flowId !== flowId.value) {

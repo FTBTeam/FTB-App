@@ -59,11 +59,6 @@ public class RcpEndpoints {
         
         register("profiles.refresh", RefreshAuthenticationProfileHandler.Data.class, new RefreshAuthenticationProfileHandler());
         register("profiles.is-valid", AccountIsValidHandler.Data.class, new AccountIsValidHandler());
-        
-        // TOOD: Rework.
-        register("accounts.store-oauth", StoreFtbAccountHandler.Data.class, new StoreFtbAccountHandler());
-        register("accounts.get-oauth", BaseData.class, new GetFtbAccountHandler());
-        register("accounts.sign-out", BaseData.class, new SignOutFTBAccountHandler());
 
         register("storage.put", StoragePutHandler.Data.class, new StoragePutHandler());
         register("storage.get", StorageGetHandler.Data.class, new StorageGetHandler());

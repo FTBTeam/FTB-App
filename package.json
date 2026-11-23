@@ -37,7 +37,6 @@
     "marked": "^15.0.12",
     "mitt": "^3.0.1",
     "object-inspect": "^1.13.4",
-    "openid-client": "^6.4.2",
     "pinia": "^3.0.4",
     "qr": "^0.7.2",
     "semver": "^7.8.5",

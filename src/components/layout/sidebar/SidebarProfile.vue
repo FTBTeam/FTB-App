@@ -5,6 +5,7 @@ import {createLogger} from '@/core/logger';
 import {ref, useTemplateRef} from 'vue';
 import { useAccountsStore } from '@/store/accountsStore.ts';
 import { AuthProfile } from '@/core/types/appTypes.ts';
+import { FtbAccount } from '@/core/types/javaApi';
 import {faCog, faExternalLink, faPlus} from '@fortawesome/free-solid-svg-icons';
 import {Popover, UiButton} from "@/components/ui";
 import {useAttachDomEvent} from "@/composables";
@@ -86,10 +87,44 @@ async function setActiveProfile(profile: AuthProfile) {
   loading.value = false;
 }
 
-async function ftbSignOut() {
-  if (await confirm()) {
-    await accountsStore.signOutFtb();
+async function removeFtbAccount(account: FtbAccount) {
+  if (!(await confirm())) {
+    return;
   }
+
+  loading.value = true;
+  try {
+    if (!(await accountsStore.removeFtbAccount(account.id))) {
+      logger.debug('Failed to remove FTB account');
+    }
+  } catch (error) {
+    logger.debug('Failed to remove FTB account due to message errors', error);
+  }
+  loading.value = false;
+}
+
+async function setActiveFtbAccount(account: FtbAccount) {
+  if (account.id === accountsStore.ftbAccount?.id) {
+    return;
+  }
+
+  loading.value = true;
+  try {
+    if (!(await accountsStore.setActiveFtbAccount(account.id))) {
+      logger.debug('Failed to set active FTB account');
+    }
+  } catch (error) {
+    logger.debug('Failed to set active FTB account due to message errors', error);
+  }
+  loading.value = false;
+}
+
+function ftbSubtext(account: FtbAccount) {
+  if (account.notLoggedIn) {
+    return 'Signed out, please sign in again';
+  }
+
+  return account.premium ? '❤️ Premium member' : undefined;
 }
 
 async function confirm() {
@@ -174,15 +209,17 @@ function closeMenu() {
         <section class="p-2 pt-4 bg-black/20 border-t border-b border-white/10">
           <p class="font-bold text-white/80 text-lg px-2">FTB Accounts</p>
 
-          <div class="accounts" v-if="accountsStore.ftbAccount">
-            <SidebarProfileItem :isMinecraft="false" :profile="{
-              name: accountsStore.ftbAccount?.accountData.preferred_username ?? accountsStore.ftbAccount?.accountData.given_name ?? 'Unknown?',
-              avatarUrl: accountsStore.ftbAccount?.accountData.picture
-            }"
-                                :subtext="accountsStore.isPremiumMember ? '❤️ Premium member' : undefined"
-                                :active="true"
-                                :on-delete="ftbSignOut"
-                                :on-select="() => {}" />
+          <div class="accounts" v-if="accountsStore.ftbAccounts.length">
+            <SidebarProfileItem v-for="account in accountsStore.ftbAccounts" :key="account.id"
+                                :isMinecraft="false"
+                                :profile="{
+                                  name: account.username,
+                                  avatarUrl: account.avatarUrl
+                                }"
+                                :subtext="ftbSubtext(account)"
+                                :active="account.id === accountsStore.ftbAccount?.id"
+                                :on-delete="() => removeFtbAccount(account)"
+                                :on-select="() => setActiveFtbAccount(account)" />
             
             <a href="https://account.feed-the-beast.com" target="_blank"><UiButton :icon="faExternalLink">Go to accounts page</UiButton></a>
           </div>

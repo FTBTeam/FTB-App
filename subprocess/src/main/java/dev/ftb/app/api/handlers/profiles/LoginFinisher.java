@@ -1,10 +1,9 @@
 package dev.ftb.app.api.handlers.profiles;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import dev.ftb.app.api.data.accounts.LoginFlowEvent;
 import dev.ftb.app.services.Services;
 import dev.ftb.app.services.accounts.FtbAccount;
+import dev.ftb.app.services.accounts.FtbTokenClaims;
 import dev.ftb.app.services.accounts.minecraft.MicrosoftOAuthProcess;
 import dev.ftb.app.services.accounts.minecraft.MicrosoftProfile;
 import dev.ftb.app.services.storage.VaultException;
@@ -17,9 +16,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.Base64;
 import java.util.Map;
 
 /// Turns the tokens from a finished browser or device code login into a saved account
@@ -67,25 +64,17 @@ final class LoginFinisher {
     private void finishFtb(FtbFinalToken token) {
         this.working(LoginFlowEvent.LoginStep.SAVING);
         
-        JsonObject claims = readJwtClaims(token.accessToken());
-        String id = claims == null ? null : stringClaim(claims, "sub");
-        if (claims == null || id == null) {
+        FtbTokenClaims claims = FtbTokenClaims.read(token.accessToken());
+        if (claims == null) {
             LOGGER.error("FTB access token had no readable sub claim");
             this.failed("FTB returned an account we couldn't read. Please try again.");
             return;
         }
 
-        String email = stringClaim(claims, "email");
-        String username = stringClaim(claims, "preferred_username");
-        if (username == null) {
-            username = email != null ? email : id;
-        }
-
+        String id = claims.id();
         long now = Instant.now().getEpochSecond();
         var account = new FtbAccount(
-            id,
-            username,
-            email,
+            claims,
             now + token.expiresIn(),
             // I don't think this can actually happen...
             token.refreshExpiresIn() <= 0 ? 0 : now + token.refreshExpiresIn()
@@ -108,7 +97,7 @@ final class LoginFinisher {
             return;
         }
 
-        this.complete(username);
+        this.complete(claims.username());
     }
 
     // Run over the Microsoft flow...
@@ -174,31 +163,5 @@ final class LoginFinisher {
 
     private void failed(String message, @Nullable String errorCode) {
         this.services.rcpApi().sendMessage(LoginFlowEvent.failed(this.provider, this.flowId, message, errorCode));
-    }
-
-    /// Parse and return the raw JTW claims
-    private static @Nullable JsonObject readJwtClaims(String jwt) {
-        String[] parts = jwt.split("\\.");
-        if (parts.length < 2) {
-            return null;
-        }
-
-        try {
-            String payload = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
-            var element = JsonParser.parseString(payload);
-            return element.isJsonObject() ? element.getAsJsonObject() : null;
-        } catch (RuntimeException e) {
-            return null;
-        }
-    }
-
-    private static @Nullable String stringClaim(JsonObject claims, String name) {
-        var value = claims.get(name);
-        if (value == null || !value.isJsonPrimitive()) {
-            return null;
-        }
-
-        String text = value.getAsString();
-        return text.isBlank() ? null : text;
     }
 }

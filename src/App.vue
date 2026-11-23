@@ -17,7 +17,6 @@ import { useAppSettings } from '@/store/appSettingsStore.ts';
 import { useAppStore } from '@/store/appStore.ts';
 import { createLogger } from '@/core/logger.ts';
 import { retrying } from '@/utils/helpers/asyncHelpers.ts';
-import {getOrCreateOauthClient} from "@/utils";
 import {AppNotification} from "@/types.ts";
 import {handleAction} from "@/core/protocol/protocolActions.ts";
 
@@ -109,11 +108,6 @@ async function initAppLoad() {
   ])
   
   lookForNotifications().catch((e) => logger.error(e))
-  
-  // Set this up early so we're not waiting for the user to click
-  getOrCreateOauthClient()
-    .finally(() => accountStore.loadFtbAccount().catch((e) => logger.error(e)))
-    .catch((e) => logger.error(e))
   
   appPlatform.app.getProtocolUrl()
     .then((protocolUrl) => {

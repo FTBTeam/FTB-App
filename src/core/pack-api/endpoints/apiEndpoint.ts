@@ -8,7 +8,7 @@ export class ApiEndpoint {
   ) {
   }
 
-  private async fetch<T>(method: HttpMethod, fetcher: (endpoint: string) => JavaFetch, endpoint: string, baseEndpointOverride?: string) {
+  protected async fetch<T>(method: HttpMethod, endpoint: string, baseEndpointOverride?: string) {
     if (endpoint.startsWith("http")) {
       throw new Error("Endpoint must not start with http");
     }
@@ -20,7 +20,7 @@ export class ApiEndpoint {
     const base = stringIsEmpty(baseEndpointOverride) && stringIsEmpty(this.base) ? '' : `${baseEndpointOverride ?? this.base}/`;    
     const url = `${base}${endpoint}`;
 
-    const req = await fetcher(url)
+    const req = await JavaFetch.modpacksApi(url)
       .method(method)
       .execute();
     
@@ -29,13 +29,5 @@ export class ApiEndpoint {
     }
     
     return req.json<T>();
-  }
-  
-  public async fetchPublic<T>(method: HttpMethod, endpoint: string, baseEndpointOverride?: string) {
-    return this.fetch<T>(method, JavaFetch.modpacksApi, endpoint, baseEndpointOverride);
-  }
-  
-  public async fetchPrivate<T>(method: HttpMethod, endpoint: string, baseEndpointOverride?: string) {
-    return this.fetch<T>(method, JavaFetch.modpacksApiPrivate, endpoint, baseEndpointOverride);
   }
 }

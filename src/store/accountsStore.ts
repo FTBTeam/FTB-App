@@ -1,32 +1,14 @@
 import {defineStore} from 'pinia';
 import {sendMessage} from '@/core/websockets/websocketsApi.ts';
 import {AuthProfile} from '@/core/types/appTypes.ts';
-import {FtbAccountManager} from "@/core/auth/ftbAccountManager.ts";
-import {JWTIdTokenData} from "@/core/auth/jwtIdTokenData";
 import {InstanceActions} from "@/core/actions/instanceActions.ts";
-import {AccountProvider} from "@/core/types/javaApi";
-
-export type FTBAccountData = {
-  preferred_username?: string;
-  name?: string;
-  given_name?: string;
-  family_name?: string;
-  sub: string;
-  email?: string;
-  picture?: string;
-}
+import {AccountProvider, FtbAccount} from "@/core/types/javaApi";
 
 type AccountsState = {
   mcProfiles: AuthProfile[];
   mcActiveProfile: AuthProfile | null;
-  ftbAccount: {
-    accountData: FTBAccountData;
-    idTokenData: JWTIdTokenData | null;
-    token: string;
-  } | null;
-  ftbAccountManager: FtbAccountManager;
-  ftbLoggingIn: boolean;
-  
+  ftbAccounts: FtbAccount[];
+  ftbAccount: FtbAccount | null;
   activeSignInModal: AccountProvider | null;
 }
 
@@ -36,15 +18,14 @@ export const useAccountsStore = defineStore("accounts", {
       mcProfiles: [],
       mcActiveProfile: null,
       activeSignInModal: null,
+      ftbAccounts: [],
       ftbAccount: null,
-      ftbLoggingIn: false,
-      ftbAccountManager: new FtbAccountManager(),
     }
   },
 
   getters: {
     isPremiumMember(s) {
-      return s.ftbAccount && Object.values(s.ftbAccount.idTokenData?.resource_access ?? {}).flatMap(e => e.roles).includes("member:ads")
+      return !!s.ftbAccount && !s.ftbAccount.notLoggedIn && s.ftbAccount.premium
     }
   },
   
@@ -69,23 +50,24 @@ export const useAccountsStore = defineStore("accounts", {
       }
       
       this.mcProfiles = profiles
+
+      this.ftbAccounts = result.ftbAccounts;
+      this.ftbAccount = result.activeFtbAccount ?? null;
     },
-    async loadFtbAccount() {
-      const accountData = await sendMessage("accounts.get-oauth", {});
-      if (!accountData || !accountData.success) {
-        // They're just not logged in
-        return;
-      }
-      
-      this.ftbAccountManager.init(accountData.authData);
+    async removeFtbAccount(id: string) {
+      const result = await sendMessage("profiles.remove", {provider: "FTB", id});
+      await this.ftbAccountChanged();
+      return result.success;
     },
-    async signOutFtb() {
-      this.ftbAccountManager.signOut();
-      this.ftbAccount = null;
-      this.ftbLoggingIn = false;
-      
-      await sendMessage("accounts.sign-out", {});
-      await InstanceActions.clearInstanceCache(false)
+    async setActiveFtbAccount(id: string) {
+      const result = await sendMessage("profiles.setActiveProfile", {provider: "FTB", id});
+      await this.ftbAccountChanged();
+      return result.success;
+    },
+    // Call after an FTB account is added, removed or switched
+    async ftbAccountChanged() {
+      await this.loadProfiles();
+      await InstanceActions.clearInstanceCache(false);
     }
   }
 })

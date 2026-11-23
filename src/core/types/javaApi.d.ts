@@ -394,11 +394,6 @@ export interface DeviceAuthFlowHandlerReply extends BaseData {
     reason?: string;
 }
 
-export interface GetFtbAccountHandlerReply extends PrivateBaseData {
-    success: boolean;
-    authData?: CompleteTokenData;
-}
-
 export interface GetProfilesHandlerReply extends PrivateBaseData {
     profiles: SharableData[];
     activeProfile?: SharableData;
@@ -450,23 +445,6 @@ export interface SetActiveProfileHandlerData extends BaseData {
 
 export interface SetActiveProfileHandlerReply extends PrivateBaseData {
     success: boolean;
-}
-
-export interface SignOutFTBAccountHandlerReply extends BaseData {
-    success: boolean;
-}
-
-export interface StoreFtbAccountHandlerData extends PrivateBaseData {
-    token: string;
-    idToken: string;
-    refreshToken: string;
-    expiresIn: number;
-    refreshExpiresIn: number;
-}
-
-export interface StoreFtbAccountHandlerReply extends StoreFtbAccountHandlerData {
-    success: boolean;
-    completeToken?: CompleteTokenData;
 }
 
 export interface PurgeHandlerData extends BaseData {
@@ -613,17 +591,6 @@ export interface DeviceUserCode {
     expiresAt: number;
 }
 
-export interface CompleteTokenData {
-    token: string;
-    idToken: string;
-    refreshToken: string;
-    expiresIn: number;
-    refreshExpiresIn: number;
-    loggedInAt: number;
-    expiresAt: number;
-    refreshExpiresAt: number;
-}
-
 export interface SharableData {
     uuid: string;
     minecraftName: string;
@@ -635,6 +602,8 @@ export interface FtbAccount {
     id: string;
     username: string;
     email?: string;
+    avatarUrl?: string;
+    premium: boolean;
     accessExpiresAt: number;
     refreshExpiresAt: number;
     notLoggedIn: boolean;

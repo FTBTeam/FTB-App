@@ -12,17 +12,17 @@ export class ModpacksApiSearchEndpoint extends ApiEndpoint {
     const queryUrl = `modpack/search/${limit}/detailed/?term=${query}&platform=${platform}`;
     
     if (platform === "ftb") {
-      return this.fetchPrivate<ListPackSearchResults>("GET", queryUrl);
+      return this.fetch<ListPackSearchResults>("GET", queryUrl);
     } else {
-      return this.fetchPublic<ListPackSearchResults>("GET", queryUrl);
+      return this.fetch<ListPackSearchResults>("GET", queryUrl);
     }
   }
   
   async modSearch(query: string, mcVersion: string, loader: "forge" | "fabric" | "neoforge" | "all", limit = 50) {
-    return this.fetchPublic<StatusResult<{mods: number[], total: number}>>("GET", `mod/search/${mcVersion}/${loader}/${limit}?term=${query}`);
+    return this.fetch<StatusResult<{mods: number[], total: number}>>("GET", `mod/search/${mcVersion}/${loader}/${limit}?term=${query}`);
   }
   
   async modFetch(id: number) {
-    return this.fetchPublic<Mod>("GET", `mod/${id}`);
+    return this.fetch<Mod>("GET", `mod/${id}`);
   }
 }
