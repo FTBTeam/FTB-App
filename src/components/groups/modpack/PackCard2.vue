@@ -4,8 +4,8 @@ import {RouterNames} from '@/router';
 import {SugaredInstanceJson} from '@/core/types/javaApi';
 import ProgressBar from '@/components/ui/ProgressBar.vue';
 import UpdateConfirmModal from '@/components/modals/UpdateConfirmModal.vue';
-import {AppContextController} from '@/core/context/contextController';
-import {ContextMenus} from '@/core/context/contextMenus';
+import {openContextMenu} from '@/core/context/contextMenu';
+import {instanceMenu} from '@/core/context/menus/instanceMenu';
 import {InstanceActions} from '@/core/actions/instanceActions';
 import { watch, ref, onMounted, computed } from 'vue';
 import { useFetchingPack } from '@/components/groups/modpack/useFetchingPack.ts';
@@ -82,11 +82,7 @@ function openInstanceMenu(event: MouseEvent) {
     return;
   }
 
-  AppContextController.openMenu(ContextMenus.INSTANCE_MENU, event, () => {
-    return {
-      instance: instance
-    }
-  });
+  openContextMenu(event, instanceMenu(instance));
 }
 
 const modloader = computed(() => resolveModloader(instance));

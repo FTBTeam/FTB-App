@@ -24,8 +24,8 @@ import {
 import {RecycleScroller} from 'vue-virtual-scroller'
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 import {artworkFileOrElse} from '@/utils/helpers/packHelpers.ts';
-import {AppContextController} from '@/core/context/contextController';
-import {ContextMenus} from "@/core/context/contextMenus.ts";
+import {openContextMenu} from '@/core/context/contextMenu';
+import {runningInstanceMenu} from "@/core/context/menus/runningInstanceOptionsMenu.ts";
 import {InstanceController} from "@/core/controllers/InstanceController.ts";
 
 const logger = createLogger("LaunchingPage.vue");
@@ -235,7 +235,11 @@ function showContextMenu(event: MouseEvent) {
   event.preventDefault()
   event.stopPropagation();
   
-  AppContextController.openMenu(ContextMenus.RUNNING_INSTANCE_OPTIONS_MENU, event, () => ({ instance: instance.value }));
+  if (!instance.value) {
+    return;
+  }
+
+  openContextMenu(event, runningInstanceMenu(instance.value));
 }
 
 async function playAgain() {

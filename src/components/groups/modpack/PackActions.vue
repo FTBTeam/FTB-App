@@ -4,8 +4,8 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import {
   faEllipsisVertical,
 } from '@fortawesome/free-solid-svg-icons';
-import {AppContextController} from "@/core/context/contextController.ts";
-import {ContextMenus} from "@/core/context/contextMenus.ts";
+import {openContextMenu} from "@/core/context/contextMenu.ts";
+import {instanceMenu} from "@/core/context/menus/instanceMenu.ts";
 
 const {
   instance,
@@ -17,9 +17,7 @@ function openMenu(e: MouseEvent) {
   e.stopPropagation()
   e.preventDefault();
 
-  AppContextController.openMenu(ContextMenus.INSTANCE_MENU, e, () => ({
-    instance: instance
-  }))
+  openContextMenu(e, instanceMenu(instance))
 }
 </script>
 

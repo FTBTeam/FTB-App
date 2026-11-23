@@ -1,70 +1,42 @@
 <script lang="ts" setup>
-import {ContextMenu, MenuItem} from '@/core/context/menus/contextMenu';
 import ContextMenuItem from '@/components/groups/global/contextMenu/ContextMenuItem.vue';
 import { useAttachDomEvent } from '@/composables';
-import { nextTick, onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
-import { useAppStore } from '@/store/appStore.ts';
+import { nextTick, ref, useTemplateRef, watch } from 'vue';
+import { closeContextMenu, MenuItem, openedContextMenu, runMenuItem } from '@/core/context/contextMenu';
 
-type ContextMenuEventContext = {
-  context: () => any,
-  menu: ContextMenu<any>,
-  pos: {
-    x: number;
-    y: number;
-  }
-}
-
-const appStore = useAppStore();
-
-const menu = ref<ContextMenu<any> | null>(null);
 const menuX = ref(0);
 const menuY = ref(0);
 
 const openToLeft = ref(false);
-
-const context = ref<(() => any) | null>(null);
 const overflowFix = ref(false);
 
 const elmRef = useTemplateRef("elmRef");
 
 useAttachDomEvent<MouseEvent>('click', handleOutOfClick)
 
-onMounted(() => {
-  appStore.emitter.on("action/context-menu-open", handleMenuOpen as any)
-})
+watch(openedContextMenu, (opened) => {
+  overflowFix.value = false;
+  openToLeft.value = false;
 
-onUnmounted(() => {
-  appStore.emitter.off('action/context-menu-open', handleMenuOpen as any)
+  if (!opened) {
+    menuX.value = 0;
+    menuY.value = 0;
+    return;
+  }
+
+  nextTick(() => placeMenu(opened.pos.x, opened.pos.y));
 })
 
 function handleOutOfClick(event: MouseEvent) {
-  if ((elmRef.value as any).contains(event.target)) {
+  if (!openedContextMenu.value || (elmRef.value as any)?.contains(event.target)) {
     return;
   }
-  
-  handleMenuClose()
+
+  closeContextMenu()
 }
 
-function handleMenuOpen(givenContext: ContextMenuEventContext) {
-  menu.value = givenContext.menu;
-  context.value = givenContext.context;
-
-  nextTick(() => {
-    placeMenu(givenContext.pos.x, givenContext.pos.y);
-  })
-}
-
-function onOptionClick(_: number, __: MenuItem<any>) {
-  handleMenuClose()
-}
-
-function handleMenuClose() {
-  menuX.value = 0;
-  menuY.value = 0;
-  menu.value = null;
-  context.value = null;
-  overflowFix.value = false;
-  openToLeft.value = false;
+function onSelect(item: MenuItem) {
+  runMenuItem(item);
 }
 
 function placeMenu(x: number, y: number) {
@@ -117,11 +89,11 @@ function calculateWidth() {
 <template>
   <div class="context-menu-container">
     <transition name="slide-up">
-      <div class="context-menu rounded-lg" ref="elmRef" v-show="menu" :style="{
+      <div class="context-menu rounded-lg" ref="elmRef" v-show="openedContextMenu" :style="{
         top: menuY + 'px',
         left: menuX + 'px'
       }">
-        <ContextMenuItem v-if="menu && context" :context="context" :open-to-left="openToLeft" @close="handleMenuClose" :overflow-fix="overflowFix" @clicked="onOptionClick" :options="menu.options()" />
+        <ContextMenuItem v-if="openedContextMenu" :open-to-left="openToLeft" :overflow-fix="overflowFix" @select="onSelect" :options="openedContextMenu.items" />
       </div>
     </transition>
   </div>
