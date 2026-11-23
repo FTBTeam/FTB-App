@@ -226,7 +226,6 @@ public class CurseMetadataCache {
                     .setUrl(ModpackApiUtils.getModpacksApi() + "/mod/lookup/" + murmur)
                     .setDest(sw);
             
-            ModpackApiUtils.injectBearerHeader(action);
             action.execute();
 
             FileLookupResponse resp = JsonUtils.parse(GSON, sw.toString(), FileLookupResponse.class);

@@ -63,7 +63,6 @@ public class ModManifest {
                 .setUrl(ModpackApiUtils.getModpacksApi() + "/mod/" + id)
                 .setDest(sw);
         
-        ModpackApiUtils.injectBearerHeader(action);
         action.execute();
 
         return JsonUtils.parse(GSON, sw.toString(), ModManifest.class);

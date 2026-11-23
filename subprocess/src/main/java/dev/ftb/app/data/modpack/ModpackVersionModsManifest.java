@@ -49,7 +49,6 @@ public class ModpackVersionModsManifest {
                 .setUrl(url)
                 .setDest(sw);
         
-        ModpackApiUtils.injectBearerHeader(action);
         action.execute();
 
         return JsonUtils.parse(GSON, sw.toString(), ModpackVersionModsManifest.class);

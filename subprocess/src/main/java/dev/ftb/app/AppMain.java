@@ -167,9 +167,12 @@ public class AppMain {
             LOGGER.info(flags.isDev() ? "Development mode" : "No PID args specified");
         }
         
-        // TODO: Move to a service, load into http service for the token.
-        // TODO: Attach account switching to switch the active token and refresh systems that rely on it.
-        ModpackApiUtils.loadPrivateToken(this.services.storage());
+        // Keycloak ends offline sessions that go unused for too long, we should try and refresh them on start up
+        CompletableFuture.runAsync(() -> this.services.accounts().ftb().refreshAll(), this.services.threads().taskPool())
+            .exceptionally(e -> {
+                LOGGER.error("Failed to refresh the FTB accounts at startup", e);
+                return null;
+            });
 
         try {
             WebsocketServer.PortMode portMode;

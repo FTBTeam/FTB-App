@@ -5,7 +5,6 @@ import dev.ftb.app.api.data.other.RequestInstanceRefresh;
 import dev.ftb.app.api.handlers.IMessageHandler;
 import dev.ftb.app.api.handlers.MessageContext;
 import dev.ftb.app.services.storage.VaultException;
-import dev.ftb.app.util.ModpackApiUtils;
 import org.slf4j.Logger;
 
 public class SignOutFTBAccountHandler implements IMessageHandler<BaseData> {
@@ -20,7 +19,6 @@ public class SignOutFTBAccountHandler implements IMessageHandler<BaseData> {
             LOGGER.error("Failed to remove FTB account from vault", e);
         }
         
-        ModpackApiUtils.API_TOKEN = null;
         context.reply(new Reply(data));
         context.reply(new RequestInstanceRefresh());
     }

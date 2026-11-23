@@ -49,7 +49,8 @@ async function removeProfile(profile: AuthProfile) {
   try {
     logger.debug(`Removing profile ${profile.uuid}`)
     const data = await sendMessage("profiles.remove", {
-      uuid: profile.uuid
+      provider: "MICROSOFT",
+      id: profile.uuid
     })
     
     if (data.success) {
@@ -69,7 +70,8 @@ async function setActiveProfile(profile: AuthProfile) {
   try {
     logger.debug(`Setting active profile ${profile.uuid}`)
     const data = await sendMessage("profiles.setActiveProfile", {
-      uuid: profile.uuid
+      provider: "MICROSOFT",
+      id: profile.uuid
     })
 
     if (data.success) {

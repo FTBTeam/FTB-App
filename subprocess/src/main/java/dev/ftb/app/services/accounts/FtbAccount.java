@@ -10,8 +10,8 @@ public class FtbAccount {
     private final String username;
     private final @Nullable String email;
     
-    private final long accessExpiresAt;
-    private final long refreshExpiresAt;
+    private long accessExpiresAt;
+    private long refreshExpiresAt;
 
     private boolean notLoggedIn = false;
     
@@ -45,6 +45,11 @@ public class FtbAccount {
 
     public boolean isNotLoggedIn() {
         return notLoggedIn;
+    }
+    
+    public void refreshed(long accessExpiresAt, long refreshExpiresAt) {
+        this.accessExpiresAt = accessExpiresAt;
+        this.refreshExpiresAt = refreshExpiresAt;
     }
 
     /// Used when the tokens are lost or can no longer be refreshed, so the user is asked to log in again.

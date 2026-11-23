@@ -1,5 +1,6 @@
 package dev.ftb.app.services;
 
+import dev.ftb.app.services.accounts.ApiTokenSource;
 import com.google.common.base.Suppliers;
 import dev.ftb.app.AppFlags;
 import dev.ftb.app.Constants;
@@ -31,6 +32,8 @@ public class AppHttp {
     
     private final LongSupplier speedLimit;
     
+    private volatile ApiTokenSource modpackApiTokens = ApiTokenSource.NONE;
+    
     public AppHttp(AppFlags flags, LongSupplier speedLimit) {
         this.flags = flags;
         this.speedLimit = speedLimit;
@@ -55,7 +58,9 @@ public class AppHttp {
             .addInterceptor(new MultiHasherInterceptor())
             .addInterceptor(chain -> chain.proceed(chain.request().newBuilder().tag(Throttler.class, getClientThrottler()).build()))
             .addInterceptor(new ThrottlerInterceptor())
-            .addInterceptor(chain -> chain.proceed(chain.request().newBuilder().header("User-Agent", this.userAgent.get()).build()));
+            .addInterceptor(chain -> chain.proceed(chain.request().newBuilder().header("User-Agent", this.userAgent.get()).build()))
+            // Last, so the logger above never sees the token
+            .addInterceptor(new ModpackApiAuthInterceptor(Constants.FTB_MODPACKS_API, () -> this.modpackApiTokens));
 
         SSLUtils.inject(builder);
         ProxyUtils.inject(builder);
@@ -82,6 +87,10 @@ public class AppHttp {
             case HTTP_2 -> this.httpClientV2;
             default -> throw new IllegalArgumentException("Unsupported protocol: " + protocol);
         };
+    }
+
+    public void setModpackApiTokens(ApiTokenSource tokens) {
+        this.modpackApiTokens = tokens;
     }
 
     public Supplier<String> userAgent() {

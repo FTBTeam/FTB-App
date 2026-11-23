@@ -402,6 +402,8 @@ export interface GetFtbAccountHandlerReply extends PrivateBaseData {
 export interface GetProfilesHandlerReply extends PrivateBaseData {
     profiles: SharableData[];
     activeProfile?: SharableData;
+    ftbAccounts: FtbAccount[];
+    activeFtbAccount?: FtbAccount;
 }
 
 export interface OAuthFlowCancelHandlerData extends BaseData {
@@ -433,15 +435,17 @@ export interface RefreshAuthenticationProfileHandlerReply extends PrivateBaseDat
 }
 
 export interface RemoveProfileHandlerData extends BaseData {
-    uuid: string;
+    provider: AccountProvider;
+    id: string;
 }
 
-export interface RemoveProfileHandlerReply extends RemoveProfileHandlerData {
+export interface RemoveProfileHandlerReply extends BaseData {
     success: boolean;
 }
 
 export interface SetActiveProfileHandlerData extends BaseData {
-    uuid: string;
+    provider: AccountProvider;
+    id: string;
 }
 
 export interface SetActiveProfileHandlerReply extends PrivateBaseData {
@@ -624,6 +628,15 @@ export interface SharableData {
     uuid: string;
     minecraftName: string;
     skinUrl: string;
+    notLoggedIn: boolean;
+}
+
+export interface FtbAccount {
+    id: string;
+    username: string;
+    email?: string;
+    accessExpiresAt: number;
+    refreshExpiresAt: number;
     notLoggedIn: boolean;
 }
 

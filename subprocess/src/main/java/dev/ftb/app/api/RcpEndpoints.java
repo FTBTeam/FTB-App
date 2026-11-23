@@ -51,7 +51,7 @@ public class RcpEndpoints {
 
         register("accounts.oauth.start", OAuthFlowStartHandler.Data.class, new OAuthFlowStartHandler());
         register("accounts.oauth.cancel", OAuthFlowCancelHandler.Data.class, new OAuthFlowCancelHandler());
-        register("accounts.device.flow", DeviceAuthFlowHandler.Data.class, new DeviceAuthFlowHandler());. 
+        register("accounts.device.flow", DeviceAuthFlowHandler.Data.class, new DeviceAuthFlowHandler());
         
         register("profiles.get", BaseData.class, new GetProfilesHandler());
         register("profiles.remove", RemoveProfileHandler.Data.class, new RemoveProfileHandler());

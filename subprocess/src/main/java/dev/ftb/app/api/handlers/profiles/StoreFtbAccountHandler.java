@@ -6,7 +6,6 @@ import dev.ftb.app.api.data.other.RequestInstanceRefresh;
 import dev.ftb.app.api.handlers.IMessageHandler;
 import dev.ftb.app.api.handlers.MessageContext;
 import dev.ftb.app.services.storage.VaultException;
-import dev.ftb.app.util.ModpackApiUtils;
 import dev.ftb.app.util.ReleaseBlocking;
 import org.jspecify.annotations.Nullable;
 
@@ -19,8 +18,6 @@ public class StoreFtbAccountHandler implements IMessageHandler<StoreFtbAccountHa
         
         completeToken.token = data.token;
         completeToken.idToken = data.idToken;
-        // Update the API token
-        ModpackApiUtils.API_TOKEN = data.token;
         completeToken.refreshToken = data.refreshToken;
         completeToken.expiresIn = data.expiresIn;
         completeToken.refreshExpiresIn = data.refreshExpiresIn;

@@ -136,8 +136,6 @@ public class ModpackVersionManifest {
                 .setUrl(url)
                 .setDest(sw);
         
-        ModpackApiUtils.injectBearerHeader(action);
-        
         action.execute();
 
         ModpackVersionManifest manifest = JsonUtils.parse(GSON, sw.toString(), ModpackVersionManifest.class);
@@ -154,8 +152,6 @@ public class ModpackVersionManifest {
         Request.Builder builder = new Request.Builder()
                 .url(ModpackApiUtils.getModpacksApi() + "/curseforge/import")
                 .put(RequestBody.create(inputData, MediaType.parse("application/json; charset=utf-8")));
-        
-        ModpackApiUtils.injectBearerHeader(builder);
         
         try (Response response = http.httpClient().newCall(builder.build()).execute()) {
             ResponseBody body = response.body();

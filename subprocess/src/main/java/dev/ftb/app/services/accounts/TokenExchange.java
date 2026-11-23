@@ -228,6 +228,55 @@ public abstract class TokenExchange<T> {
         }
     }
 
+    /// Swaps a refresh token for new tokens. Makes exactly one request.
+    public RefreshResult<T> refresh(String refreshToken) {
+        var request = new Request.Builder()
+            .url(tokenUrl)
+            .header("Accept", "application/json")
+            .post(new FormBody.Builder()
+                .add("grant_type", "refresh_token")
+                .add("client_id", clientId)
+                .add("refresh_token", refreshToken)
+                .build())
+            .build();
+
+        try (Response response = appHttp.httpClient().newCall(request).execute()) {
+            JsonObject json = readJson(response);
+
+            if (!response.isSuccessful()) {
+                var error = toProviderError(response.code(), json);
+
+                // Revoked, expired, or the session behind it has ended. The user needs to sign in
+                if ("invalid_grant".equals(error.error())) {
+                    logger.warn("{} rejected a refresh token: {}", providerName, error);
+                    return new RefreshResult.Rejected<>(error);
+                }
+                
+                logger.error("Failed to refresh a {} token: {}", providerName, error);
+                return new RefreshResult.Unavailable<>(describe(error));
+            }
+
+            if (json == null) {
+                return new RefreshResult.Unavailable<>("empty or unreadable response");
+            }
+
+            if (!json.has("refresh_token")) {
+                json.addProperty("refresh_token", refreshToken);
+            }
+
+            T token = gson.fromJson(json, tokenType);
+            if (!isTokenValid(token)) {
+                logger.error("{} refresh response was missing fields: {}", providerName, json.keySet());
+                return new RefreshResult.Unavailable<>("incomplete token response");
+            }
+
+            return new RefreshResult.Refreshed<>(token);
+        } catch (IOException | JsonParseException e) {
+            logger.warn("Failed to refresh a {} token: {}", providerName, e.toString());
+            return new RefreshResult.Unavailable<>(e.toString());
+        }
+    }
+
     /// The form sent to the device code endpoint. Override if a provider needs more than the RFC's fields.
     protected FormBody initiateBody() {
         return new FormBody.Builder()
@@ -313,5 +362,11 @@ public abstract class TokenExchange<T> {
         record Failed<T>(String message, @Nullable ProviderError detail) implements PollState<T> {}
     }
     
+    public sealed interface RefreshResult<T> {
+        record Refreshed<T>(T token) implements RefreshResult<T> {} // It refreshed, we got new tokens
+        record Rejected<T>(ProviderError detail) implements RefreshResult<T> {} // Needs a new sign-in
+        record Unavailable<T>(String reason) implements RefreshResult<T> {} // Something failed.
+    }
+
     public record ProviderError(int httpStatus, @Nullable String error, @Nullable String description, @Nullable List<Long> codes) {}
 }

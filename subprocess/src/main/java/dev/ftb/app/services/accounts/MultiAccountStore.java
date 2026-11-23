@@ -211,6 +211,12 @@ public abstract class MultiAccountStore<T, I, K extends Enum<K> & AccountTokenKe
         }
     }
 
+    /// Acts like [#token] but will actually throw if the vault is for some reason not working. 
+    @Nullable
+    protected String readToken(I id, K key) throws VaultException {
+        return this.vault.get(this.tokenKey(id, key));
+    }
+
     private void removeTokens(I id) {
         try {
             for (K key : EnumSet.allOf(this.tokenKeyType)) {

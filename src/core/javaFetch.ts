@@ -3,7 +3,6 @@ import {MessageRaw, Nullable, sendMessage} from '@/core/websockets/websocketsApi
 import {WebRequestData} from '@/core/types/javaApi';
 import {createLogger} from '@/core/logger';
 import { constants } from '@/core/constants';
-import {useAccountsStore} from "@/store/accountsStore.ts";
 
 interface FetchResponseRaw {
   status: string;
@@ -89,13 +88,7 @@ export class JavaFetch {
   }
   
   public static modpacksApiPrivate(endpoint: string) {
-    const javaFetch = JavaFetch.create(constants.modpacksApi + "/" + endpoint);
-    // Inject the authoization header
-    const accountStore = useAccountsStore();
-    if (accountStore.ftbAccount && accountStore.ftbAccount.token) {
-      javaFetch.header("Authorization", `Bearer ${accountStore.ftbAccount.token}`);
-    }
-    return javaFetch
+    return JavaFetch.create(constants.modpacksApi + "/" + endpoint);
   }
   
   //#endregion

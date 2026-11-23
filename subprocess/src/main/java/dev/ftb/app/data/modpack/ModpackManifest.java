@@ -51,8 +51,6 @@ public class ModpackManifest {
                 .setUrl(url)
                 .setDest(sw);
         
-        ModpackApiUtils.injectBearerHeader(action);
-        
         action.execute();
 
         ModpackManifest manifest = JsonUtils.parse(GSON, sw.toString(), ModpackManifest.class);
