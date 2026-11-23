@@ -10,6 +10,8 @@ type AccountsState = {
   ftbAccounts: FtbAccount[];
   ftbAccount: FtbAccount | null;
   activeSignInModal: AccountProvider | null;
+  // Set when signing a known account back in, so the provider can skip asking which account to use
+  signInAccountId: string | null;
 }
 
 export const useAccountsStore = defineStore("accounts", {
@@ -18,6 +20,7 @@ export const useAccountsStore = defineStore("accounts", {
       mcProfiles: [],
       mcActiveProfile: null,
       activeSignInModal: null,
+      signInAccountId: null,
       ftbAccounts: [],
       ftbAccount: null,
     }
@@ -30,20 +33,22 @@ export const useAccountsStore = defineStore("accounts", {
   },
   
   actions: {
-    openSignIn(provider: AccountProvider | null = 'MICROSOFT') {
+    openSignIn(provider: AccountProvider | null = 'MICROSOFT', accountId: string | null = null) {
       this.activeSignInModal = provider;
+      this.signInAccountId = provider ? accountId : null;
     },
     async loadProfiles() {
       const result = await sendMessage("profiles.get", {});
 
       const profiles = result.profiles.map(
-        (a) => ({username: a.minecraftName, uuid: a.uuid} as AuthProfile),
+        (a) => ({username: a.minecraftName, uuid: a.uuid, notLoggedIn: a.notLoggedIn} as AuthProfile),
       );
       
       if (result.activeProfile) {
         this.mcActiveProfile = {
           username: result.activeProfile.minecraftName,
           uuid: result.activeProfile.uuid,
+          notLoggedIn: result.activeProfile.notLoggedIn,
         };
       } else {
         this.mcActiveProfile = null;

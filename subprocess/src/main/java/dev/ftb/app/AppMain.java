@@ -1,5 +1,6 @@
 package dev.ftb.app;
 
+import dev.ftb.app.api.data.accounts.AccountsChangedEvent;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import dev.ftb.app.api.WebsocketServer;
@@ -169,6 +170,7 @@ public class AppMain {
         
         // Keycloak ends offline sessions that go unused for too long, we should try and refresh them on start up
         CompletableFuture.runAsync(() -> this.services.accounts().ftb().refreshAll(), this.services.threads().taskPool())
+            .thenRun(() -> this.services.rcpApi().sendMessage(new AccountsChangedEvent()))
             .exceptionally(e -> {
                 LOGGER.error("Failed to refresh the FTB accounts at startup", e);
                 return null;

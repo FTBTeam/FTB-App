@@ -25,10 +25,13 @@ const stepLabels: Record<LoginStep, string> = {
 
 const {
   open,
-  accountType
+  accountType,
+  accountId = null
 } = defineProps<{
   accountType: AccountProvider
   open: boolean,
+  // The account being signed back in, if any
+  accountId?: string | null,
 }>()
 
 const emit = defineEmits<{
@@ -136,7 +139,7 @@ function close() {
 
     <template v-if="phase === 'choose'">
       <DeviceAuthModal2 :provider="accountType" v-if="selectedType === 'device'" @started="onStarted" @completed="onDeviceCompleted" />
-      <OAuthFlowModel :provider="accountType" v-if="selectedType === 'oauth'" @started="onStarted" />
+      <OAuthFlowModel :provider="accountType" :account-id="accountId" v-if="selectedType === 'oauth'" @started="onStarted" />
     </template>
 
     <div v-if="phase === 'working'" class="bg-black/30 rounded-lg p-4 flex gap-4 items-center">

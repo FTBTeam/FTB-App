@@ -5,7 +5,7 @@ import {createLogger} from '@/core/logger';
 import {ref, useTemplateRef} from 'vue';
 import { useAccountsStore } from '@/store/accountsStore.ts';
 import { AuthProfile } from '@/core/types/appTypes.ts';
-import { FtbAccount } from '@/core/types/javaApi';
+import { AccountProvider, FtbAccount } from '@/core/types/javaApi';
 import {faCog, faExternalLink, faPlus} from '@fortawesome/free-solid-svg-icons';
 import {Popover, UiButton} from "@/components/ui";
 import {useAttachDomEvent} from "@/composables";
@@ -119,9 +119,16 @@ async function setActiveFtbAccount(account: FtbAccount) {
   loading.value = false;
 }
 
+const signedOutText = 'Signed out, click to sign in again';
+
+function signInAgain(provider: AccountProvider, accountId: string) {
+  closeMenu();
+  accountsStore.openSignIn(provider, accountId);
+}
+
 function ftbSubtext(account: FtbAccount) {
   if (account.notLoggedIn) {
-    return 'Signed out, please sign in again';
+    return signedOutText;
   }
 
   return account.premium ? '❤️ Premium member' : undefined;
@@ -174,8 +181,8 @@ function closeMenu() {
                   avatarUrl: getMinecraftHead(accountsStore.mcActiveProfile.uuid)
                 }"
             :on-delete="() => removeProfile(accountsStore.mcActiveProfile!)"
-            :on-select="() => {}"
-            subtext="//todo: Add auth status"
+            :on-select="() => accountsStore.mcActiveProfile!.notLoggedIn && signInAgain('MICROSOFT', accountsStore.mcActiveProfile!.uuid)"
+            :subtext="accountsStore.mcActiveProfile.notLoggedIn ? signedOutText : 'Signed in'"
             :active="true" />
         </section>
         
@@ -190,7 +197,8 @@ function closeMenu() {
                   avatarUrl: getMinecraftHead(item.uuid)
                 }" 
                 :on-delete="() => removeProfile(item)" 
-                :on-select="() => setActiveProfile(item)"
+                :on-select="() => item.notLoggedIn ? signInAgain('MICROSOFT', item.uuid) : setActiveProfile(item)"
+                :subtext="item.notLoggedIn ? signedOutText : undefined"
                 :active="accountsStore.mcActiveProfile?.uuid === item.uuid" />
             </template>
           </div>
@@ -219,7 +227,7 @@ function closeMenu() {
                                 :subtext="ftbSubtext(account)"
                                 :active="account.id === accountsStore.ftbAccount?.id"
                                 :on-delete="() => removeFtbAccount(account)"
-                                :on-select="() => setActiveFtbAccount(account)" />
+                                :on-select="() => account.notLoggedIn ? signInAgain('FTB', account.id) : setActiveFtbAccount(account)" />
             
             <a href="https://account.feed-the-beast.com" target="_blank"><UiButton :icon="faExternalLink">Go to accounts page</UiButton></a>
           </div>

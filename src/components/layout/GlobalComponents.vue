@@ -18,7 +18,7 @@ const accountStore = useAccountsStore();
     <content-menu-global/>
     <ImagePreview/>
 
-    <SigninModal :open="accountStore.activeSignInModal !== null" :account-type="accountStore.activeSignInModal ?? 'MICROSOFT'" @closed="() => accountStore.openSignIn(null)"/>
+    <SigninModal :open="accountStore.activeSignInModal !== null" :account-type="accountStore.activeSignInModal ?? 'MICROSOFT'" :account-id="accountStore.signInAccountId" @closed="() => accountStore.openSignIn(null)"/>
 
     <!-- Only checks for an update once during startup -->
     <changelog/>

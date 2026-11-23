@@ -2,6 +2,7 @@ export interface AuthProfile {
   username: string;
   uuid: string;
   avatar?: string;
+  notLoggedIn?: boolean;
 }
 
 export interface ModPack {

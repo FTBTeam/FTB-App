@@ -122,6 +122,10 @@ function refreshHandler(data: any) {
     logger.info("Refreshing instances per request")
     instanceStore.loadInstances();
   }
+
+  if (data?.type === "event.accounts.changed") {
+    accountStore.loadProfiles().catch((e) => logger.error(e));
+  }
 }
 
 async function checkForFirstRun() {

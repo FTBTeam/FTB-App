@@ -67,7 +67,8 @@ public abstract class TokenExchange<T> {
     /// @param challenge   `base64url(sha256(verifier))`, the verifier itself is only sent in [#exchangeCodeForTokens]
     /// @param redirectUri the plain (not URL-encoded) loopback URI, this encodes it
     /// @param prompt      whether the provider should let the user pick an account, see [AccountPrompt]
-    public String authorizeUrl(String state, String challenge, String redirectUri, AccountPrompt prompt) {
+    /// @param loginHint   the username or email of the account being signed back in, pre-filled on the sign in page
+    public String authorizeUrl(String state, String challenge, String redirectUri, AccountPrompt prompt, @Nullable String loginHint) {
         var url = HttpUrl.get(authorizeUrl).newBuilder()
             .addQueryParameter("client_id", clientId)
             .addQueryParameter("response_type", "code")
@@ -79,6 +80,10 @@ public abstract class TokenExchange<T> {
 
         if (prompt == AccountPrompt.CHOOSE_ACCOUNT) {
             url.addQueryParameter("prompt", chooseAccountPrompt());
+        }
+
+        if (loginHint != null) {
+            url.addQueryParameter("login_hint", loginHint);
         }
 
         return url.build().toString();

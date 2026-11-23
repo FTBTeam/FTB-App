@@ -4,6 +4,8 @@ import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.api.data.accounts.LoginFlowEvent;
 import dev.ftb.app.api.handlers.IMessageHandler;
 import dev.ftb.app.api.handlers.MessageContext;
+import dev.ftb.app.services.Services;
+import dev.ftb.app.services.accounts.FtbAccount;
 import dev.ftb.app.services.accounts.LocalLoopback;
 import dev.ftb.app.services.accounts.TokenExchange;
 import dev.ftb.app.structs.accounts.AccountProvider;
@@ -47,7 +49,7 @@ public class OAuthFlowStartHandler implements IMessageHandler<OAuthFlowStartHand
         // If one doesn't exist, try and create it
         Result<LocalLoopback, String> loopbackResult = LocalLoopback.start(state, Duration.of(5, ChronoUnit.MINUTES));
         if (loopbackResult.isErr()) {
-            context.reply(Reply.error(data, "Unable to loopbackResult the local server due to %s".formatted(loopbackResult.unwrapErr())));
+            context.reply(Reply.error(data, "Couldn't start the local sign in server (%s). Please try again.".formatted(loopbackResult.unwrapErr())));
             return;
         }
 
@@ -58,7 +60,9 @@ public class OAuthFlowStartHandler implements IMessageHandler<OAuthFlowStartHand
         var holder = new LoopbackHolder(loopback, state, verifier, loopback.redirectUri());
         listeners.put(data.provider, holder);
         
-        String url = exchange.authorizeUrl(state, challenge, loopback.redirectUri(), TokenExchange.AccountPrompt.CHOOSE_ACCOUNT);
+        String url = data.accountId != null
+            ? exchange.authorizeUrl(state, challenge, loopback.redirectUri(), TokenExchange.AccountPrompt.REUSE_SESSION, loginHint(context.services(), data.provider, data.accountId))
+            : exchange.authorizeUrl(state, challenge, loopback.redirectUri(), TokenExchange.AccountPrompt.CHOOSE_ACCOUNT, null);
         
         // A success is the URL being returned
         context.reply(Reply.success(data, url, state));
@@ -103,6 +107,20 @@ public class OAuthFlowStartHandler implements IMessageHandler<OAuthFlowStartHand
                 LoginFinisher.finish(services, data.provider, state, tokens.unwrap());
             }, services.threads().messageHandlerPool());
     }
+    
+    private static @Nullable String loginHint(Services services, AccountProvider provider, String accountId) {
+        if (provider == AccountProvider.FTB) {
+            FtbAccount account = services.accounts().ftb().get(accountId);
+            if (account == null) {
+                return null;
+            }
+
+            return account.getEmail() != null ? account.getEmail() : account.getUsername();
+        }
+
+        // Minecraft profiles don't keep the Microsoft account's email, and the Minecraft name isn't a Microsoft login
+        return null;
+    }
 
     private static String randomUrlSafe(int bytes) {
         byte[] buf = new byte[bytes];
@@ -116,6 +134,8 @@ public class OAuthFlowStartHandler implements IMessageHandler<OAuthFlowStartHand
     
     public static class Data extends BaseData {
         public AccountProvider provider;
+        /// Set when signing a known account back in. A UUID for Microsoft, the account's `sub` for FTB.
+        public @Nullable String accountId;
     }
     
     public static class Reply extends BaseData {

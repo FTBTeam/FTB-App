@@ -10,6 +10,9 @@ export interface PrivateBaseData extends BaseData {
     notViableForLogging: boolean;
 }
 
+export interface AccountsChangedEvent extends BaseData {
+}
+
 export interface LoginFlowEvent extends BaseData {
     provider: AccountProvider;
     flowId: string;
@@ -411,6 +414,7 @@ export interface OAuthFlowCancelHandlerReply extends BaseData {
 
 export interface OAuthFlowStartHandlerData extends BaseData {
     provider: AccountProvider;
+    accountId?: string;
 }
 
 export interface OAuthFlowStartHandlerReply extends BaseData {

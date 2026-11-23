@@ -12,9 +12,12 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 const {
-  provider
+  provider,
+  accountId = null
 } = defineProps<{
   provider: AccountProvider
+  // The account being signed back in, if any
+  accountId?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -51,7 +54,8 @@ async function startFlow() {
   loading.value = true;
   try {
     const result = await sendMessage('accounts.oauth.start', {
-      provider: provider
+      provider: provider,
+      ...(accountId ? {accountId} : {})
     })
     
     if (unmounted) {
