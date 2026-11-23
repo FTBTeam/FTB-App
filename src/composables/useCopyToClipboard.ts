@@ -9,6 +9,7 @@ export function useCopyToClipboard() {
   function copy(text: string) {
     alertController.success("Copied to clipboard!")
     appPlatform.cb.copy(text)
+    copied.value = true
     if (timeoutRef.value !== null) {
       clearTimeout(timeoutRef.value)
     }

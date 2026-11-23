@@ -100,7 +100,7 @@ async function startFlow() {
     
     <div class="flex gap-2 mt-4 mb-10">
       <UiButton @click="appPlatform.utils.openUrl(redirectUri)" :icon="faExternalLink">Open again</UiButton>
-      <UiButton :icon="faCopy">Copy Link</UiButton>
+      <UiButton :icon="faCopy" @click="appPlatform.cb.copy(redirectUri)">Copy Link</UiButton>
     </div>
     
     <Message type="warning" :icon="faClock">
