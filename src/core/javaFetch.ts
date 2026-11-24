@@ -1,48 +1,31 @@
 import {HttpMethod} from '@/core/types/commonTypes';
 import {MessageRaw, Nullable, sendMessage} from '@/core/websockets/websocketsApi';
-import {WebRequestData} from '@/core/types/javaApi';
+import {WebRequestData, WebRequestDataResponse} from '@/core/types/javaApi';
 import {createLogger} from '@/core/logger';
 import { constants } from '@/core/constants';
 
-interface FetchResponseRaw {
-  status: string;
-  statusMessage: string;
-  statusCode: number;
-  statusLine: string;
-  headers: Record<string, string[]>;
-  body: {
-    contentType: string;
-    bytes: Uint8Array;
-  }
+type FetchResponseBody = {
+  contentType: string;
+  bytes: number[];
 }
 
-class FetchResponse implements FetchResponseRaw {
-  status: string;
-  statusMessage: string;
-  statusCode: number;
-  statusLine: string;
-  headers: Record<string, string[]>;
-  body: {
-    contentType: string;
-    bytes: Uint8Array;
-  }
+class FetchResponse {
+  constructor(
+    readonly status: string,
+    readonly statusCode: number,
+    readonly headers: Record<string, string[]>,
+    readonly statusMessage?: string,
+    readonly statusLine?: string,
+    readonly body?: FetchResponseBody,
+  ) {}
   
-  constructor(status: string, statusMessage: string, statusCode: number, statusLine: string, headers: Record<string, string[]>, body: { contentType: string; bytes: Uint8Array }) {
-    this.status = status;
-    this.statusMessage = statusMessage;
-    this.statusCode = statusCode;
-    this.statusLine = statusLine;
-    this.headers = headers;
-    this.body = body;
-  }
-  
-  public static of(data: FetchResponseRaw) {
+  public static of(data: WebRequestDataResponse) {
     return new FetchResponse(
       data.status,
-      data.statusMessage,
       data.statusCode,
-      data.statusLine,
       data.headers,
+      data.statusMessage,
+      data.statusLine,
       data.body
     )
   }
@@ -60,7 +43,7 @@ class FetchResponse implements FetchResponseRaw {
   }
   
   public raw(): Uint8Array {
-    return this.body.bytes as Uint8Array
+    return new Uint8Array(this.body?.bytes ?? [])
   }
 }
 

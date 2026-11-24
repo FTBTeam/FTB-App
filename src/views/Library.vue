@@ -121,7 +121,7 @@ const sortedInstances = computed(() => {
 
   return instanceStore.instances.sort((a, b) => {
     if (a[sortKey] === b[sortKey]) return 0;
-    if (a[sortKey] > b[sortKey]) return sortDirection === 'asc' ? 1 : -1;
+    if (a[sortKey]! > b[sortKey]!) return sortDirection === 'asc' ? 1 : -1;
     
     return sortDirection === 'asc' ? -1 : 1;
   });
@@ -147,7 +147,7 @@ const groupedPacks = computed(() => {
         groupKey = instance.mcVersion;
         break;
       default:
-        groupKey = categories[instance.categoryId] || categories[defaultInstanceCategory] || "Uncategorized";
+        groupKey = categories[instance.categoryId ?? defaultInstanceCategory] || categories[defaultInstanceCategory] || "Uncategorized";
         break;
     }
 

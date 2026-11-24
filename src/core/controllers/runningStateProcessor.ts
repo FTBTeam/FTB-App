@@ -42,7 +42,7 @@ async function onLaunchData(data: any) {
       totalSteps: typedData.totalSteps,
       step: typedData.step,
       progress: typedData.stepProgress,
-      progressHuman: typedData.stepProgressHuman,
+      progressHuman: typedData.stepProgressHuman ?? "",
     })
   }
 

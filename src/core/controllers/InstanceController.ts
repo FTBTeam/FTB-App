@@ -29,7 +29,7 @@ export type SaveJson = {
   instanceImage?: string;
   preventMetaModInjection?: boolean;
   preventMetaAgentInjection?: boolean;
-  categoryId: string;
+  categoryId?: string;
   locked: boolean;
   shellArgs: string;
 }
@@ -157,7 +157,7 @@ export class InstanceController {
     })
 
     if (result.status === "success") {
-      instancesStore.updateInstance(result.instanceJson)
+      instancesStore.updateInstance(result.instanceJson!)
       return result;
     }
 
@@ -225,7 +225,7 @@ export class InstanceController {
     }
     
     const instanceStore = useInstanceStore();
-    instanceStore.addInstance(result.instance)
+    instanceStore.addInstance(result.instance!)
     
     return true;
   }

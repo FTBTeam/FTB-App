@@ -141,7 +141,9 @@ function onModUpdateEvent(data: BaseData & any) {
 
   const typedPayload = data as UpdateAvailable;
   
-  modUpdates.value[typedPayload.file.sha1] = [typedPayload.file, typedPayload.update];
+  if (typedPayload.file.sha1) {
+    modUpdates.value[typedPayload.file.sha1] = [typedPayload.file, typedPayload.update];
+  }
   modUpdatesAvailableKeys.value = Object.keys(modUpdates.value);
 }
 
@@ -159,7 +161,9 @@ async function updateMod(key: string) {
 
   if (result.status === "success" || result.status === "processing") {
     if (result.status === "processing") {
-      updatingModPacketToShas.value[result.requestId] = mod.sha1;
+      if (mod.sha1) {
+        updatingModPacketToShas.value[result.requestId] = mod.sha1;
+      }
       updatingModShas.value.push(key);
     } else {
       await getModList(false) // This isn't really something that happens
@@ -199,6 +203,10 @@ function updateAll() {
 }
 
 async function toggleMod(file: ModInfo) {
+  if (!file.sha1) {
+    return;// This shouldn't be possible but migrations are fun.
+  }
+  
   togglingShas.value.push(file.sha1)
   try {
     const toggleQuery = await sendMessage("instanceModToggle", {
@@ -297,13 +305,13 @@ const installedMods = computed<[number, number][]>(() => {
           </div>
           
           <div class="meta flex gap-6 items-center">
-            <div class="update" v-if="!instance.locked && modUpdatesAvailableKeys.includes(item.sha1) && !updatingModShas.includes(item.sha1)" :aria-label="`Update available (${modUpdates[item.sha1][0].fileName} -> ${modUpdates[item.sha1][1].name})`" data-balloon-pos="down-right" @click="updateMod(item.sha1)">
+            <div class="update" v-if="!instance.locked && modUpdatesAvailableKeys.includes(item.sha1 ?? '') && !updatingModShas.includes(item.sha1 ?? '')" :aria-label="`Update available (${modUpdates[item.sha1!][0].fileName} -> ${modUpdates[item.sha1!][1].name})`" data-balloon-pos="down-right" @click="updateMod(item.sha1!)">
               <FontAwesomeIcon :icon="faDownload" :fixed-width="true" />
             </div>
-            <div class="updating" v-if="!instance.locked && updatingModShas.includes(item.sha1)">
+            <div class="updating" v-if="!instance.locked && updatingModShas.includes(item.sha1 ?? '')">
               <FontAwesomeIcon :spin="true" :icon="faCircleNotch" :fixed-width="true" />
             </div>
-            <ui-toggle class="mr-1" :use-model="false" v-if="item.fileName !== ''"  @input="() => toggleMod(item)" :value="item.enabled" :disabled="togglingShas.includes(item.sha1)" />
+            <ui-toggle class="mr-1" :use-model="false" v-if="item.fileName !== ''"  @input="() => toggleMod(item)" :value="item.enabled" :disabled="togglingShas.includes(item.sha1 ?? '')" />
           </div>
         </div>
       </recycle-scroller>

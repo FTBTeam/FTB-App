@@ -80,7 +80,7 @@ onMounted(async () => {
     if (!javas.javas.find((e) => e.path === instance.jrePath)) {
       jreSelection.value = '-1';
     } else {
-      jreSelection.value = instance.jrePath;
+      jreSelection.value = instance.jrePath ?? "";
     }
   }
 
@@ -181,7 +181,7 @@ async function saveSettings() {
     alertController.success("Settings saved!")
 
     // Update the previous settings
-    instanceSettings.value = createInstanceSettingsFromInstance(result.instanceJson)
+    instanceSettings.value = createInstanceSettingsFromInstance(result.instanceJson!)
     previousSettings.value = {
       ...instanceSettings.value
     }
@@ -221,7 +221,7 @@ function createInstanceSettingsFromInstance(instance: InstanceJson): SaveJson {
   return {
     name: instance.name,
     jvmArgs: instance.jvmArgs,
-    jrePath: instance.jrePath,
+    jrePath: instance.jrePath ?? "",
     memory: instance.memory,
     width: instance.width,
     height: instance.height,
@@ -230,7 +230,7 @@ function createInstanceSettingsFromInstance(instance: InstanceJson): SaveJson {
     categoryId: instance.categoryId,
     locked: instance.locked,
     shellArgs: instance.shellArgs,
-    programArgs: instance.programArgs,
+    programArgs: instance.programArgs ?? "",
     preventMetaModInjection: instance.preventMetaModInjection,
     preventMetaAgentInjection: instance.preventMetaAgentInjection
   }

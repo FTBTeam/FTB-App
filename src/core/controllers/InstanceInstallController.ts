@@ -291,7 +291,7 @@ export class InstanceInstallController {
         instanceStore.addInstance(installResponse.instanceData)
       }
 
-      knownInstanceUuid = installResponse.instanceData.uuid;
+      knownInstanceUuid = installResponse.instanceData!.uuid;
       continuePast = true;
     } catch (error) {
       this.logger.error('Failed to send install request', error);
