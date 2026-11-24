@@ -56,9 +56,6 @@ public class RcpEndpoints {
         register("profiles.get", BaseData.class, new GetProfilesHandler());
         register("profiles.remove", RemoveProfileHandler.Data.class, new RemoveProfileHandler());
         register("profiles.setActiveProfile", SetActiveProfileHandler.Data.class, new SetActiveProfileHandler());
-        
-        register("profiles.refresh", RefreshAuthenticationProfileHandler.Data.class, new RefreshAuthenticationProfileHandler());
-        register("profiles.is-valid", AccountIsValidHandler.Data.class, new AccountIsValidHandler());
 
         register("storage.put", StoragePutHandler.Data.class, new StoragePutHandler());
         register("storage.get", StorageGetHandler.Data.class, new StorageGetHandler());

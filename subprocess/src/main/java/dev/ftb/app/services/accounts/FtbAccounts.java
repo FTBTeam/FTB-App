@@ -11,8 +11,6 @@ import org.slf4j.LoggerFactory;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /// The signed in FTB accounts
 public class FtbAccounts extends MultiAccountStore<FtbAccount, String, FtbAccount.TokenKey> {
@@ -23,8 +21,6 @@ public class FtbAccounts extends MultiAccountStore<FtbAccount, String, FtbAccoun
 
     private final FtbTokenExchange tokenExchange;
 
-    /// One lock per account, so only one refresh per account runs at a time
-    private final ConcurrentMap<String, Object> refreshLocks = new ConcurrentHashMap<>();
 
     public FtbAccounts(Path storageDir, Vault vault, AppHttp http) {
         super(
@@ -54,7 +50,7 @@ public class FtbAccounts extends MultiAccountStore<FtbAccount, String, FtbAccoun
             return token;
         }
 
-        synchronized (this.refreshLocks.computeIfAbsent(id, k -> new Object())) {
+        synchronized (this.refreshLock(id)) {
             // Another caller may have refreshed while this one waited
             token = this.currentIfFresh(id);
             if (token != null) {
@@ -69,7 +65,7 @@ public class FtbAccounts extends MultiAccountStore<FtbAccount, String, FtbAccoun
     ///
     /// @return a replacement, `null` if there isn't one. May be `rejected` itself when a refresh isn't possible right now
     public @Nullable String accessTokenAfterRejection(String id, String rejected) {
-        synchronized (this.refreshLocks.computeIfAbsent(id, k -> new Object())) {
+        synchronized (this.refreshLock(id)) {
             String current = this.currentIfFresh(id);
             if (current != null && !current.equals(rejected)) {
                 return current;
@@ -183,6 +179,7 @@ public class FtbAccounts extends MultiAccountStore<FtbAccount, String, FtbAccoun
 
     private void signedOut(String id) {
         this.update(id, FtbAccount::markNotLoggedIn);
+        this.notifySignedOut();
     }
 
     private long now() {

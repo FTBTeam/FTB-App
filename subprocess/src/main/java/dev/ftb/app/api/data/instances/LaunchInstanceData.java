@@ -1,6 +1,7 @@
 package dev.ftb.app.api.data.instances;
 
 import dev.ftb.app.api.data.BaseData;
+import dev.ftb.app.pack.Instance.InvalidCheck;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
@@ -13,6 +14,8 @@ public class LaunchInstanceData extends BaseData {
     public boolean offline = false;
     @Nullable
     public String offlineUsername;
+    @Nullable
+    public InvalidCheck invalidCheck;
 
     public static class Status extends BaseData {
         public UUID uuid;
@@ -44,17 +47,25 @@ public class LaunchInstanceData extends BaseData {
     }
 
     public static class Reply extends BaseData {
+        /// `success`, `error`, `abort`, `canceled`, `signInRequired` or `potentiallyInvalid`
         public String status;
         public String message;
         public UUID uuid;
+        @Nullable
+        public UUID profileUuid;
 
         public Reply(LaunchInstanceData data, UUID uuid, String status, String message) {
+            this(data, uuid, status, message, null);
+        }
+
+        public Reply(LaunchInstanceData data, UUID uuid, String status, String message, @Nullable UUID profileUuid) {
             type = "launchInstance.reply";
             requestId = data.requestId;
             
             this.uuid = uuid;
             this.status = status;
             this.message = message;
+            this.profileUuid = profileUuid;
         }
     }
 

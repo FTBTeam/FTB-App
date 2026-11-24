@@ -4,6 +4,7 @@ import dev.ftb.app.AppFlags;
 import dev.ftb.app.AppPaths;
 import dev.ftb.app.Instances;
 import dev.ftb.app.api.RcpApi;
+import dev.ftb.app.api.data.accounts.AccountsChangedEvent;
 import dev.ftb.app.services.accounts.Accounts;
 import dev.ftb.app.services.cache.AppCache;
 import dev.ftb.app.storage.settings.Settings;
@@ -59,6 +60,8 @@ public class AppServices implements Services {
         this.reloadProxy();
         
         this.rcpApi = new RcpApi(this);
+        this.accounts.ftb().onSignedOut(() -> this.rcpApi.sendMessage(new AccountsChangedEvent()));
+        this.accounts.minecraft().onSignedOut(() -> this.rcpApi.sendMessage(new AccountsChangedEvent()));
         this.instances = new Instances(this.paths, this.settings, this.rcpApi, this.accounts.minecraft(), this.threads, this.cache, this.appHttp, this.jdkInstallationManager);
     }
     

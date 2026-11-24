@@ -121,25 +121,25 @@ final class LoginFinisher {
 
         var data = result.unwrap();
         var accounts = this.services.accounts().minecraft();
-        var profile = MicrosoftProfile.create(
-            accounts,
-            MiscUtils.createUuidFromStringWithoutDashes(data.profileData().id()),
-            data.profileData().name(),
-            data.minecraftAccessToken(),
-            data.minecraftExpiresIn(),
-            microsoftToken.accessToken(),
-            microsoftToken.refreshToken(),
-            token.expiresIn(),
-            data.userHash(),
-            data.notAfter(),
-            data.xstsToken(),
-            data.profileData().getActiveSkinUrl()
-        );
-
-        if (profile == null) {
+        var uuid = MiscUtils.createUuidFromStringWithoutDashes(data.profileData().id());
+        try {
+            accounts.storeTokens(uuid, Map.of(
+                MicrosoftProfile.TokenKey.MINECRAFT_ACCESS_TOKEN, data.minecraftAccessToken(),
+                MicrosoftProfile.TokenKey.MICROSOFT_REFRESH_TOKEN, microsoftToken.refreshToken()
+            ));
+        } catch (VaultException e) {
+            LOGGER.error("Failed to store the Minecraft account tokens in the vault", e);
             this.failed("Couldn't securely save your Minecraft account. Please try again.", CodedError.TOKEN_STORAGE_FAILED.code);
             return;
         }
+
+        var profile = new MicrosoftProfile(
+            uuid,
+            data.profileData().name(),
+            Instant.now().getEpochSecond() + data.minecraftExpiresIn(),
+            data.userHash(),
+            data.profileData().getActiveSkinUrl()
+        );
 
         if (!accounts.add(profile)) {
             this.failed("Couldn't save your Minecraft account. Please try again.");

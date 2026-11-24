@@ -35,8 +35,6 @@ export type ApiEndpoints = 	"moveInstances" |
 	"profiles.get" |
 	"profiles.remove" |
 	"profiles.setActiveProfile" |
-	"profiles.refresh" |
-	"profiles.is-valid" |
 	"storage.put" |
 	"storage.get" |
 	"storage.get-all" |

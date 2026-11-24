@@ -28,22 +28,6 @@ public class MicrosoftRequests {
                 .header("Content-Type", "application/json")
                 .header("Accept", "application/json");
     }
-
-    public static Result<JsonObject, ErrorWithCode> refreshWithXbox(AppHttp http, String refreshToken) {
-        return standardJsonReq(
-            http,
-            newStandardRequest()
-                .url("https://login.microsoftonline.com/consumers/oauth2/v2.0/token")
-                .post(RequestBody.create(
-                    "client_id=f23e8ba8-f46b-41ed-b5c0-7994f2ebbbf8" +
-                        "&scope=" + "offline_access%20XboxLive.signin" +
-                        "&refresh_token=" + refreshToken +
-                        "&grant_type=refresh_token",
-                    MediaType.parse("application/x-www-form-urlencoded")
-                )),
-            json -> json.has("access_token") && json.has("refresh_token")
-        );
-    }
     
     /**
      * Authenticate with Microsoft using an Xbox access token

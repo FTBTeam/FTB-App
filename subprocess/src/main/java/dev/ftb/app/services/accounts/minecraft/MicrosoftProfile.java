@@ -1,37 +1,20 @@
 package dev.ftb.app.services.accounts.minecraft;
 
-import com.google.gson.JsonObject;
-import dev.ftb.app.structs.accounts.ErrorWithCode;
-import dev.ftb.app.structs.accounts.MinecraftProfileData;
-import dev.ftb.app.services.AppHttp;
 import dev.ftb.app.services.accounts.AccountTokenKey;
-import dev.ftb.app.services.accounts.McAccounts;
-import dev.ftb.app.services.storage.VaultException;
-import dev.ftb.app.util.Result;
 import org.jspecify.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
-/**
- * Represents a logged in Microsoft account
- */
+/// A signed in Minecraft (Microsoft) account
 public class MicrosoftProfile {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MicrosoftProfile.class);
-    
     private UUID uuid;
     private String minecraftName;
-    
+
     private long minecraftAccessExpiresAt;
-    private long microsoftAccessExpiresAt;
-    
+
+    /// Sent to the game as the `xuid`
     private String xstsUserHash;
-    private long xstsNotAfter;
 
     private String skinUrl;
     private boolean notLoggedIn = false;
@@ -40,222 +23,28 @@ public class MicrosoftProfile {
     public MicrosoftProfile() {
     }
 
-    public MicrosoftProfile(UUID uuid, String minecraftName, int minecraftAccessExpiresIn, int microsoftAccessExpiresIn, String xstsUserHash, String xstsNotAfter, String skinUrl) {
-        var now = Instant.now();
-        
+    public MicrosoftProfile(UUID uuid, String minecraftName, long minecraftAccessExpiresAt, String xstsUserHash, String skinUrl) {
         this.uuid = uuid;
         this.minecraftName = minecraftName;
-        this.minecraftAccessExpiresAt = now.plus(Duration.ofSeconds(minecraftAccessExpiresIn)).getEpochSecond();
-        this.microsoftAccessExpiresAt = now.plus(Duration.ofSeconds(microsoftAccessExpiresIn)).getEpochSecond();
+        this.minecraftAccessExpiresAt = minecraftAccessExpiresAt;
         this.xstsUserHash = xstsUserHash;
-        this.xstsNotAfter = Instant.parse(xstsNotAfter).getEpochSecond();
         this.skinUrl = skinUrl;
     }
-    
-    @Nullable
-    public static MicrosoftProfile create(McAccounts accounts, UUID uuid, String minecraftName, String minecraftAccessToken, int minecraftAccessExpiresIn, String microsoftAccessToken, String microsoftRefreshToken, int microsoftAccessExpiresIn, String xstsUserHash, String xstsNotAfter, String xstsToken, String skinUrl) {
-        try {
-            accounts.storeTokens(uuid, Map.of(
-                TokenKey.MINECRAFT_ACCESS_TOKEN, minecraftAccessToken,
-                TokenKey.MICROSOFT_ACCESS_TOKEN, microsoftAccessToken,
-                TokenKey.MICROSOFT_REFRESH_TOKEN, microsoftRefreshToken,
-                TokenKey.XSTS_TOKEN, xstsToken
-            ));
-        } catch (VaultException e) {
-            LOGGER.error("Failed to store tokens in the vault", e);
-            return null;
-        }
 
-        // This only returns if the store is successful.
-        return new MicrosoftProfile(uuid, minecraftName, minecraftAccessExpiresIn, microsoftAccessExpiresIn, xstsUserHash, xstsNotAfter, skinUrl);
-    }
-    
-    /**
-     * Checks to see if the account is still valid or if the tokens need to be refreshed
-     */
-    public ValidCheckResult isValid() {
-        if (this.notLoggedIn) {
-            return ValidCheckResult.NOT_LOGGED_IN;
-        }
-        
-        var stillValid = Instant.now().getEpochSecond() < this.minecraftAccessExpiresAt;
-        return stillValid ? ValidCheckResult.VALID : ValidCheckResult.EXPIRED;
-    }
-    
-    /// Refreshes the account if needed
-    public boolean refreshAccount(AppHttp http, McAccounts accounts, boolean forceRefresh) {
-        boolean result;
-        try {
-            LOGGER.info("Refreshing account for {}", this.minecraftName);
-            result = this.unsafeRefreshAccount(http, accounts, forceRefresh);
-            if (!result) {
-                LOGGER.error("Failed to refresh account for {}", this.minecraftName);
-            } else {
-                LOGGER.info("Finished refreshing account for {}", this.minecraftName);
-            }
-        } catch (Exception e) {
-            LOGGER.error("Failed to refresh account", e);
-            result = false;
-        }
-
-        if (!result) {
-            accounts.update(uuid, MicrosoftProfile::markNotLoggedIn);
-        }
-        return result;
-    }
-    
-    public boolean refreshAccount(AppHttp http, McAccounts accounts) {
-        return this.refreshAccount(http, accounts, false);
+    /// Applies the result of a refresh
+    public void refreshed(String minecraftName, String skinUrl, String xstsUserHash, long minecraftAccessExpiresAt) {
+        this.minecraftName = minecraftName;
+        this.skinUrl = skinUrl;
+        this.xstsUserHash = xstsUserHash;
+        this.minecraftAccessExpiresAt = minecraftAccessExpiresAt;
+        this.notLoggedIn = false;
     }
 
-    /**
-     * Big thanks to ATLauncher for the rough implementation of this method
-     * <a href="https://github.com/ATLauncher/ATLauncher/blob/master/src/main/java/com/atlauncher/data/MicrosoftAccount.java#L159">...</a>
-     */
-    private boolean unsafeRefreshAccount(AppHttp http, McAccounts accounts, boolean forceRefresh) {
-        var now = Instant.now();
-        // The XSTS step can replace this, and the Minecraft step needs the new value
-        String userHash = this.xstsUserHash;
-        
-        if (forceRefresh || now.getEpochSecond() >= this.microsoftAccessExpiresAt) {
-            LOGGER.info("Xbox token expired, refreshing");
-            var microsoftRefreshToken = accounts.token(uuid, TokenKey.MICROSOFT_REFRESH_TOKEN);
-            if (microsoftRefreshToken == null) {
-                LOGGER.error("Microsoft refresh token is missing, cannot refresh");
-                return false;
-            }
-            
-            var refreshResult = MicrosoftRequests.refreshWithXbox(http, microsoftRefreshToken);
-            if (refreshResult.isErr()) {
-                LOGGER.error("Failed to refresh Xbox token: {}", refreshResult.unwrapErr());
-                return false;
-            }
-            
-            LOGGER.info("Successfully refreshed Xbox token");
-            var jsonData = refreshResult.unwrap();
-            
-            try {
-                // Microsoft rotates the refresh token, so both have to be saved together
-                accounts.storeTokens(uuid, Map.of(
-                    TokenKey.MICROSOFT_ACCESS_TOKEN, jsonData.get("access_token").getAsString(),
-                    TokenKey.MICROSOFT_REFRESH_TOKEN, jsonData.get("refresh_token").getAsString()
-                ));
-            } catch (VaultException e) {
-                LOGGER.error("Failed to store refreshed tokens in the vault", e);
-                return false;
-            }
-            
-            long microsoftExpiresAt = now.plus(Duration.ofSeconds(jsonData.get("expires_in").getAsLong())).getEpochSecond();
-            accounts.update(uuid, p -> p.microsoftAccessExpiresAt = microsoftExpiresAt);
-        }
-        
-        if (forceRefresh || now.getEpochSecond() >= this.xstsNotAfter) {
-            LOGGER.info("XSTS token expired, refreshing");
-            var microsoftAccessToken = accounts.token(uuid, TokenKey.MICROSOFT_ACCESS_TOKEN);
-            if (microsoftAccessToken == null) {
-                LOGGER.error("Microsoft access token is missing, cannot refresh XSTS token");
-                return false;
-            }
-            
-            var xstsResult = MicrosoftRequests.authenticateWithXbox(http, microsoftAccessToken);
-            if (xstsResult.isErr()) {
-                LOGGER.error("Failed to authenticate with XSTS: {}", xstsResult.unwrapErr());
-                return false;
-            }
-            
-
-            JsonObject xstsData = xstsResult.unwrap();
-            if (!xstsData.has("DisplayClaims") || !xstsData.has("Token")) {
-                LOGGER.error("Invalid XSTS response, missing expected fields. Present fields: {}", xstsData.keySet());
-                return false;
-            }
-            
-            var xstsTokenResult = MicrosoftRequests.authenticateWithXSTS(http, xstsData.get("Token").getAsString());
-            if (xstsTokenResult.isErr()) {
-                LOGGER.error("Failed to authenticate with XSTS Tokens: {}", xstsTokenResult.unwrapErr());
-                return false;
-            }
-
-            JsonObject xstsTokenData = xstsTokenResult.unwrap();
-            if (!xstsTokenData.has("DisplayClaims")) {
-                LOGGER.error("Invalid XSTS Tokens response, missing expected fields. Present fields: {}", xstsTokenData.keySet());
-                return false;
-            }
-            
-            Result<String, ErrorWithCode> displayClaims = MicrosoftOAuthProcess.getUserHashFromDisplayClaims(xstsTokenData.get("DisplayClaims").getAsJsonObject());
-            if (displayClaims.isErr()) {
-                LOGGER.error("Failed to get user hash from display claims: {}", displayClaims.unwrapErr());
-                return false;
-            }
-            
-            LOGGER.info("Successfully refreshed XSTS token");
-            try {
-                accounts.storeTokens(uuid, Map.of(TokenKey.XSTS_TOKEN, xstsTokenData.get("Token").getAsString()));
-            } catch (VaultException e) {
-                LOGGER.error("Failed to store refreshed XSTS token in the vault", e);
-                return false;
-            }
-            
-            userHash = displayClaims.unwrap();
-            String newUserHash = userHash;
-            long xstsNotAfter = Instant.parse(xstsTokenData.get("NotAfter").getAsString()).getEpochSecond();
-            accounts.update(uuid, p -> {
-                p.xstsUserHash = newUserHash;
-                p.xstsNotAfter = xstsNotAfter;
-            });
-        }
-        
-        if (forceRefresh || now.getEpochSecond() >= this.minecraftAccessExpiresAt) {
-            LOGGER.info("Minecraft token expired, refreshing");
-            var xstsToken = accounts.token(uuid, TokenKey.XSTS_TOKEN);
-            if (xstsToken == null) {
-                LOGGER.error("XSTS token is missing, cannot refresh Minecraft token");
-                return false;
-            }
-            
-            var minecraftResult = MicrosoftRequests.authenticateWithMinecraft(http, xstsToken, userHash);
-            if (minecraftResult.isErr()) {
-                LOGGER.error("Failed to authenticate with Minecraft: {}", minecraftResult.unwrapErr());
-                return false;
-            }
-
-            JsonObject minecraftData = minecraftResult.unwrap();
-            String accessToken = minecraftData.get("access_token").getAsString();
-            try {
-                accounts.storeTokens(uuid, Map.of(TokenKey.MINECRAFT_ACCESS_TOKEN, accessToken));
-            } catch (VaultException e) {
-                LOGGER.error("Failed to store refreshed Minecraft token in the vault", e);
-                return false;
-            }
-            
-            long minecraftExpiresAt = now.plus(Duration.ofSeconds(minecraftData.get("expires_in").getAsLong())).getEpochSecond();
-            
-            // Now rerun the entitlements check and profile fetching
-            var profile = MicrosoftOAuthProcess.checkEntitlementsAndGetProfile(http, accessToken);
-            if (profile.isErr()) {
-                LOGGER.error("Failed to check entitlements and get profile: {}", profile.unwrapErr());
-                return false;
-            }
-
-            LOGGER.info("Successfully refreshed Minecraft token");
-            MinecraftProfileData profileData = profile.unwrap();
-            
-            accounts.update(uuid, p -> {
-                p.minecraftAccessExpiresAt = minecraftExpiresAt;
-                p.minecraftName = profileData.name();
-                p.skinUrl = profileData.getActiveSkinUrl();
-            });
-        }
-
-        accounts.update(uuid, p -> p.notLoggedIn = false);
-        return true;
-    }
-
-    /// Used when the tokens are lost, so the user is asked to log in again.
+    /// Used when the tokens are lost or rejected, so the user is asked to log in again.
     public void markNotLoggedIn() {
         this.notLoggedIn = true;
     }
-    
+
     public UUID getUuid() {
         return uuid;
     }
@@ -267,28 +56,29 @@ public class MicrosoftProfile {
     public String getSkinUrl() {
         return skinUrl;
     }
-    
+
     public String getXstsUserHash() {
         return xstsUserHash;
     }
-    
+
+    public long getMinecraftAccessExpiresAt() {
+        return minecraftAccessExpiresAt;
+    }
+
+    public boolean isNotLoggedIn() {
+        return notLoggedIn;
+    }
+
     public SharableData toSharableData() {
         return new SharableData(this.uuid, this.minecraftName, this.skinUrl, this.notLoggedIn);
     }
-    
+
     public record SharableData(
-        UUID uuid, 
-        String minecraftName, 
+        UUID uuid,
+        String minecraftName,
         String skinUrl,
         boolean notLoggedIn
     ) { }
-    
-    public enum ValidCheckResult {
-        VALID,
-        EXPIRED,
-        NOT_LOGGED_IN,
-        TOTAL_FAILURE
-    }
 
     @Override
     public boolean equals(@Nullable Object o) {
@@ -304,16 +94,14 @@ public class MicrosoftProfile {
     
     public enum TokenKey implements AccountTokenKey {
         MINECRAFT_ACCESS_TOKEN("minecraftAccessToken"),
-        MICROSOFT_ACCESS_TOKEN("microsoftAccessToken"),
-        MICROSOFT_REFRESH_TOKEN("microsoftRefreshToken"),
-        XSTS_TOKEN("xstsToken");
-        
+        MICROSOFT_REFRESH_TOKEN("microsoftRefreshToken");
+
         private final String keyName;
-        
+
         TokenKey(String keyName) {
             this.keyName = keyName;
         }
-        
+
         @Override
         public String getKeyName() {
             return keyName;

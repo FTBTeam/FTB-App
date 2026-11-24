@@ -52,11 +52,18 @@ public class LaunchInstanceHandler implements IMessageHandler<LaunchInstanceData
         instance.prepareFuture = CompletableFuture.runAsync(() -> {
             LOGGER.info("Preparing instance for launch...");
             try {
-                instance.play(instance.prepareToken, data.extraArgs, data.offline ? data.offlineUsername : null);
+                Instance.InvalidCheck invalidCheck = data.invalidCheck != null ? data.invalidCheck : Instance.InvalidCheck.CHECK;
+                instance.play(instance.prepareToken, data.extraArgs, data.offline ? data.offlineUsername : null, invalidCheck);
                 context.reply(new LaunchInstanceData.Reply(data, uuid, "success", ""));
             } catch (InstanceLaunchException ex) {
                 if (ex instanceof InstanceLaunchException.Abort) {
                     context.reply(new LaunchInstanceData.Reply(data, uuid, "abort", ex.getMessage()));
+                } else if (ex instanceof InstanceLaunchException.SignInRequired signIn) {
+                    LOGGER.info("Can't launch, the Minecraft account has to sign in again: {}", ex.getMessage());
+                    context.reply(new LaunchInstanceData.Reply(data, uuid, "signInRequired", ex.getMessage(), signIn.profileUuid));
+                } else if (ex instanceof InstanceLaunchException.PotentiallyInvalid) {
+                    LOGGER.info("Not launching yet, the instance looks potentially invalid");
+                    context.reply(new LaunchInstanceData.Reply(data, uuid, "potentiallyInvalid", ex.getMessage()));
                 } else {
                     LOGGER.error("Failed to launch instance.", ex);
                     Throwable cause = ex.getCause();

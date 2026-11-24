@@ -20,7 +20,6 @@ import dev.ftb.app.services.cache.CurseMetadataCache.FileMetadata;
 import dev.ftb.app.util.FileUtils;
 import dev.ftb.app.util.HashingUtils;
 import dev.ftb.app.util.MiscUtils;
-import dev.ftb.app.util.ReleaseBlocking;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.platform.OperatingSystem;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -334,11 +333,12 @@ public class Instance {
     /**
      * Starts the instance.
      *
-     * @param token     The CancellationToken for cancelling the launch.
-     * @param extraArgs Extra JVM arguments.
+     * @param token           The CancellationToken for cancelling the launch.
+     * @param extraArgs       Extra JVM arguments.
+     * @param invalidCheck    What to do if the instance looks potentially invalid.
      * @throws InstanceLaunchException If there was an error preparing or starting the instance.
      */
-    public void play(CancellationToken token, String extraArgs, @Nullable String offlineUsername) throws InstanceLaunchException {
+    public void play(CancellationToken token, String extraArgs, @Nullable String offlineUsername, InvalidCheck invalidCheck) throws InstanceLaunchException {
         if (launcher.isRunning()) {
             throw new InstanceLaunchException("Instance already running.");
         }
@@ -348,34 +348,25 @@ public class Instance {
         LOGGER.info("Polling version manifest.");
         pollVersionManifest();
 
+        if (invalidCheck == InvalidCheck.DISMISS) {
+            props.potentiallyBrokenDismissed = true;
+            try {
+                saveJson();
+            } catch (IOException ex) {
+                LOGGER.error("Failed to save instance.", ex);
+            }
+        }
+
         LOGGER.info("Scanning instance.");
-        @ReleaseBlocking(
-            reason = "DialogUtil was removed. This should simply return back to the Frontend with the reason, then the Frontend can display a dialog to the user and the user can decide what to do.",
-            resolvedBy = "Instance launcher supporting a bypass flag for potentially invalid instances, and the Frontend handling the dialog and user choice."
-        )
         InstanceScanner scanner = new InstanceScanner(path, versionManifest, this);
         if (scanner.shouldScan()) {
             scanner.scan();
             if (scanner.isPotentiallyInvalid()) {
-                System.out.println("Instance is potentially invalid. This may be due to duplicate mods or invalid scripts. It is highly recommended that you re-install your instance.");
-//                DialogUtil.ConfirmationState abort = DialogUtil.confirmOrIgnore(
-//                    "Potentially invalid instance", 
-//                    "Abort", 
-//                    "Launch",
-//                    "Don't show again",
-//                    "Your instance appears to have duplicate mods or invalid scripts.\nIt is highly recommended that you re-install your instance.\nDo you want to abort launching?"
-//                );
-//                
-//                if (abort == DialogUtil.ConfirmationState.CONFIRM) {
-//                    throw new InstanceLaunchException.Abort("Aborted.");
-//                } else if (abort == DialogUtil.ConfirmationState.IGNORE) {
-//                    props.potentiallyBrokenDismissed = true;
-//                    try {
-//                        saveJson();
-//                    } catch (IOException ex) {
-//                        LOGGER.error("Failed to save instance.", ex);
-//                    }
-//                }
+                if (invalidCheck == InvalidCheck.CHECK) {
+                    throw new InstanceLaunchException.PotentiallyInvalid("Your instance appears to have duplicate mods or invalid scripts. It is highly recommended that you re-install your instance.");
+                }
+
+                LOGGER.warn("Instance is potentially invalid, launching anyway as the user asked to.");
             }
         }
 
@@ -447,6 +438,15 @@ public class Instance {
         });
         LOGGER.info("Handing off to launcher..");
         launcher.launch(token, offlineUsername);
+    }
+    
+    public enum InvalidCheck {
+        /// Stop if invalid
+        CHECK,
+        /// Launch anyway, this time only
+        IGNORE,
+        /// Launch anyway, and don't check this instance again
+        DISMISS
     }
 
     public InstanceLauncher getLauncher() {

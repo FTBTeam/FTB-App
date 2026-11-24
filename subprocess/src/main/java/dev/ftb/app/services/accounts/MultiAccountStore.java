@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -38,6 +39,9 @@ public abstract class MultiAccountStore<T, I, K extends Enum<K> & AccountTokenKe
     private final Vault vault;
 
     private final JsonStore<Accounts<T, I>> store;
+
+    private final Map<I, Object> refreshLocks = new ConcurrentHashMap<>();
+    private volatile Runnable signedOutListener = () -> {};
     
     protected MultiAccountStore(
         Path storageDir,
@@ -215,6 +219,30 @@ public abstract class MultiAccountStore<T, I, K extends Enum<K> & AccountTokenKe
     @Nullable
     protected String readToken(I id, K key) throws VaultException {
         return this.vault.get(this.tokenKey(id, key));
+    }
+
+    /// Removes a token by its raw key name
+    protected void removeStaleToken(I id, String keyName) {
+        try {
+            this.vault.remove(this.vaultPrefix + "." + id + "." + keyName);
+        } catch (VaultException e) {
+            LOGGER.error("Failed to remove {} for {} account {} from the vault", keyName, this.name, id, e);
+        }
+    }
+
+    /// Runs when a failed refresh signs an account out, so the frontend can be told
+    public void onSignedOut(Runnable listener) {
+        this.signedOutListener = listener;
+    }
+
+    /// Call after marking an account as signed out
+    protected void notifySignedOut() {
+        this.signedOutListener.run();
+    }
+
+    /// Hold this while refreshing the account's tokens
+    protected Object refreshLock(I id) {
+        return this.refreshLocks.computeIfAbsent(id, k -> new Object());
     }
 
     private void removeTokens(I id) {

@@ -1,15 +1,14 @@
-import {InstanceJson, SugaredInstanceJson} from '@/core/types/javaApi';
+import {InstanceJson, InvalidCheck, SugaredInstanceJson} from '@/core/types/javaApi';
 import {sendMessage} from '@/core/websockets/websocketsApi';
 import {createLogger} from '@/core/logger';
 import {getProfileOrDefaultToActive} from '@/core/auth/authProfileSelector';
-import {safeCheckProfileActive} from '@/core/auth/authValidChecker';
 import {safeNavigate} from '@/utils';
 import {RouterNames} from '@/router';
 import { LaunchingStatus, useRunningInstancesStore } from '@/store/runningInstancesStore.ts';
 import { useInstanceStore } from '@/store/instancesStore.ts';
 import { useAccountsStore } from '@/store/accountsStore.ts';
 import {alertController} from "@/core/controllers/alertController.ts";
-import {dialog, DialogHolder, dialogsController, form} from "@/core/controllers/dialogsController.ts";
+import {button, dialog, DialogHolder, dialogsController, form} from "@/core/controllers/dialogsController.ts";
 import {z} from "zod";
 
 const duplicateValidator = z.object({
@@ -59,15 +58,14 @@ export class InstanceController {
     return this._play(null, offlineUsername);
   }
   
-  private async _play(profileUuid: string | null = null, offlineUsername: string | null = null) {
+  private async _play(profileUuid: string | null = null, offlineUsername: string | null = null, invalidCheck: InvalidCheck = "CHECK"): Promise<void> {
     const runningInstancesStore = useRunningInstancesStore();
     
     InstanceController.logger.debug(`Playing instance ${this.instance.uuid}`);
     
-    let activeProfile;
     if (!offlineUsername) {
       InstanceController.logger.debug("Fetching active profile");
-      activeProfile = getProfileOrDefaultToActive(profileUuid);
+      const activeProfile = getProfileOrDefaultToActive(profileUuid);
       if (!activeProfile) {
         InstanceController.logger.warn("Failed to get active profile");
         return;
@@ -76,69 +74,76 @@ export class InstanceController {
     
     const loadingStatus: LaunchingStatus = {
       uuid: this.instance.uuid,
-      loggingIn: true,
-      starting: false,
+      starting: true,
       error: "",
-      step: "Checking profile",
+      step: "Starting instance",
     }
     
     runningInstancesStore.updateLaunchingStatus(loadingStatus)
-
-    if (!offlineUsername && activeProfile) {
-      InstanceController.logger.debug("Checking profile");
-      const checkResult = await safeCheckProfileActive(activeProfile.uuid);
-      if (checkResult !== "VALID") {
-        InstanceController.logger.warn("Failed to check profile");
-
-        if (checkResult === "TOTAL_FAILURE" || checkResult === "NOT_LOGGED_IN") {
-          if (checkResult === "NOT_LOGGED_IN") {
-            InstanceController.logger.debug("Profile is not logged in, asking the user to sign in");
-          }
-          
-          const accountsStore = useAccountsStore();
-          loadingStatus.loggingIn = false;
-          loadingStatus.error = "Failed to check profile";
-          runningInstancesStore.clearLaunchingStatus()
-          accountsStore.openSignIn('MICROSOFT')
-          return;
-        }
-
-        return;
-      }
-    }
     
-    loadingStatus.loggingIn = false;
-    loadingStatus.starting = true;
-    loadingStatus.step = "Starting instance";
-    runningInstancesStore.updateLaunchingStatus(loadingStatus)
-
     InstanceController.logger.debug("Sending launch handshake");
     const result = await sendMessage("launchInstance", {
       uuid: this.instance.uuid,
       extraArgs: "",
       offline: !!offlineUsername,
       offlineUsername: offlineUsername || "",
-      cancelLaunch: null
+      cancelLaunch: null,
+      invalidCheck
     }, 1000 * 60 * 10) // 10 minutes It's a long time, but we don't want to timeout too early
 
-    if (result.status === 'success') {
-      InstanceController.logger.debug("Successfully completed launch handshake")
-    } else {
-      if (result.status === 'error') {
-        loadingStatus.error = result.message;  
-      } else {
-        loadingStatus.error = "Failed to launch instance";
-      }
-      
+    if (result.status !== 'success') {
       InstanceController.logger.warn("Failed to launch instance", result);
       runningInstancesStore.clearLaunchingStatus()
+
+      if (result.status === 'signInRequired') {
+        alertController.warning(result.message);
+        useAccountsStore().openSignIn('MICROSOFT', result.profileUuid ?? null);
+      } else if (result.status === 'potentiallyInvalid') {
+        const choice = await this.askPotentiallyInvalid(result.message);
+        if (choice) {
+          return this._play(profileUuid, offlineUsername, choice);
+        }
+      } else if (result.status === 'error') {
+        alertController.error(result.message);
+      }
+      
       return;
     }
 
+    InstanceController.logger.debug("Successfully completed launch handshake")
     runningInstancesStore.clearLaunchingStatus()
     
     InstanceController.logger.debug("Navigating to running instance");
     await safeNavigate(RouterNames.ROOT_RUNNING_INSTANCE, {uuid: this.instance.uuid});
+  }
+
+  /**
+   * Asks whether to launch an instance that looks potentially invalid
+   */
+  private askPotentiallyInvalid(message: string): Promise<InvalidCheck | null> {
+    return new Promise((resolve) => {
+      const holder = dialogsController.createDialog(dialog("Potentially invalid instance")
+        .withContent(message)
+        .withType("warning")
+        .withCloseAction(() => resolve(null))
+        .withButton(button("Cancel")
+          .withAction(() => holder.close())
+          .build())
+        .withButton(button("Launch, don't ask again")
+          .withAction(() => {
+            resolve("DISMISS");
+            holder.close();
+          })
+          .build())
+        .withButton(button("Launch")
+          .withType("warning")
+          .withAction(() => {
+            resolve("IGNORE");
+            holder.close();
+          })
+          .build())
+        .build());
+    });
   }
   
   async updateInstance(data: Partial<SaveJson>) {

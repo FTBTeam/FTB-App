@@ -40,7 +40,6 @@ export type InstanceRunningData = {
 
 export type LaunchingStatus = {
   uuid: string;
-  loggingIn: boolean;
   starting: boolean;
   error: string;
   step: string;

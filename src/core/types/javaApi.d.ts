@@ -171,6 +171,7 @@ export interface LaunchInstanceData extends BaseData {
     cancelLaunch: boolean;
     offline: boolean;
     offlineUsername?: string;
+    invalidCheck?: InvalidCheck;
 }
 
 export interface Logs extends BaseData {
@@ -182,6 +183,7 @@ export interface LaunchInstanceDataReply extends BaseData {
     status: string;
     message: string;
     uuid: string;
+    profileUuid?: string;
 }
 
 export interface Status extends BaseData {
@@ -374,15 +376,6 @@ export interface PinInstanceHandlerReply extends BaseData {
     instance: SugaredInstanceJson;
 }
 
-export interface AccountIsValidHandlerData extends BaseData {
-    profileUuid: string;
-}
-
-export interface AccountIsValidHandlerReply extends AccountIsValidHandlerData {
-    checkResult: ValidCheckResult;
-    response?: string;
-}
-
 export interface DeviceAuthFlowHandlerData extends BaseData {
     flowStage: FlowStage;
     provider: AccountProvider;
@@ -422,15 +415,6 @@ export interface OAuthFlowStartHandlerReply extends BaseData {
     success: boolean;
     reason?: string;
     flowId?: string;
-}
-
-export interface RefreshAuthenticationProfileHandlerData extends BaseData {
-    profileUuid: string;
-}
-
-export interface RefreshAuthenticationProfileHandlerReply extends PrivateBaseData {
-    success: boolean;
-    code: string;
 }
 
 export interface RemoveProfileHandlerData extends BaseData {
@@ -706,9 +690,9 @@ export type LoginStep = "EXCHANGING_CODE" | "XBOX" | "XSTS" | "MINECRAFT" | "PRO
 
 export type AccountProvider = "FTB" | "MICROSOFT";
 
-export type Action = "GET" | "CREATE" | "DELETE" | "RENAME";
+export type InvalidCheck = "CHECK" | "IGNORE" | "DISMISS";
 
-export type ValidCheckResult = "VALID" | "EXPIRED" | "NOT_LOGGED_IN" | "TOTAL_FAILURE";
+export type Action = "GET" | "CREATE" | "DELETE" | "RENAME";
 
 export type FlowStage = "GET_CODE" | "CHECK_FOR_TOKEN" | "CANCEL";
 

@@ -83,7 +83,7 @@ public class InstanceLauncher {
     private final List<ThrowingConsumer<LaunchContext, Throwable>> startTasks = new LinkedList<>();
     private final List<ThrowingRunnable<Throwable>> exitTasks = new LinkedList<>();
 
-    private static final int NUM_STEPS = 7;
+    private static final int NUM_STEPS = 8;
 
     public InstanceLauncher(Instance instance) {
         this.instance = instance;
@@ -314,7 +314,12 @@ public class InstanceLauncher {
         tempDirs.clear();
     }
 
-    private ProcessBuilder prepareProcess(CancellationToken token, String offlineUsername, Path assetsDir, Path versionsDir, Path librariesDir, Set<String> features, Set<String> privateTokens) throws InstanceLaunchException {
+    private ProcessBuilder prepareProcess(CancellationToken token, @Nullable String offlineUsername, Path assetsDir, Path versionsDir, Path librariesDir, Set<String> features, Set<String> privateTokens) throws InstanceLaunchException {
+        // Outside the try below, so the reason reaches the frontend as it is
+        progressTracker.startStep("Logging in");
+        McAccounts.LoginResult.Ready session = this.login(offlineUsername);
+        progressTracker.finishStep();
+
         try {
             progressTracker.startStep("Pre-Start Tasks"); // TODO locale support.
             Path gameDir = instance.getDir().toAbsolutePath();
@@ -411,10 +416,8 @@ public class InstanceLauncher {
             progressTracker.startStep("Prepare process");
             
             Map<String, String> subMap = new HashMap<>();
-            McAccounts accounts = this.factory().accounts();
-            
-            MicrosoftProfile profile = accounts.active();
-            if (offlineUsername != null || profile == null) {
+            if (session == null) {
+                MicrosoftProfile profile = this.factory().accounts().active();
                 UUID uuid;
                 String username;
                 if (profile == null) {
@@ -433,15 +436,13 @@ public class InstanceLauncher {
                 subMap.put("user_properties", "{}");
                 subMap.put("auth_session", "null");
             } else {
+                MicrosoftProfile profile = session.profile();
+                String accessToken = session.accessToken();
                 subMap.put("auth_player_name", profile.getMinecraftName());
                 subMap.put("auth_uuid", profile.getUuid().toString());
                 subMap.put("user_properties", "{}"); // TODO, we may need to provide this all the time.
                 subMap.put("user_type", "msa");
                 subMap.put("xuid", profile.getXstsUserHash());
-                String accessToken = accounts.token(profile.getUuid(), MicrosoftProfile.TokenKey.MINECRAFT_ACCESS_TOKEN);
-                if (accessToken == null) {
-                    throw new InstanceLaunchException("Failed to retrieve Minecraft access token for profile " + profile.getMinecraftName() + "(" + profile.getUuid() + ").");
-                }
                 String sessionToken = "token:" + accessToken + ":" + profile.getUuid().toString().replace("-", "");
                 subMap.put("auth_session", sessionToken);
                 subMap.put("auth_access_token", accessToken);
@@ -545,6 +546,21 @@ public class InstanceLauncher {
             }
             throw new InstanceLaunchException("Failed to prepare instance '" + instance.getName() + "'(" + instance.getUuid() + ").", ex);
         }
+    }
+
+    /// Gets a Minecraft token for the active account, refreshing it if needed
+    private McAccounts.LoginResult.@Nullable Ready login(@Nullable String offlineUsername) throws InstanceLaunchException {
+        McAccounts accounts = this.factory().accounts();
+        MicrosoftProfile profile = accounts.active();
+        if (offlineUsername != null || profile == null) {
+            return null;
+        }
+
+        return switch (accounts.login(profile.getUuid())) {
+            case McAccounts.LoginResult.Ready ready -> ready;
+            case McAccounts.LoginResult.SignInRequired(var message) -> throw new InstanceLaunchException.SignInRequired(message, profile.getUuid());
+            case McAccounts.LoginResult.Unavailable(var message) -> throw new InstanceLaunchException(message);
+        };
     }
 
     private void prepareManifests(CancellationToken token, Path versionsDir) throws IOException, InstanceLaunchException {
