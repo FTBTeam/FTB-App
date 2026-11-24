@@ -234,7 +234,7 @@ function closeMenu() {
         <section class="p-2 pt-4 bg-black/20 border-t border-b border-white/10">
           <p class="font-bold text-white/80 text-lg px-2 mb-2">FTB Accounts</p>
 
-          <div class="flex flex-col gap-2 max-h-[250px] overflow-y-auto" v-if="accountsStore.ftbAccounts.length">
+          <div class="flex flex-col gap-2 max-h-[250px] overflow-y-auto">
             <ProfileSelectorItem 
               v-for="account in accountsStore.ftbAccounts" :key="account.id"
               is-rounded
