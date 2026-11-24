@@ -109,6 +109,12 @@ public class AppMain {
         
         this.logAppDetails();
 
+        // Nothing works without the data folder, so stop before anything tries to write to it
+        if (!Files.isWritable(this.paths.workingDir())) {
+            this.failStartup(StartupFailure.DATA_DIR_NOT_WRITABLE);
+            return;
+        }
+
         try {
             this.prelaunchChecks();
         } catch (Throwable ex) {
@@ -212,18 +218,6 @@ public class AppMain {
 
         CompletableFuture.runAsync(this.services.cache().local()::clean);
 
-        // TODO: This should return an exit code and a message. The frontend can then display this without needing to go around the houses.
-        @ReleaseBlocking(reason = "This should have a real feedback loop to the front end", resolvedBy = "Frontend handling the exit code and displaying a message to the user")
-        boolean isWritable = Files.isWritable(this.services().paths().workingDir());
-        if (!isWritable) {
-//            OpenModalData.openModal("Critical Error", "The FTBApp is unable to write to your selected data directory, this can be caused by file permission errors, anti-virus or any number of other configuration issues.<br />If you continue, the app will not work as intended and you may be unable to install or run any modpacks.", List.of(
-//                new OpenModalData.ModalButton("Exit", "success", this::exit),
-//                new OpenModalData.ModalButton("Continue", "danger", () -> {
-//                    this.services().rcpApi().sendMessage(new CloseModalData());
-//                }))
-//            );
-        }
-
         updateJavaVersions();
 
         // Spins up threaded long-lived work for fixing instances.
@@ -310,6 +304,25 @@ public class AppMain {
     public void exit() {
         cleanUpBeforeExit();
         System.exit(0);
+    }
+
+    /// Ends startup for a problem the app can't run with. Only call before the services are created
+    private void failStartup(StartupFailure failure) {
+        LOGGER.error("Backend Failed! Code={} Message={}", failure.name(), failure.message);
+        LogManager.shutdown();
+        System.exit(failure.exitCode);
+    }
+
+    private enum StartupFailure {
+        DATA_DIR_NOT_WRITABLE(10, "The FTB App can't write to its data folder. This can be caused by file permissions, anti-virus or other configuration issues. Fix the folder's permissions, then start the app again.");
+
+        private final int exitCode;
+        private final String message;
+
+        StartupFailure(int exitCode, String message) {
+            this.exitCode = exitCode;
+            this.message = message;
+        }
     }
 
     /**

@@ -64,10 +64,13 @@ export interface App {
   appData(): Promise<string>;
   appSettings(): Promise<any | null>;
   
+  /** 
+   * failure is a message for the user when the subprocess found a problem it can't start with 
+   */
   startSubprocess(): Promise<{ 
     port: number;
     secret: string;
-  } | false>;
+  } | { failure: string } | false>;
   
   getLicenses(): {
     javascript: JavascriptLicenses | null,

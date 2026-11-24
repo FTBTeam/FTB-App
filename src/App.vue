@@ -19,6 +19,7 @@ import { createLogger } from '@/core/logger.ts';
 import { retrying } from '@/utils/helpers/asyncHelpers.ts';
 import {AppNotification} from "@/types.ts";
 import {handleAction} from "@/core/protocol/protocolActions.ts";
+import {button, dialog, dialogsController} from "@/core/controllers/dialogsController.ts";
 
 const logger = createLogger("App.vue")
 
@@ -73,6 +74,12 @@ async function startApplication() {
         return;
       }
       
+      if ('failure' in result) {
+        logger.error("The subprocess couldn't start", result.failure)
+        showStartupFailure(result.failure)
+        return;
+      }
+      
       wsStore.wsSecret = result.secret;
       port = result.port;
     } catch (e) {
@@ -87,6 +94,21 @@ async function startApplication() {
   
   logger.log("Starting websocket connection on port", port);
   wsStore.controller.setup(port)
+}
+
+/**
+ * The app can't run without the subprocess, so the only way out is to quit
+ */
+function showStartupFailure(message: string) {
+  dialogsController.createDialog(dialog("The FTB App can't start")
+    .withContent(message)
+    .withType("error")
+    .withCloseAction(() => appPlatform.frame.quit())
+    .withButton(button("Quit")
+      .withType("error")
+      .withAction(() => appPlatform.frame.quit())
+      .build())
+    .build());
 }
 
 watch(() => wsStore.ready, (value) => {

@@ -2,7 +2,6 @@ package dev.ftb.app.util;
 
 import dev.ftb.app.Constants;
 
-@ReleaseBlocking(reason = "This whole class needs to move into a service.")
 public class ModpackApiUtils {
     public static PackType byteToPackType(byte packType) {
         return switch (packType) {

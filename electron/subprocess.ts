@@ -98,6 +98,8 @@ export function startSubprocess(appData: AppData, args: any) {
     const startedAt = Date.now();
     let settled = false;
     let idleTimeout: ReturnType<typeof setTimeout> | undefined;
+    // Essentially a small buffer...
+    let stdoutTail = "";
 
     const fail = (reason: string) => {
       if (settled) return;
@@ -161,6 +163,7 @@ export function startSubprocess(appData: AppData, args: any) {
       }
 
       log.debug("Subprocess stdout", outputData)
+      stdoutTail = (stdoutTail + data.toString()).slice(-16_384);
       if (!appData.state.isSubprocessSetup) {
         if (data.includes("Backend Ready! Port=")) {
           const port = parseInt(outputData.match(/Port=(\d+)/)![1]);
@@ -199,6 +202,23 @@ export function startSubprocess(appData: AppData, args: any) {
 
     subprocess.on('exit', (code, signal) => {
       log.debug("Subprocess exited", code, signal)
+
+      // The subprocess found a problem it can't start with
+      const failure = stdoutTail.match(/Backend Failed! Code=(\w+) Message=(.*)/);
+      if (failure && !settled) {
+        settled = true;
+        clearTimeout(idleTimeout);
+        clearTimeout(hardTimeout);
+        log.error(`Subprocess failed to start: ${failure[1]}`);
+        resolve({
+          failure: {
+            code: failure[1],
+            message: failure[2].trim(),
+          }
+        });
+        return;
+      }
+
       // No point waiting out the timers for a process that's already gone.
       fail(`Subprocess exited before it was ready (code: ${code}, signal: ${signal})`);
     });
