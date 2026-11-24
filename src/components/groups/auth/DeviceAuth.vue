@@ -182,12 +182,12 @@ function copyAndOpen() {
             <span>{{ deviceCode }}</span>
           </div>
           
-          <UiButton class="flex! items-center" :icon="faCopy" :aria-label="copied ? 'Copied!' : 'Copy to clipboard'" @click="copy(deviceCode)"></UiButton>
+          <UiButton class="flex! items-center" :icon="faCopy" aria-label-pos="down-right" :aria-label="copied ? 'Copied!' : 'Copy to clipboard'" @click="copy(deviceCode)"></UiButton>
         </div>
         <UiButton :icon="faExternalLink" size="large" fullWidth type="primary" @click="copyAndOpen">
           Copy & Open
         </UiButton>
-        <p class="text-white/80 mt-3">Paste the code at <a class="text-blue-400 hover:text-blue-500 underline" :href="redirectUri">{{ provider === 'MICROSOFT' ? 'microsoft.com/link' : 'identity.feed-the-beast.com' }}</a>, sign in, then come back here.</p>
+        <p class="text-white/80 mt-3">Paste the code at <a target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-500 underline" :href="redirectUri">{{ provider === 'MICROSOFT' ? 'microsoft.com/link' : 'identity.feed-the-beast.com' }}</a>, sign in, then come back here.</p>
       </div>
     </div>
 
