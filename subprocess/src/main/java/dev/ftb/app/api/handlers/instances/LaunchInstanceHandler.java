@@ -1,6 +1,7 @@
 package dev.ftb.app.api.handlers.instances;
 
 import dev.ftb.app.api.data.instances.LaunchInstanceData;
+import dev.ftb.app.api.data.instances.LaunchInstanceData.LaunchResult;
 import dev.ftb.app.api.handlers.IMessageHandler;
 import dev.ftb.app.api.handlers.MessageContext;
 import dev.ftb.app.pack.CancellationToken;
@@ -24,7 +25,7 @@ public class LaunchInstanceHandler implements IMessageHandler<LaunchInstanceData
         UUID uuid = UUID.fromString(_uuid);
         Instance instance = context.services().instances().getInstance(uuid);
         if (instance == null) {
-            context.reply(new LaunchInstanceData.Reply(data, uuid, "error", "Instance does not exist."));
+            context.reply(new LaunchInstanceData.Reply(data, uuid, LaunchResult.ERROR, "Instance does not exist."));
             return;
         }
         
@@ -32,16 +33,16 @@ public class LaunchInstanceHandler implements IMessageHandler<LaunchInstanceData
 
         if (data.cancelLaunch && instance.prepareFuture != null && instance.prepareToken != null) {
             instance.prepareToken.cancel(instance.prepareFuture);
-            context.reply(new LaunchInstanceData.Reply(data, uuid, "canceled", "Instance launch canceled."));
+            context.reply(new LaunchInstanceData.Reply(data, uuid, LaunchResult.CANCELED, "Instance launch canceled."));
             return;
         }
 
         if (launcher.isRunning()) {
-            context.reply(new LaunchInstanceData.Reply(data, uuid, "error", "Instance is already running."));
+            context.reply(new LaunchInstanceData.Reply(data, uuid, LaunchResult.ERROR, "Instance is already running."));
             return;
         }
         if (data.offline && StringUtils.isEmpty(data.offlineUsername)) {
-            context.reply(new LaunchInstanceData.Reply(data, uuid, "error", "Offline username not specified."));
+            context.reply(new LaunchInstanceData.Reply(data, uuid, LaunchResult.ERROR, "Offline username not specified."));
             return;
         }
 
@@ -54,16 +55,16 @@ public class LaunchInstanceHandler implements IMessageHandler<LaunchInstanceData
             try {
                 Instance.InvalidCheck invalidCheck = data.invalidCheck != null ? data.invalidCheck : Instance.InvalidCheck.CHECK;
                 instance.play(instance.prepareToken, data.extraArgs, data.offline ? data.offlineUsername : null, invalidCheck);
-                context.reply(new LaunchInstanceData.Reply(data, uuid, "success", ""));
+                context.reply(new LaunchInstanceData.Reply(data, uuid, LaunchResult.SUCCESS, ""));
             } catch (InstanceLaunchException ex) {
                 if (ex instanceof InstanceLaunchException.Abort) {
-                    context.reply(new LaunchInstanceData.Reply(data, uuid, "abort", ex.getMessage()));
+                    context.reply(new LaunchInstanceData.Reply(data, uuid, LaunchResult.ABORT, ex.getMessage()));
                 } else if (ex instanceof InstanceLaunchException.SignInRequired signIn) {
                     LOGGER.info("Can't launch, the Minecraft account has to sign in again: {}", ex.getMessage());
-                    context.reply(new LaunchInstanceData.Reply(data, uuid, "signInRequired", ex.getMessage(), signIn.profileUuid));
+                    context.reply(new LaunchInstanceData.Reply(data, uuid, LaunchResult.SIGN_IN_REQUIRED, ex.getMessage(), signIn.profileUuid));
                 } else if (ex instanceof InstanceLaunchException.PotentiallyInvalid) {
                     LOGGER.info("Not launching yet, the instance looks potentially invalid");
-                    context.reply(new LaunchInstanceData.Reply(data, uuid, "potentiallyInvalid", ex.getMessage()));
+                    context.reply(new LaunchInstanceData.Reply(data, uuid, LaunchResult.POTENTIALLY_INVALID, ex.getMessage()));
                 } else {
                     LOGGER.error("Failed to launch instance.", ex);
                     Throwable cause = ex.getCause();
@@ -75,11 +76,11 @@ public class LaunchInstanceHandler implements IMessageHandler<LaunchInstanceData
                         message += " because.. " + cause.getClass().getName() + ": " + cause.getMessage();
                     }
 
-                    context.reply(new LaunchInstanceData.Reply(data, uuid, "error", message));
+                    context.reply(new LaunchInstanceData.Reply(data, uuid, LaunchResult.ERROR, message));
                 }
             } catch (Throwable ex) {
                 LOGGER.error("Unknown error whilst starting instance.", ex);
-                context.reply(new LaunchInstanceData.Reply(data, uuid, "error", "Unexpected error whilst starting instance."));
+                context.reply(new LaunchInstanceData.Reply(data, uuid, LaunchResult.ERROR, "Unexpected error whilst starting instance."));
             }
             instance.prepareToken = null;
             instance.prepareFuture = null;

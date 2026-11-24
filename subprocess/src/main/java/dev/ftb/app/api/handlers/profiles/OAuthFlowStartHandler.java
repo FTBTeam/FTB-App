@@ -60,8 +60,9 @@ public class OAuthFlowStartHandler implements IMessageHandler<OAuthFlowStartHand
         var holder = new LoopbackHolder(loopback, state, verifier, loopback.redirectUri());
         listeners.put(data.provider, holder);
         
-        String url = data.accountId != null
-            ? exchange.authorizeUrl(state, challenge, loopback.redirectUri(), TokenExchange.AccountPrompt.REUSE_SESSION, loginHint(context.services(), data.provider, data.accountId))
+        String loginHint = data.accountId != null ? loginHint(context.services(), data.provider, data.accountId) : null;
+        String url = loginHint != null
+            ? exchange.authorizeUrl(state, challenge, loopback.redirectUri(), TokenExchange.AccountPrompt.REUSE_SESSION, loginHint)
             : exchange.authorizeUrl(state, challenge, loopback.redirectUri(), TokenExchange.AccountPrompt.CHOOSE_ACCOUNT, null);
         
         // A success is the URL being returned

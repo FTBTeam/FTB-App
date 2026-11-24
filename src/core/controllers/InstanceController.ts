@@ -91,19 +91,21 @@ export class InstanceController {
       invalidCheck
     }, 1000 * 60 * 10) // 10 minutes It's a long time, but we don't want to timeout too early
 
-    if (result.status !== 'success') {
+    if (result.status !== 'SUCCESS') {
       InstanceController.logger.warn("Failed to launch instance", result);
       runningInstancesStore.clearLaunchingStatus()
+      // The launch steps sent before it failed would otherwise leave the instance looking like it's still starting
+      runningInstancesStore.stopped(this.instance.uuid)
 
-      if (result.status === 'signInRequired') {
+      if (result.status === 'SIGN_IN_REQUIRED') {
         alertController.warning(result.message);
         useAccountsStore().openSignIn('MICROSOFT', result.profileUuid ?? null);
-      } else if (result.status === 'potentiallyInvalid') {
+      } else if (result.status === 'POTENTIALLY_INVALID') {
         const choice = await this.askPotentiallyInvalid(result.message);
         if (choice) {
           return this._play(profileUuid, offlineUsername, choice);
         }
-      } else if (result.status === 'error') {
+      } else if (result.status === 'ERROR') {
         alertController.error(result.message);
       }
       

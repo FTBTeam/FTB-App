@@ -180,7 +180,7 @@ export interface Logs extends BaseData {
 }
 
 export interface LaunchInstanceDataReply extends BaseData {
-    status: string;
+    status: LaunchResult;
     message: string;
     uuid: string;
     profileUuid?: string;
@@ -687,6 +687,8 @@ export interface CurseForgeIds {
 export type LoginStatus = "WORKING" | "COMPLETE" | "FAILED";
 
 export type LoginStep = "EXCHANGING_CODE" | "XBOX" | "XSTS" | "MINECRAFT" | "PROFILE" | "SAVING";
+
+export type LaunchResult = "SUCCESS" | "ERROR" | "ABORT" | "CANCELED" | "SIGN_IN_REQUIRED" | "POTENTIALLY_INVALID";
 
 export type AccountProvider = "FTB" | "MICROSOFT";
 

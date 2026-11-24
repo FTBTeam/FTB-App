@@ -47,18 +47,17 @@ public class LaunchInstanceData extends BaseData {
     }
 
     public static class Reply extends BaseData {
-        /// `success`, `error`, `abort`, `canceled`, `signInRequired` or `potentiallyInvalid`
-        public String status;
+        public LaunchResult status;
         public String message;
         public UUID uuid;
         @Nullable
         public UUID profileUuid;
 
-        public Reply(LaunchInstanceData data, UUID uuid, String status, String message) {
+        public Reply(LaunchInstanceData data, UUID uuid, LaunchResult status, String message) {
             this(data, uuid, status, message, null);
         }
 
-        public Reply(LaunchInstanceData data, UUID uuid, String status, String message, @Nullable UUID profileUuid) {
+        public Reply(LaunchInstanceData data, UUID uuid, LaunchResult status, String message, @Nullable UUID profileUuid) {
             type = "launchInstance.reply";
             requestId = data.requestId;
             
@@ -67,6 +66,15 @@ public class LaunchInstanceData extends BaseData {
             this.message = message;
             this.profileUuid = profileUuid;
         }
+    }
+
+    public enum LaunchResult {
+        SUCCESS,
+        ERROR,
+        ABORT,
+        CANCELED,
+        SIGN_IN_REQUIRED,
+        POTENTIALLY_INVALID,
     }
 
     public static class Stopped extends BaseData {

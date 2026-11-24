@@ -9,6 +9,7 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Base64;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -231,7 +232,7 @@ public class EncryptedFileVaultTests {
         store.save(key);
 
         assertArrayEquals(key, new FallbackKeyStore(dir.resolve("vault.fallback.key")).load());
-        assertFalse(Files.readString(dir.resolve("vault.fallback.key")).contains(java.util.Base64.getEncoder().encodeToString(key)));
+        assertFalse(Files.readString(dir.resolve("vault.fallback.key")).contains(Base64.getEncoder().encodeToString(key)));
 
         store.delete();
         assertNull(store.load());
