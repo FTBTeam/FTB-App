@@ -180,7 +180,7 @@ function closeMenu() {
 <template>
   <div class="profile-area" :class="{ disabled }" ref="sidebarRef">
     <div class="profile">
-      <div class="avatar cursor-pointer border-4 rounded transition-all duration-200" :class="{'border-green-600': open, 'border-transparent': !open}" @click="openMenu()">
+      <div class="avatar cursor-pointer border-4 rounded transition-all duration-200 hover:border-white/10" :class="{'border-white/10': open, 'border-transparent': !open}" @click="openMenu()">
         <Popover :text="!open ? 'Sign in or manage your accounts' : undefined">
             <img
               :src="getMinecraftHead(accountsStore.mcActiveProfile?.uuid ?? null)"
