@@ -1,0 +1,99 @@
+package dev.ftb.app.services;
+
+import dev.ftb.app.services.accounts.ApiTokenSource;
+import com.google.common.base.Suppliers;
+import dev.ftb.app.AppFlags;
+import dev.ftb.app.Constants;
+import dev.ftb.app.os.OS;
+import dev.ftb.app.util.FetchLoggerInterceptor;
+import dev.ftb.app.util.ProxyUtils;
+import dev.ftb.app.util.SSLUtils;
+import dev.ftb.app.util.SimpleCookieJar;
+import net.covers1624.quack.net.okhttp.MultiHasherInterceptor;
+import net.covers1624.quack.net.okhttp.ThrottlerInterceptor;
+import okhttp3.ConnectionPool;
+import okhttp3.OkHttpClient;
+import okhttp3.Protocol;
+import okio.Throttler;
+
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.function.LongSupplier;
+import java.util.function.Supplier;
+
+public class AppHttp {
+    private final Throttler clientThrottler = new Throttler();
+    private final Supplier<String> userAgent;
+
+    private OkHttpClient httpClientV2;
+    private OkHttpClient httpClientV1;
+    
+    private final AppFlags flags;
+    
+    private final LongSupplier speedLimit;
+    
+    private volatile ApiTokenSource modpackApiTokens = ApiTokenSource.NONE;
+    
+    public AppHttp(AppFlags flags, LongSupplier speedLimit) {
+        this.flags = flags;
+        this.speedLimit = speedLimit;
+
+        // This needs to happen before the client is created.
+        this.userAgent = Suppliers.memoize(() -> "ftb-app/" + Constants.APPVERSION + " " +
+            "OS/" + OS.CURRENT.name() + " " +
+            "Platform/" + this.flags.platform() + " " +
+            "Branch/" + Constants.BRANCH + " " +
+            "Commit/" + Constants.COMMIT);
+        
+        this.createClients();
+    }
+
+    public void createClients() {
+        OkHttpClient.Builder builder = new OkHttpClient.Builder()
+            .connectTimeout(5, TimeUnit.MINUTES)
+            .readTimeout(5, TimeUnit.MINUTES)
+            .connectionPool(new ConnectionPool())
+            .cookieJar(new SimpleCookieJar())
+            .addInterceptor(new FetchLoggerInterceptor())
+            .addInterceptor(new MultiHasherInterceptor())
+            .addInterceptor(chain -> chain.proceed(chain.request().newBuilder().tag(Throttler.class, getClientThrottler()).build()))
+            .addInterceptor(new ThrottlerInterceptor())
+            .addInterceptor(chain -> chain.proceed(chain.request().newBuilder().header("User-Agent", this.userAgent.get()).build()))
+            // Last, so the logger above never sees the token
+            .addInterceptor(new ModpackApiAuthInterceptor(Constants.FTB_MODPACKS_API, () -> this.modpackApiTokens));
+
+        SSLUtils.inject(builder);
+        ProxyUtils.inject(builder);
+        this.httpClientV2 = builder.build();
+        builder.protocols(List.of(Protocol.HTTP_1_1));
+        this.httpClientV1 = builder.build();
+    }
+
+    private Throttler getClientThrottler() {
+        // The slider stores kilobits per second. One throttler is shared by every request, so this caps total
+        // download bandwidth, not each file. With several files downloading at once, each gets a share of it.
+        long bytesPerSecond = this.speedLimit.getAsLong() * 1000L / 8;
+        this.clientThrottler.bytesPerSecond(Math.max(bytesPerSecond, 0)); // 0 is okio's "no limit"
+        return this.clientThrottler;
+    }
+    
+    public OkHttpClient httpClient() {
+        return this.httpClient(Protocol.HTTP_2);
+    }
+    
+    public OkHttpClient httpClient(Protocol protocol) {
+        return switch (protocol) {
+            case HTTP_1_1 -> this.httpClientV1;
+            case HTTP_2 -> this.httpClientV2;
+            default -> throw new IllegalArgumentException("Unsupported protocol: " + protocol);
+        };
+    }
+
+    public void setModpackApiTokens(ApiTokenSource tokens) {
+        this.modpackApiTokens = tokens;
+    }
+
+    public Supplier<String> userAgent() {
+        return userAgent;
+    }
+}

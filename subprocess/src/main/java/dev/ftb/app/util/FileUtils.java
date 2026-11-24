@@ -20,10 +20,9 @@ import java.util.stream.Stream;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static net.covers1624.quack.util.SneakyUtils.sneak;
 
-public class FileUtils
-{
+public class FileUtils {
     private static final Logger LOGGER = LogManager.getLogger();
-    
+
     public static void deletePath(Path path) {
         if (Files.notExists(path)) return;
 

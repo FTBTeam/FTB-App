@@ -1,9 +1,8 @@
 package dev.ftb.app.api.handlers.instances;
 
-import dev.ftb.app.Instances;
-import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.api.handlers.IMessageHandler;
+import dev.ftb.app.api.handlers.MessageContext;
 import dev.ftb.app.pack.Instance;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,10 +18,10 @@ public class GetInstanceFoldersHandler implements IMessageHandler<GetInstanceFol
 
     private static final Logger LOGGER = LogManager.getLogger();
     @Override
-    public void handle(Request data) {
-        Instance instance = Instances.getInstance(UUID.fromString(data.uuid));
+    public void handle(MessageContext context, Request data) {
+        Instance instance = context.services().instances().getInstance(UUID.fromString(data.uuid));
         if (instance == null) {
-            WebSocketHandler.sendMessage(new Reply(data, false, Set.of()));
+            context.reply(new Reply(data, false, Set.of()));
             return;
         }
 
@@ -34,10 +33,10 @@ public class GetInstanceFoldersHandler implements IMessageHandler<GetInstanceFol
                 .map(e -> instanceDir.relativize(e).toString())
                 .collect(Collectors.toSet());
             
-            WebSocketHandler.sendMessage(new Reply(data, true, folders));
+            context.reply(new Reply(data, true, folders));
         } catch (IOException e) {
             LOGGER.error("Unable to read paths from {}", instanceDir, e);
-            WebSocketHandler.sendMessage(new Reply(data, false, Set.of()));
+            context.reply(new Reply(data, false, Set.of()));
         }
     }
     

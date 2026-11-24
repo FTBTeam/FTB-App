@@ -1,6 +1,5 @@
 package dev.ftb.app.task;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import net.covers1624.quack.util.SneakyUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -10,19 +9,17 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import static net.covers1624.quack.util.SneakyUtils.unsafeCast;
 
 public class LongRunningTaskManager {
-
     private static final Logger LOGGER = LogManager.getLogger();
 
-    private final ExecutorService executor = Executors.newCachedThreadPool(new ThreadFactoryBuilder()
-            .setNameFormat("Long Running Executor %d")
-            .setDaemon(true)
-            .build()
-    );
+    private final ExecutorService executor;
+    public LongRunningTaskManager(ExecutorService executor) {
+        this.executor = executor;
+    }
+
     private final List<LongRunningOperation> operations = new LinkedList<>();
 
     /**

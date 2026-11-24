@@ -2,13 +2,6 @@ import { useAppSettings } from '@/store/appSettingsStore.ts';
 import { computed } from 'vue';
 import { constants } from '@/core/constants.ts';
 import {useAccountsStore} from "@/store/accountsStore.ts";
-import {Roles} from "@/core/auth/jwtIdTokenData";
-
-function idTokenHasPremiumAccess(resourceAccess: Record<string, Roles> | undefined): boolean {
-  if (!resourceAccess) return false;
-  
-  return resourceAccess?.["ftb-app"]?.roles.includes("member:ads");
-}
 
 export function useAds() {
   const isProd = constants.isProduction;
@@ -16,8 +9,7 @@ export function useAds() {
   const accountStore = useAccountsStore();
   
   const adsEnabled = computed(() => {
-    const isPremium = idTokenHasPremiumAccess(accountStore.ftbAccount?.idTokenData?.resource_access);
-    if (isPremium) {
+    if (accountStore.isPremiumMember) {
       return false;
     }
     

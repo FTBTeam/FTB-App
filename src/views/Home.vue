@@ -1,5 +1,5 @@
 <template>
-  <div class="home page-spacing">
+  <div class="home page-spacing">    
     <template v-if="recentInstances.length">
       <h2 class="text-2xl font-bold text-white mb-4">Jump back in where you left off</h2>
       
@@ -21,7 +21,7 @@
 <script lang="ts" setup>
 import PackPreview from '@/components/groups/modpack/PackPreview.vue';
 import PackCard2 from '@/components/groups/modpack/PackCard2.vue';
-import { Message } from '@/components/ui';
+import {Message} from '@/components/ui';
 import { computed, onMounted, ref } from 'vue';
 import { useInstanceStore } from '@/store/instancesStore.ts';
 import { useModpackStore } from '@/store/modpackStore.ts';

@@ -1,10 +1,9 @@
 package dev.ftb.app.api.handlers.instances;
 
 import com.google.gson.annotations.JsonAdapter;
-import dev.ftb.app.Instances;
-import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.data.instances.InstalledInstancesData;
 import dev.ftb.app.api.handlers.IMessageHandler;
+import dev.ftb.app.api.handlers.MessageContext;
 import dev.ftb.app.data.InstanceJson;
 import dev.ftb.app.instance.InstanceCategory;
 import dev.ftb.app.pack.Instance;
@@ -14,28 +13,29 @@ import org.jspecify.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 public class InstalledInstancesHandler implements IMessageHandler<InstalledInstancesData> {
     @Override
-    public void handle(InstalledInstancesData data) {
+    public void handle(MessageContext context, InstalledInstancesData data) {
         if (data.refresh) {
-            Instances.refreshInstances();
+            context.services().instances().refreshInstances();
         }
 
-        List<SugaredInstanceJson> instanceJsons = Instances.allInstances()
+        List<SugaredInstanceJson> instanceJsons = context.services().instances().allInstances()
                 .stream()
                 .map(SugaredInstanceJson::new)
                 .toList();
         
-        var categories = Instances.categories();
+        var categories = context.services().instances().categories();
         if (categories.isEmpty()) {
             categories = new LinkedList<>();
             categories.add(InstanceCategory.DEFAULT);
         }
         
-        InstalledInstancesData.Reply reply = new InstalledInstancesData.Reply(data.requestId, instanceJsons, categories);
-        WebSocketHandler.sendMessage(reply);
+        context.reply(new InstalledInstancesData.Reply(data.requestId, instanceJsons, categories));
     }
 
     public static class SugaredInstanceJson extends InstanceJson {

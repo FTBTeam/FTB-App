@@ -5,11 +5,15 @@ import {createLogger} from '@/core/logger';
 import {ref, useTemplateRef} from 'vue';
 import { useAccountsStore } from '@/store/accountsStore.ts';
 import { AuthProfile } from '@/core/types/appTypes.ts';
-import {faExternalLink, faPlus} from '@fortawesome/free-solid-svg-icons';
-import {Popover, UiButton} from "@/components/ui";
+import { AccountProvider, FtbAccount } from '@/core/types/javaApi';
+import {faArrowsLeftRight, faExternalLink, faPlus, faRefresh, faTrash} from '@fortawesome/free-solid-svg-icons';
+import {MenuOptions, openContextMenu} from '@/core/context/contextMenu.ts';
+import {Popover} from "@/components/ui";
+import appPlatform from '@platform';
 import {useAttachDomEvent} from "@/composables";
-import SidebarProfileItem from "@/components/layout/sidebar/SidebarProfileItem.vue";
 import {dialogsController} from "@/core/controllers/dialogsController.ts";
+import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
+import ProfileSelectorItem from "@/components/layout/sidebar/ProfileSelectorItem.vue";
 
 const accountsStore = useAccountsStore();
 
@@ -20,8 +24,6 @@ const { disabled = false } = defineProps<{
 const loading = ref(false);
 const open = ref(false);
 const awaitingConfirm = ref(false);
-const specialOpen = ref(false);
-const closeTimeoutRef = ref<ReturnType<typeof setTimeout> | null>(null);
 
 const sidebarRef = useTemplateRef<HTMLDivElement>("sidebarRef");
 
@@ -50,7 +52,8 @@ async function removeProfile(profile: AuthProfile) {
   try {
     logger.debug(`Removing profile ${profile.uuid}`)
     const data = await sendMessage("profiles.remove", {
-      uuid: profile.uuid
+      provider: "MICROSOFT",
+      id: profile.uuid
     })
     
     if (data.success) {
@@ -70,7 +73,8 @@ async function setActiveProfile(profile: AuthProfile) {
   try {
     logger.debug(`Setting active profile ${profile.uuid}`)
     const data = await sendMessage("profiles.setActiveProfile", {
-      uuid: profile.uuid
+      provider: "MICROSOFT",
+      id: profile.uuid
     })
 
     if (data.success) {
@@ -85,20 +89,71 @@ async function setActiveProfile(profile: AuthProfile) {
   loading.value = false;
 }
 
-function openSignIn() {
-  accountsStore.openSignIn(true);
-  closeMenu()
-}
-
-function openSignInFtb() {
-  accountsStore.openSignInFtb(true);
-  closeMenu()
-}
-
-async function ftbSignOut() {
-  if (await confirm()) {
-    await accountsStore.signOutFtb();
+async function removeFtbAccount(account: FtbAccount) {
+  if (!(await confirm())) {
+    return;
   }
+
+  loading.value = true;
+  try {
+    if (!(await accountsStore.removeFtbAccount(account.id))) {
+      logger.debug('Failed to remove FTB account');
+    }
+  } catch (error) {
+    logger.debug('Failed to remove FTB account due to message errors', error);
+  }
+  loading.value = false;
+}
+
+async function setActiveFtbAccount(account: FtbAccount) {
+  if (account.id === accountsStore.ftbAccount?.id) {
+    return;
+  }
+
+  loading.value = true;
+  try {
+    if (!(await accountsStore.setActiveFtbAccount(account.id))) {
+      logger.debug('Failed to set active FTB account');
+    }
+  } catch (error) {
+    logger.debug('Failed to set active FTB account due to message errors', error);
+  }
+  loading.value = false;
+}
+
+const signedOutText = 'Signed out, click to sign in again';
+
+function minecraftMenu(profile: AuthProfile): MenuOptions {
+  const active = profile.uuid === accountsStore.mcActiveProfile?.uuid;
+  return [
+    {title: 'Switch to this account', icon: faArrowsLeftRight, hidden: active || profile.notLoggedIn, action: () => setActiveProfile(profile)},
+    {title: 'Sign in again', icon: faRefresh, hidden: !profile.notLoggedIn, action: () => signInAgain('MICROSOFT', profile.uuid)},
+    {title: 'Remove account', icon: faTrash, color: 'danger', action: () => removeProfile(profile)},
+  ];
+}
+
+function ftbMenu(account: FtbAccount): MenuOptions {
+  const active = account.id === accountsStore.ftbAccount?.id;
+  return [
+    {title: 'Switch to this account', icon: faArrowsLeftRight, hidden: active || account.notLoggedIn, action: () => setActiveFtbAccount(account)},
+    {title: 'Sign in again', icon: faRefresh, hidden: !account.notLoggedIn, action: () => signInAgain('FTB', account.id)},
+    {title: 'Go to accounts page', icon: faExternalLink, action: () => appPlatform.utils.openUrl('https://account.feed-the-beast.com')},
+    {separator: true},
+    {title: 'Remove account', icon: faTrash, color: 'danger', action: () => removeFtbAccount(account)},
+  ];
+}
+
+function signInAgain(provider: AccountProvider, accountId: string) {
+  closeMenu();
+  accountsStore.openSignIn(provider, accountId);
+}
+
+function ftbSubtext(account: FtbAccount) {
+  if (account.notLoggedIn) {
+    return signedOutText;
+  }
+
+  return account.premium ? '❤️ Premium' : undefined;
 }
 
 async function confirm() {
@@ -108,42 +163,29 @@ async function confirm() {
   return result
 }
 
-function openMenu(event: MouseEvent) {
+function openMenu() {
   if (open.value) {
     closeMenu()
     return;
   }
-
-  if (closeTimeoutRef.value) {
-    clearTimeout(closeTimeoutRef.value);
-  }
   
   open.value = true;
-  if (event.shiftKey) {
-    specialOpen.value = true;
-  }
 }
 
 function closeMenu() {
   open.value = false;
-  if (closeTimeoutRef.value) {
-    clearTimeout(closeTimeoutRef.value);
-  }
-  closeTimeoutRef.value = setTimeout(() => {
-    specialOpen.value = false;
-  }, 200);
 }
 </script>
 
 <template>
   <div class="profile-area" :class="{ disabled }" ref="sidebarRef">
     <div class="profile">
-      <div class="avatar cursor-pointer" @click="openMenu($event)">
+      <div class="avatar cursor-pointer border-4 rounded transition-all duration-200" :class="{'border-green-600': open, 'border-transparent': !open}" @click="openMenu()">
         <Popover :text="!open ? 'Sign in or manage your accounts' : undefined">
             <img
               :src="getMinecraftHead(accountsStore.mcActiveProfile?.uuid ?? null)"
               alt="Profile"
-              class="rounded"
+              class="rounded-xs"
               width="35"
               height="35"
             />
@@ -151,43 +193,70 @@ function closeMenu() {
       </div>
 
       <div class="profile-switch" :class="{open}" v-show="!disabled">
-        <section>
-          <p class="font-bold mb-4">Minecraft Accounts</p>
+        <section class="p-4 border-b border-white/10" v-if="accountsStore.mcActiveProfile">
+          <p class="font-bold text-white/80 text-lg mb-4">Playing as</p>
+
+          <ProfileSelectorItem
+            :name="accountsStore.mcActiveProfile.username" 
+            :avatar="getMinecraftHead(accountsStore.mcActiveProfile.uuid)"
+            @options="(elm) => openContextMenu(elm, minecraftMenu(accountsStore.mcActiveProfile!))"
+            is-larger 
+          >
+            <span :class="{'text-red-300': accountsStore.mcActiveProfile.notLoggedIn, 'text-green-300': !accountsStore.mcActiveProfile.notLoggedIn}">{{accountsStore.mcActiveProfile.notLoggedIn ? signedOutText : 'Ready to play'}}</span>
+          </ProfileSelectorItem>
+        </section>
+        
+        <section class="p-2">
+          <div class="font-bold text-white/80 text-lg px-2 mt-2" v-if="accountsStore.mcActiveProfile">Switch to</div>
           
-          <div class="accounts" v-if="accountsStore.mcProfiles && accountsStore.mcProfiles.length">
-            <SidebarProfileItem
-              v-for="(item, key) in accountsStore.mcProfiles"
-              :key="key"
-              :profile="{
-                name: item.username,
-                avatarUrl: getMinecraftHead(item.uuid)
-              }" 
-              :on-delete="() => removeProfile(item)" 
-              :on-select="() => setActiveProfile(item)"
-              :subtext="accountsStore.mcActiveProfile?.uuid === item.uuid ? 'Active Profile' : undefined"
-              :active="accountsStore.mcActiveProfile?.uuid === item.uuid" />
-          </div>
-          
-          <UiButton class="mt-4" size="small" type="primary" :icon="faPlus" @click="() => openSignIn()">Add Minecraft Account</UiButton>
+          <div class="flex flex-col gap-2 max-h-[250px] overflow-y-auto" v-if="accountsStore.mcProfiles && accountsStore.mcProfiles.length">
+            <div v-for="(item, key) in accountsStore.mcProfiles">
+              <ProfileSelectorItem
+                v-if="item.uuid !== accountsStore.mcActiveProfile?.uuid"
+                class="px-2 py-2 hover:bg-white/10 rounded-lg cursor-pointer"
+                :key="key"
+                :name="`${item.username}${item.notLoggedIn ? ` (${signedOutText})` : ''}`"
+                :avatar="getMinecraftHead(item.uuid)"
+                @options="(elm) => openContextMenu(elm, minecraftMenu(item))"
+                @click="() => item.notLoggedIn ? signInAgain('MICROSOFT', item.uuid) : setActiveProfile(item)"
+              />
+            </div>
+            
+            <div class="flex gap-4 items-center hover:bg-white/10 p-2 rounded-lg cursor-pointer" @click="() => accountsStore.openSignIn('MICROSOFT')">
+              <div class="w-10 h-10 border border-dashed border-blue-500 rounded-lg flex items-center justify-center">
+                <FontAwesomeIcon :icon="faPlus" class="text-blue-200" fixed-width />
+              </div>
+              <p class="text-blue-300">Add Minecraft Account</p>
+            </div>
+          </div>          
         </section>
 
-        <section v-if="specialOpen">
-          <p class="font-bold mb-4">FTB Account</p>
+        <section class="p-2 pt-4 bg-black/20 border-t border-b border-white/10">
+          <p class="font-bold text-white/80 text-lg px-2 mb-2">FTB Accounts</p>
 
-          <div class="accounts" v-if="accountsStore.ftbAccount">
-            <SidebarProfileItem :profile="{
-              name: accountsStore.ftbAccount?.accountData.preferred_username ?? accountsStore.ftbAccount?.accountData.given_name ?? 'Unknown?',
-              avatarUrl: accountsStore.ftbAccount?.accountData.picture
-            }"
-                                :subtext="accountsStore.isPremiumMember ? '❤️ Premium member' : undefined"
-                                :active="true"
-                                :on-delete="ftbSignOut"
-                                :on-select="() => {}" />
-            
-            <a href="https://account.feed-the-beast.com" target="_blank"><UiButton :icon="faExternalLink">Go to accounts page</UiButton></a>
-          </div>
+          <div class="flex flex-col gap-2 max-h-[250px] overflow-y-auto" v-if="accountsStore.ftbAccounts.length">
+            <ProfileSelectorItem 
+              v-for="account in accountsStore.ftbAccounts" :key="account.id"
+              is-rounded
+              :class="{'px-2 py-2 hover:bg-white/10 rounded-lg cursor-pointer border border-transparent': true, 'bg-blue-600/30 border-blue-400!': account.id === accountsStore.ftbAccount?.id}"
+              :name="account.username"
+              :avatar="account.avatarUrl"
+              @options="e => openContextMenu(e, ftbMenu(account))"
+              @click="() => account.notLoggedIn ? signInAgain('FTB', account.id) : setActiveFtbAccount(account)">
+              <div class="flex flex-wrap gap-2">
+                <span v-if="account.id === accountsStore.ftbAccount?.id">Active</span>
+                <span v-if="account.id === accountsStore.ftbAccount?.id">·</span>
+                {{ftbSubtext(account)}}
+              </div>
+            </ProfileSelectorItem>
 
-          <UiButton v-if="!accountsStore.ftbAccount" size="small" type="primary" :icon="faPlus" @click="() => openSignInFtb()">Add FTB Account</UiButton>
+            <div class="flex gap-4 items-center hover:bg-white/10 p-2 rounded-lg cursor-pointer" @click="() => accountsStore.openSignIn('FTB')">
+              <div class="w-10 h-10 border border-dashed border-blue-500 rounded-full flex items-center justify-center">
+                <FontAwesomeIcon :icon="faPlus" class="text-blue-200" fixed-width />
+              </div>
+              <p class="text-blue-300">Add FTB Account</p>
+            </div>
+          </div>          
         </section>
       </div>
     </div>
@@ -249,16 +318,16 @@ function closeMenu() {
 
   .profile-switch {
     position: absolute;
-    left: 100%;
+    left: 120%;
     bottom: 1rem;
-    width: 360px;
-    max-height: calc(100% - 1px);
+    width: 320px;
+    max-height: calc(100% - 24px);
+    overflow-y: auto;
     z-index: 1000;
     opacity: 0;
     background-color: #363636;
     border: 1px solid rgba(white, .1);
     border-radius: var(--border-radius);
-    padding: 1rem;
     
     transition: transform 0.2s ease-in-out, opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
     transform: translateX(1rem);
@@ -272,17 +341,6 @@ function closeMenu() {
 
     section {
       position: relative;
-      &:not(:last-child) {
-        margin-bottom: 1rem;
-      }
-    }
-    
-    .accounts {
-      position: relative;
-      z-index: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
     }
   }
 }

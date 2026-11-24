@@ -2,8 +2,8 @@ package dev.ftb.app.data.modpack;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
-import dev.ftb.app.Constants;
-import dev.ftb.app.util.CurseMetadataCache;
+import dev.ftb.app.services.AppHttp;
+import dev.ftb.app.services.cache.CurseMetadataCache;
 import dev.ftb.app.util.ModpackApiUtils;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.io.IOUtils;
@@ -40,16 +40,15 @@ public class ModpackVersionModsManifest {
         JsonUtils.write(GSON, IOUtils.makeParents(path), manifest);
     }
 
-    public static ModpackVersionModsManifest query(long packId, long versionId, boolean isPrivate, byte packType) throws IOException, JsonParseException {
+    public static ModpackVersionModsManifest query(AppHttp httpClient, long packId, long versionId, boolean isPrivate, byte packType) throws IOException, JsonParseException {
         String url = ModpackApiUtils.getModpacksEndpoint(isPrivate, packType) + packId + "/" + versionId + "/mods";
         LOGGER.info("Querying Modpack version mods manifest: {}", url);
         StringWriter sw = new StringWriter();
         DownloadAction action = new OkHttpDownloadAction()
-                .setClient(Constants.httpClient())
+                .setClient(httpClient.httpClient())
                 .setUrl(url)
                 .setDest(sw);
         
-        ModpackApiUtils.injectBearerHeader(action);
         action.execute();
 
         return JsonUtils.parse(GSON, sw.toString(), ModpackVersionModsManifest.class);

@@ -5,14 +5,11 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import dev.ftb.app.AppMain;
 import dev.ftb.app.Constants;
-import dev.ftb.app.Instances;
-import dev.ftb.app.accounts.AccountManager;
 import dev.ftb.app.data.InstanceJson;
 import dev.ftb.app.os.OS;
 import dev.ftb.app.pack.Instance;
-import dev.ftb.app.storage.settings.Settings;
+import dev.ftb.app.services.Services;
 import dev.ftb.app.storage.settings.SettingsData;
 import net.covers1624.quack.platform.OperatingSystem;
 import org.apache.logging.log4j.LogManager;
@@ -69,34 +66,32 @@ public class LogZipper {
         .create();
 
     private final Supplier<List<String>> ipAddresses = Suppliers.memoize(this::getUserIpAddresses);
-
+    
     private final long startTime;
-
-    private LogZipper() {
+    private final Services services;
+    
+    public LogZipper(Services services) {
+        this.services = services;
         this.startTime = System.currentTimeMillis();
     }
-
-    public static LogZipper create() {
-        return new LogZipper();
-    }
     
-    public Path generate() {
+    public Path generate() {        
         var obj = new JsonObject();
 
         obj.addProperty("version", VERSION);
 
         var metaDetails = new JsonObject();
-        metaDetails.addProperty("instanceCount", Instances.allInstances().size());
+        metaDetails.addProperty("instanceCount", services.instances().allInstances().size());
         metaDetails.addProperty("today", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE));
         metaDetails.addProperty("time", System.currentTimeMillis());
         metaDetails.addProperty("timeTaken", System.currentTimeMillis() - startTime);
-        metaDetails.addProperty("addedAccounts", AccountManager.get().getProfiles().size());
-        metaDetails.addProperty("hasActiveAccount", AccountManager.get().getActiveProfile() != null);
+        metaDetails.addProperty("addedAccounts", services.accounts().minecraft().all().size());
+        metaDetails.addProperty("hasActiveAccount", services.accounts().minecraft().active() != null);
         obj.add("metaDetails", metaDetails);
 
         var appDetails = new JsonObject();
         appDetails.addProperty("version", Constants.APPVERSION);
-        appDetails.addProperty("platform", Constants.PLATFORM);
+        appDetails.addProperty("platform", this.services.flags().platform().toString());
         obj.add("appDetails", appDetails);
 
         var systemDetails = new JsonObject();
@@ -107,7 +102,7 @@ public class LogZipper {
         obj.add("systemDetails", systemDetails);
 
         var providerInstanceMapping = new JsonObject();
-        for (Instance instance : Instances.allInstances()) {
+        for (Instance instance : services.instances().allInstances()) {
             var instanceObj = new JsonObject();
             instanceObj.addProperty("name", instance.getName());
             instanceObj.addProperty("packType", instance.props.packType);
@@ -136,7 +131,8 @@ public class LogZipper {
             addFileToZip(writer, "manifest.json", jsonData, true);
             
             // Add a blank file with the name of the platform for easy identification
-            addFileToZip(writer, Constants.PLATFORM, Constants.PLATFORM, true);
+            var platform = this.services.flags().platform().toString();
+            addFileToZip(writer, platform, platform, true);
             addFileToZip(writer, "version-" + Constants.APPVERSION, Constants.APPVERSION, true);
 
             // Put all the logs into the zip as well
@@ -170,13 +166,12 @@ public class LogZipper {
 
     private String getFilteredSettings() {
         try {
-            SettingsData settings = Settings.getSettings();
-            var proxySettingsOld = settings.proxy();
-            // References...
-            settings.setProxy(null);
-            var output = GSON.toJson(settings);
-            settings.setProxy(proxySettingsOld);
-            return output;
+            SettingsData settings = this.services.settings().get();
+            // Drop the proxy from a copy so we don't log it in the export. The settings themselves are shared and
+            // read-only, so they mustn't be changed, even briefly.
+            var json = GSON.toJsonTree(settings).getAsJsonObject();
+            json.remove("proxy");
+            return GSON.toJson(json);
         } catch (Throwable e) {
             LOGGER.warn("Failed to get settings", e);
             return "settings failed to load";
@@ -204,7 +199,7 @@ public class LogZipper {
     }
 
     private void includeInstanceLogs(ZipOutputStream writer) throws IOException {        
-        var instances = Instances.allInstances();
+        var instances = services.instances().allInstances();
         if (instances.isEmpty()) {
             return;
         }
@@ -285,7 +280,7 @@ public class LogZipper {
         } catch (Throwable ignored) {
         }
 
-        Path debugLogFile = AppMain.paths().workingDir().resolve("logs/debug.log");
+        Path debugLogFile = this.services.paths().workingDir().resolve("logs/debug.log");
 
         if (Files.exists(debugLogFile)) {
             try {
@@ -299,7 +294,7 @@ public class LogZipper {
     }
     
     public String getHttpLogs() {
-        Path httpLogFile = AppMain.paths().workingDir().resolve("logs/http-requests.log");
+        Path httpLogFile = this.services.paths().workingDir().resolve("logs/http-requests.log");
 
         if (Files.exists(httpLogFile)) {
             try {
@@ -314,7 +309,7 @@ public class LogZipper {
 
     public void includeHistoricLogs(ZipOutputStream writer, List<String> files) {
         var existingFiles = files.stream()
-            .map(AppMain.paths().workingDir().resolve("logs")::resolve)
+            .map(this.services.paths().workingDir().resolve("logs")::resolve)
             .filter(Files::exists)
             .toList();
 
@@ -340,7 +335,7 @@ public class LogZipper {
 
         if (!OperatingSystem.current().isWindows()) {
             // Electron logs
-            appLogs.add(AppMain.paths().workingDir().resolve("logs/electron-main.log"));
+            appLogs.add(this.services.paths().workingDir().resolve("logs/electron-main.log"));
         } else {
             // Get AppData/Local
             var appData = System.getenv("LOCALAPPDATA");
@@ -359,7 +354,7 @@ public class LogZipper {
     }
 
     private String getRuntimes() {
-        var runtimesPath = AppMain.paths().binDir().resolve("runtime/installations.json");
+        var runtimesPath = this.services.paths().binDir().resolve("runtime/installations.json");
         if (Files.notExists(runtimesPath)) {
             return "";
         }
@@ -374,16 +369,16 @@ public class LogZipper {
     }
 
     private String getVersions() {
-        return getTopLevelDirectoriesAsString(AppMain.paths().mcVersionsDir());
+        return getTopLevelDirectoriesAsString(this.services.paths().mcVersionsDir());
     }
 
     private String getInstances() {
-        return getTopLevelDirectoriesAsString(AppMain.paths().instancesDir());
+        return getTopLevelDirectoriesAsString(this.services.paths().instancesDir());
     }
 
     private String getInstancesFromMemory() {
         return GSON.toJson(
-            Instances.allInstances().stream()
+            this.services.instances().allInstances().stream()
                 .map(e -> e.props)
                 .map(e -> {
                     // Not lovely but it should work
@@ -505,13 +500,13 @@ public class LogZipper {
         return ipAddresses;
     }
     
-    private static Path locateOutputPath() {
-        var outputPath = AppMain.paths().workingDir().resolve("log-exports");
+    private Path locateOutputPath() {
+        var outputPath = this.services.paths().workingDir().resolve("log-exports");
         if (Files.notExists(outputPath)) {
             try {
                 Files.createDirectories(outputPath);
             } catch (IOException e) {
-                return AppMain.paths().workingDir();
+                return this.services.paths().workingDir();
             }
         }
         

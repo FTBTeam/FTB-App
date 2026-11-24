@@ -28,10 +28,17 @@
 import {IconDefinition} from "@fortawesome/free-brands-svg-icons";
 import {
   faBan,
+  faChildReaching,
   faFaceSadTear,
+  faFileSignature,
+  faGavel,
   faGlobe,
+  faLock,
   faPersonCircleQuestion,
-  faQuestion
+  faQuestion,
+  faTriangleExclamation,
+  faUserPlus,
+  faWifi
 } from "@fortawesome/free-solid-svg-icons";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 import {parseMarkdown} from "@/utils";
@@ -54,7 +61,25 @@ const troubleShootingButton: Btn = {
   link: "https://go.ftb.team/docs/login-issues",
 }
 
+// Microsoft or Minecraft sent back something we couldn't use (auth:90 to auth:98)
+const badResponse: RichError[string] = {
+  icon: faTriangleExclamation,
+  title: "Unexpected response",
+  descriptionMarkdown: "Microsoft or Minecraft sent back a response we didn't expect. This is usually a temporary problem on their end, so please try again in a few minutes.",
+  button: [troubleShootingButton]
+}
+
 const richErrors: RichError = {
+  // XBOX_ACCOUNT_MISSING
+  "auth:50": {
+    icon: faUserPlus,
+    title: "No Xbox profile",
+    descriptionMarkdown: "This Microsoft account doesn't have an Xbox profile yet, which Minecraft needs. Sign in to Xbox once with this account to create one, then try again.\n\n**If you own Minecraft on a different Microsoft account, sign in with that one instead.**",
+    button: [troubleShootingButton, {
+      text: "Create an Xbox profile",
+      link: "https://www.xbox.com/live",
+    }]
+  },
   // XBOX_INVALID_REGION
   "auth:51": {
     icon: faGlobe,
@@ -84,6 +109,53 @@ const richErrors: RichError = {
       text: "Update Microsoft account date of birth",
       link: "https://go.ftb.team/app/microsoft-profile-update"
     }]
+  },
+  // XBOX_BANNED
+  "auth:54": {
+    icon: faGavel,
+    title: "Account banned",
+    descriptionMarkdown: "This account has been banned from Xbox, so it can't be used to play Minecraft. You can see the details of the ban, and appeal it, on the Xbox enforcement page.",
+    button: [{
+      text: "Xbox enforcement",
+      link: "https://enforcement.xbox.com",
+    }]
+  },
+  // XBOX_CHILD_RESTRICTED
+  "auth:55": {
+    icon: faChildReaching,
+    title: "Parental controls",
+    descriptionMarkdown: "This is a child account, and its parental controls don't allow online play. An adult in your Microsoft family needs to allow it for this account, then you can try again.",
+    button: [{
+      text: "Microsoft family settings",
+      link: "https://account.microsoft.com/family",
+    }]
+  },
+  // XBOX_TERMS_NOT_ACCEPTED
+  "auth:56": {
+    icon: faFileSignature,
+    title: "Xbox terms not accepted",
+    descriptionMarkdown: "This account hasn't accepted the Xbox terms of use yet. Sign in to Xbox once with this account and accept them, then try again.",
+    button: [troubleShootingButton, {
+      text: "Sign in to Xbox",
+      link: "https://www.xbox.com/live",
+    }]
+  },
+  // XBOX_UNKNOWN_FAILURE_CODE
+  "auth:60": {
+    icon: faQuestion,
+    title: "Xbox wouldn't sign you in",
+    descriptionMarkdown: "Xbox refused to sign this account in, but didn't tell us why. Signing in at xbox.com with the same account usually shows what's wrong.",
+    button: [troubleShootingButton, {
+      text: "Sign in to Xbox",
+      link: "https://www.xbox.com/live",
+    }]
+  },
+  // MISSING_CLAIMS
+  "auth:70": {
+    icon: faQuestion,
+    title: "Xbox profile incomplete",
+    descriptionMarkdown: "Xbox signed you in, but didn't send back the details Minecraft needs. Signing in at xbox.com once usually fixes this, then try again.",
+    button: [troubleShootingButton]
   },
   // MISSING_ENTITLEMENTS
   "auth:71": {
@@ -120,6 +192,26 @@ const richErrors: RichError = {
       troubleShootingButton
     ]
   },
+  // TOKEN_STORAGE_FAILED
+  "auth:81": {
+    icon: faLock,
+    title: "Couldn't save your account",
+    descriptionMarkdown: "You signed in, but we couldn't save your account securely. This is usually caused by the system keychain or credential store being locked or unavailable. Unlock it, or restart the app, then try again.",
+    button: [troubleShootingButton]
+  },
+  // COMPLETE_REQUEST_FAILURE
+  "auth:99": {
+    icon: faWifi,
+    title: "Couldn't reach Microsoft",
+    descriptionMarkdown: "We couldn't connect to Microsoft or Minecraft's servers. Check your internet connection, and that a firewall, VPN or proxy isn't blocking the app.",
+    button: [troubleShootingButton]
+  },
+  "auth:90": badResponse,
+  "auth:94": badResponse,
+  "auth:95": badResponse,
+  "auth:96": badResponse,
+  "auth:97": badResponse,
+  "auth:98": badResponse,
 }
 
 const {

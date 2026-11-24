@@ -1,7 +1,7 @@
 {
     "org.apache.logging.log4j:log4j-core": "https://github.com/apache/logging-log4j2",
     "org.apache.logging.log4j:log4j-api": "https://github.com/apache/logging-log4j2",
-    "org.apache.logging.log4j:log4j-slf4j-impl": "https://github.com/apache/logging-log4j2",
+    "org.apache.logging.log4j:log4j-slf4j2-impl": "https://github.com/apache/logging-log4j2",
     "org.apache.logging.log4j:log4j-jul": "https://github.com/apache/logging-log4j2",
     "org.slf4j:slf4j-api": "https://github.com/qos-ch/slf4j",
 
@@ -10,7 +10,15 @@
     "com.google.code.gson:gson": "https://github.com/google/gson",
 
     "org.nanohttpd:nanohttpd": "https://github.com/NanoHttpd/nanohttpd",
-    "org.nanohttpd:nanohttpd-websocket": "https://github.com/NanoHttpd/nanohttpd",
+    "org.eclipse.jetty:jetty-server": "https://github.com/jetty/jetty.project",
+    "org.eclipse.jetty:jetty-http": "https://github.com/jetty/jetty.project",
+    "org.eclipse.jetty:jetty-io": "https://github.com/jetty/jetty.project",
+    "org.eclipse.jetty:jetty-util": "https://github.com/jetty/jetty.project",
+    "org.eclipse.jetty.websocket:jetty-websocket-jetty-server": "https://github.com/jetty/jetty.project",
+    "org.eclipse.jetty.websocket:jetty-websocket-jetty-api": "https://github.com/jetty/jetty.project",
+    "org.eclipse.jetty.websocket:jetty-websocket-jetty-common": "https://github.com/jetty/jetty.project",
+    "org.eclipse.jetty.websocket:jetty-websocket-core-server": "https://github.com/jetty/jetty.project",
+    "org.eclipse.jetty.websocket:jetty-websocket-core-common": "https://github.com/jetty/jetty.project",
 
     "com.github.oshi:oshi-core": "https://github.com/oshi/oshi",
     "net.java.dev.jna:jna": "https://github.com/java-native-access/jna",

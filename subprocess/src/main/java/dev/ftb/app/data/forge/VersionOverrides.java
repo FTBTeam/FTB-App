@@ -2,7 +2,7 @@ package dev.ftb.app.data.forge;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import dev.ftb.app.Constants;
+import dev.ftb.app.services.AppHttp;
 import net.covers1624.quack.net.okhttp.OkHttpDownloadAction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -35,11 +35,11 @@ public class VersionOverrides {
 
     public Map<String, String> overrides = new LinkedHashMap<>();
 
-    public static VersionOverrides compute() {
+    public static VersionOverrides compute(AppHttp http) {
         try {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             OkHttpDownloadAction action = new OkHttpDownloadAction()
-                    .setClient(Constants.httpClient())
+                    .setClient(http.httpClient())
                     .setUrl("https://maven.minecraftforge.net/net/minecraftforge/forge/maven-metadata.xml")
                     .setDest(bos);
 

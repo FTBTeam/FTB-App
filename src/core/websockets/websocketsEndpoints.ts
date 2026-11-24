@@ -1,17 +1,12 @@
 import {
-  AccountIsValidHandlerData,
-  AccountIsValidHandlerReply,
-  AppInitHandlerData,
-  AppInitHandlerReply,
-  AuthenticateMsProfileHandlerData,
-  AuthenticateMsProfileHandlerReply,
+  OAuthFlowStartHandlerData, OAuthFlowStartHandlerReply, OAuthFlowCancelHandlerData, OAuthFlowCancelHandlerReply,
   BaseData,
   CancelInstallInstanceData,
   CancelInstallInstanceDataReply,
   DuplicateInstanceHandlerReply,
   DuplicateInstanceHandlerRequest,
   FileHashData,
-  FileHashDataReply, GetFtbAccountHandlerReply,
+  FileHashDataReply,
   GetInstanceFoldersHandlerReply,
   GetInstanceFoldersHandlerRequest,
   GetJavasData,
@@ -37,15 +32,12 @@ import {
   KillInstanceDataReply,
   LaunchInstanceData,
   LaunchInstanceDataReply,
-  ModalCallbackData,
   MoveInstancesHandlerData,
   MoveInstancesHandlerReply,
   PingLauncherData,
   PinInstanceHandlerData,
   PinInstanceHandlerReply,
   PongLauncherData, PurgeHandlerData, PurgeHandlerReply,
-  RefreshAuthenticationProfileHandlerData,
-  RefreshAuthenticationProfileHandlerReply,
   RemoveProfileHandlerData,
   RemoveProfileHandlerReply,
   SetActiveProfileHandlerData,
@@ -55,19 +47,19 @@ import {
   SettingsConfigureData,
   SettingsConfigureDataReply,
   SettingsInfoData,
-  SettingsInfoDataReply, SignOutFTBAccountHandlerReply,
+  SettingsInfoDataReply,
   StorageGetAllHandlerReply,
   StorageGetHandlerData,
   StorageGetHandlerReply,
   StoragePutHandlerData,
-  StoragePutHandlerReply, StoreFtbAccountHandlerData, StoreFtbAccountHandlerReply,
+  StoragePutHandlerReply,
   UninstallInstanceData,
   UninstallInstanceDataReply,
   UpdateInstanceData,
   UploadLogsData,
   UploadLogsDataReply,
   WebRequestData,
-  WebRequestDataResponse
+  WebRequestDataResponse, DeviceAuthFlowHandlerData, DeviceAuthFlowHandlerReply
 } from '@/core/types/javaApi';
 import {Nullable} from '@/core/websockets/websocketsApi';
 import {ApiEndpoints} from '@/core/types/javaApiEndpoints';
@@ -89,7 +81,6 @@ function io<Input, Output>(): EndpointDefinition<Input, Output> {
 
 // We don't export as nothing needs this. It just helps us infer the type of the endpoints object.
 const endpoints = {
-  appInit:                        io<AppInitHandlerData, AppInitHandlerReply>(),
   pinInstance:                    io<PinInstanceHandlerData, PinInstanceHandlerReply>(),
   installedInstances:             io<InstalledInstancesData, InstalledInstancesDataReply>(),
   launchInstance:                 io<Nullable<LaunchInstanceData, "cancelLaunch">, LaunchInstanceDataReply>(),
@@ -105,7 +96,6 @@ const endpoints = {
   duplicateInstance:              io<DuplicateInstanceHandlerRequest, DuplicateInstanceHandlerReply>(),
   getSettings:                    io<SettingsInfoData, SettingsInfoDataReply>(),
   saveSettings:                   io<SettingsConfigureData, SettingsConfigureDataReply>(),
-  modalCallback:                  io<ModalCallbackData, EmptyMessageResponse>(),
   fileHash:                       io<FileHashData, FileHashDataReply>(),
   uploadLogs:                     io<UploadLogsData, UploadLogsDataReply>(),
   getJavas:                       io<GetJavasData, GetJavasDataReply>(),
@@ -118,20 +108,16 @@ const endpoints = {
   "profiles.get":                 io<BaseData, GetProfilesHandlerReply>(),
   "profiles.remove":              io<RemoveProfileHandlerData, RemoveProfileHandlerReply>(),
   "profiles.setActiveProfile":    io<SetActiveProfileHandlerData, SetActiveProfileHandlerReply>(),
-  "profiles.ms.authenticate":     io<AuthenticateMsProfileHandlerData, AuthenticateMsProfileHandlerReply>(),
-  "profiles.refresh":             io<RefreshAuthenticationProfileHandlerData, RefreshAuthenticationProfileHandlerReply>(),
-  "profiles.is-valid":            io<AccountIsValidHandlerData, AccountIsValidHandlerReply>(),
   "storage.put":                  io<StoragePutHandlerData, StoragePutHandlerReply>(),
   "storage.get":                  io<StorageGetHandlerData, StorageGetHandlerReply>(),
   "storage.get-all":              io<BaseData, StorageGetAllHandlerReply>(),
   webRequest:                     io<Nullable<WebRequestData, "body">, WebRequestDataResponse>(),
-  openDebugTools:                 io<BaseData, EmptyMessageResponse>(),
   instanceOverrideModLoader:      io<InstanceOverrideModLoaderData, InstanceOverrideModLoaderDataReply>(),
   moveInstances:                  io<MoveInstancesHandlerData, MoveInstancesHandlerReply>(),
-  "accounts.store-oauth":         io<StoreFtbAccountHandlerData, StoreFtbAccountHandlerReply>(),
-  "accounts.get-oauth":           io<BaseData, GetFtbAccountHandlerReply>(),
-  "accounts.sign-out":            io<BaseData, SignOutFTBAccountHandlerReply>(),
   'purge':                        io<PurgeHandlerData, PurgeHandlerReply>(),
+  "accounts.oauth.start":         io<OAuthFlowStartHandlerData, OAuthFlowStartHandlerReply>(),
+  "accounts.oauth.cancel":        io<OAuthFlowCancelHandlerData, OAuthFlowCancelHandlerReply>(),
+  "accounts.device.flow":         io<DeviceAuthFlowHandlerData, DeviceAuthFlowHandlerReply>() 
 } satisfies Record<ApiEndpoints, EndpointDefinition<any, any>>;
 
 export type EmptyMessageResponse = {}

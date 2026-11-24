@@ -2,7 +2,6 @@ package dev.ftb.app.install.tasks.modloader.forge;
 
 import com.google.common.hash.Hashing;
 import com.google.gson.JsonObject;
-import dev.ftb.app.AppMain;
 import dev.ftb.app.data.forge.installerv1.InstallProfile;
 import dev.ftb.app.install.tasks.TaskProgressListener;
 import dev.ftb.app.minecraft.jsons.VersionManifest;
@@ -37,7 +36,6 @@ public class ForgeV1InstallTask extends AbstractForgeInstallTask {
 
     private final Instance instance;
     private final Path installerJar;
-
     public ForgeV1InstallTask(Instance instance, Path installerJar) {
         this.instance = instance;
         this.installerJar = installerJar;
@@ -45,8 +43,9 @@ public class ForgeV1InstallTask extends AbstractForgeInstallTask {
 
     @Override
     public void execute(@Nullable CancellationToken cancelToken, @Nullable TaskProgressListener listener) throws Throwable {
-        Path versionsDir = AppMain.paths().mcVersionsDir();
-        Path librariesDir = AppMain.paths().mcLibrariesDir();
+        var appPaths = instance.factory().appPaths();
+        Path versionsDir = appPaths.mcVersionsDir();
+        Path librariesDir = appPaths.mcLibrariesDir();
 
         try (FileSystem fs = IOUtils.getJarFileSystem(installerJar, true)) {
             Path installerRoot = fs.getPath("/");
@@ -57,7 +56,7 @@ public class ForgeV1InstallTask extends AbstractForgeInstallTask {
 
             if (cancelToken != null) cancelToken.throwIfCancelled();
 
-            VersionManifest vanillaManifest = downloadVanilla(versionsDir, profile.install.minecraft);
+            VersionManifest vanillaManifest = downloadVanilla(this.instance.factory().httpClient(), versionsDir, profile.install.minecraft);
             if (profile.versionInfo.inheritsFrom == null || profile.versionInfo.jar == null) {
                 Path srcJar = versionsDir.resolve(vanillaManifest.id).resolve(vanillaManifest.id + ".jar");
                 Path destJar = IOUtils.makeParents(versionsDir.resolve(versionName).resolve(versionName + ".jar"));
@@ -75,7 +74,7 @@ public class ForgeV1InstallTask extends AbstractForgeInstallTask {
             for (InstallProfile.Library library : profile.versionInfo.libraries) {
                 if (cancelToken != null) cancelToken.throwIfCancelled();
                 if (library.clientreq == null || !library.clientreq) continue; // Skip, mirrors forge logic.
-                Path libraryPath = processLibrary(cancelToken, installerRoot, librariesDir, library);
+                Path libraryPath = processLibrary(cancelToken, this.instance.factory().httpClient(), installerRoot, librariesDir, library);
 
                 if (libraryPath == null || library.checksums.isEmpty()) continue;
 

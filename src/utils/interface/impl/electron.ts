@@ -227,7 +227,7 @@ const Electron: ElectronOverwolfInterface = {
       
       try {
         return await retrying(async () => {
-          const {port, secret} = await window.ipcRenderer.invoke("startSubprocess", {
+          const {port, secret, failure} = await window.ipcRenderer.invoke("startSubprocess", {
             javaPath: jreExecPath,
             args: [
               ...jvmArgs,
@@ -236,6 +236,13 @@ const Electron: ElectronOverwolfInterface = {
             ],
             env: envVars
           });
+
+          // Starting again won't fix it, so don't retry
+          if (failure) {
+            return {
+              failure: failure.message as string
+            }
+          }
 
           if (port && secret) {
             return {

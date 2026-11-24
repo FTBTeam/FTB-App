@@ -1,9 +1,8 @@
 package dev.ftb.app.api.handlers.other;
 
-import dev.ftb.app.Constants;
-import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.data.other.WebRequestData;
 import dev.ftb.app.api.handlers.IMessageHandler;
+import dev.ftb.app.api.handlers.MessageContext;
 import okhttp3.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -13,11 +12,13 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+/// @deprecated This should be removed and all fetching should be done via the api.
+@Deprecated
 public class WebRequestHandler implements IMessageHandler<WebRequestData> {
     private static final Logger LOGGER = LogManager.getLogger();
         
     @Override
-    public void handle(WebRequestData data) {
+    public void handle(MessageContext context, WebRequestData data) {
         Request.Builder builder = new Request.Builder()
                 .url(data.url)
                 .method(data.method, buildRequestBody(data.body));
@@ -27,7 +28,7 @@ public class WebRequestHandler implements IMessageHandler<WebRequestData> {
             }
         }
         
-        try (Response response = Constants.httpClient().newCall(builder.build()).execute()) {
+        try (Response response = context.services().http().httpClient().newCall(builder.build()).execute()) {
             WebRequestData.WebRequestDataResponse resp = new WebRequestData.WebRequestDataResponse(data, "success");
             resp.statusCode = response.code();
             resp.statusLine = response.message();
@@ -45,9 +46,9 @@ public class WebRequestHandler implements IMessageHandler<WebRequestData> {
                 resp.body.bytes = body.bytes();
             }
 
-            WebSocketHandler.sendMessage(resp);
+            context.reply(resp);
         } catch (IOException ex) {
-            WebSocketHandler.sendMessage(new WebRequestData.WebRequestDataResponse(data, "error", ex.getMessage()));
+            context.reply(new WebRequestData.WebRequestDataResponse(data, "error", ex.getMessage()));
             LOGGER.warn("Failed to make web request to {}.", data.url, ex);
         }
     }

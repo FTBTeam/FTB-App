@@ -1,11 +1,10 @@
 package dev.ftb.app.migration.migrations;
 
 import dev.ftb.app.Constants;
-import dev.ftb.app.Instances;
-import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.data.other.RequestInstanceRefresh;
 import dev.ftb.app.migration.Migration;
 import dev.ftb.app.pack.Instance;
+import dev.ftb.app.services.Services;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,8 +27,8 @@ public class MigrateJVMDefaultsToInstances implements Migration {
     }
 
     @Override
-    public boolean migrate() {
-        Collection<Instance> instances = Instances.allInstances();
+    public boolean migrate(Services services) {
+        Collection<Instance> instances = services.instances().allInstances();
         if (instances.isEmpty()) {
             return true; // Nothing to migrate
         }
@@ -55,7 +54,7 @@ public class MigrateJVMDefaultsToInstances implements Migration {
     }
 
     @Override
-    public void cleanup() {
-        WebSocketHandler.sendMessage(new RequestInstanceRefresh());
+    public void cleanup(Services services) {
+        services.rcpApi().sendMessage(new RequestInstanceRefresh());
     }
 }

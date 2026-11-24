@@ -1,7 +1,5 @@
 package dev.ftb.app.util;
 
-import dev.ftb.app.Constants;
-import dev.ftb.app.storage.CredentialStorage;
 import dev.ftb.app.storage.settings.Settings;
 import okhttp3.OkHttpClient;
 import org.apache.commons.lang3.StringUtils;
@@ -35,21 +33,14 @@ public class ProxyUtils {
     @Nullable
     private static String proxyPassword;
 
-    public static void loadProxy() {
-        String settingsProxyType = Settings.getSettings().proxy().type();
-        String settingsProxyHost = Settings.getSettings().proxy().host();
-        int settingsProxyPort = Settings.getSettings().proxy().port();
-        String settingsProxyUser = Settings.getSettings().proxy().username();
+    public static void loadProxy(Settings settings, Runnable onChange) {
+        String settingsProxyType = settings.get().proxy().type();
+        String settingsProxyHost = settings.get().proxy().host();
+        int settingsProxyPort = settings.get().proxy().port();
+        String settingsProxyUser = settings.get().proxy().username();
         
-        // TODO: Remove: Migration, won't be needed for much longer
-        if (!Settings.getSettings().proxy().password().isEmpty()) {
-            // Move it to the credential storage.
-            CredentialStorage.getInstance().set("proxyPassword", Settings.getSettings().proxy().password());
-            Settings.getSettings().proxy().setPassword("");
-            Settings.saveSettings();
-        }
+        String settingsProxyPassword = settings.proxyPassword();
         
-        String settingsProxyPassword = CredentialStorage.getInstance().get("proxyPassword");
         boolean requiresReset;
         requiresReset = !Objects.equals(proxyType, settingsProxyType);
         requiresReset |= !Objects.equals(proxyHost, settingsProxyHost);
@@ -74,7 +65,7 @@ public class ProxyUtils {
             }
             injectProxy(proxy);
             // Refresh http client to reset the connection pools.
-            Constants.refreshHttpClient();
+            onChange.run();
         }
     }
 

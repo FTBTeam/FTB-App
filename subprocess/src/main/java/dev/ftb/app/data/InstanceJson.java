@@ -7,6 +7,7 @@ import com.google.gson.annotations.JsonAdapter;
 import dev.ftb.app.data.modpack.ModpackManifest;
 import dev.ftb.app.data.modpack.ModpackVersionManifest;
 import dev.ftb.app.storage.settings.Settings;
+import dev.ftb.app.storage.settings.SettingsData;
 import joptsimple.internal.Strings;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.gson.PathTypeAdapter;
@@ -33,20 +34,20 @@ public class InstanceJson {
     public int minMemory = 2048;
     @Deprecated  // May not be required, it's mirrored from the version manifest.
     public int recMemory = 4096;
-    public int memory = Settings.getSettings().instanceDefaults().memory();
+    public int memory;
 
     public String jvmArgs = "";
-    public String shellArgs = Settings.getSettings().instanceDefaults().shellArgs();
+    public String shellArgs;
     
     @Nullable
-    public String programArgs = Settings.getSettings().instanceDefaults().getProgramArgs(); 
+    public String programArgs; 
     
     public boolean embeddedJre = true;
     @Nullable
     @JsonAdapter (PathTypeAdapter.class)
     public Path jrePath = null;
-    public int width = Settings.getSettings().instanceDefaults().width();
-    public int height = Settings.getSettings().instanceDefaults().height();
+    public int width;
+    public int height;
     public boolean fullscreen = false;
     public String modLoader = "";
 
@@ -70,8 +71,8 @@ public class InstanceJson {
      * When enabled, the app will not inject mods from the meta system. Sometimes these can 
      * cause issues, so it's good to let the user have the option to turn them off
      */
-    public boolean preventMetaModInjection = Settings.getSettings().instanceDefaults().preventMetaModInjection();
-    public boolean preventMetaAgentInjection = Settings.getSettings().instanceDefaults().preventMetaAgentInjection();
+    public boolean preventMetaModInjection;
+    public boolean preventMetaAgentInjection;
     
     public byte packType;
     // TODO migrate this to `isPrivate`
@@ -139,7 +140,7 @@ public class InstanceJson {
     }
 
     // New instance.
-    public InstanceJson(ModpackManifest modpack, ModpackVersionManifest versionManifest, String mcVersion, boolean isPrivate, byte packType, String[] jvmArgs) {
+    public InstanceJson(Settings settings, ModpackManifest modpack, ModpackVersionManifest versionManifest, String mcVersion, boolean isPrivate, byte packType, String[] jvmArgs) {
         uuid = UUID.randomUUID();
 
         versionId = versionManifest.getId();
@@ -152,19 +153,41 @@ public class InstanceJson {
 
         minMemory = versionManifest.getMinimumSpec();
         recMemory = versionManifest.getRecommendedSpec();
-        memory = Settings.getSettings().instanceDefaults().memory();
-
+        
+        memory = settings.get().instanceDefaults().memory();
+        shellArgs = settings.get().instanceDefaults().shellArgs();
+        programArgs = settings.get().instanceDefaults().getProgramArgs();
+        width = settings.get().instanceDefaults().width();
+        height = settings.get().instanceDefaults().height();
+        preventMetaModInjection = settings.get().instanceDefaults().preventMetaModInjection();
+        preventMetaAgentInjection = settings.get().instanceDefaults().preventMetaAgentInjection();
+        
         this._private = isPrivate;
         this.packType = packType;
         this.jvmArgs = Strings.join(jvmArgs, " ");
     }
 
-    public static InstanceJson load(Path path) throws IOException {
+    public static InstanceJson load(Path path, SettingsData.InstanceSettings defaults) throws IOException {
         // Parse to generic obj
         JsonObject obj = JsonUtils.parse(GSON, path, JsonObject.class);
-        
+
         // Parse to instance json.
-        return GSON.fromJson(obj, InstanceJson.class);
+        InstanceJson json = GSON.fromJson(obj, InstanceJson.class);
+        json.applyMissingDefaults(obj, defaults);
+        return json;
+    }
+
+    /// Older instance.json files can predate some fields, which Gson then leaves as null, 0 or false. Fill those from
+    /// the user's instance defaults instead. The raw json is checked so a value that really is 0 or false is kept.
+    private void applyMissingDefaults(JsonObject obj, SettingsData.InstanceSettings defaults) {
+        if (!obj.has("memory")) memory = defaults.memory();
+        if (!obj.has("programArgs")) programArgs = defaults.getProgramArgs();
+        if (!obj.has("width")) width = defaults.width();
+        if (!obj.has("height")) height = defaults.height();
+        if (!obj.has("preventMetaModInjection")) preventMetaModInjection = defaults.preventMetaModInjection();
+        if (!obj.has("preventMetaAgentInjection")) preventMetaAgentInjection = defaults.preventMetaAgentInjection();
+        // Launching splits this, so it can never be null
+        if (shellArgs == null) shellArgs = defaults.shellArgs();
     }
 
     public static InstanceJson load(byte[] bytes) throws IOException {

@@ -29,8 +29,12 @@ public class AppPaths {
     
     private final Path settingsFile;
     private final Path legacySettingsFile;
-    private final Path storageFile;
+    private final Path keyValueFile;
+    @Deprecated(forRemoval = true)
     private final Path credentialsFiles;
+    private final Path vaultFile;
+    private final Path vaultKeyFile;
+    private final Path vaultFallbackKeyFile;
     private final Path processMarkerFile;
     
     public AppPaths() {
@@ -47,8 +51,11 @@ public class AppPaths {
         
         this.legacySettingsFile = this.binDir.resolve("settings.json");
         this.settingsFile = this.storageDir.resolve("settings.json");
-        this.storageFile = this.storageDir.resolve("storage.json");
+        this.keyValueFile = this.storageDir.resolve("storage.json");
         this.credentialsFiles = this.storageDir.resolve("credentials.encr");
+        this.vaultFile = this.storageDir.resolve("vault.json");
+        this.vaultKeyFile = this.storageDir.resolve("vault.key");
+        this.vaultFallbackKeyFile = this.storageDir.resolve("vault.fallback.key");
         this.processMarkerFile = this.workingDir.resolve("app.pid");
         
         this.ensureDirectoriesExist();
@@ -121,12 +128,26 @@ public class AppPaths {
         return legacySettingsFile;
     }
 
-    public Path storageFile() {
-        return storageFile;
+    public Path keyValueFile() {
+        return keyValueFile;
     }
 
+    @Deprecated(forRemoval = true)
     public Path credentialsFiles() {
         return credentialsFiles;
+    }
+    
+    public Path vaultFile() {
+        return vaultFile;
+    }
+
+    /// Where the DPAPI protected master key lives on Windows.
+    public Path vaultKeyFile() {
+        return vaultKeyFile;
+    }
+
+    public Path vaultFallbackKeyFile() {
+        return vaultFallbackKeyFile;
     }
     
     public Path processMarkerFile() {

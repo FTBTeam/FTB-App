@@ -2,9 +2,10 @@ package dev.ftb.app.install.tasks;
 
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
+import dev.ftb.app.AppFlags;
 import dev.ftb.app.install.tasks.DownloadTask.DownloadValidation;
 import dev.ftb.app.install.tasks.NewDownloadTaskTests.EtagTestWebServer.BakedResponse;
-import dev.ftb.app.util.MiscUtils;
+import dev.ftb.app.services.AppHttp;
 import fi.iki.elonen.NanoHTTPD;
 import net.covers1624.quack.util.HashUtils;
 import net.covers1624.quack.util.MultiHasher.HashFunc;
@@ -28,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class NewDownloadTaskTests {
 
     private static final Random random = new Random();
+    private static final AppHttp HTTP = new AppHttp(new AppFlags(false, AppFlags.FrontendPlatform.ELECTRON), () -> 0);
 
     static {
         System.setProperty("DownloadTask.debug", "true");
@@ -38,7 +40,7 @@ public class NewDownloadTaskTests {
         Path tempDir = Files.createTempDirectory("dlTask");
         tempDir.toFile().deleteOnExit();
 
-        DownloadTask task = DownloadTask.builder()
+        DownloadTask task = DownloadTask.builder(HTTP)
                 .url("https://repo1.maven.org/maven2/com/google/guava/guava/maven-metadata.xml")
                 .dest(tempDir.resolve("maven-metadata.xml"))
                 .tryCompanionHashes()
@@ -55,7 +57,7 @@ public class NewDownloadTaskTests {
             Files.delete(dest);
 
             String path = "/test/etag_change";
-            DownloadTask firstRequest = DownloadTask.builder()
+            DownloadTask firstRequest = DownloadTask.builder(HTTP)
                     .url(testWebServer.getAddr() + path)
                     .withValidation(DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true))
                     .dest(dest)
@@ -70,7 +72,7 @@ public class NewDownloadTaskTests {
             resp = testWebServer.generateResponseData(resp);
             testWebServer.responseMap.put(path, resp);
 
-            DownloadTask secondRequest = DownloadTask.builder()
+            DownloadTask secondRequest = DownloadTask.builder(HTTP)
                     .url(testWebServer.getAddr() + path)
                     .withValidation(DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true))
                     .dest(dest)
@@ -94,7 +96,7 @@ public class NewDownloadTaskTests {
             testWebServer.responseMap.put(pathA, new BakedResponse(null, "", -1));
             String pathB = "/test/notMissing";
 
-            DownloadTask firstRequest = DownloadTask.builder()
+            DownloadTask firstRequest = DownloadTask.builder(HTTP)
                     .url(testWebServer.getAddr() + pathA)
                     .withMirror(testWebServer.getAddr() + pathB)
                     .withValidation(DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true))
@@ -117,7 +119,7 @@ public class NewDownloadTaskTests {
             testWebServer.responseMap.put(pathB, new BakedResponse(null, "", -1));
 
             Assertions.assertThrows(DownloadFailedException.class, () -> {
-                DownloadTask firstRequest = DownloadTask.builder()
+                DownloadTask firstRequest = DownloadTask.builder(HTTP)
                         .url(testWebServer.getAddr() + pathA)
                         .withMirror(testWebServer.getAddr() + pathB)
                         .withValidation(DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true))
@@ -138,7 +140,7 @@ public class NewDownloadTaskTests {
             String path = "/test";
             ResumeTestWebServer.ExpectedResponse resp = server.prepareRequest(path);
 
-            DownloadTask task = DownloadTask.builder()
+            DownloadTask task = DownloadTask.builder(HTTP)
                     .url(server.getAddr() + path)
                     .withValidation(DownloadValidation.of().withExpectedSize(resp.bytes.length).withHash(HashFunc.SHA256, resp.sha256))
                     .dest(dest)
@@ -159,20 +161,13 @@ public class NewDownloadTaskTests {
 
         public final Map<String, BakedResponse> responseMap = new HashMap<>();
 
-        private final int port;
-
         public EtagTestWebServer() throws IOException {
-            this(MiscUtils.getRandomEphemeralPort());
-        }
-
-        public EtagTestWebServer(int port) throws IOException {
-            super(port);
-            this.port = port;
+            super(0);
             start();
         }
 
         public String getAddr() {
-            return "http://localhost:" + port;
+            return "http://localhost:" + getListeningPort();
         }
 
         @Override
@@ -230,7 +225,7 @@ public class NewDownloadTaskTests {
         private final Map<String, ExpectedResponse> responseMap = new HashMap<>();
 
         public ResumeTestWebServer() throws IOException {
-            super(MiscUtils.getRandomEphemeralPort());
+            super(0);
             start();
         }
 

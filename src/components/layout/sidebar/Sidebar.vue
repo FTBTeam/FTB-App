@@ -3,8 +3,8 @@ import appPlatform from '@platform';
 import SidebarProfile from '@/components/layout/sidebar/SidebarProfile.vue';
 import {RouterNames} from '@/router';
 import SidebarCreate from '@/components/layout/sidebar/SidebarCreate.vue';
-import {AppContextController} from '@/core/context/contextController';
-import {ContextMenus} from '@/core/context/contextMenus';
+import {openContextMenu} from '@/core/context/contextMenu';
+import {settingsMenu} from '@/core/context/menus/settingsMenu';
 import SidebarRunningInstances from '@/components/layout/sidebar/SidebarRunningInstances.vue';
 import Popover from '@/components/ui/Popover.vue';
 import {FontAwesomeIcon} from '@fortawesome/vue-fontawesome';
@@ -67,8 +67,7 @@ function openPromo(): void {
 
 function navItemRightClick(event: MouseEvent, item: typeof navigation[0]): void {
   if (item.to === RouterNames.SETTINGS_APP) {
-    AppContextController.openMenu(ContextMenus.NAV_SETTINGS_MENU, event, () => {
-    });
+    openContextMenu(event, settingsMenu());
   }
 }
 </script>

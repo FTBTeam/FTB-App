@@ -1,13 +1,12 @@
 package dev.ftb.app.install;
 
-import dev.ftb.app.api.WebSocketHandler;
+import dev.ftb.app.api.RcpApi;
 import dev.ftb.app.api.data.instances.OperationProgressUpdateData;
 import dev.ftb.app.install.tasks.TaskProgressListener;
 
 import java.util.Map;
 
 public class OperationProgressTracker {
-
     /**
      * How often non-important updates will be sent to the UI.
      */
@@ -28,8 +27,11 @@ public class OperationProgressTracker {
 
     private long lastSpeedTime;
     private long lastSpeedBytes;
+    
+    private final RcpApi rcpApi;
 
-    public OperationProgressTracker(String type, Map<String, String> meta) {
+    public OperationProgressTracker(RcpApi rcpApi, String type, Map<String, String> meta) {
+        this.rcpApi = rcpApi;
         this.type = type;
         this.meta = meta;
 
@@ -97,7 +99,7 @@ public class OperationProgressTracker {
             lastSpeedBytes = currentBytes;
         }
 
-        WebSocketHandler.sendMessage(new OperationProgressUpdateData(
+        this.rcpApi.sendMessage(new OperationProgressUpdateData(
                 type,
                 meta,
                 stage,

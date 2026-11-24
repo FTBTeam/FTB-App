@@ -1,61 +1,32 @@
 <script lang="ts" setup>
-import { MenuItem, MenuOptions } from '@/core/context/menus';
+import { isSeparator, MenuItem, MenuOptions } from '@/core/context/contextMenu';
 import NestedContextMenuItem from '@/components/groups/global/contextMenu/ContextMenuItem.vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { ref } from 'vue';
-import { faChevronRight, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 
 const {
-  context,
   options,
   overflowFix,
   openToLeft = false,
   depth = 0
 } = defineProps<{
-  context: () => any;
-  options: MenuOptions<any>;
+  options: MenuOptions;
   overflowFix: boolean;
   openToLeft: boolean;
   depth?: number;
 }>()
 
-const working = ref<Record<string, boolean>>({});
-
 const emit = defineEmits<{
-  (e: 'clicked', depth: number, option: MenuItem<any>): void;
-  (e: 'close'): void;
+  (e: 'select', option: MenuItem): void;
 }>()
 
-async function onItemClicked(givenDepth: number, option: MenuItem<any>) {
-  if (givenDepth !== depth) {
-    emit('close')
-    return;
-  }
-  
-  if ("separator" in option) {
+function onItemClicked(option: MenuItem) {
+  // A parent without an action only opens its children
+  if (!option.action) {
     return;
   }
 
-  if (working.value[option.title]) {
-    return;
-  }
-
-  working.value = {
-    ...working.value,
-    [option.title]: true
-  }
-
-  try {
-    await option.action(context())
-    emit('clicked', givenDepth, option);
-  } catch (e) {
-    console.error(e)
-  } finally {
-    working.value = {
-      ...working.value,
-      [option.title]: false
-    }
-  }
+  emit('select', option);
 }
 </script>
 
@@ -65,23 +36,21 @@ async function onItemClicked(givenDepth: number, option: MenuItem<any>) {
          v-for="(option, key) in options"
          :key="key"
     >
-      <div v-if="'separator' in option" class="item separator" />
+      <div v-if="isSeparator(option)" class="item separator" />
       <div class="item"
-           v-else
-           :class="{[option.color ?? 'normal']: true, 'has-children': option.children, 'working': working[option.title]}"
-           @click.stop="onItemClicked(depth, option)"
-           v-if="!option.predicate || option.predicate(context())">
+           v-else-if="!option.hidden"
+           :class="{[option.color ?? 'normal']: true, 'has-children': option.children}"
+           @click.stop="onItemClicked(option)">
         <div class="main">
-          <FontAwesomeIcon :fixed-width="true" :icon="faSpinner" spin v-if="working[option.title]" />
-          <FontAwesomeIcon :fixed-width="true" v-else-if="option.icon" :icon="option.icon"/>
+          <FontAwesomeIcon :fixed-width="true" v-if="option.icon" :icon="option.icon"/>
           {{ option.title }}
         </div>
   
         <FontAwesomeIcon class="chevron" v-if="option.children" :icon="faChevronRight"/>
   
         <div class="child rounded-lg backdrop-blur-lg" :class="{'overflow-fix': overflowFix, 'open-to-left': openToLeft}" v-if="option.children" @click.stop.prevent>
-          <nested-context-menu-item :depth="depth + 1" :context="context" :options="option.children" :overflow-fix="overflowFix" @click.stop.prevent
-                                    :open-to-left="openToLeft" @clicked="(innerDepth, o) => onItemClicked(innerDepth, o)"/>
+          <nested-context-menu-item :depth="depth + 1" :options="option.children" :overflow-fix="overflowFix" @click.stop.prevent
+                                    :open-to-left="openToLeft" @select="(o) => emit('select', o)"/>
         </div>
       </div>
     </template>
@@ -144,19 +113,6 @@ async function onItemClicked(givenDepth: number, option: MenuItem<any>) {
     > .child {
       opacity: 1;
       visibility: visible;
-    }
-  }
-  
-  &.working {
-    animation: 1.2s ease-in-out infinite fade-in-out;
-    
-    @keyframes fade-in-out {
-      0%, 100% {
-        opacity: 1;
-      }
-      50% {
-        opacity: .5;
-      }
     }
   }
   

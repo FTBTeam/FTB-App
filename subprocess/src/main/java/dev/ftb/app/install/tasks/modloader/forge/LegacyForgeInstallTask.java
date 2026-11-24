@@ -1,6 +1,5 @@
 package dev.ftb.app.install.tasks.modloader.forge;
 
-import dev.ftb.app.AppMain;
 import dev.ftb.app.Constants;
 import dev.ftb.app.install.tasks.DownloadTask;
 import dev.ftb.app.install.tasks.DownloadTask.DownloadValidation;
@@ -40,15 +39,15 @@ public class LegacyForgeInstallTask extends AbstractForgeInstallTask {
         assert versionName != null;
 
         instance.props.hasInstMods = true;
-        Path versionsDir = AppMain.paths().mcVersionsDir();
+        Path versionsDir = this.instance.factory().appPaths().mcVersionsDir();
         Path instMods = instance.getDir().resolve("instmods");
         
         instance.props.jvmArgs = instance.props.jvmArgs + " -Dfml.ignorePatchDiscrepancies=true -Dfml.ignoreInvalidMinecraftCertificates=true -Dminecraft.applet.TargetDirectory=\"" + instance.getDir().toAbsolutePath() + "\"";
 
         if (cancelToken != null) cancelToken.throwIfCancelled();
 
-        MavenNotation universal = getForgeNotation(mcVersion, forgeVersion);
-        DownloadTask dlForge = DownloadTask.builder()
+        MavenNotation universal = getForgeNotation(this.instance.factory().httpClient(), mcVersion, forgeVersion);
+        DownloadTask dlForge = DownloadTask.builder(this.instance.factory().httpClient())
                 .url(appendIfMissing("https://maven.minecraftforge.net", "/") + universal.toPath())
                 .dest(instMods.resolve(versionName + ".jar"))
                 .build();
@@ -56,7 +55,7 @@ public class LegacyForgeInstallTask extends AbstractForgeInstallTask {
             dlForge.execute(cancelToken, null);
         }
 
-        VersionManifest vanillaManifest = downloadVanilla(versionsDir, mcVersion);
+        VersionManifest vanillaManifest = downloadVanilla(this.instance.factory().httpClient(), versionsDir, mcVersion);
 
         Files.copy(
                 versionsDir.resolve(vanillaManifest.id).resolve(vanillaManifest.id + ".jar"),
@@ -64,7 +63,7 @@ public class LegacyForgeInstallTask extends AbstractForgeInstallTask {
                 StandardCopyOption.REPLACE_EXISTING
         );
 
-        DownloadTask dlForgeVersionJson = DownloadTask.builder()
+        DownloadTask dlForgeVersionJson = DownloadTask.builder(this.instance.factory().httpClient())
                 .url(Constants.MC_JSONS + "forge-" + mcVersion + ".json")
                 .dest(versionsDir.resolve(versionName).resolve(versionName + ".json"))
                 .withValidation(DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true))

@@ -8,6 +8,7 @@ import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.reflect.TypeToken;
 import dev.ftb.app.install.tasks.DownloadTask;
 import dev.ftb.app.install.tasks.DownloadTask.DownloadValidation;
+import dev.ftb.app.services.AppHttp;
 import net.covers1624.jdkutils.JavaVersion;
 import net.covers1624.quack.gson.HashCodeAdapter;
 import net.covers1624.quack.gson.JsonUtils;
@@ -108,10 +109,10 @@ public class VersionManifest {
      * @throws IOException        Thrown when an error occurs whilst loading the manifest.
      * @throws JsonParseException Thrown when the Json cannot be parsed.
      */
-    public static VersionManifest update(Path versionsDir, VersionListManifest.Version version) throws IOException {
+    public static VersionManifest update(AppHttp http, Path versionsDir, VersionListManifest.Version version) throws IOException {
         Path versionFile = versionsDir.resolve(version.id).resolve(version.id + ".json");
         LOGGER.info("Updating version manifest for '{}' from '{}'.", version.id, version.url);
-        DownloadTask downloadTask = DownloadTask.builder()
+        DownloadTask downloadTask = DownloadTask.builder(http)
                 .url(version.url)
                 .dest(versionFile)
                 .withValidation(DownloadValidation.of()
@@ -135,9 +136,9 @@ public class VersionManifest {
     }
 
     @Nullable
-    public static AssetIndex assetsFor(Path versionsDir, String version) throws IOException {
-        VersionListManifest versionList = VersionListManifest.update(versionsDir);
-        VersionManifest manifest = versionList.resolve(versionsDir, version);
+    public static AssetIndex assetsFor(AppHttp http, Path versionsDir, String version) throws IOException {
+        VersionListManifest versionList = VersionListManifest.update(http, versionsDir);
+        VersionManifest manifest = versionList.resolve(http, versionsDir, version);
         if (manifest == null) {
             LOGGER.error("Failed to retrieve valid Vanilla version for '{}'.", version);
             return null;
@@ -163,12 +164,12 @@ public class VersionManifest {
     }
 
     @Nullable
-    public DownloadTask getClientDownload(Path versionsDir, String id) {
-        return getDownload("client", versionsDir.resolve(id).resolve(id + ".jar"));
+    public DownloadTask getClientDownload(AppHttp http, Path versionsDir, String id) {
+        return getDownload(http, "client", versionsDir.resolve(id).resolve(id + ".jar"));
     }
 
     @Nullable
-    public DownloadTask getDownload(String dlName, Path dest) {
+    public DownloadTask getDownload(AppHttp http, String dlName, Path dest) {
         Download download = downloads.get(dlName);
         if (download == null || download.url == null) return null;
 
@@ -177,7 +178,7 @@ public class VersionManifest {
         if (download.sha1 != null) {
             validation = validation.withHash(Hashing.sha1(), download.sha1);
         }
-        return DownloadTask.builder()
+        return DownloadTask.builder(http)
                 .url(download.url)
                 .tryResumeDownload()
                 .dest(dest)
@@ -324,7 +325,7 @@ public class VersionManifest {
         }
 
         @Nullable
-        public DownloadTask createDownloadTask(Path librariesDir, boolean ignoreLocalLibraries) {
+        public DownloadTask createDownloadTask(AppHttp http, Path librariesDir, boolean ignoreLocalLibraries) {
             // We have 'natives'
             if (natives != null) {
                 String classifier = ARTIFACT_SUBSTITUTIONS.replace(natives.get(OS.current()));
@@ -332,7 +333,7 @@ public class VersionManifest {
                 if (downloads == null) {
 
                     MavenNotation nativeNotation = name.withClassifier(classifier);
-                    return DownloadTask.builder()
+                    return DownloadTask.builder(http)
                             .url((url != null ? url : "https://libraries.minecraft.net/") + nativeNotation.toPath())
                             .dest(nativeNotation.toPath(librariesDir))
                             .build();
@@ -342,12 +343,12 @@ public class VersionManifest {
                 if (downloads.classifiers == null) return null; // What? but okay, just ignore.
                 LibraryDownload artifact = downloads.classifiers.get(classifier);
                 if (artifact == null) return null; // Shouldn't happen, but okay.
-                return downloadTaskFor(librariesDir, artifact, name.withClassifier(classifier), ignoreLocalLibraries);
+                return downloadTaskFor(http, librariesDir, artifact, name.withClassifier(classifier), ignoreLocalLibraries);
             }
 
             // If we have a URL or no downloads, just do this.
             if (url != null || downloads == null) {
-                return DownloadTask.builder()
+                return DownloadTask.builder(http)
                         .url((url != null ? url : "https://libraries.minecraft.net/") + name.toPath())
                         .dest(name.toPath(librariesDir))
                         .build();
@@ -355,11 +356,11 @@ public class VersionManifest {
 
             // We have a 'downlaods' property, but no 'natives'.
             if (downloads.artifact == null) return null;
-            return downloadTaskFor(librariesDir, downloads.artifact, name, ignoreLocalLibraries);
+            return downloadTaskFor(http, librariesDir, downloads.artifact, name, ignoreLocalLibraries);
         }
 
         @Nullable
-        private DownloadTask downloadTaskFor(Path librariesDir, LibraryDownload artifact, MavenNotation name, boolean ignoreLocalLibraries) {
+        private DownloadTask downloadTaskFor(AppHttp http, Path librariesDir, LibraryDownload artifact, MavenNotation name, boolean ignoreLocalLibraries) {
             if (StringUtils.isEmpty(artifact.url) && ignoreLocalLibraries) return null; // Ignore. Library is not a remote resource. TODO, these should still be validated though.
 
             if (artifact.path == null) {
@@ -373,7 +374,7 @@ public class VersionManifest {
                 validation = validation.withHash(Hashing.sha1(), artifact.sha1);
             }
             
-            return DownloadTask.builder()
+            return DownloadTask.builder(http)
                     .url(artifact.url)
                     .dest(librariesDir.resolve(artifact.path))
                     .withValidation(validation)

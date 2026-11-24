@@ -3,10 +3,11 @@ package dev.ftb.app.data;
 import com.google.common.hash.HashCode;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
-import dev.ftb.app.AppMain;
+import dev.ftb.app.AppPaths;
 import dev.ftb.app.Constants;
 import dev.ftb.app.install.tasks.DownloadTask;
 import dev.ftb.app.install.tasks.DownloadTask.DownloadValidation;
+import dev.ftb.app.services.AppHttp;
 import net.covers1624.quack.gson.HashCodeAdapter;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.platform.OperatingSystem;
@@ -27,19 +28,26 @@ import static java.util.Objects.requireNonNull;
 
 @SuppressWarnings ("FieldMayBeFinal") // Gson
 public class InstanceSupportMeta {
-
     private static final Logger LOGGER = LogManager.getLogger();
     private static final Gson GSON = new Gson();
 
     private List<SupportEntry> supportMods = new LinkedList<>();
     private List<SupportEntry> supportAgents = new LinkedList<>();
+
+    private transient AppPaths appPaths;
+    private transient AppHttp http;
     
-    public static InstanceSupportMeta update() throws IOException {
-        return update(0);
+    public InstanceSupportMeta(AppPaths paths, AppHttp http) {
+        this.appPaths = paths;
+        this.http = http;
+    }
+
+    public void update() throws IOException {
+        update(0);
     }
     
-    private static InstanceSupportMeta update(int depth) throws IOException {
-        Path metaFile = AppMain.paths().binDir().resolve("support-meta.json");
+    private void update(int depth) throws IOException {
+        Path metaFile = this.appPaths.binDir().resolve("support-meta.json");
         if (Files.exists(metaFile)) {
             try {
                 if (Files.readString(metaFile).trim().isEmpty()) {
@@ -50,7 +58,7 @@ public class InstanceSupportMeta {
             }
         }
 
-        DownloadTask task = DownloadTask.builder()
+        DownloadTask task = DownloadTask.builder(http)
                 .url(Constants.META_JSON)
                 .dest(metaFile)
                 .withValidation(DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true))
@@ -61,17 +69,22 @@ public class InstanceSupportMeta {
         if (meta == null) {
             if (depth == 3) {
                 LOGGER.error("Tried to dowload meta.json 3 times. Aborting..");
-                return null;
+                return;
             }
 
             LOGGER.info("Meta file parsed to null. Deleting..");
             delete(metaFile);
-            return update(depth + 1);
+            // The retry populates the fields itself
+            update(depth + 1);
+            return;
         }
-        return meta;
+        
+        // We have meta so populate the fields
+        this.supportMods = meta.supportMods;
+        this.supportAgents = meta.supportAgents;
     }
 
-    private static void delete(Path metaFile) {
+    private void delete(Path metaFile) {
         try {
             Files.delete(metaFile);
             Files.deleteIfExists(metaFile.resolveSibling(metaFile.getFileName() + ".etag"));
@@ -140,8 +153,8 @@ public class InstanceSupportMeta {
             return validation;
         }
 
-        public DownloadTask createTask(Path destFolder) {
-            return DownloadTask.builder()
+        public DownloadTask createTask(AppHttp http, Path destFolder) {
+            return DownloadTask.builder(http)
                     .url(getUrl())
                     .dest(destFolder.resolve(getName()))
                     .withValidation(makeValidation())

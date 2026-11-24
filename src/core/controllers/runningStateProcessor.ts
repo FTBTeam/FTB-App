@@ -1,6 +1,5 @@
 import {gobbleError} from '@/utils/helpers/asyncHelpers';
-import {alertController} from '@/core/controllers/alertController';
-import {LaunchInstanceDataReply, Logs, Status, Stopped} from '@/core/types/javaApi';
+import {Logs, Status, Stopped} from '@/core/types/javaApi';
 import {createLogger} from '@/core/logger';
 import { InstanceMessageData, useRunningInstancesStore } from '@/store/runningInstancesStore.ts';
 import { useAppStore } from '@/store/appStore.ts';
@@ -47,27 +46,10 @@ async function onLaunchData(data: any) {
     })
   }
 
-  if (
-    data.type === 'launchInstance.stopped' ||
-    (data.type === 'launchInstance.reply' && (data.status === 'abort' || data.status === 'error'))
-  ) {
-    if (data.type === "launchInstance.stopped") {
-      const typeData = data as Stopped;
-      runningInstancesStore.stopped(typeData.instanceId)
-      return;
-    }
-    
-    // Lets assume we've crashed
-    if (data.status === 'errored' || data.status === 'error') {
-      alertController.error(data.status === 'error'
-        ? 'Unable to start pack... please see the instance logs...'
-        : 'The instance has crashed or has been externally closed.'
-      )
-
-      const uuid = (data as Stopped).instanceId ?? (data as LaunchInstanceDataReply).uuid;
-      runningInstancesStore.crashed(uuid)
-      runningInstancesStore.stopped(uuid)
-    }
+  // Failed launch replies are handled by InstanceController, which sent the launch
+  if (data.type === 'launchInstance.stopped') {
+    const typeData = data as Stopped;
+    runningInstancesStore.stopped(typeData.instanceId)
   }
 }
 

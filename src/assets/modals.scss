@@ -39,6 +39,14 @@
         margin-bottom: 0;
       }
     }
+    
+    &.no-title {
+      .modal-closer {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+      }
+    }
 
     .modal-closer {
       opacity: 0.5;

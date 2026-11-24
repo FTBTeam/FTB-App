@@ -1,7 +1,7 @@
 package dev.ftb.app.install;
 
 import com.google.gson.JsonParseException;
-import dev.ftb.app.AppMain;
+import dev.ftb.app.api.RcpApi;
 import dev.ftb.app.data.InstanceModifications;
 import dev.ftb.app.data.InstanceModifications.ModOverride;
 import dev.ftb.app.data.InstanceModifications.ModOverrideState;
@@ -10,18 +10,25 @@ import dev.ftb.app.data.mod.ModInfo;
 import dev.ftb.app.data.mod.ModManifest;
 import dev.ftb.app.install.tasks.*;
 import dev.ftb.app.pack.Instance;
+import dev.ftb.app.services.AppHttp;
+import dev.ftb.app.services.AppThreads;
+import dev.ftb.app.services.cache.AppCache;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import static dev.ftb.app.util.StreamUtils.onlyOrDefault;
-
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
-import static dev.ftb.app.data.InstanceModifications.ModOverrideState.*;
+import static dev.ftb.app.data.InstanceModifications.ModOverrideState.ADDED_ENABLED;
+import static dev.ftb.app.data.InstanceModifications.ModOverrideState.UPDATED_DISABLED;
+import static dev.ftb.app.data.InstanceModifications.ModOverrideState.UPDATED_ENABLED;
+import static dev.ftb.app.util.StreamUtils.onlyOrDefault;
 
 public class ModInstaller implements ModCollector {
 
@@ -42,8 +49,15 @@ public class ModInstaller implements ModCollector {
     private final List<Pair<ModManifest, ModManifest>> unsatisfiable = new ArrayList<>();
     private final List<Pair<ModManifest, ModManifest.Version>> toInstall = new ArrayList<>();
 
-    public ModInstaller(Instance instance, String mcVersion, String modLoader, long modId, long versionId) {
+    private final AppThreads appThreads;
+    private final AppCache appCache;
+    private final AppHttp appHttp;
+
+    public ModInstaller(AppHttp appHttp, RcpApi rcpApi, AppThreads appThreads, Instance instance, AppCache appCache, String mcVersion, String modLoader, long modId, long versionId) {
         this.instance = instance;
+        this.appHttp = appHttp;
+        this.appThreads = appThreads;
+        this.appCache = appCache;
         this.mcVersion = mcVersion;
         this.modLoader = modLoader;
 
@@ -51,6 +65,7 @@ public class ModInstaller implements ModCollector {
         this.versionId = versionId;
 
         tracker = new OperationProgressTracker(
+                rcpApi,
                 "mod_install",
                 Map.of(
                         "instance", instance.getUuid().toString(),
@@ -67,7 +82,7 @@ public class ModInstaller implements ModCollector {
         try {
             ModManifest manifest;
             try {
-                manifest = ModManifest.queryManifest(modId);
+                manifest = ModManifest.queryManifest(this.appHttp, modId);
             } catch (IOException | JsonParseException ex) {
                 throw new ModInstallerException("Mod does not exist.", ex);
             }
@@ -77,7 +92,7 @@ public class ModInstaller implements ModCollector {
                 throw new ModInstallerException("Mod version does not exist.");
             }
 
-            manifest.visitVersion(this, version);
+            manifest.visitVersion(this.appHttp,this, version);
         } catch (Throwable ex) {
             tracker.finished();
             throw ex;
@@ -143,16 +158,16 @@ public class ModInstaller implements ModCollector {
                 ModInfo selfExisting = onlyOrDefault(existingMods.stream()
                         .filter(e -> e.curse() != null && e.curse().curseProject() == modId), null);
                 String suffix = selfExisting != null && !selfExisting.enabled() ? ".disabled" : "";
-                DownloadTask task = DownloadTask.builder()
+                DownloadTask task = DownloadTask.builder(this.appHttp)
                         .url(version.getUrl())
                         .dest(instance.getDir().resolve(version.getPath()).resolve(version.getName() + suffix))
                         .withValidation(version.createValidation().asDownloadValidation())
-                        .withFileLocator(AppMain.localCache)
+                        .withFileLocator(appCache.local())
                         .build();
                 if (!task.isRedundant()) {
                     long size = version.getSize();
                     if (size <= 0) {
-                        size = DownloadTask.getContentLength(version.getUrl());
+                        size = DownloadTask.getContentLength(this.appHttp, version.getUrl());
                     }
                     totalSize += size;
                     tasks.add((cancelToken, listener) -> {
@@ -214,7 +229,7 @@ public class ModInstaller implements ModCollector {
             TaskProgressListener listener = tracker.listenerForStage();
             listener.start(totalSize);
             TaskProgressAggregator aggregator = new ParallelTaskProgressAggregator(listener);
-            ParallelTaskHelper.executeInParallel(null, Task.TASK_POOL, tasks, aggregator);
+            ParallelTaskHelper.executeInParallel(null, this.appThreads.taskPool(), tasks, aggregator);
 
             LOGGER.info("Finished downloading, Saving metadata changes.");
 

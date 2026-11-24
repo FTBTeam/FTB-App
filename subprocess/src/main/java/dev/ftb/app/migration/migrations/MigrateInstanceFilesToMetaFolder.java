@@ -1,10 +1,9 @@
 package dev.ftb.app.migration.migrations;
 
-import dev.ftb.app.Instances;
-import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.data.other.RequestInstanceRefresh;
 import dev.ftb.app.migration.Migration;
 import dev.ftb.app.pack.Instance;
+import dev.ftb.app.services.Services;
 import dev.ftb.app.util.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,8 +24,8 @@ public class MigrateInstanceFilesToMetaFolder implements Migration {
     }
 
     @Override
-    public boolean migrate() {
-        var instances = Instances.allInstances();
+    public boolean migrate(Services services) {
+        var instances = services.instances().allInstances();
         if (instances.isEmpty()) {
             return true; // Nothing to migrate
         }
@@ -122,9 +121,9 @@ public class MigrateInstanceFilesToMetaFolder implements Migration {
     }
     
     @Override
-    public void cleanup() {
+    public void cleanup(Services services) {
         // Not super needed but might as well
-        Instances.refreshInstances();
-        WebSocketHandler.sendMessage(new RequestInstanceRefresh());
+        services.instances().refreshInstances();
+        services.rcpApi().sendMessage(new RequestInstanceRefresh());
     }
 }

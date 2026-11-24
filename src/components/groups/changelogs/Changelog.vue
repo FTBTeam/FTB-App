@@ -55,6 +55,7 @@ async function checkForUpdate() {
   }
 }
 
+// TODO: Move this to the backend.
 async function showChangelog(currentVersion: string, forced = false) {
   try {
     const changelogsReq = await fetch(`${constants.metaApi}/changelogs/app`);

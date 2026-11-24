@@ -2,11 +2,11 @@ package dev.ftb.app.pack;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import dev.ftb.app.AppMain;
+import dev.ftb.app.AppPaths;
 import dev.ftb.app.Constants;
-import dev.ftb.app.accounts.AccountManager;
-import dev.ftb.app.accounts.MicrosoftProfile;
-import dev.ftb.app.api.WebSocketHandler;
+import dev.ftb.app.services.accounts.McAccounts;
+import dev.ftb.app.services.accounts.minecraft.MicrosoftProfile;
+import dev.ftb.app.api.RcpApi;
 import dev.ftb.app.api.data.instances.LaunchInstanceData;
 import dev.ftb.app.install.tasks.DownloadTask;
 import dev.ftb.app.install.tasks.InstallAssetsTask;
@@ -16,7 +16,6 @@ import dev.ftb.app.minecraft.jsons.AssetIndexManifest;
 import dev.ftb.app.minecraft.jsons.VersionListManifest;
 import dev.ftb.app.minecraft.jsons.VersionManifest;
 import dev.ftb.app.minecraft.jsons.VersionManifest.AssetIndex;
-import dev.ftb.app.storage.settings.Settings;
 import dev.ftb.app.util.StreamGobblerLog;
 import net.covers1624.jdkutils.JavaInstall;
 import net.covers1624.jdkutils.JavaVersion;
@@ -77,16 +76,18 @@ public class InstanceLauncher {
     @Nullable
     private LogThread logThread;
 
-    private boolean forceStopped;
+    // Set by forceStop() on another thread, read when the process exits
+    private volatile boolean forceStopped;
 
     private final ProgressTracker progressTracker;
     private final List<ThrowingConsumer<LaunchContext, Throwable>> startTasks = new LinkedList<>();
     private final List<ThrowingRunnable<Throwable>> exitTasks = new LinkedList<>();
 
-    private static final int NUM_STEPS = 7;
+    private static final int NUM_STEPS = 8;
 
     public InstanceLauncher(Instance instance) {
         this.instance = instance;
+        
         this.progressTracker = new ProgressTracker(this.instance);
     }
 
@@ -139,9 +140,12 @@ public class InstanceLauncher {
         setPhase(Phase.INITIALIZING);
         progressTracker.reset(NUM_STEPS);
 
-        Path assetsDir = AppMain.paths().mcAssetsDir();
-        Path versionsDir = AppMain.paths().mcVersionsDir();
-        Path librariesDir = AppMain.paths().mcLibrariesDir();
+        AppPaths appPaths = this.factory().appPaths();
+        RcpApi rcpApi = this.factory().rcpApi();
+        
+        Path assetsDir = appPaths.mcAssetsDir();
+        Path versionsDir = appPaths.mcVersionsDir();
+        Path librariesDir = appPaths.mcLibrariesDir();
 
         Set<String> features = new HashSet<>();
         if (instance.props.width != 0 && instance.props.height != 0) {
@@ -167,7 +171,7 @@ public class InstanceLauncher {
                 } catch (IOException e) {
                     LOGGER.error("Failed to start minecraft process!", e);
                     setPhase(Phase.ERRORED);
-                    WebSocketHandler.sendMessage(new LaunchInstanceData.Stopped(instance.getUuid(), "launch_failed", -1));
+                    rcpApi.sendMessage(new LaunchInstanceData.Stopped(instance.getUuid(), "launch_failed", -1));
                     process = null;
                     processThread = null;
                     return;
@@ -214,8 +218,10 @@ public class InstanceLauncher {
                 }
                 int exit = process.exitValue();
                 LOGGER.info("Minecraft exited with status code: " + exit);
-                setPhase(exit != 0 ? Phase.ERRORED : Phase.STOPPED);
-                WebSocketHandler.sendMessage(new LaunchInstanceData.Stopped(instance.getUuid(), exit != 0 && !forceStopped ? "errored" : "stopped", exit));
+                // A forced stop exits non-zero (e.g. 137), but that's the user's doing, not an error
+                boolean errored = exit != 0 && !forceStopped;
+                setPhase(errored ? Phase.ERRORED : Phase.STOPPED);
+                rcpApi.sendMessage(new LaunchInstanceData.Stopped(instance.getUuid(), errored ? "errored" : "stopped", exit));
                 forceStopped = false;
                 process = null;
                 processThread = null;
@@ -229,7 +235,7 @@ public class InstanceLauncher {
                 }
                 processThread = null;
                 setPhase(Phase.ERRORED);
-                WebSocketHandler.sendMessage(new LaunchInstanceData.Stopped(instance.getUuid(), "internal_error", -1));
+                rcpApi.sendMessage(new LaunchInstanceData.Stopped(instance.getUuid(), "internal_error", -1));
             }
         });
         processThread.setName("Instance Thread [" + THREAD_COUNTER.getAndIncrement() + "]");
@@ -308,7 +314,12 @@ public class InstanceLauncher {
         tempDirs.clear();
     }
 
-    private ProcessBuilder prepareProcess(CancellationToken token, String offlineUsername, Path assetsDir, Path versionsDir, Path librariesDir, Set<String> features, Set<String> privateTokens) throws InstanceLaunchException {
+    private ProcessBuilder prepareProcess(CancellationToken token, @Nullable String offlineUsername, Path assetsDir, Path versionsDir, Path librariesDir, Set<String> features, Set<String> privateTokens) throws InstanceLaunchException {
+        // Outside the try below, so the reason reaches the frontend as it is
+        progressTracker.startStep("Logging in");
+        McAccounts.LoginResult.Ready session = this.login(offlineUsername);
+        progressTracker.finishStep();
+
         try {
             progressTracker.startStep("Pre-Start Tasks"); // TODO locale support.
             Path gameDir = instance.getDir().toAbsolutePath();
@@ -325,12 +336,12 @@ public class InstanceLauncher {
             Path javaExecutable;
             
             // Let's pull the info directly from Minecrafts manifests
-            var locatedVersion = VersionListManifest.update(versionsDir).locate(instance.props.mcVersion);
+            var locatedVersion = VersionListManifest.update(this.instance.factory().httpClient(), versionsDir).locate(instance.props.mcVersion);
             if (locatedVersion == null) {
                 throw new RuntimeException("Failed to find version manifest for " + instance.props.mcVersion);
             }
 
-            VersionManifest manifest = VersionManifest.update(versionsDir, locatedVersion);
+            VersionManifest manifest = VersionManifest.update(this.instance.factory().httpClient(), versionsDir, locatedVersion);
             
             if (instance.props.embeddedJre) {
                 ProvisionRequest.Builder provisionBuilder = new ProvisionRequest.Builder()
@@ -350,7 +361,7 @@ public class InstanceLauncher {
                         .build();
                 }
                 
-                var javaHome = Constants.getJdkManager().provisionJdk(provisionRequest);
+                var javaHome = instance.factory().jdkInstallationManager().provisionJdk(provisionRequest);
                 
                 LOGGER.info("Java home: {}", javaHome);
                 javaExecutable = JavaInstall.getJavaExecutable(javaHome, true);
@@ -405,8 +416,8 @@ public class InstanceLauncher {
             progressTracker.startStep("Prepare process");
             
             Map<String, String> subMap = new HashMap<>();
-            MicrosoftProfile profile = AccountManager.get().getActiveProfile();
-            if (offlineUsername != null || profile == null) {
+            if (session == null) {
+                MicrosoftProfile profile = this.factory().accounts().active();
                 UUID uuid;
                 String username;
                 if (profile == null) {
@@ -425,12 +436,13 @@ public class InstanceLauncher {
                 subMap.put("user_properties", "{}");
                 subMap.put("auth_session", "null");
             } else {
+                MicrosoftProfile profile = session.profile();
+                String accessToken = session.accessToken();
                 subMap.put("auth_player_name", profile.getMinecraftName());
                 subMap.put("auth_uuid", profile.getUuid().toString());
                 subMap.put("user_properties", "{}"); // TODO, we may need to provide this all the time.
                 subMap.put("user_type", "msa");
                 subMap.put("xuid", profile.getXstsUserHash());
-                String accessToken = profile.getMinecraftAccessToken();
                 String sessionToken = "token:" + accessToken + ":" + profile.getUuid().toString().replace("-", "");
                 subMap.put("auth_session", sessionToken);
                 subMap.put("auth_access_token", accessToken);
@@ -461,7 +473,7 @@ public class InstanceLauncher {
 
             AssetIndexManifest.AssetObject icon = assetPair.getRight().objects.get("icons/minecraft.icns");
             if (icon != null) {
-                Path path = AppMain.paths().mcAssetsDir()
+                Path path = this.factory().appPaths().mcAssetsDir()
                         .resolve("objects")
                         .resolve(icon.getPath());
                 subMap.put("minecraft_icon", path.toAbsolutePath().toString());
@@ -491,7 +503,7 @@ public class InstanceLauncher {
                     .collect(Collectors.toList());
 
             List<String> command = new ArrayList<>(jvmArgs.size() + progArgs.size() + 2);
-            Boolean feralGamemode = Settings.getSettings().enableFeralGameMode();
+            Boolean feralGamemode = this.factory().settings().get().enableFeralGameMode();
             if (feralGamemode != null && feralGamemode) {
                 command.add("gamemoderun");
             }
@@ -536,16 +548,31 @@ public class InstanceLauncher {
         }
     }
 
+    /// Gets a Minecraft token for the active account, refreshing it if needed
+    private McAccounts.LoginResult.@Nullable Ready login(@Nullable String offlineUsername) throws InstanceLaunchException {
+        McAccounts accounts = this.factory().accounts();
+        MicrosoftProfile profile = accounts.active();
+        if (offlineUsername != null || profile == null) {
+            return null;
+        }
+
+        return switch (accounts.login(profile.getUuid())) {
+            case McAccounts.LoginResult.Ready ready -> ready;
+            case McAccounts.LoginResult.SignInRequired(var message) -> throw new InstanceLaunchException.SignInRequired(message, profile.getUuid());
+            case McAccounts.LoginResult.Unavailable(var message) -> throw new InstanceLaunchException(message);
+        };
+    }
+
     private void prepareManifests(CancellationToken token, Path versionsDir) throws IOException, InstanceLaunchException {
         manifests.clear();
-        VersionListManifest versions = VersionListManifest.update(versionsDir);
+        VersionListManifest versions = VersionListManifest.update(this.factory().httpClient(), versionsDir);
         Set<String> seen = new HashSet<>();
         String id = instance.props.modLoader;
         while (id != null) {
             token.throwIfCancelled();
             if (!seen.add(id)) throw new IllegalStateException("Circular VersionManifest reference. Root: " + instance.props.modLoader);
             LOGGER.info("Preparing manifest {}", id);
-            VersionManifest manifest = versions.resolveOrLocal(versionsDir, id);
+            VersionManifest manifest = versions.resolveOrLocal(instance.factory().httpClient(), versionsDir, id);
             if (manifest == null) {
                 throw new InstanceLaunchException("Failed to prepare instance. Missing installed version " + id + ". Please validate/re-install.");
             }
@@ -565,9 +592,9 @@ public class InstanceLauncher {
             LOGGER.info("Old manifest with broken assets. Querying vanilla manifest for assets..");
             if (manifest.assets == null) {
                 LOGGER.warn("Version '{}' does not have an assetIndex. Assuming Legacy. (Harvesting from {})", manifest.id, LEGACY_ASSETS_VERSION);
-                index = VersionManifest.assetsFor(versionsDir, LEGACY_ASSETS_VERSION);
+                index = VersionManifest.assetsFor(this.instance.factory().httpClient(), versionsDir, LEGACY_ASSETS_VERSION);
             } else {
-                index = VersionManifest.assetsFor(versionsDir, manifest.assets);
+                index = VersionManifest.assetsFor(this.instance.factory().httpClient(), versionsDir, manifest.assets);
             }
             if (index == null) {
                 LOGGER.error("Unable to find assets for '{}'.", manifest.id);
@@ -575,7 +602,7 @@ public class InstanceLauncher {
             }
         }
 
-        InstallAssetsTask assetsTask = new InstallAssetsTask(index);
+        InstallAssetsTask assetsTask = new InstallAssetsTask(this.factory().httpClient(), this.factory().appPaths(), this.factory().threads(), index);
         if (!assetsTask.isRedundant()) {
             try {
                 assetsTask.execute(token, progressTracker.listenerForStep(true));
@@ -611,7 +638,7 @@ public class InstanceLauncher {
 
     private void validateClient(CancellationToken token, Path versionsDir) throws IOException {
         VersionManifest vanillaManifest = manifests.get(0);
-        DownloadTask task = vanillaManifest.getClientDownload(versionsDir, getClientId());
+        DownloadTask task = vanillaManifest.getClientDownload(this.instance.factory().httpClient(), versionsDir, getClientId());
         if (task != null) {
             LOGGER.info("Validating client download for {}", vanillaManifest.id);
             task.execute(token, progressTracker.listenerForStep(true));
@@ -622,7 +649,7 @@ public class InstanceLauncher {
         LOGGER.info("Validating minecraft libraries...");
         List<DownloadTask> tasks = new LinkedList<>();
         for (VersionManifest.Library library : libraries) {
-            DownloadTask task = library.createDownloadTask(librariesDir, true);
+            DownloadTask task = library.createDownloadTask(this.instance.factory().httpClient(), librariesDir, true);
             if (task != null && !task.isRedundant()) {
                 tasks.add(task);
             }
@@ -632,7 +659,7 @@ public class InstanceLauncher {
                 .mapToLong(e -> {
                     if (e.getValidation().expectedSize == -1) {
                         // Try and HEAD request the content length.
-                        return DownloadTask.getContentLength(e.getUrl());
+                        return DownloadTask.getContentLength(this.factory().httpClient(), e.getUrl());
                     }
                     return e.getValidation().expectedSize;
                 })
@@ -875,6 +902,10 @@ public class InstanceLauncher {
         }
         return manifests.get(manifests.size() - 1).id;
     }
+    
+    private InstanceFactory factory() {
+        return instance.factory();
+    }
 
     public static class LaunchContext {
         public final List<String> extraJVMArgs = new ArrayList<>();
@@ -910,7 +941,7 @@ public class InstanceLauncher {
         ERRORED,
     }
 
-    private static class ProgressTracker {
+    private class ProgressTracker {
         private static final boolean DEBUG = Boolean.getBoolean("InstanceLauncher.ProgressTracker.debug");
 
         private Instance instance;
@@ -1021,7 +1052,7 @@ public class InstanceLauncher {
                 LOGGER.info("Progress [{}/{}] {}: {} {}", currStep, totalSteps, stepProgress, stepDesc, humanDesc);
             }
 
-            WebSocketHandler.sendMessage(new LaunchInstanceData.Status(this.instance.getUuid(), currStep, totalSteps, stepProgress, stepDesc, humanDesc));
+            factory().rcpApi().sendMessage(new LaunchInstanceData.Status(this.instance.getUuid(), currStep, totalSteps, stepProgress, stepDesc, humanDesc));
         }
     }
 
@@ -1071,7 +1102,7 @@ public class InstanceLauncher {
                         // After 100k lines, just stop sending the logs and terminate the logging thread along
                         // with the stream gobblers to avoid accumulating too much data in memory.
                         if (linesWritten > 100_000) {
-                            WebSocketHandler.sendMessage(new LaunchInstanceData.Logs(instance.getUuid(), List.of("[... Log truncated ...]")));
+                            factory().rcpApi().sendMessage(new LaunchInstanceData.Logs(instance.getUuid(), List.of("[... Log truncated ...]")));
                             // Now we need to kill this thread and the gobblers.
                             stop = true;
                             for (StreamGobblerLog gobbler : gobblers) {
@@ -1081,7 +1112,7 @@ public class InstanceLauncher {
                             break;
                         }
 
-                        WebSocketHandler.sendMessage(new LaunchInstanceData.Logs(instance.getUuid(), toSend));
+                        factory().rcpApi().sendMessage(new LaunchInstanceData.Logs(instance.getUuid(), toSend));
                     }
                 }
                 try {

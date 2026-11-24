@@ -1,9 +1,10 @@
 package dev.ftb.app.api.handlers.purge;
 
 import com.google.gson.annotations.JsonAdapter;
-import dev.ftb.app.api.WebSocketHandler;
+import dev.ftb.app.AppPaths;
 import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.api.handlers.IMessageHandler;
+import dev.ftb.app.api.handlers.MessageContext;
 import dev.ftb.app.util.FileUtils;
 import net.covers1624.quack.gson.LowerCaseEnumAdapterFactory;
 import org.slf4j.Logger;
@@ -17,35 +18,35 @@ public class PurgeHandler implements IMessageHandler<PurgeHandler.Data> {
     private static final Logger LOGGER = LoggerFactory.getLogger(PurgeHandler.class);
     
     @Override
-    public void handle(Data data) {
+    public void handle(MessageContext context, Data data) {
         if (data.target == null) {
-            WebSocketHandler.sendMessage(new Reply(data, "error", "No purge target specified."));
+            context.reply(new Reply(data, "error", "No purge target specified."));
             return;
         }
         
         try {
-            purgeTarget(data.target);
-            WebSocketHandler.sendMessage(new Reply(data, "success", "Purge completed for target: " + data.target));
+            purgeTarget(context.services().paths(), data.target);
+            context.reply(new Reply(data, "success", "Purge completed for target: " + data.target));
         } catch (Exception e) {
-            WebSocketHandler.sendMessage(new Reply(data, "error", "Purge failed for target: " + data.target + " with error: " + e.getMessage()));
+            context.reply(new Reply(data, "error", "Purge failed for target: " + data.target + " with error: " + e.getMessage()));
         }
     }
     
-    private void purgeTarget(PurgeTarget target) {
+    private void purgeTarget(AppPaths appPaths, PurgeTarget target) {
         List<Path> paths = new ArrayList<>();
         if (target == PurgeTarget.ALL) {
             for (PurgeTarget t : PurgeTarget.values()) {
                 if (t != PurgeTarget.ALL) {
-                    paths.addAll(t.paths().get());
+                    paths.addAll(t.paths().apply(appPaths));
                 }
             }
         } else {
-            paths.addAll(target.paths().get());
+            paths.addAll(target.paths().apply(appPaths));
         }
         
         // Go over all the paths given and delete the contents. If it's a dir, delete recursively.
         for (Path path : paths) {
-            LOGGER.info("Purge target: {}", path.toString());
+            LOGGER.info("Purge target: {}", path);
             FileUtils.deletePath(path);
         }
     }

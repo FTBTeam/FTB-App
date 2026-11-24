@@ -5,13 +5,12 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.JsonAdapter;
 import dev.ftb.app.AppMain;
+import dev.ftb.app.AppPaths;
 import net.covers1624.quack.gson.PathTypeAdapter;
 import org.jspecify.annotations.Nullable;
 import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
@@ -19,7 +18,8 @@ import java.nio.file.Path;
  */
 public class SettingsData {
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    
+    public static final String DEFAULT_SPEC = "1.0.0";
+
     private String spec;
     @JsonAdapter(PathTypeAdapter.class)
     private Path instanceLocation;
@@ -43,33 +43,6 @@ public class SettingsData {
         this.workaround = workaround;
     }
 
-    // Writer
-    public void write() {
-        var jsonData = gson.toJson(this);
-        try {
-            if (Files.notExists(AppMain.paths().settingsFile().getParent())) {
-                Files.createDirectories(AppMain.paths().settingsFile().getParent());
-            }
-            
-            Files.writeString(AppMain.paths().settingsFile(), jsonData);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    // Reader
-    public static SettingsData read() {
-        try {
-            var jsonData = Files.readString(AppMain.paths().settingsFile());
-            if (jsonData.isBlank()) {
-                throw new IOException("Settings file is empty.");
-            }
-            return gson.fromJson(jsonData, SettingsData.class);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public static SettingsData fromString(String json) {
         return gson.fromJson(json, SettingsData.class);
     }
@@ -83,10 +56,10 @@ public class SettingsData {
         return gson.toJsonTree(this).getAsJsonObject();
     }
     
-    public static SettingsData createDefault() {
+    public static SettingsData createDefault(AppPaths paths) {
         return new SettingsData(
-            Settings.DEFAULT_SPEC,
-            AppMain.paths().instancesDir(),
+            SettingsData.DEFAULT_SPEC,
+            paths.instancesDir(),
             false, // Feral Game Mode is disabled by default
             new GeneralSettings(
                 "release",

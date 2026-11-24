@@ -5,8 +5,8 @@ import {
   AllRichModData,
   BaseData,
   CurseMetadata,
-  InstanceJson,
   ModInfo,
+  SugaredInstanceJson,
   UpdateAvailable
 } from '@/core/types/javaApi';
 import {containsIgnoreCase} from '@/utils/helpers/stringHelpers';
@@ -19,20 +19,22 @@ import {createLogger} from '@/core/logger';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useAppStore } from '@/store/appStore.ts';
 import {
+  faArrowRotateRight,
   faCircleNotch,
   faDownload, faEllipsisVertical,
   faFilter,
+  faFolder,
   faPlus,
   faSearch,
 } from '@fortawesome/free-solid-svg-icons';
+import appPlatform from '@platform';
 // @ts-ignore (Literally no types :tada:)
 import { RecycleScroller } from 'vue-virtual-scroller'
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { Input } from '@/components/ui';
 import {prettyByteFormat} from "@/utils";
-import {AppContextController} from "@/core/context/contextController.ts";
-import {ContextMenus} from "@/core/context/contextMenus.ts";
+import {openContextMenu} from "@/core/context/contextMenu.ts";
 import UiSelectSingle from "@/components/ui/select/UiSelectSingle.vue";
 
 const logger = createLogger("ModpackMods.vue")
@@ -40,7 +42,7 @@ const logger = createLogger("ModpackMods.vue")
 const {
   instance,
 } = defineProps<{
-  instance: InstanceJson;
+  instance: SugaredInstanceJson;
 }>();
 
 const filters = [
@@ -165,6 +167,30 @@ async function updateMod(key: string) {
   }
 }
 
+function openOptionsMenu(event: MouseEvent) {
+  openContextMenu(event, [
+    {
+      title: 'Open Mods folder',
+      icon: faFolder,
+      async action() {
+        const folder = instance.rootDirs?.includes("mods") ? appPlatform.io.pathJoin(instance.path, "mods") : instance.path;
+        await appPlatform.io.openFinder(folder);
+      }
+    },
+    {
+      title: 'Refresh Mods list',
+      icon: faArrowRotateRight,
+      action: () => getModList(true)
+    },
+    {
+      title: 'Update All Mods',
+      icon: faDownload,
+      action: () => updateAll(),
+      hidden: instance.locked || !modUpdatesAvailableKeys.value.length
+    }
+  ]);
+}
+
 // TODO: This has basically no feedback. Awful UX.
 function updateAll() {
   for (const key of modUpdatesAvailableKeys.value) {
@@ -244,14 +270,7 @@ const installedMods = computed<[number, number][]>(() => {
       <Input :icon="faSearch" class="flex-1" fill placeholder="Search..." v-model="search" />
       
       <ui-button type="success" @click="searchingForMods = true" :icon="faPlus" :data-balloon-length="instance.locked ? 'medium' : undefined" :aria-label="instance.locked ? 'This instance is locked, to add more content you will need to unlock it in settings.' : 'Add more mods'" :disabled="instance.locked" />
-      <ui-button @click.prevent.stop="(e) => AppContextController.openMenu(ContextMenus.MODPACK_MODS_MENU, e, () => ({ 
-        instance: instance,
-        hasModUpdates: modUpdatesAvailableKeys.length,
-        actions: {
-          refreshMods: () => getModList(true),
-          updateAll: () => updateAll(),
-        }
-      }))" :icon="faEllipsisVertical">Options</ui-button>
+      <ui-button @click.prevent.stop="openOptionsMenu" :icon="faEllipsisVertical">Options</ui-button>
       <UiSelectSingle :options="filters" :icon="faFilter" placeholder="Filter" placement="bottom-end" v-model="filterType" />
     </div>
     

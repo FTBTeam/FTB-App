@@ -20,54 +20,54 @@ export class ModpackApiModpackEndpoint extends ApiEndpoint {
   }
   
   async getModpacks() {
-    return this.fetchPrivate<StatusResult<PackIdList>>("GET", "all");
+    return this.fetch<StatusResult<PackIdList>>("GET", "all");
   }
   
   async getPrivatePacks() {
-    return this.fetchPrivate<StatusResult<PackIdList>>("GET", "private/100");
+    return this.fetch<StatusResult<PackIdList>>("GET", "private/100");
   }
   
   async getModpack(id: number | string, provider: PackProvider = "ftb") {
     if (provider === "ftb") {
-      return this.fetchPrivate<StatusResult<ModPack>>("GET", "" + id);
+      return this.fetch<StatusResult<ModPack>>("GET", "" + id);
     }
     
     // Use curseforge for other providers
-    return this.fetchPrivate<StatusResult<ModPack>>("GET", "" + id, "curseforge");
+    return this.fetch<StatusResult<ModPack>>("GET", "" + id, "curseforge");
   }
   
   async getModpackVersion(id: number, versionId: number, provider: PackProvider = "ftb") {
     if (provider === "ftb") {
-      return this.fetchPrivate<StatusResult<ModpackVersion>>("GET", `${id}/${versionId}`);
+      return this.fetch<StatusResult<ModpackVersion>>("GET", `${id}/${versionId}`);
     }
     
     // Use curseforge for other providers
-    return this.fetchPrivate<StatusResult<ModpackVersion>>("GET", `${id}/${versionId}`, "curseforge");
+    return this.fetch<StatusResult<ModpackVersion>>("GET", `${id}/${versionId}`, "curseforge");
   }
   
   async getChangelog(packId: number, versionId: number, provider: PackProvider = "ftb") {
     if (provider === "ftb") {
-      return this.fetchPrivate<StatusResult<{ content: string, html?: string }>>("GET", `${packId}/${versionId}/changelog`);
+      return this.fetch<StatusResult<{ content: string, html?: string }>>("GET", `${packId}/${versionId}/changelog`);
     }
     
     // Use curseforge for other providers
-    return this.fetchPrivate<StatusResult<{ content: string, html?: string }>>("GET", `${packId}/${versionId}/changelog`, "curseforge");
+    return this.fetch<StatusResult<{ content: string, html?: string }>>("GET", `${packId}/${versionId}/changelog`, "curseforge");
   }
   
   async getMods(packId: number, versionId: number, provider: PackProvider = "ftb") {
     if (provider === "ftb") {
-      return this.fetchPrivate<StatusResult<ModpackModsResponse>>("GET", `${packId}/${versionId}/mods`);
+      return this.fetch<StatusResult<ModpackModsResponse>>("GET", `${packId}/${versionId}/mods`);
     }
     
     // Use curseforge for other providers
-    return this.fetchPrivate<StatusResult<ModpackModsResponse>>("GET", `${packId}/${versionId}/mods`, "curseforge");
+    return this.fetch<StatusResult<ModpackModsResponse>>("GET", `${packId}/${versionId}/mods`, "curseforge");
   }
   
   async getFeaturedPacks(limit = 5) {
-    return this.fetchPublic<PackIdList>("GET", `featured/${limit}`)
+    return this.fetch<PackIdList>("GET", `featured/${limit}`)
   }
   
   async getLatestPacks(limit = 5) {
-    return this.fetchPublic<PackIdList>("GET", `updated/${limit}`)
+    return this.fetch<PackIdList>("GET", `updated/${limit}`)
   }
 }

@@ -9,7 +9,6 @@ public class ConstantsTests {
 
     @Test
     public void testGetModpackPrefix() {
-        AppMain.isDevMode = false;
         // Test non private.
         assertEquals("https://api.feed-the-beast.com/v1/modpacks/modpack/", ModpackApiUtils.getModpacksEndpoint(false, (byte) 0));
         assertEquals("https://api.feed-the-beast.com/v1/modpacks/curseforge/", ModpackApiUtils.getModpacksEndpoint(false, (byte) 1));

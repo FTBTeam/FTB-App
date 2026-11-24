@@ -1,32 +1,17 @@
 import {defineStore} from 'pinia';
 import {sendMessage} from '@/core/websockets/websocketsApi.ts';
 import {AuthProfile} from '@/core/types/appTypes.ts';
-import {FtbAccountManager} from "@/core/auth/ftbAccountManager.ts";
-import {JWTIdTokenData} from "@/core/auth/jwtIdTokenData";
 import {InstanceActions} from "@/core/actions/instanceActions.ts";
-
-export type FTBAccountData = {
-  preferred_username?: string;
-  name?: string;
-  given_name?: string;
-  family_name?: string;
-  sub: string;
-  email?: string;
-  picture?: string;
-}
+import {AccountProvider, FtbAccount} from "@/core/types/javaApi";
 
 type AccountsState = {
   mcProfiles: AuthProfile[];
   mcActiveProfile: AuthProfile | null;
-  ftbAccount: {
-    accountData: FTBAccountData;
-    idTokenData: JWTIdTokenData | null;
-    token: string;
-  } | null;
-  ftbAccountManager: FtbAccountManager;
-  ftbLoggingIn: boolean;
-  signInFtbOpen: boolean;
-  signInOpen: boolean;
+  ftbAccounts: FtbAccount[];
+  ftbAccount: FtbAccount | null;
+  activeSignInModal: AccountProvider | null;
+  // Set when signing a known account back in, so the provider can skip asking which account to use
+  signInAccountId: string | null;
 }
 
 export const useAccountsStore = defineStore("accounts", {
@@ -34,61 +19,60 @@ export const useAccountsStore = defineStore("accounts", {
     return {
       mcProfiles: [],
       mcActiveProfile: null,
-      signInOpen: false,
-      signInFtbOpen: false,
+      activeSignInModal: null,
+      signInAccountId: null,
+      ftbAccounts: [],
       ftbAccount: null,
-      ftbLoggingIn: false,
-      ftbAccountManager: new FtbAccountManager(),
     }
   },
 
   getters: {
     isPremiumMember(s) {
-      return s.ftbAccount && Object.values(s.ftbAccount.idTokenData?.resource_access ?? {}).flatMap(e => e.roles).includes("member:ads")
+      return !!s.ftbAccount && !s.ftbAccount.notLoggedIn && s.ftbAccount.premium
     }
   },
   
   actions: {
-    openSignIn(open = true) {
-      this.signInOpen = open;
-    },
-    openSignInFtb(open = true) {
-      this.signInFtbOpen = open;
+    openSignIn(provider: AccountProvider | null = 'MICROSOFT', accountId: string | null = null) {
+      this.activeSignInModal = provider;
+      this.signInAccountId = provider ? accountId : null;
     },
     async loadProfiles() {
       const result = await sendMessage("profiles.get", {});
 
       const profiles = result.profiles.map(
-        (a) => ({username: a.minecraftName, uuid: a.uuid} as AuthProfile),
+        (a) => ({username: a.minecraftName, uuid: a.uuid, notLoggedIn: a.notLoggedIn} as AuthProfile),
       );
       
       if (result.activeProfile) {
         this.mcActiveProfile = {
           username: result.activeProfile.minecraftName,
           uuid: result.activeProfile.uuid,
+          notLoggedIn: result.activeProfile.notLoggedIn,
         };
       } else {
         this.mcActiveProfile = null;
       }
       
       this.mcProfiles = profiles
+
+      this.ftbAccounts = result.ftbAccounts;
+      this.ftbAccount = result.activeFtbAccount ?? null;
     },
-    async loadFtbAccount() {
-      const accountData = await sendMessage("accounts.get-oauth", {});
-      if (!accountData || !accountData.success) {
-        // They're just not logged in
-        return;
-      }
-      
-      this.ftbAccountManager.init(accountData.authData);
+    async removeFtbAccount(id: string) {
+      const result = await sendMessage("profiles.remove", {provider: "FTB", id});
+      await this.ftbAccountChanged();
+      return result.success;
     },
-    async signOutFtb() {
-      this.ftbAccountManager.signOut();
-      this.ftbAccount = null;
-      this.ftbLoggingIn = false;
-      
-      await sendMessage("accounts.sign-out", {});
-      await InstanceActions.clearInstanceCache(false)
+    async setActiveFtbAccount(id: string) {
+      const result = await sendMessage("profiles.setActiveProfile", {provider: "FTB", id});
+      await this.ftbAccountChanged();
+      return result.success;
+    },
+    // Call after an FTB account is added, removed or switched
+    async ftbAccountChanged() {
+      await this.loadProfiles();
+      await InstanceActions.clearInstanceCache(false);
     }
   }
 })

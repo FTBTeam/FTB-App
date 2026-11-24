@@ -2,102 +2,145 @@ package dev.ftb.app.storage.settings;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import dev.ftb.app.AppMain;
-import dev.ftb.app.util.ProxyUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import dev.ftb.app.AppPaths;
+import dev.ftb.app.services.AppStorage;
+import dev.ftb.app.services.storage.VaultException;
+import dev.ftb.app.util.JsonStore;
+import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 public class Settings {
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger LOGGER = LoggerFactory.getLogger(Settings.class);
+    private static final Type LEGACY_SETTINGS_TOKEN = new TypeToken<HashMap<String, String>>(){}.getType();
 
-    private static final Type settingsTokenLegacy = new TypeToken<HashMap<String, String>>(){}.getType();    
-    private static SettingsData settingsData = null;
+    private static final Gson GSON = new Gson().newBuilder()
+        .setPrettyPrinting()
+        .create();
 
-    public static void saveSettings() {
-        // Very defensive fallback system but allows us to save settings even if they weren't loaded.
-        if (settingsData == null) {
-            LOGGER.warn("No settings available at save time. Failing back to defaults.");
-            if (settingsData == null) {
-                settingsData = DEFAULT_SETTINGS;
-            }
-        }
-        
-        try {
-            settingsData.write();
-        } catch (Exception e) {
-            LOGGER.error("Failed to save settings file.", e);
-        }
-    }
-    
-    public static void loadSettings() {
-        // TODO: Remove in newer versions
+    public static final String PROXY_PASSWORD_KEY = "proxy.password";
+
+    private final AppPaths appPaths;
+    private final AppStorage storage;
+    private final JsonStore<SettingsData> store;
+
+    public Settings(AppPaths appPaths, AppStorage storage) {
+        this.appPaths = appPaths;
+        this.storage = storage;
+
+        this.store = new JsonStore<>(
+            appPaths.settingsFile(),
+            GSON,
+            SettingsData.class,
+            () -> SettingsData.createDefault(this.appPaths)
+        );
+
         attemptMigration();
-        if (Settings.settingsData != null) {
-            // Migration happened, we don't need to load.
-
-            // Again, this shouldn't be needed but it looks like it is...
-            if (settingsData.instanceLocation().equals(AppMain.paths().workingDir())) {
-                Settings.settingsData.setInstanceLocation(AppMain.paths().instancesDir());
-            }
-            
-            return;
-        }
-            
-        // Try and load the settings file
-        try {
-            Settings.settingsData = SettingsData.read();
-            
-            // Attempt to fix the instance location if it's fucked for some reason
-            // I think something with path parsing might break it.
-            if (settingsData.instanceLocation().equals(AppMain.paths().workingDir())) {
-                Settings.settingsData.setInstanceLocation(AppMain.paths().instancesDir());   
-            }
-        } catch (Throwable e) {
-            LOGGER.warn("Failed to load settings file, using defaults.", e);
-            Settings.settingsData = Settings.DEFAULT_SETTINGS;
-            
-            // Backup the old settings file
-            if (Files.exists(AppMain.paths().settingsFile())) {
-                try {
-                    Files.move(AppMain.paths().settingsFile(), AppMain.paths().settingsFile().resolveSibling("settings.json.bak"));
-                } catch (IOException ex) {
-                    LOGGER.warn("Failed to backup settings file.", ex);
-                }
-            }
-
-            Settings.settingsData.write();
-        }
-        
-        ProxyUtils.loadProxy();
+        load();
     }
 
-    public static void attemptMigration() {
-        // Don't migrate if the new settings file exists or the old one doesn't
-        Path legacySettingsFile = AppMain.paths().legacySettingsFile();
-        if (Files.notExists(legacySettingsFile) || Files.exists(AppMain.paths().settingsFile())) {
+    public SettingsData get() {
+        return this.store.get();
+    }
+
+    /// Mutates the settings and saves them.
+    public void update(Consumer<SettingsData> mutator) throws IOException {
+        this.store.update(mutator);
+    }
+
+    /// Replaces all the settings, as sent by the frontend, and saves them.
+    public void replace(SettingsData data) throws IOException, VaultException {
+        var proxy = data.proxy();
+        
+        // Older settings files kept the proxy password in plain text. Move it to the vault if it's there.
+        if (proxy != null && StringUtils.isNotEmpty(proxy.password())) {
+            this.storage.vault().put(PROXY_PASSWORD_KEY, proxy.password());
+            proxy.setPassword("");
+        } else if (usesProxyAuth(get()) && !usesProxyAuth(data)) {
+            this.storage.vault().remove(PROXY_PASSWORD_KEY);
+        }
+
+        this.store.set(data);
+    }
+
+    /// Called after every change has been saved.
+    public void onChange(Consumer<SettingsData> listener) {
+        this.store.onChange(listener);
+    }
+
+    /// @return the proxy password, or `null` if the proxy doesn't use one or the vault can't be read
+    @Nullable
+    public String proxyPassword() {
+        if (!usesProxyAuth(get())) {
+            return null;
+        }
+
+        try {
+            return this.storage.vault().get(PROXY_PASSWORD_KEY);
+        } catch (VaultException e) {
+            LOGGER.error("Failed to retrieve proxy password from vault", e);
+            return null;
+        }
+    }
+
+    private void load() {
+        try {
+            this.store.load();
+        } catch (IOException e) {
+            LOGGER.error("Failed to load settings file. Falling back to default.", e);
             return;
         }
-        
-        LOGGER.info("Migrating old settings to new format.");
 
+        // Something (likely path parsing) has left this pointing at the app directory before, which would install
+        // instances into the app root.
+        Path instanceLocation = get().instanceLocation();
+        if (instanceLocation == null || instanceLocation.equals(this.appPaths.workingDir())) {
+            LOGGER.warn("Instance location is '{}', resetting it to the default.", instanceLocation);
+            try {
+                this.store.update(data -> data.setInstanceLocation(this.appPaths.instancesDir()));
+            } catch (IOException e) {
+                LOGGER.error("Failed to save the reset instance location.", e);
+            }
+        }
+
+        try {
+            boolean moved = this.store.updateIf(Settings::hasPlainTextProxyPassword, this::moveProxyPasswordToVault);
+            if (moved) {
+                this.store.save(); // The first save backs up the old file, password included. The second replaces that backup.
+            }
+        } catch (IOException e) {
+            LOGGER.error("Failed to save settings after moving the proxy password to the vault.", e);
+        }
+    }
+
+    private void attemptMigration() {
+        // Don't migrate if the new settings file exists or the old one doesn't
+        Path legacySettingsFile = this.appPaths.legacySettingsFile();
+        if (Files.notExists(legacySettingsFile) || Files.exists(this.appPaths.settingsFile())) {
+            return;
+        }
+
+        LOGGER.info("Migrating old settings to new format.");
         try {
             var originalSettingsRaw = Files.readString(legacySettingsFile);
-            var originalSettings = new Gson().<HashMap<String, String>>fromJson(originalSettingsRaw, settingsTokenLegacy);
-            var migrator = new SettingsMigrator(originalSettings);
+            var originalSettings = new Gson().<HashMap<String, String>>fromJson(originalSettingsRaw, LEGACY_SETTINGS_TOKEN);
+            var migrator = new SettingsMigrator(this.appPaths, originalSettings);
             var newSettings = migrator.migrate();
-            
+
+            // The legacy file kept the proxy password in plain text, keep it out of the new one
+            moveProxyPasswordToVault(newSettings);
+
             // Save the new settings
-            newSettings.write();
-            Settings.settingsData = newSettings;
-            
+            this.store.set(newSettings);
+
             // Delete the old settings file
             try {
                 Files.deleteIfExists(legacySettingsFile);
@@ -114,144 +157,60 @@ public class Settings {
             }
         }
     }
-    
-    public static SettingsData getSettings() {
-        if (settingsData == null) {
-            LOGGER.error("Failed to load settings, using defaults.");
-            settingsData = DEFAULT_SETTINGS;
+
+    /// Older installs kept the proxy password in the settings file. If the vault fails it's left in place, so this
+    /// retries on the next launch.
+    ///
+    /// @return whether a password was moved
+    private boolean moveProxyPasswordToVault(SettingsData data) {
+        if (!hasPlainTextProxyPassword(data)) {
+            return false;
         }
-        
-        return settingsData;
-    }
-    
-    public static void updateSettings(SettingsData data) {
-        settingsData = data;
-        saveSettings();
+
+        var proxy = data.proxy();
+
+        try {
+            this.storage.vault().put(PROXY_PASSWORD_KEY, proxy.password());
+            proxy.setPassword("");
+            return true;
+        } catch (VaultException e) {
+            LOGGER.error("Failed to move the proxy password to the vault.", e);
+            return false;
+        }
     }
 
-    public static Path getInstancesDir() {
-        return getSettings().instanceLocation();
+    private static boolean hasPlainTextProxyPassword(SettingsData data) {
+        var proxy = data.proxy();
+        return proxy != null && StringUtils.isNotEmpty(proxy.password());
     }
 
-    public static int getDefaultThreadLimit()
-    {
+    private static boolean usesProxyAuth(SettingsData data) {
+        var proxy = data.proxy();
+        return proxy != null && !"none".equalsIgnoreCase(proxy.type()) && StringUtils.isNotEmpty(proxy.username());
+    }
+
+    public Path getInstancesDir() {
+        return get().instanceLocation();
+    }
+
+    public static int getDefaultThreadLimit() {
         int defaultThreads = (Runtime.getRuntime().availableProcessors() / 2) - 1;
         if(defaultThreads < 2) defaultThreads = 2;
         return defaultThreads;
     }
 
-    public static long getSpeedLimit() {
-        if (settingsData == null || settingsData.download() == null) {
-            return 0;
-        }
-        
-        return settingsData.download().speedLimit();
+    /// Read on every http request, so a settings file without a download section must not throw.
+    public long getSpeedLimit() {
+        var download = get().download();
+        return download != null ? download.speedLimit() : 0;
     }
 
-    public static int getThreadLimit() {
-        return settingsData.download().threadLimit();
+    public int getThreadLimit() {
+        var download = get().download();
+        return download != null ? download.threadLimit() : getDefaultThreadLimit();
     }
 
-    public static boolean ignoreForgeProcessorOutputHashes() {
-        return settingsData.workaround().ignoreForgeProcessorOutputHashes();
-    }
-    
-    public static final String DEFAULT_SPEC = "1.0.0";
-    
-    private static final SettingsData DEFAULT_SETTINGS = SettingsData.createDefault();
-    
-    public static class SettingsMigrator {
-        private final Map<String, String> oldSettings;
-        
-        public SettingsMigrator(Map<String, String> oldSettings) {
-            this.oldSettings = oldSettings;
-        }
-
-        /**
-         * Migrate old settings to the new format.
-         */
-        private SettingsData migrate() {
-            if (this.oldSettings == null) {
-                // Something failed, fallback. We likely read the file wrong or an empty file
-                return DEFAULT_SETTINGS;
-            }
-            
-            return new SettingsData(
-                DEFAULT_SPEC,
-                getOrDefault("instanceLocation", input -> {
-                    // This shouldn't be needed but it looks like it is...
-                    var path = Path.of(input);
-                    if (path.equals(AppMain.paths().workingDir())) {
-                        // Something borked...
-                        LOGGER.error("Instance location is the same as the data directory. Using default.");
-                        return AppMain.paths().instancesDir();
-                    }
-                    
-                    return path;
-                }, DEFAULT_SETTINGS.instanceLocation()),
-                getOrDefault("enableFeralGameMode", Boolean::parseBoolean, DEFAULT_SETTINGS.enableFeralGameMode()),
-                new SettingsData.GeneralSettings(
-                    getOrDefault("updateChannel", DEFAULT_SETTINGS.general().releaseChannel()),
-                    getOrDefault("cacheLife", Integer::parseInt, DEFAULT_SETTINGS.general().cacheLife()),
-                    getOrDefault("exitOverwolf", Boolean::parseBoolean, DEFAULT_SETTINGS.general().exitOverwolf()),
-                    getOrDefault("verbose", Boolean::parseBoolean, DEFAULT_SETTINGS.general().verbose())
-                ),
-                new SettingsData.InstanceSettings(
-                    getOrDefault("width", Integer::parseInt, DEFAULT_SETTINGS.instanceDefaults().width()),
-                    getOrDefault("height", Integer::parseInt, DEFAULT_SETTINGS.instanceDefaults().height()),
-                    getOrDefault("memory", Integer::parseInt, DEFAULT_SETTINGS.instanceDefaults().memory()),
-                    getOrDefault("fullscreen", Boolean::parseBoolean, DEFAULT_SETTINGS.instanceDefaults().fullscreen()),
-                    getOrDefault("updateChannel", DEFAULT_SETTINGS.instanceDefaults().updateChannel()),
-                    getOrDefault("preventMetaModInjection", Boolean::parseBoolean, DEFAULT_SETTINGS.instanceDefaults().preventMetaModInjection()),
-                    false, // There is no existing setting for this
-                    getOrDefault("shellArgs", DEFAULT_SETTINGS.instanceDefaults().shellArgs()),
-                    "" // There is no existing setting for this
-                ),
-                new SettingsData.AppearanceSettings(
-                    getOrDefault("useSystemWindowStyle", Boolean::parseBoolean, DEFAULT_SETTINGS.appearance().useSystemWindowStyle()),
-                    getOrDefault("showAdverts", Boolean::parseBoolean, DEFAULT_SETTINGS.appearance().showAds())
-                ),
-                new SettingsData.ProxySettings(
-                    getOrDefault("proxyType", DEFAULT_SETTINGS.proxy().type()),
-                    getOrDefault("proxyHost", DEFAULT_SETTINGS.proxy().host()),
-                    getOrDefault("proxyPort", Integer::parseInt, DEFAULT_SETTINGS.proxy().port()),
-                    getOrDefault("proxyUser", DEFAULT_SETTINGS.proxy().username()),
-                    getOrDefault("proxyPassword", DEFAULT_SETTINGS.proxy().password())
-                ),
-                new SettingsData.DownloadSettings(
-                    getOrDefault("threadLimit", Integer::parseInt, DEFAULT_SETTINGS.download().threadLimit()),
-                    getOrDefault("speedLimit", Long::parseLong, DEFAULT_SETTINGS.download().speedLimit())
-                ),
-                new SettingsData.WorkaroundSettings(
-                    false
-                )
-            );
-        }
-        
-        private <T> T getOrDefault(String key, Function<String, T> transform, T defaultValue) {
-            String value = this.oldSettings.get(key);
-            if (value == null) {
-                return defaultValue;
-            }
-            
-            try {
-                return transform.apply(value);
-            } catch (Throwable e) {
-                LOGGER.error("Failed to parse setting " + key + " with value " + value, e);
-                return defaultValue;
-            }
-        }
-
-        /**
-         * No type conversion, just return the value or the default.
-         */
-        private String getOrDefault(String key, String defaultValue) {
-            String value = this.oldSettings.get(key);
-            if (value == null) {
-                return defaultValue;
-            }
-
-            return value;
-        }
+    public boolean ignoreForgeProcessorOutputHashes() {
+        return get().workaround().ignoreForgeProcessorOutputHashes();
     }
 }

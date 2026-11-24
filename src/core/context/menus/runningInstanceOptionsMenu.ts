@@ -1,4 +1,4 @@
-import {ContextMenu, MenuItem, MenuOptions} from '@/core/context/menus/contextMenu';
+import {MenuItem, MenuOptions} from '@/core/context/contextMenu';
 import appPlatform from '@platform';
 import {SugaredInstanceJson} from '@/core/types/javaApi';
 import {generalInstancePaths} from "@/core/context/menus/instanceMenu.ts";
@@ -6,45 +6,34 @@ import {gobbleError} from "@/utils/helpers/asyncHelpers.ts";
 import {sendMessage} from "@/core/websockets/websocketsApi.ts";
 import {useRunningInstancesStore} from "@/store/runningInstancesStore.ts";
 
-export type RunningInstanceMenuContext = {
-  instance: SugaredInstanceJson
-}
+export function runningInstanceMenu(instance: SugaredInstanceJson): MenuOptions {
+  const runningInstances = useRunningInstancesStore();
 
-export class RunningInstanceOptionsMenu extends ContextMenu<RunningInstanceMenuContext> {
-  name(): String {
-    return 'Running Instance Menu';
-  }
-
-  options(): MenuOptions<RunningInstanceMenuContext> {
-    return [
-      {
-        title: 'Instance folder',
-        async action(context) {
-          await appPlatform.io.openFinder(context.instance.path);
-        },
+  return [
+    {
+      title: 'Instance folder',
+      async action() {
+        await appPlatform.io.openFinder(instance.path);
       },
-      ...generalInstancePaths.map((e) => ({
-        title: e[1],
-        async action(context) {
-          await appPlatform.io.openFinder(appPlatform.io.pathJoin(context.instance.path, e[0]));
-        },
-        predicate: context => context.instance.rootDirs?.includes(e[0])
-      })) as MenuItem<RunningInstanceMenuContext>[],
-      {
-        title: 'Kill instance',
-        color: 'danger',
-        async action(context) {
-          await gobbleError(() => {
-            sendMessage("instance.kill", {
-              uuid: context.instance.uuid
-            })
-          });
-        },
-        predicate(context) {
-          const runningInstances = useRunningInstancesStore();
-          return runningInstances.instances.find(i => i.uuid === context.instance.uuid) !== undefined;
-        }
-      }
-    ];
-  }
+    },
+    ...generalInstancePaths.map(([dir, title]): MenuItem => ({
+      title,
+      async action() {
+        await appPlatform.io.openFinder(appPlatform.io.pathJoin(instance.path, dir));
+      },
+      hidden: !instance.rootDirs?.includes(dir)
+    })),
+    {
+      title: 'Kill instance',
+      color: 'danger',
+      async action() {
+        await gobbleError(() => {
+          sendMessage("instance.kill", {
+            uuid: instance.uuid
+          })
+        });
+      },
+      hidden: !runningInstances.instances.some(i => i.uuid === instance.uuid)
+    }
+  ];
 }

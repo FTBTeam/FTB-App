@@ -1,11 +1,13 @@
 package dev.ftb.app.install.tasks;
 
 import com.google.common.hash.Hashing;
-import dev.ftb.app.AppMain;
+import dev.ftb.app.AppPaths;
 import dev.ftb.app.install.tasks.DownloadTask.DownloadValidation;
 import dev.ftb.app.minecraft.jsons.AssetIndexManifest;
 import dev.ftb.app.minecraft.jsons.VersionManifest;
 import dev.ftb.app.pack.CancellationToken;
+import dev.ftb.app.services.AppHttp;
+import dev.ftb.app.services.AppThreads;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jspecify.annotations.Nullable;
 
@@ -19,12 +21,14 @@ import static dev.ftb.app.Constants.MC_RESOURCES;
  * Update/downloads assets for a given Minecraft version.
  */
 public class InstallAssetsTask implements Task {
-
     private final List<DownloadTask> subTasks;
     private final AssetIndexManifest manifest;
+    private final AppThreads appThreads;
 
-    public InstallAssetsTask(VersionManifest.AssetIndex assetIndex) throws IOException {
-        Pair<AssetIndexManifest, List<DownloadTask>> pair = buildTaskList(assetIndex);
+    public InstallAssetsTask(AppHttp appHttp, AppPaths paths, AppThreads appThreads, VersionManifest.AssetIndex assetIndex) throws IOException {
+        this.appThreads = appThreads;
+        
+        Pair<AssetIndexManifest, List<DownloadTask>> pair = buildTaskList(appHttp, paths, assetIndex);
         subTasks = pair.getValue();
         manifest = pair.getKey();
     }
@@ -41,7 +45,7 @@ public class InstallAssetsTask implements Task {
             progressAggregator = new ParallelTaskProgressAggregator(listener);
         }
 
-        ParallelTaskHelper.executeInParallel(token, Task.TASK_POOL, subTasks, progressAggregator);
+        ParallelTaskHelper.executeInParallel(token, this.appThreads.taskPool(), subTasks, progressAggregator);
 
         if (listener != null) {
             listener.finish(progressAggregator.getProcessed());
@@ -62,9 +66,9 @@ public class InstallAssetsTask implements Task {
      * @param assetIndex The asset index to download.
      * @return The list of tasks.
      */
-    private static Pair<AssetIndexManifest, List<DownloadTask>> buildTaskList(VersionManifest.AssetIndex assetIndex) throws IOException {
-        Path assetsDir = AppMain.paths().mcAssetsDir();
-        AssetIndexManifest manifest = AssetIndexManifest.update(assetsDir, assetIndex);
+    private static Pair<AssetIndexManifest, List<DownloadTask>> buildTaskList(AppHttp http, AppPaths appPaths, VersionManifest.AssetIndex assetIndex) throws IOException {
+        Path assetsDir = appPaths.mcAssetsDir();
+        AssetIndexManifest manifest = AssetIndexManifest.update(http, assetsDir, assetIndex);
 
         Path objectsDir = assetsDir.resolve("objects");
 
@@ -80,7 +84,7 @@ public class InstallAssetsTask implements Task {
             // this causes duplicate tasks to be added.
             if (!seen.add(dest)) continue;
             
-            DownloadTask task = DownloadTask.builder()
+            DownloadTask task = DownloadTask.builder(http)
                     .url(MC_RESOURCES + loc)
                     .dest(dest)
                     .tryResumeDownload()

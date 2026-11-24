@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia';
 import { useAppStore } from '@/store/appStore.ts';
-import { useModalStore } from '@/store/modalStore.ts';
 import { createLogger } from '@/core/logger.ts';
 
 const logger = createLogger("wsStore.ts")
@@ -16,14 +15,18 @@ export const useWsStore = defineStore("ws", {
     const wsController = new WebSocketController(
       (ws: WebSocket) => {
         logger.log("Websocket connected", ws);
-        const appStore = useWsStore();
-        appStore.ready = true;
+        const appWsStore = useWsStore();
+        const appStore = useAppStore();
+        appWsStore.ready = true;
+        appStore.emitter.emit('ws/connected')
       },
       () => {
         logger.log("Websocket disconnected");
-
-        const appStore = useWsStore();
-        appStore.ready = false;
+        
+        const appWsStore = useWsStore();
+        const appStore = useAppStore();
+        appWsStore.ready = false;
+        appStore.emitter.emit('ws/disconnected')
       }
     );
     
@@ -95,7 +98,7 @@ class WebSocketController {
     
     this.connectingLock = true;
     try {
-      this.ws = new WebSocket(`ws://localhost:${this.port}`);
+      this.ws = new WebSocket(`ws://127.0.0.1:${this.port}`);
       this.attachEvents(this.ws);
     } catch (e) {
       logger.error(e);
@@ -223,17 +226,6 @@ class WebSocketController {
       // Respond to ping messages
       // TODO: More data?
       this.ws?.send(JSON.stringify({ type: "pong" }));
-      return true;
-    }
-    
-    if (message.type === "openModal" || message.type === "closeModal") {
-      const modalStore = useModalStore();
-      if (message.type === "openModal") {
-        modalStore.openModal(message);
-      } else {
-        modalStore.closeModal();
-      }
-      
       return true;
     }
     

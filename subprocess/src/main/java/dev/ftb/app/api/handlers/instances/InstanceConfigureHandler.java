@@ -2,10 +2,9 @@ package dev.ftb.app.api.handlers.instances;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import dev.ftb.app.Instances;
-import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.data.instances.InstanceConfigureData;
 import dev.ftb.app.api.handlers.IMessageHandler;
+import dev.ftb.app.api.handlers.MessageContext;
 import dev.ftb.app.instance.InstanceCategory;
 import dev.ftb.app.pack.Instance;
 import dev.ftb.app.util.MiscUtils;
@@ -25,11 +24,11 @@ public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigu
     private static final Logger LOGGER = LogManager.getLogger();
 
     @Override
-    public void handle(InstanceConfigureData data) {
+    public void handle(MessageContext context, InstanceConfigureData data) {
         try {
-            Instance instance = Instances.getInstance(data.uuid);
+            Instance instance = context.services().instances().getInstance(data.uuid);
             if (instance == null) {
-                WebSocketHandler.sendMessage(new InstanceConfigureData.Reply(data, "error", "Unable to save settings as the instance couldn't be found..."));
+                context.reply(new InstanceConfigureData.Reply(data, "error", "Unable to save settings as the instance couldn't be found..."));
                 return;
             }
 
@@ -90,17 +89,17 @@ public class InstanceConfigureHandler implements IMessageHandler<InstanceConfigu
 
             if (jreRealPath != null) {
                 if (JavaInstall.parse(jreRealPath) == null) {
-                    WebSocketHandler.sendMessage(new InstanceConfigureData.Reply(data, "error", "No java install found... Make sure you're selecting the 'java' file in '/bin'."));
+                    context.reply(new InstanceConfigureData.Reply(data, "error", "No java install found... Make sure you're selecting the 'java' file in '/bin'."));
                     return;
                 }
                 instance.props.jrePath = jreRealPath;
             }
 
             instance.saveJson();
-            WebSocketHandler.sendMessage(new InstanceConfigureData.Reply(data, "success", "", new InstalledInstancesHandler.SugaredInstanceJson(instance)));
+            context.reply(new InstanceConfigureData.Reply(data, "success", "", new InstalledInstancesHandler.SugaredInstanceJson(instance)));
         } catch (IOException ex) {
             LOGGER.error("Failed to update instance settings.", ex);
-            WebSocketHandler.sendMessage(new InstanceConfigureData.Reply(data, "error", "Fatal error on settings saving..."));
+            context.reply(new InstanceConfigureData.Reply(data, "error", "Fatal error on settings saving..."));
         }
     }
 

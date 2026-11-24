@@ -57,7 +57,7 @@ function saveMutated() {
       maxValueLabel="250"
       @blur="saveMutated"
       class="mb-8"
-      small="Limit how fast each file can be downloaded. For poor internet connection, we recommend using a lower value to not effect others on your network."
+      small="Limit the app's total download speed, shared across all files being downloaded. For a poor internet connection, we recommend using a lower value so you don't affect others on your network."
     />
 
     <Slider

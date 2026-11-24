@@ -2,12 +2,10 @@
 import { Input, UiButton } from '@/components/ui';
 import { alertController } from '@/core/controllers/alertController.ts';
 import { dialogsController } from '@/core/controllers/dialogsController.ts';
-import { useModalStore } from '@/store/modalStore.ts';
 import { useAppStore } from '@/store/appStore.ts';
 import { ref } from 'vue';
 import appPlatform from '@platform';
 
-const modalStore = useModalStore();
 const appStore = useAppStore();
 
 // TODO: Query versions and provide selector
@@ -20,22 +18,6 @@ function showToast(type: 'info' | 'error' | 'success' | 'warning', message?: str
 function showConfirmDialog() {
   dialogsController.createConfirmationDialog("Are you sure", "But no really, are you?")
     .then(e => alertController.info("You clicked " + (e ? "yes" : "no")))
-}
-
-function showBackendModal() {
-  modalStore.openModal({
-    type: 'modal', secret: '', requestId: crypto.randomUUID(),
-    title: "Backend modal",
-    message: "This is a backend modal, it can be closed by clicking the button below.",
-    buttons: [
-      {
-        name: "Close",
-        type: "success",
-        message: "close"
-      }
-    ],
-    id: crypto.randomUUID()
-  })
 }
 
 function showChangelog() {
@@ -77,11 +59,6 @@ function randomLongString() {
   <p class="font-bold uppercase mt-8 mb-4 text-white/80">Dialogs</p>
   <div class="flex gap-4">
     <UiButton @click="showConfirmDialog">Show confirm dialog</UiButton>
-  </div>
-
-  <p class="font-bold uppercase mt-8 mb-4 text-white/80">Backend modal</p>
-  <div class="flex gap-4">
-    <UiButton @click="showBackendModal">Open backend modal</UiButton>
   </div>
 
   <p class="font-bold uppercase mt-8 mb-4 text-white/80">Changelog</p>

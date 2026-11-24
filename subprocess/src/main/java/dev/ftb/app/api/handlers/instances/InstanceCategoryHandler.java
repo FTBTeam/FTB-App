@@ -1,9 +1,8 @@
 package dev.ftb.app.api.handlers.instances;
 
-import dev.ftb.app.Instances;
-import dev.ftb.app.api.WebSocketHandler;
 import dev.ftb.app.api.data.BaseData;
 import dev.ftb.app.api.handlers.IMessageHandler;
+import dev.ftb.app.api.handlers.MessageContext;
 import dev.ftb.app.instance.InstanceCategory;
 import org.jspecify.annotations.Nullable;
 
@@ -12,43 +11,45 @@ import java.util.UUID;
 
 public class InstanceCategoryHandler implements IMessageHandler<InstanceCategoryHandler.Data> {
     @Override
-    public void handle(Data data) {
+    public void handle(MessageContext context, Data data) {
         var categoryUuid = data.categoryId == null ? null : UUID.fromString(data.categoryId);
         
+        var instances = context.services().instances();
+        
         if (data.action == Action.GET) {
-            var categories = Instances.categories();
-            WebSocketHandler.sendMessage(new Reply(data, true, "...", categories));
+            var categories = instances.categories();
+            context.reply(new Reply(data, true, "...", categories));
         } else if (data.action == Action.DELETE && categoryUuid != null) {
-            Instances.removeCategory(categoryUuid);
-            WebSocketHandler.sendMessage(new Reply(data, true, "Category deleted successfully"));
+            instances.removeCategory(categoryUuid);
+            context.reply(new Reply(data, true, "Category deleted successfully"));
         } else if (data.action == Action.CREATE) {
             if (data.categoryName == null || data.categoryName.isEmpty()) {
-                WebSocketHandler.sendMessage(new Reply(data, false, "Category name cannot be empty"));
+                context.reply(new Reply(data, false, "Category name cannot be empty"));
                 return;
             }
             
-            var result = Instances.addCategory(data.categoryName);
+            var result = instances.addCategory(data.categoryName);
             if (result == null) {
-                WebSocketHandler.sendMessage(new Reply(data, false, "Failed to create category"));
+                context.reply(new Reply(data, false, "Failed to create category"));
                 return;
             }
             
-            WebSocketHandler.sendMessage(new Reply(data, true, "Category created successfully", result));
+            context.reply(new Reply(data, true, "Category created successfully", result));
         } else if (data.action == Action.RENAME) {
             if (categoryUuid == null || data.categoryName == null || data.categoryName.isEmpty()) {
-                WebSocketHandler.sendMessage(new Reply(data, false, "Category ID and name cannot be empty"));
+                context.reply(new Reply(data, false, "Category ID and name cannot be empty"));
                 return;
             }
             
-            var result = Instances.updateCategory(categoryUuid, data.categoryName);
+            var result = instances.updateCategory(categoryUuid, data.categoryName);
             if (result == null) {
-                WebSocketHandler.sendMessage(new Reply(data, false, "Failed to rename category"));
+                context.reply(new Reply(data, false, "Failed to rename category"));
                 return;
             }
             
-            WebSocketHandler.sendMessage(new Reply(data, true, "Category renamed successfully", result));
+            context.reply(new Reply(data, true, "Category renamed successfully", result));
         } else {
-            WebSocketHandler.sendMessage(new Reply(data, false, "Invalid action specified"));
+            context.reply(new Reply(data, false, "Invalid action specified"));
         }
     }
 

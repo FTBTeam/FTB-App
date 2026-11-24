@@ -2,8 +2,6 @@ package dev.ftb.app.install.tasks.modloader.forge;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import dev.ftb.app.AppMain;
-import dev.ftb.app.Constants;
 import dev.ftb.app.data.forge.VersionOverrides;
 import dev.ftb.app.data.forge.installerv1.InstallProfile;
 import dev.ftb.app.install.FileValidation;
@@ -12,6 +10,7 @@ import dev.ftb.app.install.tasks.modloader.ModLoaderInstallTask;
 import dev.ftb.app.minecraft.jsons.VersionManifest;
 import dev.ftb.app.pack.CancellationToken;
 import dev.ftb.app.pack.Instance;
+import dev.ftb.app.services.AppHttp;
 import net.covers1624.quack.gson.JsonUtils;
 import net.covers1624.quack.io.IOUtils;
 import net.covers1624.quack.maven.MavenNotation;
@@ -31,7 +30,9 @@ import java.util.Objects;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 
-import static dev.ftb.app.install.tasks.DownloadTask.*;
+import static dev.ftb.app.install.tasks.DownloadTask.DownloadValidation;
+import static dev.ftb.app.install.tasks.DownloadTask.LocalFileLocator;
+import static dev.ftb.app.install.tasks.DownloadTask.builder;
 import static org.apache.commons.lang3.StringUtils.appendIfMissing;
 
 public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
@@ -40,8 +41,22 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
     private static final MavenNotation FORGE_NOTATION = MavenNotation.parse("net.minecraftforge:forge");
     private static final MavenNotation NEO_FORGE_NOTATION = MavenNotation.parse("net.neoforged:forge");
     private static final MavenNotation NEO_FORGE_1_20_2_PLUS_NOTATION = MavenNotation.parse("net.neoforged:neoforge");
+    
+    private static volatile @Nullable VersionOverrides specialVersions;
 
-    private static final VersionOverrides SPECIAL_VERSIONS = VersionOverrides.compute();
+    private static VersionOverrides specialVersions(AppHttp http) {
+        VersionOverrides overrides = specialVersions;
+        if (overrides == null) {
+            synchronized (AbstractForgeInstallTask.class) {
+                overrides = specialVersions;
+                if (overrides == null) {
+                    overrides = VersionOverrides.compute(http);
+                    specialVersions = overrides;
+                }
+            }
+        }
+        return overrides;
+    }
 
     @Nullable
     protected String versionName;
@@ -56,7 +71,7 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
             String finalForgeVersion = forgeVersion;
             if (forgeVersion.contains("recommended") || forgeVersion.contains("latest")) {
                 // Load the promotions and find the correct latest vs recommended version.
-                var promotions = loadPromotions();
+                var promotions = loadPromotions(instance.factory().httpClient());
                 
                 // We need to find the key that contains the mcVersion and the type (latest/recommended)
                 String key = mcVersion + "-" + (forgeVersion.contains("recommended") ? "recommended" : "latest");
@@ -71,7 +86,7 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
             return new LegacyForgeInstallTask(instance, mcVersion, finalForgeVersion);
         }
         
-        MavenNotation notation = getForgeNotation(mcVersion, forgeVersion);
+        MavenNotation notation = getForgeNotation(instance.factory().httpClient(), mcVersion, forgeVersion);
         if (!"universal".equals(notation.classifier) && !"jar".equals(notation.extension)) {
             throw new IllegalStateException("Expected Forge 'universal.jar'. Got: " + notation);
         }
@@ -80,9 +95,9 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
         // TODO, can we maybe merge both install tasks and do this detection in there?
         //       I dislike that we have to download this file in a call path that just evaluates
         //       what needs to be done for an installation.
-        DownloadTask task = builder()
+        DownloadTask task = builder(instance.factory().httpClient())
                 .url(appendIfMissing("https://maven.minecraftforge.net/", notation.toPath()))
-                .dest(notation.toPath(AppMain.paths().mcLibrariesDir()))
+                .dest(notation.toPath(instance.factory().appPaths().mcLibrariesDir()))
                 .withValidation(DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true))
                 .tryCompanionHashes()
                 .build();
@@ -102,9 +117,9 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
                 .withClassifier("installer");
 
         // TODO, this is a common path with above.
-        DownloadTask task = builder()
+        DownloadTask task = builder(instance.factory().httpClient())
                 .url(appendIfMissing("https://maven.neoforged.net/releases/", notation.toPath()))
-                .dest(notation.toPath(AppMain.paths().mcLibrariesDir()))
+                .dest(notation.toPath(instance.factory().appPaths().mcLibrariesDir()))
                 .withValidation(DownloadValidation.of().withUseETag(true).withUseOnlyIfModified(true))
                 .tryCompanionHashes()
                 .build();
@@ -128,10 +143,10 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
         }
     }
 
-    protected static MavenNotation getForgeNotation(String mcVersion, String forgeVersion) {
+    protected static MavenNotation getForgeNotation(AppHttp http, String mcVersion, String forgeVersion) {
         ArtifactVersion forgeVers = new DefaultArtifactVersion(forgeVersion);
 
-        MavenNotation notation = getVersionNotation(mcVersion, forgeVersion);
+        MavenNotation notation = getVersionNotation(http, mcVersion, forgeVersion);
         if (FORGE_CLIENT_ZIP.containsVersion(forgeVers)) {
             return notation.withClassifier("client")
                     .withExtension("zip");
@@ -149,15 +164,8 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
         throw new UnsupportedOperationException("Unable to create notation for Forge version. Minecraft Version: " + mcVersion + ", Forge Version: " + forgeVersion);
     }
 
-    protected static MavenNotation getForgeInstallerNotation(String mcVersion, String forgeVersion) {
-        if (!FORGE_INSTALLER_JAR.containsVersion(new DefaultArtifactVersion(forgeVersion))) {
-            throw new UnsupportedOperationException("Forge version '" + forgeVersion + "' is not known to have an installer.");
-        }
-        return getVersionNotation(mcVersion, forgeVersion).withClassifier("installer").withClassifier("jar");
-    }
-
-    private static MavenNotation getVersionNotation(String mcVersion, String forgeVersion) {
-        String override = SPECIAL_VERSIONS.find(forgeVersion);
+    private static MavenNotation getVersionNotation(AppHttp http, String mcVersion, String forgeVersion) {
+        String override = specialVersions(http).find(forgeVersion);
         if (override != null) {
             LOGGER.info("Overriding Forge version from {} to {}.", forgeVersion, override);
             return FORGE_NOTATION.withVersion(override);
@@ -166,7 +174,7 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
         return FORGE_NOTATION.withVersion(mcVersion + "-" + forgeVersion);
     }
 
-    protected static @Nullable Path processLibrary(@Nullable CancellationToken token, Path installerRoot, Path librariesDir, VersionManifest.Library library) throws IOException {
+    protected static @Nullable Path processLibrary(@Nullable CancellationToken token, AppHttp http, Path installerRoot, Path librariesDir, VersionManifest.Library library) throws IOException {
         LOGGER.info("Processing library " + library.name);
         Path installerMavenFile = library.name.toPath(installerRoot.resolve("maven"));
         if (!library.hasDownloadPath() && Files.notExists(installerMavenFile)) {
@@ -177,10 +185,10 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
             LOGGER.info(" Library does not exist inside forge installer jar. Must be a generated artifact.");
             return null;
         }
-        DownloadTask downloadTask = library.createDownloadTask(librariesDir, false);
+        DownloadTask downloadTask = library.createDownloadTask(http, librariesDir, false);
         if (downloadTask == null) throw new IOException("Unable to download or locate library: " + library.name);
 
-        downloadTask = downloadTask.toBuilder()
+        downloadTask = downloadTask.toBuilder(http)
                 .withFileLocator(new PackedJarLocator(installerMavenFile))
                 .build();
 
@@ -191,13 +199,13 @@ public abstract class AbstractForgeInstallTask extends ModLoaderInstallTask {
 
     }
     
-    private static Promotions loadPromotions() {
+    private static Promotions loadPromotions(AppHttp http) {
         var request = new Request.Builder()
             .url("https://maven.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json")
             .get()
             .build();
         
-        try (var req = Constants.httpClient().newCall(request).execute()) {
+        try (var req = http.httpClient().newCall(request).execute()) {
             if (!req.isSuccessful() || req.body() == null) {
                 throw new IOException("Failed to fetch Forge promotions: " + req);
             }

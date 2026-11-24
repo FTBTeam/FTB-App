@@ -6,7 +6,6 @@ export type EmitEvents = {
   "ws/connected": void,
   "ws/disconnected": void
   "ws/message": any,
-  "action/context-menu-open": any;
   "action/force-changelog-open": string
   "alert/simple": any;
 }

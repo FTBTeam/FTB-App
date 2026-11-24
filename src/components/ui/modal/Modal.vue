@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onMounted, onUnmounted } from 'vue';
+import {computed, onMounted, onUnmounted} from 'vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { useAds } from '@/composables/useAds.ts';
@@ -29,6 +29,9 @@ const emit = defineEmits<{
 }>();
 
 const ads = useAds();
+const noTitle = computed(() => {
+  return title === "" && (!subTitle || subTitle === "")
+})
 
 onMounted(() => {
   document.addEventListener('keydown', onEsc)
@@ -67,8 +70,8 @@ export type ModalSizes = 'small' | 'medium' | 'large';
   <Transition name="fade-and-grow">
     <div v-if="open" class="modal-container" :class="{ads: ads.adsEnabled.value}" @mousedown.self="() => close(true)">      
       <div class="modal-contents relative" :class="`${size}`">
-        <div class="modal-header" :class="{'no-subtitle': !subTitle}">
-          <div class="modal-heading">
+        <div class="modal-header" :class="{'no-subtitle': !subTitle, 'no-title': noTitle}">
+          <div class="modal-heading" v-if="!noTitle">
             <div class="title">{{ title }}</div>
             <div class="subtitle" v-if="subTitle">{{ subTitle }}</div>
           </div>
