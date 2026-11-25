@@ -7,7 +7,7 @@ import PackUpdateButton from '@/components/groups/modpack/PackUpdateButton.vue';
 import appPlatform from '@platform';
 import {SugaredInstanceJson} from '@/core/types/javaApi';
 import { Loader, ProgressBar } from '@/components/ui';
-import { parseMarkdown, safeLinkOpen } from '@/utils';
+import { parseMarkdown, safeLinkOpen, sanitizeHtml } from '@/utils';
 import {sourceProviderToProvider, typeIdToProvider} from '@/utils/helpers/packHelpers';
 import WorldsTab from '@/components/groups/modpack/WorldsTab.vue';
 import { computed } from 'vue';
@@ -155,7 +155,7 @@ function cursePackBody() {
   // Force all urls to open in a new tab
   description = description?.replaceAll(/<a href="(.*?)"/g, '<a href="$1" target="_blank" rel="noopener noreferrer"') ?? ''
   
-  return description;
+  return sanitizeHtml(description);
 }
 
 const curseWebsite = computed(() => packInstance?.provider === "curseforge" && packInstance?.links?.find(e => e.type === 'website')?.link);

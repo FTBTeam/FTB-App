@@ -93,7 +93,7 @@ async function startApplication() {
   }
   
   logger.log("Starting websocket connection on port", port);
-  wsStore.controller.setup(port)
+  wsStore.controller.setup(port, wsStore.wsSecret)
 }
 
 /**

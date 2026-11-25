@@ -27,9 +27,11 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AppMain {
@@ -191,8 +193,10 @@ public class AppMain {
             }
             
             var port = this.services().rcpApi().start(portMode);
-            // Common format both electron and overwolf can understand
-            LOGGER.info("Backend Ready! Port=%s OneTimeToken=%s".formatted(port, Constants.WEBSOCKET_SECRET), port);
+            // Common format both electron and overwolf can understand. Written straight to stdout rather than logged
+            System.out.println("Backend Ready! Port=%s OneTimeToken=%s".formatted(port, Constants.WEBSOCKET_SECRET));
+            System.out.flush();
+            LOGGER.info("RPC server started on port {}", port);
             if (OS.CURRENT == OS.WIN) pingPong();
         } catch (Throwable t) {
             websocketDisconnect = true;
@@ -346,7 +350,7 @@ public class AppMain {
                     }
                     // SHUT IT DOWN!
                     LOGGER.info("Found running process with pid {}", pid);
-                    handle.destroy();
+                    stopOldProcess(handle);
                 });
             } catch (Throwable ex) {
                 LOGGER.warn("Failed to read app.pid file", ex);
@@ -359,6 +363,31 @@ public class AppMain {
             Files.writeString(paths.processMarkerFile(), String.valueOf(currentPid));
         } catch (IOException ex) {
             LOGGER.error("Failed to write app.pid file", ex);
+        }
+    }
+
+    /// Waits for the old process to actually exit
+    private static void stopOldProcess(ProcessHandle handle) {
+        handle.destroy();
+        try {
+            handle.onExit().get(10, TimeUnit.SECONDS);
+            return;
+        } catch (TimeoutException ex) {
+            LOGGER.warn("Process {} didn't exit within 10 seconds, killing it.", handle.pid());
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            return;
+        } catch (ExecutionException ex) {
+            LOGGER.warn("Failed waiting for process {} to exit.", handle.pid(), ex);
+        }
+
+        handle.destroyForcibly();
+        try {
+            handle.onExit().get(5, TimeUnit.SECONDS);
+        } catch (TimeoutException | ExecutionException ex) {
+            LOGGER.error("Process {} is still running after being killed.", handle.pid());
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
         }
     }
 

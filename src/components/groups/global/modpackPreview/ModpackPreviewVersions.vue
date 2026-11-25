@@ -4,7 +4,7 @@ import {computed, onMounted, ref, watch} from "vue";
 import {Loader} from "@/components/ui";
 import {standardDate} from "@/utils/helpers/dateHelpers.ts";
 import {modpackApi} from "@/core/pack-api/modpackApi.ts";
-import {marked} from "marked";
+import {parseMarkdown} from "@/utils";
 import {alertController} from "@/core/controllers/alertController.ts";
 import {UiSelectOption} from "@/components/ui/select/UiSelect.ts";
 import {sourceProviderToProvider} from "@/utils/helpers/packHelpers.ts";
@@ -61,7 +61,7 @@ function selectAndLoad(id?: number | string | null) {
   
   loading.value = true;
   modpackApi.modpacks.getChangelog(modpack.id, resolvedVersion.id, sourceProviderToProvider(modpack.provider))
-    .then(async data => changelogData.value = await marked.parse(data?.content ?? ""))
+    .then(data => changelogData.value = parseMarkdown(data?.content ?? ""))
     .catch(e => alertController.error("Failed to load changelog", e))
     .finally(() => loading.value = false)
 }

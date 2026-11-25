@@ -371,17 +371,27 @@ public class ModpackVersionManifest {
             return toPath(root, "");
         }
 
+        /// @throws IllegalStateException if the manifest's path or name would put the file outside `root`
         public Path toPath(Path root, String nameSuffix) {
             String name = getName() + nameSuffix;
             String path = getPath();
+            Path resolved;
             try {
-                return root.resolve(path).resolve(name);
+                resolved = root.resolve(path).resolve(name);
             } catch (InvalidPathException exception) {
                 // Try again without formatting
                 String plaintextName = name.replaceAll("§(?:\\w|\\d)", "");
                 String plaintextPath = path.replaceAll("§(?:\\w|\\d)", "");
-                return root.resolve(plaintextPath).resolve(plaintextName);
+                resolved = root.resolve(plaintextPath).resolve(plaintextName);
             }
+
+            // The path and name come from the manifest
+            Path normalizedRoot = root.toAbsolutePath().normalize();
+            if (!resolved.toAbsolutePath().normalize().startsWith(normalizedRoot)) {
+                throw new IllegalStateException("Modpack file '%s' (path '%s') resolves outside of %s".formatted(name, path, normalizedRoot));
+            }
+
+            return resolved;
         }
 
         public String instanceRelPath() {

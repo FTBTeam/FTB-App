@@ -70,7 +70,8 @@ const setup = async () => {
   plugin.get().onData.addListener(({ error, output }) => {
     if (error) console.error(error);
     if (output) {
-      console.log(output);
+      // The ready line carries the RPC token, keep it out of the log
+      console.log(output.replace(/OneTimeToken=\S+/g, "OneTimeToken=<redacted>"));
       
       if (!finishedSetup) {
         if (output.includes("Backend Ready! Port=")) {
@@ -78,11 +79,11 @@ const setup = async () => {
           const secret = output.match(/OneTimeToken=(\w+-\w+-\w+-\w+-\w+)/)[1];
           
           if (!port || !secret || isNaN(port)) {
-            console.error("Failed to find port or secret", output)
+            console.error("Failed to find port or secret")
             return
           }
           
-          console.log("Found port and secret", output)
+          console.log("Found port and secret", port)
           
           wsData = {
             port: port,

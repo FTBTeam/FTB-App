@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -22,6 +23,10 @@ public class FetchLoggerInterceptor implements Interceptor {
      */
     private static final Set<String> IGNORED_HEADERS = Set.of(
         "content-length", "cache-control", "user-agent", "report-to", "etag", "x-powered-by", "vary", "nel"
+    );
+    
+    private static final List<String> REDACTED_HEADERS = List.of(
+        "authorization", "proxy-authorization", "cookie", "set-cookie", "x-api-key"
     );
     
     @Override
@@ -74,8 +79,8 @@ public class FetchLoggerInterceptor implements Interceptor {
                 continue; // Skip logging ignored headers
             }
             
-            if (key.toLowerCase().startsWith("authorization") || key.toLowerCase().startsWith("cookie")) {
-                // Redact sensitive information like Authorization tokens or Cookies
+            String lowerKey = key.toLowerCase();
+            if (REDACTED_HEADERS.stream().anyMatch(lowerKey::startsWith)) {
                 LOGGER.info("-- {}: REDACTED", key);
                 continue;
             }

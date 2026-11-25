@@ -70,6 +70,7 @@ class WebSocketController {
   
   private connectingLock = false;
   private port: number = 13377;
+  private secret: string | null = null;
   
   /**
    * Custom hooks to pass back to the main store to avoid non-reactive
@@ -81,8 +82,9 @@ class WebSocketController {
   ) {
   }
   
-  public setup(port: number) {
+  public setup(port: number, secret: string | null) {
     this.port = port;
+    this.secret = secret;
     this.connect()
     this.callbackQueue = {};
   }
@@ -98,7 +100,8 @@ class WebSocketController {
     
     this.connectingLock = true;
     try {
-      this.ws = new WebSocket(`ws://127.0.0.1:${this.port}`);
+      const query = this.secret ? `?secret=${encodeURIComponent(this.secret)}` : "";
+      this.ws = new WebSocket(`ws://127.0.0.1:${this.port}/${query}`);
       this.attachEvents(this.ws);
     } catch (e) {
       logger.error(e);

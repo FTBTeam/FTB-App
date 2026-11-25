@@ -162,7 +162,7 @@ export function startSubprocess(appData: AppData, args: any) {
         outputData = outputData.slice(0, -1);
       }
 
-      log.debug("Subprocess stdout", outputData)
+      log.debug("Subprocess stdout", outputData.replace(/OneTimeToken=\S+/g, "OneTimeToken=<redacted>"))
       stdoutTail = (stdoutTail + data.toString()).slice(-16_384);
       if (!appData.state.isSubprocessSetup) {
         if (data.includes("Backend Ready! Port=")) {
@@ -170,7 +170,7 @@ export function startSubprocess(appData: AppData, args: any) {
           const secret = outputData.match(/OneTimeToken=(\w+-\w+-\w+-\w+-\w+)/)![1];
 
           if (!(!port || !secret || isNaN(port))) {
-            log.debug('Found port and secret', port, secret);
+            log.debug('Found port and secret', port);
             appData.state.isSubprocessSetup = true;
             settled = true;
             clearTimeout(idleTimeout);

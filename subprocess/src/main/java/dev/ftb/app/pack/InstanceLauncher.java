@@ -726,6 +726,10 @@ public class InstanceLauncher {
                     if (entry.isDirectory()) continue;
                     if (library.extract != null && !library.extract.shouldExtract(entry.getName())) continue;
                     Path dest = nativesDir.resolve(entry.getName());
+                    if (!dest.toAbsolutePath().normalize().startsWith(nativesDir.toAbsolutePath().normalize())) {
+                        LOGGER.warn("Skipping '{}' in {}, it would extract outside of the natives directory.", entry.getName(), nativesJar);
+                        continue;
+                    }
                     if (Files.notExists(dest.getParent())) {
                         Files.createDirectories(dest.getParent());
                     }

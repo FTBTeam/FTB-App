@@ -15,6 +15,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.Nullable;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.concurrent.CompletableFuture;
 
 public class RcpApi {
@@ -39,7 +41,7 @@ public class RcpApi {
             case DYNAMIC -> 0;
             case STATIC -> Constants.WEBSOCKET_PORT;
         };
-        server = new JettyWebsocketServer(port, this::handleMessage);
+        server = new JettyWebsocketServer(port, this::handleMessage, this::isValidSecret);
         server.startServer();
 
         // The port actually bound, not the one requested
@@ -59,6 +61,11 @@ public class RcpApi {
     public int getPort() {
         assert server != null : "Websocket not configured yet.";
         return server.getPort();
+    }
+
+    private boolean isValidSecret(@Nullable String secret) {
+        if (this.services.flags().isDev()) return true;
+        return secret != null && MessageDigest.isEqual(secret.getBytes(StandardCharsets.UTF_8), Constants.WEBSOCKET_SECRET.getBytes(StandardCharsets.UTF_8));
     }
 
     public void handleMessage(String data) {
@@ -82,7 +89,7 @@ public class RcpApi {
 
         try {
             BaseData parsedData = GSON.fromJson(data, entry.getLeft());
-            if (this.services.flags().isDev() || (parsedData.secret != null && parsedData.secret.equals(Constants.WEBSOCKET_SECRET))) {
+            if (isValidSecret(parsedData.secret)) {
                 var context = new MessageContext(this.services);
                 
                 CompletableFuture.runAsync(() -> iMessageHandler.handle(context, parsedData), this.services.threads().messageHandlerPool()).exceptionally((t) -> {

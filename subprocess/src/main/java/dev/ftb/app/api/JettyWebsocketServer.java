@@ -5,17 +5,21 @@ import dev.ftb.app.AppMain;
 import dev.ftb.app.api.data.BaseData;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jspecify.annotations.Nullable;
+import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.websocket.api.Callback;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.server.WebSocketUpgradeHandler;
 
+import java.net.URI;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 public class JettyWebsocketServer implements WebsocketServer {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -32,7 +36,7 @@ public class JettyWebsocketServer implements WebsocketServer {
     private final Consumer<String> onMessage;
     
     /// @param port the port to bind to, or `0` to let the OS pick a free one
-    public JettyWebsocketServer(int port, Consumer<String> onMessage) {
+    public JettyWebsocketServer(int port, Consumer<String> onMessage, Predicate<@Nullable String> authenticate) {
         this.onMessage = onMessage;
 
         QueuedThreadPool threadPool = new QueuedThreadPool(16, 2);
@@ -52,7 +56,22 @@ public class JettyWebsocketServer implements WebsocketServer {
             container.setMaxFrameSize(MAX_MESSAGE_SIZE);
             container.setIdleTimeout(Duration.ZERO);
             
-            container.addMapping("/", (req, resp, cb) -> new Connection());
+            container.addMapping("/", (req, resp, cb) -> {
+                String origin = req.getHeaders().get(HttpHeader.ORIGIN);
+                if (!isAllowedOrigin(origin)) {
+                    LOGGER.warn("Refused websocket connection from origin {}.", origin);
+                    Response.writeError(req, resp, cb, 403);
+                    return null;
+                }
+
+                if (!authenticate.test(Request.extractQueryParameters(req).getValue("secret"))) {
+                    LOGGER.warn("Refused websocket connection without a valid secret.");
+                    Response.writeError(req, resp, cb, 403);
+                    return null;
+                }
+
+                return new Connection();
+            });
         });
         wsHandler.setHandler(new Handler.Abstract() {
             @Override
@@ -106,6 +125,28 @@ public class JettyWebsocketServer implements WebsocketServer {
     @Override
     public int getPort() {
         return connector.getLocalPort();
+    }
+
+    /// Browsers send the page's origin, so this stops any website the user has open from connecting. The app's own
+    /// windows are `file://` (Electron), `overwolf-extension://` (Overwolf) or the localhost dev server. Non-browser
+    /// clients send no origin.
+    private static boolean isAllowedOrigin(@Nullable String origin) {
+        if (origin == null || origin.equals("null")) return true;
+
+        URI uri;
+        try {
+            uri = URI.create(origin);
+        } catch (IllegalArgumentException ex) {
+            return false;
+        }
+
+        String scheme = uri.getScheme();
+        if ("file".equals(scheme) || "overwolf-extension".equals(scheme)) return true;
+        if ("http".equals(scheme) || "https".equals(scheme)) {
+            return "localhost".equals(uri.getHost()) || "127.0.0.1".equals(uri.getHost());
+        }
+
+        return false;
     }
 
     private void addConnection(Connection conn) {

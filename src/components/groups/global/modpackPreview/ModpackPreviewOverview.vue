@@ -2,7 +2,7 @@
 import {ModPack} from "@/core/types/appTypes.ts";
 import Stat from "@/components/groups/global/modpackPreview/Stat.vue";
 import {computed} from "vue";
-import {marked} from "marked";
+import {parseMarkdown} from "@/utils";
 import {resolveModloader} from "@/utils/helpers/packHelpers.ts";
 import {prettyByteFormat} from "@/utils";
 
@@ -12,7 +12,7 @@ const {
   modpack: ModPack
 }>()
 
-const description = computed(() => marked.parse(modpack.description))
+const description = computed(() => parseMarkdown(modpack.description))
 const poweredBy = computed(() => resolveModloader(modpack))
 const minecraftVersion = computed(() => modpack.versions?.[0].targets.find(e => e.name === "minecraft")?.version ?? "Unknown")
 const expectedRam = computed(() => modpack.versions?.[0].specs?.minimum ?? 1024 * 4)

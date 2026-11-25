@@ -1,6 +1,7 @@
 import Router, {RouterNames} from '@/router';
 import appPlatform from '@platform';
 import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 
 export async function safeNavigate(name: RouterNames, params?: any, query?: any) {
   if (Router.currentRoute.value.name === name) {
@@ -66,6 +67,10 @@ marked.use({ hooks: {
     }
 } });
 
+export const sanitizeHtml = (html: string) => {
+  return DOMPurify.sanitize(html, { ADD_ATTR: ['target'] });
+}
+
 export const parseMarkdown = (input: string) => {
-  return marked.parse(input);
+  return sanitizeHtml(marked.parse(input, { async: false }));
 }

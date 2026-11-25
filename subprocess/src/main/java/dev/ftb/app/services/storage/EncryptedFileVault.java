@@ -141,8 +141,41 @@ public final class EncryptedFileVault implements Vault {
         } catch (GeneralSecurityException | IllegalArgumentException | JsonParseException ex) {
             throw new VaultException("Failed to decrypt vault using '" + store.id() + "'.", ex);
         }
-        
-        return new Unlocked(store, key, data != null ? data : Map.of());
+
+        if (data == null) {
+            data = Map.of();
+        }
+
+        if (store == fallback && primary.isAvailable()) {
+            Unlocked moved = moveToPrimary(data);
+            if (moved != null) {
+                return moved;
+            }
+        }
+
+        return new Unlocked(store, key, data);
+    }
+
+    /// A vault on the fallback can be there because the OS store failed once when the vault was created. Move it over
+    /// as soon as the OS store works, so that failure doesn't leave the secrets obfuscated for good.
+    private @Nullable Unlocked moveToPrimary(Map<String, String> data) {
+        byte[] key;
+        try {
+            key = loadOrCreateKey(primary);
+            write(primary, key, data);
+        } catch (VaultException ex) {
+            LOGGER.warn("Key store '{}' still isn't working, staying on '{}'.", primary.id(), fallback.id(), ex);
+            return null;
+        }
+
+        try {
+            fallback.delete();
+        } catch (VaultException ex) {
+            LOGGER.warn("Moved the vault to '{}' but failed to delete the '{}' key.", primary.id(), fallback.id(), ex);
+        }
+
+        LOGGER.info("Moved vault from '{}' to '{}'.", fallback.id(), primary.id());
+        return new Unlocked(primary, key, data);
     }
 
     private Unlocked create() throws VaultException {
@@ -153,7 +186,8 @@ public final class EncryptedFileVault implements Vault {
         } catch (VaultException ex) {
             if (store == fallback) throw ex;
 
-            // Nothing is stored yet, so falling back here can't lose any data
+            // Nothing is stored yet, so falling back here can't lose any data. It isn't permanent, open() moves the
+            // vault to the OS store once that works.
             LOGGER.warn("Key store '{}' failed, falling back to '{}'.", store.id(), fallback.id(), ex);
             store = fallback;
             key = loadOrCreateKey(store);
