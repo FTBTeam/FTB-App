@@ -133,6 +133,9 @@ public class JettyWebsocketServer implements WebsocketServer {
     private static boolean isAllowedOrigin(@Nullable String origin) {
         if (origin == null || origin.equals("null")) return true;
 
+        // Checked as prefixes, Electron sends a bare `file://`, which isn't a URI Java will parse
+        if (origin.startsWith("file://") || origin.startsWith("overwolf-extension://")) return true;
+
         URI uri;
         try {
             uri = URI.create(origin);
@@ -141,7 +144,6 @@ public class JettyWebsocketServer implements WebsocketServer {
         }
 
         String scheme = uri.getScheme();
-        if ("file".equals(scheme) || "overwolf-extension".equals(scheme)) return true;
         if ("http".equals(scheme) || "https".equals(scheme)) {
             return "localhost".equals(uri.getHost()) || "127.0.0.1".equals(uri.getHost());
         }

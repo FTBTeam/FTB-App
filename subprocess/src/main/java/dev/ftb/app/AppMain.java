@@ -20,8 +20,12 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 
+import java.io.FileDescriptor;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -193,9 +197,9 @@ public class AppMain {
             }
             
             var port = this.services().rcpApi().start(portMode);
-            // Common format both electron and overwolf can understand. Written straight to stdout rather than logged
-            System.out.println("Backend Ready! Port=%s OneTimeToken=%s".formatted(port, Constants.WEBSOCKET_SECRET));
-            System.out.flush();
+            // Common format both electron and overwolf can understand. Written to the real stdout, as System.out is
+            PrintStream stdout = new PrintStream(new FileOutputStream(FileDescriptor.out), true, StandardCharsets.UTF_8);
+            stdout.println("Backend Ready! Port=%s OneTimeToken=%s".formatted(port, Constants.WEBSOCKET_SECRET));
             LOGGER.info("RPC server started on port {}", port);
             if (OS.CURRENT == OS.WIN) pingPong();
         } catch (Throwable t) {
